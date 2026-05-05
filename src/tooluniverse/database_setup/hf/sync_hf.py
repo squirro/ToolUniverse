@@ -30,8 +30,8 @@ import shutil
 from pathlib import Path
 from dotenv import load_dotenv
 from huggingface_hub import HfApi, whoami, get_token
-from tooluniverse.utils import download_from_hf
-from tooluniverse.utils import get_user_cache_dir  # ensure imported for DATA_DIR setup
+from ...utils import download_from_hf
+from ...utils import get_user_cache_dir  # ensure imported for DATA_DIR setup
 
 # Always load .env if present
 load_dotenv()

@@ -8,14 +8,14 @@ from ..base_tool import BaseTool
 from ..tool_registry import register_tool
 from ..logging_config import get_logger
 
-from tooluniverse.database_setup.sqlite_store import SQLiteStore
-from tooluniverse.database_setup.vector_store import VectorStore
-from tooluniverse.database_setup.embedder import Embedder
-from tooluniverse.database_setup.provider_resolver import (
+from ..database_setup.sqlite_store import SQLiteStore
+from ..database_setup.vector_store import VectorStore
+from ..database_setup.embedder import Embedder
+from ..database_setup.provider_resolver import (
     resolve_provider as _resolve_provider,
     resolve_model as _resolve_model,
 )
-from tooluniverse.utils import get_user_cache_dir
+from ..utils import get_user_cache_dir
 
 # ---------------------------
 # Misc helpers

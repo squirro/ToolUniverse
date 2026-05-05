@@ -1,0 +1,526 @@
+[
+  {
+    "name": "internalization_score",
+    "description": "Score targets for receptor-mediated internalization potential based on UniProt topology, endocytic motifs (YXXΦ, [DE]XXXL[LI], NPXY), STRING interactors (AP2, clathrin, dynamin, arrestin), and literature evidence. Produces a 0-1 score per gene. Use after getting gene targets to assess which are suitable for antibody-drug conjugates or radioligand therapy.",
+    "label": [
+      "internalization",
+      "endocytosis",
+      "uptake",
+      "receptor_mediated",
+      "trafficking",
+      "endocytic",
+      "adc",
+      "radioligand"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "threshold": {
+          "type": "number",
+          "description": "Min score to include in results (default: 0)"
+        }
+      },
+      "required": []
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "threshold": 0.5
+      }
+    ]
+  },
+  {
+    "name": "differential_expression",
+    "description": "Compare cancer vs normal tissue gene expression using EBI Expression Atlas. Returns log2 fold change and p-value per gene from matched-tissue RNA-seq studies. Works in two modes: (1) standalone with a gene name/Ensembl ID, or (2) chained from a gene table. Aggregates across multiple experiments.",
+    "label": [
+      "overexpression",
+      "differential",
+      "fold_change",
+      "log2fc",
+      "upregulated",
+      "overexpressed",
+      "cancer_vs_normal",
+      "expression"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "indication": {
+          "type": "string",
+          "description": "Cancer type (e.g., 'prostate cancer', 'lung cancer')"
+        },
+        "gene": {
+          "type": "string",
+          "description": "Gene symbol or Ensembl ID for standalone mode (e.g., 'TMPRSS2', 'ENSG00000184012')"
+        },
+        "experiment": {
+          "type": "string",
+          "description": "Optional GxA accession (e.g., 'E-MTAB-567'). Auto-detected if omitted."
+        }
+      },
+      "required": []
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "indication": "prostate cancer",
+        "gene": "SSTR2"
+      }
+    ]
+  },
+  {
+    "name": "export_table",
+    "description": "Export the current result table as a downloadable file. Generates a styled HTML table and uploads it via the Squirro studio plugin to get PDF, DOCX, and HTML download links. Use when the user wants to download, export, or save results.",
+    "label": [
+      "export",
+      "download",
+      "save",
+      "file",
+      "csv",
+      "pdf",
+      "report",
+      "output"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Report title (default: table name)"
+        },
+        "format": {
+          "type": "string",
+          "description": "Export format: html, pdf, csv (default: html)"
+        }
+      },
+      "required": []
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "title": "Target Analysis Results",
+        "format": "html"
+      }
+    ]
+  },
+  {
+    "name": "shedding_risk",
+    "description": "Assess ectodomain shedding and secretion risk for target genes. Checks UniProt for secretion signals, GPI anchors, transmembrane topology, and protease substrate motifs (ADAM10/17, MMP, furin). Cross-references with shedding literature from EuropePMC. Returns a 0-1 risk score where lower means less shedding risk (better for antibody/ADC/radioligand drug targeting). Use after identifying membrane targets to flag those that shed ectodomains.",
+    "label": [
+      "shedding",
+      "shed",
+      "ectodomain",
+      "cleavage",
+      "soluble",
+      "secreted",
+      "decoy",
+      "secretion",
+      "extracellular"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "gene": {
+          "type": "string",
+          "description": "Gene symbol(s), comma-separated (e.g., 'SSTR2' or 'SSTR2,FOLH1'). Used in standalone mode when no input table."
+        }
+      },
+      "required": []
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "gene": "SSTR2"
+      }
+    ]
+  },
+  {
+    "name": "organs_at_risk",
+    "description": "Identify normal tissues with high expression of target genes — toxicity risk for theranostics and radioligand therapy. Downloads baseline expression from EBI Expression Atlas (HPA RNA-seq, 29 human tissues), compares each gene's normal tissue expression against the target tissue, and flags organs where expression exceeds 50% of the target. Weights high-risk organs (CNS, bone marrow, heart, liver, kidney) 3x. Returns a 0-1 risk score where lower means fewer organs at risk (better safety profile).",
+    "label": [
+      "toxicity",
+      "organs",
+      "tissue",
+      "safety",
+      "off_target",
+      "side_effect",
+      "adverse",
+      "normal_tissue",
+      "theranostics",
+      "radioligand",
+      "rlt",
+      "adc"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "indication": {
+          "type": "string",
+          "description": "Cancer type to determine target tissue (e.g., 'prostate cancer')"
+        },
+        "gene": {
+          "type": "string",
+          "description": "Gene symbol(s), comma-separated (e.g., 'AR' or 'AR,SSTR2'). Used in standalone mode when no input table."
+        },
+        "experiment": {
+          "type": "string",
+          "description": "GxA baseline accession (default: E-MTAB-2836 HPA)"
+        }
+      },
+      "required": []
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "indication": "prostate cancer",
+        "gene": "SSTR2"
+      }
+    ]
+  },
+  {
+    "name": "competition_landscape",
+    "description": "Analyze competitive landscape for target genes. Fetches all known drugs from OpenTargets, groups by modality (antibody, small molecule, ADC, radioligand, etc.), and identifies whitespace opportunities. Returns a competition score (0-1 where higher = less competition) plus modality breakdown and top competitors by phase. Use to assess how crowded a target is and where modality gaps exist.",
+    "label": [
+      "competition",
+      "competitive",
+      "drugs",
+      "pipeline",
+      "crowded",
+      "whitespace",
+      "landscape",
+      "competitors",
+      "approved",
+      "clinical_trial",
+      "opportunity",
+      "modality",
+      "gap",
+      "unmet"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "gene": {
+          "type": "string",
+          "description": "Gene symbol(s), comma-separated (e.g., 'AR' or 'AR,EGFR'). Used in standalone mode when no input table."
+        }
+      },
+      "required": []
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "gene": "SSTR2"
+      }
+    ]
+  },
+  {
+    "name": "patent_landscape",
+    "description": "Search patent databases for IP encumbrance. Supports three entity types: gene (searches gene symbol + protein name), drug (searches drug name + synonyms), or topic (raw keyword search). Uses EuropePMC patent search as primary source, EPO OPS as supplement when API keys are available. Returns IP freedom score (0-1, higher = fewer patents = more freedom), patent counts, top titles, and applicants. Auto-detects entity type from input table column names if not specified.",
+    "label": [
+      "patent",
+      "ip",
+      "intellectual_property",
+      "fto",
+      "freedom_to_operate",
+      "prior_art"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "entity_type": {
+          "type": "string",
+          "description": "Type of entity to search: gene, drug, or topic (auto-detected if omitted)"
+        },
+        "indication": {
+          "type": "string",
+          "description": "Optional indication to narrow patent search (e.g., 'prostate cancer')"
+        }
+      },
+      "required": []
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "entity_type": "gene",
+        "indication": "prostate cancer"
+      }
+    ]
+  },
+  {
+    "name": "validation_level",
+    "description": "Assess clinical validation level for target genes or drugs. Combines OpenTargets maximum clinical trial phase with ClinicalTrials.gov trial counts and status breakdown. Two search modes: 'target' (default) searches by gene target name, 'intervention' searches by drug/intervention name with synonym expansion (finds all notation variants, e.g. terbium-161 → 161Tb, Tb-161, Tb-PSMA). Use 'intervention' mode when searching for specific drugs, isotopes, or therapies.",
+    "label": [
+      "validation",
+      "validated",
+      "clinical_evidence",
+      "druggability",
+      "proven",
+      "trial",
+      "clinical",
+      "phase",
+      "tractability"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "indication": {
+          "type": "string",
+          "description": "Disease/indication to narrow trial search (e.g., 'prostate cancer')"
+        },
+        "gene": {
+          "type": "string",
+          "description": "Gene symbol(s) or drug name(s), comma-separated. Used in standalone mode when no input table."
+        },
+        "search_mode": {
+          "type": "string",
+          "description": "Search mode: 'target' (gene target, default) or 'intervention' (drug/intervention with synonym expansion)"
+        }
+      },
+      "required": []
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "indication": "prostate cancer",
+        "gene": "SSTR2",
+        "search_mode": "target"
+      }
+    ]
+  },
+  {
+    "name": "ClinicalTrials_search_by_intervention_and_condition",
+    "description": "Legacy CT.gov search by intervention + condition. **Prefer `successful_trials_classifier` for any new chain** — it returns the same trial list PLUS classification, audit columns, and a cached raw study JSON that downstream tools (`trial_population_summary`, `trial_outcomes_extractor`) project from without re-fetching. This tool does not classify, does not cache, and does not paginate. Kept for back-compat. Searches `query.intr + query.cond` with synonym expansion (PubChem, OLS, NCI Thesaurus, isotope variants).",
+    "label": [
+      "clinical_trial",
+      "trial",
+      "study",
+      "nct",
+      "recruiting",
+      "phase",
+      "clinicaltrials"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "intervention": {
+          "type": "string",
+          "description": "Drug or intervention name (e.g., 'terbium-161', 'imatinib', 'PSMA radioligand')"
+        },
+        "condition": {
+          "type": "string",
+          "description": "Disease or condition (e.g., 'prostate cancer', 'glioblastoma')"
+        }
+      },
+      "required": [
+        "intervention",
+        "condition"
+      ]
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "intervention": "terbium-161",
+        "condition": "prostate cancer"
+      }
+    ]
+  },
+  {
+    "name": "successful_trials_classifier",
+    "description": "Classify clinical trials as successful / failed / inconclusive using deterministic rules on CT.gov resultsSection (no LLM judgement). Modes: (a) condition-only — pass `condition` and the tool returns ALL interventional trials for that condition; (b) condition + drugs — comma-separated drug list narrows the search via intervention synonyms; (c) chained from a table column. Optional time window (`since`, `until`) filters by completion date. Optional `limit` returns the most recent N. Applies pure-Python rules to overallStatus, hasResults, and primary outcome pValues. Audit columns expose every input so each classification is traceable.",
+    "label": [
+      "clinical_trial",
+      "trial",
+      "success",
+      "outcome",
+      "efficacy",
+      "pvalue",
+      "statistical",
+      "interventional",
+      "date",
+      "recent"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string",
+          "description": "Disease/condition free-text (e.g. 'prostate cancer', 'glioblastoma', 'epilepsy', 'type 2 diabetes'). Required."
+        },
+        "drugs": {
+          "type": "string",
+          "description": "Optional. Comma-separated drug names to narrow the search. Omit to fetch all interventional trials for the condition."
+        },
+        "since": {
+          "type": "string",
+          "description": "Optional ISO date YYYY-MM-DD. Lower bound on trial completion date."
+        },
+        "until": {
+          "type": "string",
+          "description": "Optional ISO date YYYY-MM-DD. Upper bound on trial completion date."
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Optional. Return only the most recent N trials (sorted by completion date desc). Use when the user says 'last N'."
+        },
+        "pvalue_threshold": {
+          "type": "number",
+          "description": "Significance threshold (default 0.05)"
+        }
+      },
+      "required": [
+        "condition"
+      ]
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "condition": "epilepsy"
+      },
+      {
+        "condition": "epilepsy",
+        "drugs": "cenobamate,lamotrigine"
+      },
+      {
+        "condition": "epilepsy",
+        "limit": 100
+      },
+      {
+        "condition": "epilepsy",
+        "since": "2020-01-01",
+        "until": "2024-12-31"
+      }
+    ]
+  },
+  {
+    "name": "trial_population_summary",
+    "description": "Extract patient-population descriptions per arm for clinical trials. Given NCT IDs (chained from a `successful_trials_classifier` step or comma-separated), pulls CT.gov v2 protocol + results sections and emits one row per trial × arm. Free-text fields (eligibility criteria, baseline data) are surfaced raw so a downstream code-runner or LLM can interpret them. Includes arm sizes, age range, sex distribution, baseline characteristics JSON, and PMIDs from CT.gov references (when present).",
+    "label": [
+      "clinical_trial",
+      "patient_population",
+      "eligibility",
+      "arms",
+      "baseline",
+      "demographic",
+      "age",
+      "sex"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "nct_ids": {
+          "type": "string",
+          "description": "Optional. Comma-separated NCT IDs (standalone mode). Chain from a table column for batch — the `nct_id` column from `successful_trials_classifier` works directly."
+        }
+      },
+      "required": []
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "nct_ids": "NCT01397968"
+      }
+    ]
+  },
+  {
+    "name": "trial_outcomes_extractor",
+    "description": "Extract response-level statistics per trial × arm × endpoint from CT.gov resultsSection. Given NCT IDs (chained from a `successful_trials_classifier` step or comma-separated), pulls the `outcomeMeasuresModule` for each trial and emits one row per trial × arm × endpoint with: per-arm point estimate (value, lowerLimit, upperLimit), per-comparison analysis (paramType, paramValue, ciPctValue, ciLower, ciUpper, pValue, statisticalMethod, nonInferiorityType), endpoint metadata (type=PRIMARY/SECONDARY, paramType, unit, timeFrame), and a `source_field` pointer for audit traceability. All values are surfaced raw from CT.gov — no LLM-invented numbers. Pure cache projection when chained: zero CT.gov roundtrips when input table has the `_raw_study_json` cache column.",
+    "label": [
+      "clinical_trial",
+      "outcome",
+      "outcomes",
+      "endpoint",
+      "response",
+      "efficacy",
+      "pvalue",
+      "statistical",
+      "results",
+      "ci",
+      "confidence_interval"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "nct_ids": {
+          "type": "string",
+          "description": "Optional. Comma-separated NCT IDs (standalone mode). Chain from a table column for batch — the `nct_id` column from `successful_trials_classifier` works directly and uses the cached `_raw_study_json` to skip CT.gov fetches."
+        }
+      },
+      "required": []
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "nct_ids": "NCT01397968"
+      }
+    ]
+  },
+  {
+    "name": "analyze_table_with_python",
+    "description": "Run LLM-generated Python code over the session's AIRA tables for open-ended analysis (joins, aggregations, statistical tests, plots). Two-step UX by default: submit code with approve=false to PROPOSE — the tool's response includes the code echoed back AND a markdown schema preview of every session table (row counts, columns, JSON-encoded-column hints, sample rows). Read the preview before resubmitting to verify column names, detect JSON-encoded fields, and pick correct join keys. Resubmit with approve=true to EXECUTE; auto_approve=true skips PROPOSE for trusted/short ops. Every non-underscore-prefixed table in the session is auto-injected as a pandas DataFrame named df_<table_name>; the chained predecessor is also available as `df`. Code must assign `result`. Three valid result shapes: (1) list-of-dicts or pandas DataFrame -> next chainable AIRA table; (2) base64-encoded image bytes prefixed with 'PNG_B64:' / 'PDF_B64:' / 'JPEG_B64:' -> written to /storage/localfile/, output is a one-row table with chart_url column; (3) scalar (str/int/float) -> one-row, one-column table. If the analysis result is intended for inspection only (e.g. discovery: print column names, peek at a few rows), assign a short string to `result` — it lands in the chat, not as a chainable table. AST-sandboxed via TU's python_code_executor (forbids os/subprocess/socket/urllib/requests/http/open/eval/exec by default). Pass `allowed_imports=[...]` to extend the whitelist for this call; `dependencies=[...]` to pip-install missing packages at runtime. Use whenever the user asks an analysis question that doesn't fit the deterministic SR tools — joins, aggregations, plots, custom statistics. Always pass the user's literal `code` string in `params`; `code` is required and must be forwarded verbatim. When uncertain about table shape (column names, JSON-encoded fields, asymmetric join keys across tables), do a discovery pass first: submit short code that returns a string summary of `df_<name>.columns` / `df_<name>.head(2)` for the relevant tables, then write the analysis with the actual schema in hand.",
+    "label": [
+      "code",
+      "python",
+      "analyze",
+      "analysis",
+      "compute",
+      "calculate",
+      "plot",
+      "chart",
+      "join",
+      "aggregate",
+      "pandas",
+      "scipy",
+      "matplotlib",
+      "statistics"
+    ],
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Python code that assigns `result`. Available DataFrames: every session table as df_<table_name>, plus `df` for the chained predecessor. Result shapes: list-of-dicts (chainable table), 'PNG_B64:'+base64 (chart), or scalar."
+        },
+        "code_explanation": {
+          "type": "string",
+          "description": "One-line summary of what the code does. Shown to the user during PROPOSE step."
+        },
+        "approve": {
+          "type": "boolean",
+          "description": "Default false. Submit with approve=false first to PROPOSE the code; user reviews; resubmit with approve=true to EXECUTE."
+        },
+        "auto_approve": {
+          "type": "boolean",
+          "description": "Default false. Set to true to skip the propose step entirely (for trusted/short operations the user expects immediately)."
+        },
+        "allowed_imports": {
+          "type": "string",
+          "description": "Optional. Comma-separated list of additional Python modules to allow (e.g. 'lifelines,plotly'). Default whitelist already includes pandas, numpy, scipy, matplotlib, seaborn, statistics, math, datetime, json, re."
+        },
+        "dependencies": {
+          "type": "string",
+          "description": "Optional. Comma-separated list of pip packages to install at runtime if missing (e.g. 'lifelines,plotly'). Auto-install is ON by default."
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Optional. Max execution time in seconds (default 30, max 300)."
+        }
+      },
+      "required": [
+        "code"
+      ]
+    },
+    "type": "SRAnalysisTool",
+    "test_examples": [
+      {
+        "code": "import pandas as pd\nresult = pd.DataFrame(df_trials).head(5).to_dict('records')",
+        "code_explanation": "Show first 5 rows of the trials table",
+        "auto_approve": true
+      },
+      {
+        "code": "result = sum(1 for r in df if r.get('classification') == 'successful')",
+        "code_explanation": "Count successful trials",
+        "approve": true
+      }
+    ]
+  }
+]

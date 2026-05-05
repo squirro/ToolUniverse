@@ -330,12 +330,12 @@ Type-safe Python interface to {len(tool_names)} scientific tools.
 Each tool is in its own module for minimal import overhead.
 
 Usage:
-    from tooluniverse.tools import ArXiv_search_papers
+    from .tools import ArXiv_search_papers
     result = ArXiv_search_papers(query="machine learning")
 """
 
 # Import exceptions from main package
-from tooluniverse.exceptions import (
+from .exceptions import (
     ToolError,
     ToolAuthError,
     ToolUnavailableError,
@@ -389,7 +389,7 @@ Custom Instance:
 
 Examples:
     Basic usage (default behavior):
-        from tooluniverse.tools import get_shared_client
+        from .tools import get_shared_client
         client = get_shared_client()
 
     With custom configuration (only effective on first call):
@@ -400,7 +400,7 @@ Examples:
         client = get_shared_client(custom_instance=my_tu)
 
     Reset for testing:
-        from tooluniverse.tools import reset_shared_client
+        from .tools import reset_shared_client
         reset_shared_client()
 """
 

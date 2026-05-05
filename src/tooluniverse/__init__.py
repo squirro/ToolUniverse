@@ -11,14 +11,23 @@ __path__ = extend_path(__path__, __name__)
 from .execute_function import ToolUniverse
 from .base_tool import BaseTool
 from .default_config import default_tool_files
-from .profile import (
-    ProfileLoader,
-    validate_profile_config,
-    validate_with_schema,
-    validate_yaml_file_with_schema,
-    validate_yaml_format_by_template,
-    PROFILE_SCHEMA,
-)
+try:
+    from .profile import (
+        ProfileLoader,
+        validate_profile_config,
+        validate_with_schema,
+        validate_yaml_file_with_schema,
+        validate_yaml_format_by_template,
+        PROFILE_SCHEMA,
+    )
+except ImportError:
+    # Profile loading requires huggingface_hub — not available on all deployments
+    ProfileLoader = None
+    validate_profile_config = None
+    validate_with_schema = None
+    validate_yaml_file_with_schema = None
+    validate_yaml_format_by_template = None
+    PROFILE_SCHEMA = None
 
 from .tool_registry import (
     register_tool,
@@ -34,7 +43,10 @@ _LIGHT_IMPORT = (
 )
 
 # Version information - read from package metadata or pyproject.toml
-__version__ = version("tooluniverse")
+try:
+    __version__ = version("tooluniverse")
+except Exception:
+    __version__ = "1.1.11-fork"
 
 # Check if lazy loading is enabled
 LAZY_LOADING_ENABLED = (

@@ -529,8 +529,8 @@ def _get_tool_template_example():
 # Example of correct @register_tool usage:
 
 from typing import Dict, Any
-from tooluniverse.base_tool import BaseTool
-from tooluniverse.tool_registry import register_tool
+from ..base_tool import BaseTool
+from ..tool_registry import register_tool
 
 @register_tool("ExampleTool")
 class ExampleTool(BaseTool):

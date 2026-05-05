@@ -9,10 +9,10 @@ Configuration (tool_config.fields)
 """
 
 from typing import Any, Dict
-from tooluniverse.base_tool import BaseTool
-from tooluniverse.tool_registry import register_tool
-from tooluniverse.database_setup.search import SearchEngine
-from tooluniverse.utils import get_user_cache_dir
+from ..base_tool import BaseTool
+from ..tool_registry import register_tool
+from ..database_setup.search import SearchEngine
+from ..utils import get_user_cache_dir
 import os
 
 

@@ -43,11 +43,11 @@ import urllib3
 import numpy as np
 from typing import Dict, List, Optional, Any
 from bs4 import BeautifulSoup
-from tooluniverse.database_setup.sqlite_store import SQLiteStore
-from tooluniverse.database_setup.vector_store import VectorStore
-from tooluniverse.database_setup.embedder import Embedder
-from tooluniverse.database_setup.hf.sync_hf import db_path_for_collection
-from tooluniverse.database_setup.provider_resolver import (
+from ..database_setup.sqlite_store import SQLiteStore
+from ..database_setup.vector_store import VectorStore
+from ..database_setup.embedder import Embedder
+from ..database_setup.hf.sync_hf import db_path_for_collection
+from ..database_setup.provider_resolver import (
     resolve_provider,
     resolve_model,
 )

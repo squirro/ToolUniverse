@@ -75,14 +75,14 @@ See also
 
 from __future__ import annotations
 from typing import List, Dict, Any, Optional
-from tooluniverse.database_setup.search import SearchEngine
-from tooluniverse.database_setup.provider_resolver import (
+from ..database_setup.search import SearchEngine
+from ..database_setup.provider_resolver import (
     resolve_provider,
     resolve_model,
 )
-from tooluniverse.euhealth.euhealth_live import deep_dive_for_datasets
-from tooluniverse.database_setup.sqlite_store import SQLiteStore, normalize_text
-from tooluniverse.utils import get_user_cache_dir
+from ..euhealth.euhealth_live import deep_dive_for_datasets
+from ..database_setup.sqlite_store import SQLiteStore, normalize_text
+from ..utils import get_user_cache_dir
 import os
 
 # -----------------

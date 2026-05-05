@@ -17,13 +17,13 @@ from ..logging_config import get_logger
 
 from huggingface_hub import whoami
 
-from tooluniverse.database_setup.hf.sync_hf import (
+from ..database_setup.hf.sync_hf import (
     upload as hf_upload,
     download as hf_download,  # ensure you pulled the "rename-on-download" fix in sync_hf.py
     db_path_for_collection,
 )
-from tooluniverse.database_setup.sqlite_store import SQLiteStore
-from tooluniverse.utils import get_user_cache_dir
+from ..database_setup.sqlite_store import SQLiteStore
+from ..utils import get_user_cache_dir
 
 
 def _collection_paths(name: str) -> Tuple[Path, Path]:

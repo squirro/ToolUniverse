@@ -3162,7 +3162,7 @@
   },
   {
     "name": "OpenTargets_get_drug_description_by_chemblId",
-    "description": "Get drug name, year of first approval, type, cross references, and max clinical trial phase based on specified chemblId.",
+    "description": "Get drug name, type, cross references, and max clinical stage based on specified chemblId.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -3175,7 +3175,7 @@
         "chemblId"
       ]
     },
-    "query_schema": "\n      query retrieveMultipleDrugsInfo($chemblId: String!) {\n        drug(chemblId: $chemblId) {\n          id\n          name\n          yearOfFirstApproval\n          drugType\n          crossReferences {\n            source\n            ids\n          }\n          maximumClinicalTrialPhase\n        }\n      }\n    ",
+    "query_schema": "\n      query retrieveMultipleDrugsInfo($chemblId: String!) {\n        drug(chemblId: $chemblId) {\n          id\n          name\n          drugType\n          crossReferences {\n            source\n            ids\n          }\n          maximumClinicalStage\n        }\n      }\n    ",
     "label": [
       "OpenTarget",
       "Drug",
@@ -3203,9 +3203,6 @@
                 "name": {
                   "type": "string"
                 },
-                "yearOfFirstApproval": {
-                  "type": "integer"
-                },
                 "drugType": {
                   "type": "string"
                 },
@@ -3226,7 +3223,7 @@
                     }
                   }
                 },
-                "maximumClinicalTrialPhase": {
+                "maximumClinicalStage": {
                   "type": "integer"
                 }
               }

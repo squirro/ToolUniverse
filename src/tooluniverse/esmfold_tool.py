@@ -12,7 +12,7 @@ import re
 import urllib.request
 from typing import Any, Dict
 
-from tooluniverse.tool_registry import register_tool
+from .tool_registry import register_tool
 
 ESMFOLD_URL = "https://api.esmatlas.com/foldSequence/v1/pdb/"
 

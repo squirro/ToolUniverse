@@ -1,5 +1,5 @@
-from tooluniverse.base_tool import BaseTool
-from tooluniverse.tool_registry import register_tool
+from .base_tool import BaseTool
+from .tool_registry import register_tool
 
 _TIPS = {
     "loading": [

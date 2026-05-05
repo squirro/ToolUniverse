@@ -24,8 +24,8 @@ import os
 import time
 from typing import List
 import numpy as np
-from tooluniverse.database_setup.sqlite_store import SQLiteStore
-from tooluniverse.database_setup.vector_store import VectorStore
+from ..database_setup.sqlite_store import SQLiteStore
+from ..database_setup.vector_store import VectorStore
 
 
 class Embedder:

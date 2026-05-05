@@ -19,7 +19,7 @@ import json
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 from pathlib import Path
-from tooluniverse.logging_config import get_logger
+from .logging_config import get_logger
 
 _logger = get_logger(__name__)
 

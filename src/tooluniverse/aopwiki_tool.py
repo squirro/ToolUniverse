@@ -9,7 +9,7 @@ import json
 from typing import Any, Dict
 from urllib.request import Request, urlopen
 
-from tooluniverse.tool_registry import register_tool
+from .tool_registry import register_tool
 
 _BASE = "https://aopwiki.org"
 

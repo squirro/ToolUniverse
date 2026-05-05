@@ -10,7 +10,7 @@ Usage:
 """
 
 # Import exceptions from main package
-from tooluniverse.exceptions import (
+from ..exceptions import (
     ToolError,
     ToolAuthError,
     ToolUnavailableError,

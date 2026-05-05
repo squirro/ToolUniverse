@@ -1,8 +1,8 @@
 from typing import Dict, Any, List, Optional
 import requests
 import re
-from tooluniverse.base_tool import BaseTool
-from tooluniverse.tool_registry import register_tool
+from .base_tool import BaseTool
+from .tool_registry import register_tool
 
 
 @register_tool("FDAPharmacogenomicBiomarkersTool")

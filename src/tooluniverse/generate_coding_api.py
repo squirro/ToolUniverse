@@ -39,11 +39,11 @@ Type-safe Python interface to {n} scientific tools.
 Each tool is in its own module for minimal import overhead.
 
 Usage:
-    from tooluniverse.tools import UniProt_get_entry_by_accession
+    from .tools import UniProt_get_entry_by_accession
     result = UniProt_get_entry_by_accession(accession="P05067")
 \"\"\"
 
-from tooluniverse.exceptions import (
+from .exceptions import (
     ToolAuthError,
     ToolConfigError,
     ToolDependencyError,

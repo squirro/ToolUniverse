@@ -39,6 +39,11 @@
       "endpoint": "/esearch.fcgi",
       "return_format": "JSON"
     },
+    "result_shape": {
+      "path": "esearchresult.idlist",
+      "id_col": "uid",
+      "id_type": "ncbi_geo_uid"
+    },
     "return_schema": {
       "type": "object",
       "description": "GEO dataset search results",

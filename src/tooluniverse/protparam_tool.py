@@ -10,7 +10,7 @@ index, and GRAVY (grand average of hydropathicity).
 import math
 from typing import Any, Dict
 
-from tooluniverse.tool_registry import register_tool
+from .tool_registry import register_tool
 
 # Monoisotopic amino acid molecular weights (Da)
 _MW = {

@@ -14,7 +14,7 @@ Tools available:
 - get_expert_status: Get system status
 
 Usage:
-    from tooluniverse.mcp_tool_registry import start_mcp_server
+    from ...mcp_tool_registry import start_mcp_server
     # Tools are automatically registered and available on startup
 """
 
@@ -30,7 +30,7 @@ from threading import Timer
 from typing import Dict, List, Optional, Any
 
 # Import the new registration system
-from tooluniverse.mcp_tool_registry import register_mcp_tool, start_mcp_server
+from ...mcp_tool_registry import register_mcp_tool, start_mcp_server
 import requests
 
 # Check Flask availability for web interface

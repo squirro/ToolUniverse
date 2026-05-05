@@ -29,11 +29,11 @@ and ensure correct fallback warnings.
 """
 
 from typing import Dict, Any, List, Optional
-from tooluniverse.base_tool import BaseTool
-from tooluniverse.tool_registry import register_tool
+from ..base_tool import BaseTool
+from ..tool_registry import register_tool
 
 # The full runtime surface (topic search fns + deep dive)
-from tooluniverse.euhealth import tools_runtime as rt
+from ..euhealth import tools_runtime as rt
 
 
 # ---------------------------------------------------------------------

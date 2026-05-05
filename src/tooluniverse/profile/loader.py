@@ -12,7 +12,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 import yaml
 import requests
-from huggingface_hub import hf_hub_download
+try:
+    from huggingface_hub import hf_hub_download
+except ImportError:
+    hf_hub_download = None  # HF profile loading unavailable
 
 from ..utils import get_user_cache_dir
 from .validator import validate_with_schema

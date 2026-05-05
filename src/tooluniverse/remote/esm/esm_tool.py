@@ -21,7 +21,7 @@ Embeddings are 960-dimensional vectors (mean-pooled across tokens) that enable:
 """
 
 from typing import Dict, Any
-from tooluniverse.mcp_tool_registry import register_mcp_tool, start_mcp_server
+from ...mcp_tool_registry import register_mcp_tool, start_mcp_server
 from esm.models.esmc import ESMC
 from esm.sdk.api import ESMProtein, LogitsConfig
 

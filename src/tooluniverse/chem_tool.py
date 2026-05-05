@@ -2,8 +2,14 @@
 ChEMBL API Tools
 
 This module provides tools for accessing the ChEMBL database:
-- ChEMBLTool: Specialized tool for similarity search
-- ChEMBLRESTTool: Generic REST API tool for ChEMBL endpoints
+- ChEMBLTool: Specialized tool for similarity search (requires `indigo` at runtime)
+- ChEMBLRESTTool: Generic REST API tool for ChEMBL endpoints (no heavy deps)
+
+NOTE: `indigo` is imported lazily inside ChEMBLTool.__init__ — on Squirro the
+package is not installed, and a top-level `from indigo import Indigo` caused
+the entire module to fail loading, which dropped ChEMBLRESTTool from the lazy
+registry ("Tool type 'ChEMBLRESTTool' not found in registry"). ChEMBLRESTTool
+has no indigo dependency, so it must stay importable.
 """
 
 import requests
@@ -14,7 +20,6 @@ from typing import Any, Dict, Optional
 from .base_tool import BaseTool
 from .tool_registry import register_tool
 from .http_utils import request_with_retry
-from indigo import Indigo
 
 
 @register_tool("ChEMBLRESTTool")
@@ -512,6 +517,9 @@ class ChEMBLTool(BaseTool):
     def __init__(self, tool_config, base_url="https://www.ebi.ac.uk/chembl/api/data"):
         super().__init__(tool_config)
         self.base_url = base_url
+        # Lazy import so ChEMBLRESTTool (same module, no indigo dep) still
+        # loads on hosts without the `indigo` package installed.
+        from indigo import Indigo
         self.indigo = Indigo()
 
     def run(self, arguments):

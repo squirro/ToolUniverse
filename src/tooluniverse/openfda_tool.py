@@ -30,7 +30,7 @@ def _get_drug_names_query():
 def _execute_opentargets_query(chembl_id):
     """Directly execute OpenTargets GraphQL query (most efficient)"""
     try:
-        from tooluniverse.graphql_tool import execute_query
+        from .graphql_tool import execute_query
 
         query = _get_drug_names_query()
         variables = {"chemblId": chembl_id}
@@ -632,7 +632,7 @@ def search_openfda(
             if term and (" " not in term):
                 try:
                     import difflib
-                    from tooluniverse.data.fda_drugs_with_brand_generic_names_for_tool import (
+                    from .data.fda_drugs_with_brand_generic_names_for_tool import (
                         drug_list,
                     )
 

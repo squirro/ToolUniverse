@@ -23,11 +23,11 @@ import sqlite3
 from .sqlite_store import SQLiteStore
 from .vector_store import VectorStore
 from .embedder import Embedder
-from tooluniverse.database_setup.provider_resolver import (
+from ..database_setup.provider_resolver import (
     resolve_provider,
     resolve_model,
 )
-from tooluniverse.database_setup.embed_utils import get_model_dim
+from ..database_setup.embed_utils import get_model_dim
 
 
 def _l2norm(x: np.ndarray) -> np.ndarray:

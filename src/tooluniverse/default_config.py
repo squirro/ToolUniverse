@@ -1134,6 +1134,8 @@ default_tool_files = {
     "data_quality": os.path.join(current_dir, "data", "data_quality_tools.json"),
     # Meta-Analysis - fixed/random effects, inverse-variance, DerSimonian-Laird (local)
     "meta_analysis": os.path.join(current_dir, "data", "meta_analysis_tools.json"),
+    # SR Analysis - Swiss Rockets custom target identification and scoring tools
+    "sr_analysis": os.path.join(current_dir, "data", "sr_analysis_tools.json"),
 }
 
 # Auto-load any user-provided tools from ~/.tooluniverse/user_tools/

@@ -38,7 +38,7 @@ Examples:
 
 import threading
 from typing import Optional
-from tooluniverse import ToolUniverse
+from .. import ToolUniverse
 
 _client: Optional[ToolUniverse] = None
 _client_lock = threading.Lock()

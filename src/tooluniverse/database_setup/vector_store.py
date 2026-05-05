@@ -25,7 +25,7 @@ import numpy as np
 import sqlite3
 from pathlib import Path
 from typing import List, Tuple, Optional, Dict
-from tooluniverse.utils import get_user_cache_dir
+from ..utils import get_user_cache_dir
 import os
 
 

@@ -3,7 +3,7 @@ from typing import Any, Dict
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from tooluniverse.tool_registry import register_tool
+from .tool_registry import register_tool
 
 
 def _http_get(

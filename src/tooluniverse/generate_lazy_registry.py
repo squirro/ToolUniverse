@@ -15,7 +15,7 @@ src_path = Path(__file__).parent.parent
 sys.path.insert(0, str(src_path))
 
 try:
-    from tooluniverse.tool_registry import build_lazy_registry
+    from .tool_registry import build_lazy_registry
 except ImportError:
     print(
         "Error: Could not import tooluniverse. Ensure you are running from the project root or src directory."

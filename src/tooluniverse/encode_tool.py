@@ -5,9 +5,9 @@ from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from tooluniverse.tool_registry import register_tool
-from tooluniverse.base_rest_tool import BaseRESTTool
-from tooluniverse.exceptions import (
+from .tool_registry import register_tool
+from .base_rest_tool import BaseRESTTool
+from .exceptions import (
     ToolError,
     ToolAuthError,
     ToolRateLimitError,

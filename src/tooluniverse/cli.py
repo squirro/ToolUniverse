@@ -62,7 +62,7 @@ def _get_tu():
     # The CLI has its own status output; library-level info logs are noise.
     try:
         import logging
-        from tooluniverse.logging_config import reconfigure_for_stdio
+        from .logging_config import reconfigure_for_stdio
 
         reconfigure_for_stdio()
         logging.getLogger("tooluniverse").setLevel(logging.WARNING)
@@ -1035,7 +1035,7 @@ def cmd_find(args: argparse.Namespace) -> None:
         _cat_unknown = False
         if args.categories:
             args.categories, _cat_unknown = _resolve_categories(tu, args.categories)
-        from tooluniverse.tool_finder_keyword import ToolFinderKeyword
+        from .tool_finder_keyword import ToolFinderKeyword
 
         finder = ToolFinderKeyword({}, tooluniverse=tu)
         raw_result = finder._run_json_search(
@@ -1159,7 +1159,7 @@ def cmd_status(args: argparse.Namespace) -> None:
         tu._auto_load_tools_if_empty()
         # Count categories the same way list_tools does (via _get_tool_category)
         # so that `tu status` and `tu list --mode categories` agree.
-        from tooluniverse.tool_discovery_tools import _get_tool_category
+        from .tool_discovery_tools import _get_tool_category
 
         category_counts: dict[str, int] = {}
         for tool_name, tool in (tu.all_tool_dict or {}).items():
@@ -1514,7 +1514,7 @@ def cmd_build(args: argparse.Namespace) -> None:
 
 def cmd_serve(_args: argparse.Namespace) -> None:
     """Start the MCP stdio server — identical to running `tooluniverse`."""
-    from tooluniverse.smcp_server import run_default_stdio_server
+    from .smcp_server import run_default_stdio_server
 
     run_default_stdio_server()
 
@@ -1847,7 +1847,7 @@ def main() -> None:
         # so that ℹ️ info lines (e.g. "Number of tools", "Auto-loaded workspace
         # profile.yaml") are suppressed.
         try:
-            from tooluniverse.logging_config import reconfigure_for_quiet
+            from .logging_config import reconfigure_for_quiet
 
             reconfigure_for_quiet()
         except Exception:

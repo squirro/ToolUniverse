@@ -39,7 +39,7 @@ from pathlib import Path
 from .pipeline import build_collection, search
 from .hf.sync_hf import upload as sync_upload, download as sync_download
 from .packager import pack_folder
-from tooluniverse.utils import get_user_cache_dir
+from ..utils import get_user_cache_dir
 
 
 def resolve_db_path(db_arg, collection):

@@ -9,8 +9,8 @@ Use cases:
 from typing import List, Optional
 import numpy as np
 
-from tooluniverse.database_setup.embedder import Embedder
-from tooluniverse.database_setup.provider_resolver import (
+from ..database_setup.embedder import Embedder
+from ..database_setup.provider_resolver import (
     resolve_provider,
     resolve_model,
 )

@@ -1,7 +1,7 @@
 from fastmcp import FastMCP
 import sys
 import os
-from tooluniverse.boltz_tool import Boltz2DockingTool
+from ...boltz_tool import Boltz2DockingTool
 import json
 
 # Read the tool config dicts from the JSON file

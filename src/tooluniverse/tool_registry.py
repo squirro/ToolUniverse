@@ -245,13 +245,12 @@ def _discover_from_ast():
     Returns: Dict[tool_name, module_name]
     """
     import ast
-    import tooluniverse
 
     mapping = {}
     try:
-        package_path = tooluniverse.__path__[0]
-    except (ImportError, AttributeError):
-        logger.warning("Cannot import tooluniverse package for AST discovery")
+        package_path = str(Path(__file__).parent)
+    except Exception:
+        logger.warning("Cannot determine package path for AST discovery")
         return {}
 
     logger.debug(f"AST scanning directory: {package_path}")
@@ -364,7 +363,7 @@ def build_lazy_registry(package_name=None):
 
     # 1. Try to load pre-computed static registry (for frozen environments)
     try:
-        from tooluniverse._lazy_registry_static import STATIC_LAZY_REGISTRY
+        from ._lazy_registry_static import STATIC_LAZY_REGISTRY
 
         logger.debug(
             f"Loaded static lazy registry with {len(STATIC_LAZY_REGISTRY)} classes."

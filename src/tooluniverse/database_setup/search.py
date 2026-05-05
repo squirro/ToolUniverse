@@ -26,10 +26,10 @@ See also
 
 from typing import List, Dict, Any, Optional
 
-from tooluniverse.database_setup.sqlite_store import SQLiteStore
-from tooluniverse.database_setup.vector_store import VectorStore
-from tooluniverse.database_setup.embedder import Embedder
-from tooluniverse.database_setup.provider_resolver import (
+from ..database_setup.sqlite_store import SQLiteStore
+from ..database_setup.vector_store import VectorStore
+from ..database_setup.embedder import Embedder
+from ..database_setup.provider_resolver import (
     resolve_provider,
     resolve_model,
 )

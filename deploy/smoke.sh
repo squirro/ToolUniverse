@@ -102,7 +102,7 @@ CALL_RESP=$(curl -fsS -X POST "$URL" \
               -H "$HDR_TYPE" -H "Accept: $ACCEPT" -H "$HDR_SESSION" \
               -d '{"jsonrpc":"2.0","id":2,"method":"tools/call",
                    "params":{"name":"search_clinical_trials",
-                             "arguments":{"condition":"focal onset epilepsy","page_size":3}}}')
+                             "arguments":{"query_term":"focal onset epilepsy","limit":3}}}')
 
 CALL_JSON=$(echo "$CALL_RESP" | sse_payload)
 # MCP error responses still set .result but with isError=true; check both.

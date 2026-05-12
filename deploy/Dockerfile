@@ -19,7 +19,12 @@ COPY src/ ./src/
 
 # Editable install so the package metadata + entry points are present
 # under /app/tu_src; the source tree is what runs at import time.
-RUN pip install --no-cache-dir -e .
+# [embedding] adds sentence-transformers + faiss-cpu (faiss-cpu is already
+# in base deps, but the extra also pulls torch which Tool_RAG needs at
+# runtime). Without it, Tool_RAG / ToolFinderEmbedding fails the first
+# time the agent calls Tool_Finder_LLM and the LLM falls through to
+# the embedding-based finder.
+RUN pip install --no-cache-dir -e ".[embedding]"
 
 # Trim build-only toolchain; runtime libs stay.
 RUN apt-get purge -y gcc g++ && apt-get autoremove -y

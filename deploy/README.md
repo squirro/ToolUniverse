@@ -19,7 +19,7 @@ its own Python env.
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | `python:3.12-slim` base, `pip install -e` from `libs/tooluniverse/` |
+| `Dockerfile` | `python:3.12-slim` base, `pip install -e` from `libs/tooluniverse/`. Runs `tooluniverse-smcp-server` (full load + search enabled, both hard-coded in that entry point). |
 | `docker-compose.yml` | Service `smcp`, port `127.0.0.1:8765:8000`, named volume, TCP healthcheck, log rotation |
 | `.env.template` | Tracked. Lists every env var the server reads. Copy to `.env` and fill. |
 | `.env` | **gitignored**. Hand-maintained on sempart. Holds API keys. |

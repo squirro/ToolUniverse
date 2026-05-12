@@ -29,4 +29,8 @@ ENV TOOLUNIVERSE_LOG_LEVEL=INFO \
 
 EXPOSE 8000
 
-CMD ["tooluniverse-smcp-server", "--host", "0.0.0.0", "--port", "8000", "--search-enabled"]
+# tooluniverse-smcp-server is the compat entry — it hard-codes
+# search_enabled=True and loads all tool categories. If you need to
+# tune (--no-search, --categories, etc.), switch to the richer
+# tooluniverse-smcp entry with --transport http.
+CMD ["tooluniverse-smcp-server", "--host", "0.0.0.0", "--port", "8000"]

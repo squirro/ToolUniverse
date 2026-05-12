@@ -34,6 +34,69 @@ class UniProtRESTTool(BaseTool):
             url = url.replace(f"{{{k}}}", str(v))
         return url
 
+    def _compact_entry(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Return a bounded summary of a UniProtKB entry for LLM contexts."""
+        protein_desc = data.get("proteinDescription", {})
+        recommended_name = (
+            protein_desc.get("recommendedName", {}).get("fullName", {}).get("value", "")
+        )
+        gene_names = []
+        for gene in data.get("genes", []):
+            gene_name = gene.get("geneName", {}).get("value")
+            if gene_name:
+                gene_names.append(gene_name)
+
+        comment_summaries = []
+        for comment in data.get("comments", []):
+            text_values = [
+                text["value"]
+                for text in comment.get("texts", [])
+                if isinstance(text, dict) and text.get("value")
+            ]
+            if text_values:
+                comment_summaries.append(
+                    {
+                        "commentType": comment.get("commentType", ""),
+                        "texts": text_values[:3],
+                    }
+                )
+
+        feature_summaries = []
+        for feature in data.get("features", [])[:100]:
+            feature_summaries.append(
+                {
+                    "type": feature.get("type", ""),
+                    "description": feature.get("description", ""),
+                    "location": feature.get("location", {}),
+                }
+            )
+
+        return {
+            "status": "success",
+            "data": {
+                "entryType": data.get("entryType", ""),
+                "primaryAccession": data.get("primaryAccession", ""),
+                "uniProtkbId": data.get("uniProtkbId", ""),
+                "protein_name": recommended_name,
+                "gene_names": gene_names,
+                "organism": data.get("organism", {}),
+                "sequence": data.get("sequence", {}),
+                "annotationScore": data.get("annotationScore"),
+                "proteinExistence": data.get("proteinExistence", ""),
+                "keywords": data.get("keywords", []),
+                "comments": comment_summaries[:25],
+                "features": feature_summaries,
+                "xref_count": len(data.get("uniProtKBCrossReferences", [])),
+            },
+            "metadata": {
+                "compact": True,
+                "comments_returned": min(len(comment_summaries), 25),
+                "features_returned": len(feature_summaries),
+                "total_comments": len(data.get("comments", [])),
+                "total_features": len(data.get("features", [])),
+            },
+        }
+
     def _extract_data(self, data: Dict, extract_path: str) -> Any:
         """Custom data extraction with support for filtering"""
 
@@ -506,7 +569,8 @@ class UniProtRESTTool(BaseTool):
             return self._handle_id_mapping(arguments)
 
         # Build URL for standard accession-based queries
-        url = self._build_url(arguments)
+        request_args = {k: v for k, v in arguments.items() if k != "compact"}
+        url = self._build_url(request_args)
         try:
             resp = requests.get(url, timeout=self.timeout)
             if resp.status_code != 200:
@@ -541,6 +605,9 @@ class UniProtRESTTool(BaseTool):
                 return result
 
             return result
+
+        if arguments.get("compact") is True:
+            return self._compact_entry(data)
 
         return data
 

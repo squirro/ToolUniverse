@@ -9,9 +9,15 @@
 set -euo pipefail
 
 URL="${SMCP_URL:-http://127.0.0.1:8765/mcp}"
-# Curated tool surface (~115); we accept anywhere between 80 and 128.
-# Above 128 = Squirro's OpenAI handoff will fail.
-MIN_TOOLS="${SMCP_MIN_TOOLS:-80}"
+# Hard limits:
+#   ≤128 = OpenAI tools[] cap (Squirro's MCP integration forwards
+#          tools/list verbatim — exceeding triggers HTTP 400)
+# Soft limits (Squirro agent latency):
+#   ≤30  = keeps "tool suggestion" first-token latency under
+#          Squirro's per-turn timeout. Tighten by trimming
+#          --categories in the Dockerfile CMD.
+# Lower bound just guards against an empty/broken load.
+MIN_TOOLS="${SMCP_MIN_TOOLS:-10}"
 MAX_TOOLS="${SMCP_MAX_TOOLS:-128}"
 
 command -v jq >/dev/null || { echo "ERROR: jq required" >&2; exit 1; }

@@ -89,19 +89,30 @@ So we curate at the SMCP side via `--categories`:
 
 | Category | Tools | Why kept |
 |---|---|---|
-| `opentarget` | 55 | Target-disease associations (target_discovery, AIRA) |
-| `uniprot` | 17 | Protein metadata |
-| `hpa` | 14 | Human Protein Atlas tissue expression |
-| `clinical_trials` | 16 | CT.gov (single-tool view alongside the standalone plugin) |
-| `alphamissense` | 3 | Variant pathogenicity (XEN1101 demo) |
-| `alphafold` | 3 | Predicted structures |
-| `tool_finder` | 4 | `find_tools`, Tool_Finder_LLM, Tool_RAG, keyword |
-| `special_tools` | 3 | Essential utilities |
+| `clinical_trials` | 16 | CT.gov — current demo focus (focal-onset epilepsy trial extraction) |
+| `tool_finder` | 4 | `find_tools`, Tool_Finder_LLM, Tool_Finder_Keyword (Tool_RAG excluded) |
+| `special_tools` | 3 | Essential utility tools |
 
-Excluded by design:
-- `fda_drug_label` (156), `fda_drug_adverse_event` (15+6), `ChEMBL` (29) — already served by SR's standalone plugins (`competition_landscape_tool`, `competitive_radar`). Re-add to SMCP only if a single-tool unified surface is needed.
+> **Tool count is now ~23, not 115.** Squirro's LLM-side "tool suggestion"
+> step times out when ~86 KB of tool schemas hit the model. Keeping the
+> advertised surface tight (≤ ~30 tools) keeps the agent decision latency
+> within Squirro's timeout. Add categories back to the CMD as new demo
+> workflows need them — and re-test latency end-to-end after each add.
 
-`smoke.sh` enforces `80 ≤ tool_count ≤ 128` so this regression class is caught at deploy time.
+Temporarily dropped (re-enable per use case):
+- `opentarget` (55), `uniprot` (17), `hpa` (14), `alphamissense` (3),
+  `alphafold` (3) — covered by SR's `target_discovery` / standalone
+  plugins for now; re-add to the SMCP CMD individually when an SMCP-only
+  demo workflow needs them and re-measure agent-decision latency.
+
+Permanently excluded (already covered by SR standalone plugins):
+- `fda_drug_label` (156), `fda_drug_adverse_event` (15+6), `ChEMBL` (29)
+  — `competition_landscape_tool` / `competitive_radar` handle these.
+
+`smoke.sh` enforces `tool_count ≤ 128` (OpenAI's hard cap). The looser
+"keep ≤ 30 for Squirro latency" constraint is enforced by Dockerfile
+comments rather than smoke.sh, since the right value depends on
+Squirro's agent timeout.
 
 ## Connecting from a Squirro plugin (future PR)
 

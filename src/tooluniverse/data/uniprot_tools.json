@@ -8,6 +8,11 @@
         "accession": {
           "type": "string",
           "description": "UniProtKB entry accession, e.g., P05067."
+        },
+        "compact": {
+          "type": "boolean",
+          "description": "Return a bounded summary instead of the complete UniProtKB JSON entry. Use this when calling from an LLM context to avoid oversized outputs.",
+          "default": false
         }
       },
       "required": [

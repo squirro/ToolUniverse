@@ -16,6 +16,10 @@ from .base_tool import BaseTool
 from .tool_registry import register_tool
 
 CTD_BASE_URL = "https://ctdbase.org/tools/batchQuery.go"
+CTD_REQUEST_HEADERS = {
+    "Accept": "application/json",
+    "User-Agent": "ToolUniverse CTDTool",
+}
 
 
 @register_tool("CTDTool")
@@ -93,44 +97,15 @@ class CTDTool(BaseTool):
             "format": "json",
         }
 
-        response = requests.get(CTD_BASE_URL, params=params, timeout=self.timeout)
+        response = requests.get(
+            CTD_BASE_URL,
+            params=params,
+            headers=CTD_REQUEST_HEADERS,
+            timeout=self.timeout,
+        )
         response.raise_for_status()
 
         raw_text = response.text.strip()
-
-        if not raw_text or raw_text == "[]":
-            return {
-                "status": "success",
-                "data": [],
-                "metadata": {
-                    "total_results": 0,
-                    "input_type": input_type,
-                    "report_type": report_type,
-                    "query": input_terms,
-                },
-            }
-
-        content_type = response.headers.get("content-type", "")
-        try:
-            data = response.json()
-        except ValueError:
-            snippet = raw_text[:200]
-            is_html = "text/html" in content_type or raw_text.lstrip().startswith("<")
-            return {
-                "status": "error",
-                "error": "CTD API returned non-JSON response",
-                "content_type": content_type,
-                "response_snippet": snippet,
-                "retryable": is_html,
-                "suggestion": (
-                    "CTD may be under maintenance or rate-limiting. "
-                    "Check https://ctdbase.org for status. "
-                    "Retry in a few minutes."
-                    if is_html
-                    else "Response was truncated or malformed. Retry the request."
-                ),
-            }
-
         metadata = {
             "input_type": input_type,
             "report_type": report_type,
@@ -142,6 +117,38 @@ class CTDTool(BaseTool):
                 f"CTD uses '{normalized_terms}' instead of '{input_terms}' "
                 "for mitochondrial genes."
             )
+
+        if not raw_text or raw_text == "[]":
+            return {
+                "status": "success",
+                "data": [],
+                "metadata": {**metadata, "total_results": 0},
+            }
+
+        content_type = response.headers.get("content-type", "")
+        try:
+            data = response.json()
+        except ValueError:
+            snippet = raw_text[:200]
+            is_html = "text/html" in content_type or raw_text.lstrip().startswith("<")
+            return {
+                "status": "error",
+                "error": "CTD API returned non-JSON response",
+                "status_code": response.status_code,
+                "content_type": content_type,
+                "request_url": response.url,
+                "response_snippet": snippet,
+                "metadata": metadata,
+                "retryable": is_html,
+                "suggestion": (
+                    "CTD may be under maintenance or rate-limiting. "
+                    "Check https://ctdbase.org for status and retry. "
+                    "If this persists, include request_url and response_snippet "
+                    "when reporting the issue."
+                    if is_html
+                    else "Response was truncated or malformed. Retry the request."
+                ),
+            }
 
         if isinstance(data, (list, dict)):
             metadata["total_results"] = len(data) if isinstance(data, list) else 1

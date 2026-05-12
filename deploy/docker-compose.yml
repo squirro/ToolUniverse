@@ -1,0 +1,37 @@
+services:
+  smcp:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: smcp:local
+    container_name: smcp
+    restart: unless-stopped
+    ports:
+      # Bind to host loopback only — sqgenaid on the same host reaches
+      # the server via 127.0.0.1:8000. No external exposure.
+      - "127.0.0.1:8000:8000"
+    env_file: .env
+    volumes:
+      # Persist TU workspace: caches (NCBI, HPA TSVs), downloaded
+      # reference data, and the --search-enabled FAISS index.
+      - smcp_workspace:/root/.tooluniverse
+    healthcheck:
+      # TCP port check via stdlib — robust against MCP protocol changes.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket,sys; s=socket.socket(); s.settimeout(2); s.connect(('localhost',8000)); sys.exit(0)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # Full TU load + initial search-index build is slow on cold start.
+      start_period: 90s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+volumes:
+  smcp_workspace:

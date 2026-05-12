@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-URL="${SMCP_URL:-http://127.0.0.1:8000/mcp}"
+URL="${SMCP_URL:-http://127.0.0.1:8765/mcp}"
 MIN_TOOLS="${SMCP_MIN_TOOLS:-300}"
 
 command -v jq >/dev/null || { echo "ERROR: jq required" >&2; exit 1; }

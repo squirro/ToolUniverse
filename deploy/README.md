@@ -1,9 +1,13 @@
 # SMCP on sempart-demo
 
 Hosts the local ToolUniverse fork (`libs/tooluniverse/`) as an MCP server
-on sempart-demo, bound to host loopback `127.0.0.1:8000`. Squirro GenAI
+on sempart-demo, bound to host loopback `127.0.0.1:8765`. Squirro GenAI
 plugins running on the same host (in `sqgenaid`) reach it at
-`http://127.0.0.1:8000/mcp`.
+`http://127.0.0.1:8765/mcp`.
+
+> Host port is 8765 (not 8000) because sqgenaid itself binds uvicorn on
+> 127.0.0.1:8000. The container internally still listens on 8000; only
+> the host-side mapping uses 8765.
 
 This replaces the `_vendor/tooluniverse/` bundling trick used by
 `integration/genai/research_pipeline/`: instead of cramming TU into the
@@ -16,7 +20,7 @@ its own Python env.
 | File | Purpose |
 |---|---|
 | `Dockerfile` | `python:3.12-slim` base, `pip install -e` from `libs/tooluniverse/` |
-| `docker-compose.yml` | Service `smcp`, port `127.0.0.1:8000:8000`, named volume, TCP healthcheck, log rotation |
+| `docker-compose.yml` | Service `smcp`, port `127.0.0.1:8765:8000`, named volume, TCP healthcheck, log rotation |
 | `.env.template` | Tracked. Lists every env var the server reads. Copy to `.env` and fill. |
 | `.env` | **gitignored**. Hand-maintained on sempart. Holds API keys. |
 | `deploy.sh` | Pre-flight checks + `docker compose up -d --build` |
@@ -66,7 +70,7 @@ Plugins call the server via the MCP streamable-HTTP transport:
 ```python
 # example sketch — actual wiring will land in a follow-up PR
 from fastmcp import Client
-async with Client("http://127.0.0.1:8000/mcp") as mcp:
+async with Client("http://127.0.0.1:8765/mcp") as mcp:
     result = await mcp.call_tool("OpenTargets_search_target",
                                   {"target": "BRAF"})
 ```

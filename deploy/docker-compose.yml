@@ -8,8 +8,10 @@ services:
     restart: unless-stopped
     ports:
       # Bind to host loopback only — sqgenaid on the same host reaches
-      # the server via 127.0.0.1:8000. No external exposure.
-      - "127.0.0.1:8000:8000"
+      # the server via 127.0.0.1:8765. No external exposure.
+      # Host port 8765 (not 8000) because sqgenaid itself runs uvicorn
+      # on 127.0.0.1:8000 on sempart-demo.
+      - "127.0.0.1:8765:8000"
     env_file: .env
     volumes:
       # Persist TU workspace: caches (NCBI, HPA TSVs), downloaded

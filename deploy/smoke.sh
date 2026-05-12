@@ -94,18 +94,22 @@ fi
 # Step 3: tools/call OpenTargets_search_target — verifies external
 # network egress + a real tool round-trip.
 # ---------------------------------------------------------------------
-echo "[3/3] tools/call OpenTargets_search_target BRAF …"
+# Pick a representative tool from the currently-advertised surface.
+# clinical_trials is the always-present anchor of the curated set;
+# search_studies is cheap and proves CT.gov egress works.
+echo "[3/3] tools/call search_clinical_trials focal-onset-epilepsy …"
 CALL_RESP=$(curl -fsS -X POST "$URL" \
               -H "$HDR_TYPE" -H "Accept: $ACCEPT" -H "$HDR_SESSION" \
               -d '{"jsonrpc":"2.0","id":2,"method":"tools/call",
-                   "params":{"name":"OpenTargets_search_target",
-                             "arguments":{"target":"BRAF"}}}')
+                   "params":{"name":"search_clinical_trials",
+                             "arguments":{"condition":"focal onset epilepsy","page_size":3}}}')
 
 CALL_JSON=$(echo "$CALL_RESP" | sse_payload)
-if ! echo "$CALL_JSON" | jq -e '.result' >/dev/null; then
-  echo "ERROR: OpenTargets_search_target call failed." >&2
+# MCP error responses still set .result but with isError=true; check both.
+if ! echo "$CALL_JSON" | jq -e '.result and (.result.isError | not)' >/dev/null; then
+  echo "ERROR: search_clinical_trials call failed." >&2
   echo "$CALL_JSON" | head -c 500 >&2
   exit 1
 fi
 
-echo "OK — server responds, $N tools registered, OpenTargets reachable."
+echo "OK — server responds, $N tools registered, CT.gov reachable."

@@ -9,7 +9,10 @@
 set -euo pipefail
 
 URL="${SMCP_URL:-http://127.0.0.1:8765/mcp}"
-MIN_TOOLS="${SMCP_MIN_TOOLS:-300}"
+# Curated tool surface (~115); we accept anywhere between 80 and 128.
+# Above 128 = Squirro's OpenAI handoff will fail.
+MIN_TOOLS="${SMCP_MIN_TOOLS:-80}"
+MAX_TOOLS="${SMCP_MAX_TOOLS:-128}"
 
 command -v jq >/dev/null || { echo "ERROR: jq required" >&2; exit 1; }
 command -v curl >/dev/null || { echo "ERROR: curl required" >&2; exit 1; }
@@ -69,10 +72,15 @@ LIST_RESP=$(curl -fsS -X POST "$URL" \
 LIST_JSON=$(echo "$LIST_RESP" | sse_payload)
 N=$(echo "$LIST_JSON" | jq -r '.result.tools | length // 0')
 
-echo "      → $N tools registered (require ≥ $MIN_TOOLS)"
+echo "      → $N tools registered (require $MIN_TOOLS ≤ N ≤ $MAX_TOOLS)"
 if (( N < MIN_TOOLS )); then
   echo "ERROR: too few tools registered." >&2
   echo "$LIST_JSON" | head -c 500 >&2
+  exit 1
+fi
+if (( N > MAX_TOOLS )); then
+  echo "ERROR: $N tools registered — exceeds OpenAI's 128-tool limit." >&2
+  echo "Squirro's native MCP integration will fail with 'array too long'." >&2
   exit 1
 fi
 

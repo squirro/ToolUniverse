@@ -19,7 +19,7 @@ its own Python env.
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | `python:3.12-slim` base, `pip install -e` from `libs/tooluniverse/`. Runs `tooluniverse-smcp-server` (full load + search enabled, both hard-coded in that entry point). |
+| `Dockerfile` | `python:3.12-slim` base, `pip install -e` from `libs/tooluniverse/`. Runs `tooluniverse-smcp --transport http --categories <list>` — curated to ≤128 tools (see "Tool surface" below). |
 | `docker-compose.yml` | Service `smcp`, port `127.0.0.1:8765:8000`, named volume, TCP healthcheck, log rotation |
 | `.env.template` | Tracked. Lists every env var the server reads. Copy to `.env` and fill. |
 | `.env` | **gitignored**. Hand-maintained on sempart. Holds API keys. |
@@ -62,6 +62,36 @@ git pull origin <branch>
 cd libs/tooluniverse/deploy
 ./deploy.sh && ./smoke.sh
 ```
+
+## Tool surface (~115 advertised)
+
+OpenAI's Chat Completions API caps `tools[]` at 128. Squirro's native MCP
+integration is client-side — it pulls the whole `tools/list` from SMCP
+and forwards every entry into that `tools[]` array. Full TU load (~2,278
+tools) busts the cap and returns:
+
+```
+openai.BadRequestError: 400 - Invalid 'tools': array too long.
+Expected an array with maximum length 128, but got an array with length 2278.
+```
+
+So we curate at the SMCP side via `--categories`:
+
+| Category | Tools | Why kept |
+|---|---|---|
+| `opentarget` | 55 | Target-disease associations (target_discovery, AIRA) |
+| `uniprot` | 17 | Protein metadata |
+| `hpa` | 14 | Human Protein Atlas tissue expression |
+| `clinical_trials` | 16 | CT.gov (single-tool view alongside the standalone plugin) |
+| `alphamissense` | 3 | Variant pathogenicity (XEN1101 demo) |
+| `alphafold` | 3 | Predicted structures |
+| `tool_finder` | 4 | `find_tools`, Tool_Finder_LLM, Tool_RAG, keyword |
+| `special_tools` | 3 | Essential utilities |
+
+Excluded by design:
+- `fda_drug_label` (156), `fda_drug_adverse_event` (15+6), `ChEMBL` (29) — already served by SR's standalone plugins (`competition_landscape_tool`, `competitive_radar`). Re-add to SMCP only if a single-tool unified surface is needed.
+
+`smoke.sh` enforces `80 ≤ tool_count ≤ 128` so this regression class is caught at deploy time.
 
 ## Connecting from a Squirro plugin (future PR)
 

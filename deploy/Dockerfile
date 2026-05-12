@@ -29,8 +29,38 @@ ENV TOOLUNIVERSE_LOG_LEVEL=INFO \
 
 EXPOSE 8000
 
-# tooluniverse-smcp-server is the compat entry — it hard-codes
-# search_enabled=True and loads all tool categories. If you need to
-# tune (--no-search, --categories, etc.), switch to the richer
-# tooluniverse-smcp entry with --transport http.
-CMD ["tooluniverse-smcp-server", "--host", "0.0.0.0", "--port", "8000"]
+# We use the richer `tooluniverse-smcp` entry (not the `tooluniverse-smcp-server`
+# compat alias) so we can pass --categories.  The reason is Squirro's
+# native MCP integration: it pulls the entire tools/list from SMCP and
+# forwards every entry as an OpenAI tool.  OpenAI Chat Completions caps
+# `tools[]` at 128 entries, so full TU load (2,278 tools) triggers a
+# 400 invalid_request_error.  We curate to ~115.
+#
+# Categories included (~115 tools total):
+#   opentarget       (55) target-disease associations
+#   uniprot          (17) protein sequences/metadata
+#   hpa              (14) Human Protein Atlas tissue expression
+#   clinical_trials  (16) ClinicalTrials.gov
+#   alphamissense     (3) variant pathogenicity
+#   alphafold         (3) predicted structures
+#   tool_finder       (4) find_tools / Tool_Finder_LLM / Tool_RAG / Keyword
+#   special_tools     (3) essential utility tools
+#
+# Categories deliberately excluded:
+#   fda_drug_label (156), fda_drug_adverse_event (15+6), ChEMBL (29) —
+#   already covered by SR's standalone Squirro plugins
+#   (competition_landscape_tool, competitive_radar). Re-add here only if
+#   a single-tool view through SMCP is needed.
+CMD ["tooluniverse-smcp", \
+     "--transport", "http", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--categories", \
+       "opentarget", \
+       "uniprot", \
+       "hpa", \
+       "clinical_trials", \
+       "alphamissense", \
+       "alphafold", \
+       "tool_finder", \
+       "special_tools"]

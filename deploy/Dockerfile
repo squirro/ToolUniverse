@@ -19,12 +19,16 @@ COPY src/ ./src/
 
 # Editable install so the package metadata + entry points are present
 # under /app/tu_src; the source tree is what runs at import time.
-# [embedding] adds sentence-transformers + faiss-cpu (faiss-cpu is already
-# in base deps, but the extra also pulls torch which Tool_RAG needs at
-# runtime). Without it, Tool_RAG / ToolFinderEmbedding fails the first
-# time the agent calls Tool_Finder_LLM and the LLM falls through to
-# the embedding-based finder.
-RUN pip install --no-cache-dir -e ".[embedding]"
+# Base TU only — NOT [embedding]. We exclude Tool_RAG (the embedding-
+# based tool finder) from the advertised surface because:
+#   1. It needs sentence-transformers + torch + ~3 GB Qwen2-1.5B model
+#   2. CPU embedding on sempart pushes memory near OOM (sempart has
+#      ~4 GB headroom after sqgenaid + ES + temporal + alloy)
+#   3. find_tools (via Tool_Finder_LLM) uses OpenAI for tool ranking,
+#      no local model needed
+# To re-enable Tool_RAG later: change to `.[embedding]` here AND remove
+# Tool_RAG from --exclude-tools below.
+RUN pip install --no-cache-dir -e .
 
 # Trim build-only toolchain; runtime libs stay.
 RUN apt-get purge -y gcc g++ && apt-get autoremove -y
@@ -68,4 +72,5 @@ CMD ["tooluniverse-smcp", \
        "alphamissense", \
        "alphafold", \
        "tool_finder", \
-       "special_tools"]
+       "special_tools", \
+     "--exclude-tools", "Tool_RAG"]

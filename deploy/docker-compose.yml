@@ -13,20 +13,10 @@ services:
       # on 127.0.0.1:8000 on sempart-demo.
       - "127.0.0.1:8765:8000"
     env_file: .env
-    # Persist large caches that would otherwise vanish on container
-    # recreate:
-    #   /root/.tooluniverse           → TU workspace (HPA TSV, NCBI, etc.)
-    #   /root/.cache/huggingface      → HF model downloads (5–10 GB —
-    #                                   mims-harvard/ToolRAG-T1-GTE-Qwen2-1.5B
-    #                                   alone is ~3 GB)
-    #   /root/.cache/tooluniverse     → Tool_RAG .pt embeddings cache
-    environment:
-      # Steer TU's own user_cache_dir into the volume too so .pt
-      # embeddings persist across container recreate.
-      TOOLUNIVERSE_TMPDIR: /root/.tooluniverse/cache
     volumes:
+      # TU workspace: HPA bulk TSVs, NCBI cache, downloaded reference
+      # data. Survives container recreate.
       - smcp_workspace:/root/.tooluniverse
-      - smcp_hf_cache:/root/.cache/huggingface
     healthcheck:
       # TCP port check via stdlib — robust against MCP protocol changes.
       test:
@@ -47,4 +37,3 @@ services:
 
 volumes:
   smcp_workspace:
-  smcp_hf_cache:

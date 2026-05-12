@@ -42,16 +42,26 @@ $EDITOR .env                                       # fill in API keys
 ```
 
 Expected on first build:
-- 4–8 minutes for the initial `docker compose up --build` (pandas, numpy,
-  faiss-cpu, lxml, playwright etc. — heavy wheels).
-- Up to ~2 minutes after container start for full TU load + initial
-  FAISS index build (`--search-enabled`). The `start_period: 90s` in the
-  healthcheck accommodates this; bump it if cold-start gets slower in
-  practice.
+- 2–4 minutes for the initial `docker compose up --build` (pandas, numpy,
+  faiss-cpu, lxml, playwright … — heavy wheels).
+- Up to ~30 s after container start to load the 115 curated tools and
+  become healthy. The `start_period: 90s` healthcheck accommodates this.
 
-The FAISS index, NCBI cache, HPA bulk TSVs, and any downloaded reference
-data live in the named volume `smcp_workspace`. Subsequent restarts skip
-the rebuild.
+State persistence:
+
+| Volume | Mount point | Contents |
+|---|---|---|
+| `smcp_workspace` | `/root/.tooluniverse` | TU workspace, HPA bulk TSVs, NCBI cache |
+
+Subsequent `docker compose up -d` (without `-v`) re-uses the volume.
+
+> Tool_RAG (the embedding-based tool finder) is **excluded by design** —
+> it would need `sentence-transformers` + `torch` + a ~3 GB Qwen2-1.5B
+> model loaded into CPU RAM, and sempart-demo has only ~4 GB free after
+> sqgenaid + Elasticsearch + temporal + alloy. `find_tools` uses
+> `Tool_Finder_LLM` (OpenAI-based, cheap, no local model) instead. To
+> turn Tool_RAG back on: switch the Dockerfile to install with
+> `.[embedding]` and drop `--exclude-tools Tool_RAG` from CMD.
 
 ## Routine deploy (after a code change)
 
@@ -118,6 +128,8 @@ architecture for plugins that need TU.
 | `smoke.sh` step 2 returns no result | Either OpenTargets API is unreachable from sempart (egress firewall) or the tool name has drifted (`OpenTargets_search_target` is current as of writing) |
 | Disk filling up | The `smcp_workspace` volume has no eviction policy. `docker volume inspect smcp_workspace` to see size; `docker volume rm smcp_workspace` to wipe (forces a rebuild of caches/index on next start) |
 | Need to wipe and rebuild from scratch | `docker compose down -v && ./deploy.sh` |
+| Squirro reports `ToolFinderEmbedding requires dependencies` | The `Tool_RAG` MCP tool is being advertised. Check that `--exclude-tools Tool_RAG` is in the Dockerfile CMD and rebuild. The agent should be using `find_tools` (LLM-based) instead. |
+| OOM on sempart during deploy | The `[embedding]` extra is enabled and the 1.5 B Tool_RAG model is being loaded. Revert: install plain `.` (no extras) and add `Tool_RAG` to `--exclude-tools`. |
 
 ## Out of scope
 

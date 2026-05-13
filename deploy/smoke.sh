@@ -3,22 +3,19 @@
 #
 # Performs the MCP streamable-HTTP session handshake (initialize →
 # notifications/initialized) and then verifies (1) tools/list returns
-# ≥300 registered tools, (2) one representative tool round-trips
-# against its external API. Exits non-zero on any failure.
+# the compact-mode meta-tool surface (~5 tools), (2) execute_tool can
+# dispatch to a non-statically-loaded tool (proves background-loaded
+# breadth is reachable). Exits non-zero on any failure.
 
 set -euo pipefail
 
 URL="${SMCP_URL:-http://127.0.0.1:8765/mcp}"
-# Hard limits:
-#   ≤128 = OpenAI tools[] cap (Squirro's MCP integration forwards
-#          tools/list verbatim — exceeding triggers HTTP 400)
-# Soft limits (Squirro agent latency):
-#   ≤30  = keeps "tool suggestion" first-token latency under
-#          Squirro's per-turn timeout. Tighten by trimming
-#          --categories in the Dockerfile CMD.
-# Lower bound just guards against an empty/broken load.
-MIN_TOOLS="${SMCP_MIN_TOOLS:-10}"
-MAX_TOOLS="${SMCP_MAX_TOOLS:-128}"
+# Compact mode advertises ~5 meta-tools: find_tools, list_tools,
+# grep_tools, get_tool_info, execute_tool. Bounds give some slack
+# (e.g. a sixth tool registered by an extension) but will catch a
+# reverted --compact-mode flag (which would push count to 23+ or 2278).
+MIN_TOOLS="${SMCP_MIN_TOOLS:-4}"
+MAX_TOOLS="${SMCP_MAX_TOOLS:-20}"
 
 command -v jq >/dev/null || { echo "ERROR: jq required" >&2; exit 1; }
 command -v curl >/dev/null || { echo "ERROR: curl required" >&2; exit 1; }
@@ -80,36 +77,41 @@ N=$(echo "$LIST_JSON" | jq -r '.result.tools | length // 0')
 
 echo "      → $N tools registered (require $MIN_TOOLS ≤ N ≤ $MAX_TOOLS)"
 if (( N < MIN_TOOLS )); then
-  echo "ERROR: too few tools registered." >&2
+  echo "ERROR: too few tools registered — compact mode should expose ~5 meta-tools." >&2
   echo "$LIST_JSON" | head -c 500 >&2
   exit 1
 fi
 if (( N > MAX_TOOLS )); then
-  echo "ERROR: $N tools registered — exceeds OpenAI's 128-tool limit." >&2
-  echo "Squirro's native MCP integration will fail with 'array too long'." >&2
+  echo "ERROR: $N tools registered — compact mode appears disabled." >&2
+  echo "Check that --compact-mode is in the Dockerfile CMD." >&2
+  exit 1
+fi
+
+# Confirm execute_tool is one of them (the load-bearing primitive).
+if ! echo "$LIST_JSON" | jq -e '.result.tools[] | select(.name=="execute_tool")' >/dev/null; then
+  echo "ERROR: execute_tool not in tools/list — compact mode misconfigured." >&2
   exit 1
 fi
 
 # ---------------------------------------------------------------------
-# Step 3: tools/call OpenTargets_search_target — verifies external
-# network egress + a real tool round-trip.
+# Step 3: execute_tool → search_clinical_trials. Proves the agent flow:
+#   tools/call(execute_tool) → TU dispatches to a background-loaded tool
+#   → external API round-trip works. If this passes, the LLM can reach
+#   any of TU's ~2,278 tools through the meta-tool surface.
 # ---------------------------------------------------------------------
-# Pick a representative tool from the currently-advertised surface.
-# clinical_trials is the always-present anchor of the curated set;
-# search_studies is cheap and proves CT.gov egress works.
-echo "[3/3] tools/call search_clinical_trials focal-onset-epilepsy …"
+echo "[3/3] tools/call execute_tool → search_clinical_trials focal-onset-epilepsy …"
 CALL_RESP=$(curl -fsS -X POST "$URL" \
               -H "$HDR_TYPE" -H "Accept: $ACCEPT" -H "$HDR_SESSION" \
               -d '{"jsonrpc":"2.0","id":2,"method":"tools/call",
-                   "params":{"name":"search_clinical_trials",
-                             "arguments":{"query_term":"focal onset epilepsy","limit":3}}}')
+                   "params":{"name":"execute_tool",
+                             "arguments":{"tool_name":"search_clinical_trials",
+                                          "arguments":{"query_term":"focal onset epilepsy","limit":3}}}}')
 
 CALL_JSON=$(echo "$CALL_RESP" | sse_payload)
-# MCP error responses still set .result but with isError=true; check both.
 if ! echo "$CALL_JSON" | jq -e '.result and (.result.isError | not)' >/dev/null; then
-  echo "ERROR: search_clinical_trials call failed." >&2
+  echo "ERROR: execute_tool dispatch failed." >&2
   echo "$CALL_JSON" | head -c 500 >&2
   exit 1
 fi
 
-echo "OK — server responds, $N tools registered, CT.gov reachable."
+echo "OK — server responds, $N meta-tools registered, execute_tool reaches CT.gov."

@@ -34,10 +34,10 @@ Then execute systematically: batch 1 establishes baseline, subsequent batches us
 ## 3. ToolUniverse Mode (Specialized Bio/Chem Lookup)
 **Criteria:** Queries about specific biological or chemical entities not covered by the dedicated tools above — gene/protein/variant data, drug/compound chemistry, pathway analysis, target-disease associations, PK/PD. Examples: AlphaFold structure for BRCA1, TPMT pharmacogenomics, OpenTargets associations for a disease.
 **Action:**
-1. `find_tools(query)` — discovers TU tools, returns name + description + parameter schema per match.
-2. `execute_tool(tool_name, arguments)` — invokes the chosen tool.
+1. `find_tools(query=<5-10 word natural-language description>)` — discovers TU tools. Pass ONLY `query`; do NOT pass a `categories` filter (TU categorizes by DB name like `alphafold`/`uniprot`/`opentarget`, not topical labels — speculative categories return empty results).
+2. `execute_tool(tool_name, arguments)` — invokes the chosen tool. Use the parameter schema returned by `find_tools` to construct `arguments`.
 3. For multi-entity / chained queries, use Mode 2 cadence: post a Plan first, then execute in parallel batches.
-4. If `find_tools` returns no useful match, fall back to `Perplexity` or `Exa`.
+4. If `find_tools` returns an empty list or no useful match, fall back to `Perplexity` or `Exa`.
 
 **Rationale:** SMCP runs in compact mode — only 5 meta-tools are advertised; the full ~2,278 TU catalogue is reachable via `execute_tool`.
 

@@ -52,14 +52,11 @@ EXPOSE 8000
 # the registry entirely (unreachable via execute_tool, invisible to
 # find_tools). Use OpenTargets for gene-disease associations instead.
 #
-# *_disease_target_score (all 10 DiseaseTargetScoreTool instances) excluded
-# for two reasons: (1) a name-match trap — a weaker agent picks e.g.
-# cancer_biomarkers_disease_target_score for "genes associated with disease"
-# instead of resolving the name to an efoId and calling
-# OpenTargets_get_associated_targets_by_disease_efoId; (2) all share an
-# unguarded response_data["data"]["disease"] (graphql_tool.py:324) that
-# raises KeyError -> "Unexpected error: 'disease'" on any OT schema drift.
-# The general association tool (not a DiseaseTargetScoreTool) is unaffected.
+# The 10 *_disease_target_score tools (DiseaseTargetScoreTool) are NOT
+# excluded: they were briefly excluded because an invalid efoId crashed them
+# with KeyError: 'disease', now fixed in graphql_tool.py (they return a clean
+# "resolve the name to an id first" error). The persona still steers
+# "most associated" queries to OpenTargets_get_associated_targets_by_disease_efoId.
 #
 # --exclude-tools takes nargs='+', and being the last flag it consumes
 # every trailing name.
@@ -70,9 +67,4 @@ CMD ["tooluniverse-smcp", \
      "--compact-mode", \
      "--exclude-tools", "Tool_RAG", \
      "DisGeNET_search_gene", "DisGeNET_search_disease", "DisGeNET_get_gda", \
-     "DisGeNET_get_vda", "DisGeNET_get_disease_genes", \
-     "disease_target_score", "chembl_disease_target_score", \
-     "eva_disease_target_score", "eva_somatic_disease_target_score", \
-     "cancer_gene_census_disease_target_score", "cancer_biomarkers_disease_target_score", \
-     "europepmc_disease_target_score", "expression_atlas_disease_target_score", \
-     "genomics_england_disease_target_score", "reactome_disease_target_score"]
+     "DisGeNET_get_vda", "DisGeNET_get_disease_genes"]

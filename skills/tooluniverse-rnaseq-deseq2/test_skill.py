@@ -905,7 +905,7 @@ def test_14_mirna_de():
         record("miRNA multiple testing", False, str(e))
 
     try:
-        # Ratio calculation (BixBench bix-30-q3 pattern)
+        # Ratio calculation (Bonferroni : BH correction ratio)
         ratio_str = f"{n_bonf}:{n_by}"
         record("correction ratio format", ':' in ratio_str, f"Ratio: {ratio_str}")
     except Exception as e:
@@ -1369,6 +1369,34 @@ def run_all_tests():
     test_20_batch_effect_comparison()
     test_21_enrichment_overlap_fraction()
     test_22_tooluniverse_integration()
+
+    def test_23_bundled_scripts_exist():
+        """Test 23: Required deterministic scripts ship with the skill."""
+        print("\n--- Test 23: Bundled scripts ---")
+        import subprocess
+        skill_dir = os.path.dirname(os.path.abspath(__file__))
+        scripts_dir = os.path.join(skill_dir, "scripts")
+        required = [
+            "r_deseq2_wrapper.py",
+            "multi_strain_venn.py",
+            "gene_length_correlation.py",
+            "pca_variance.py",
+            "one_way_anova_f.py",
+        ]
+        for name in required:
+            path = os.path.join(scripts_dir, name)
+            exists = os.path.exists(path)
+            record(f"bundled script {name}", exists,
+                   "" if exists else f"missing: {path}")
+            if exists:
+                # Confirm `--help` works (catches syntax errors)
+                r = subprocess.run(["python3", path, "--help"],
+                                   capture_output=True, text=True, timeout=10)
+                record(f"bundled script {name} --help",
+                       r.returncode == 0,
+                       "" if r.returncode == 0 else r.stderr[:200])
+
+    test_23_bundled_scripts_exist()
 
     # Summary
     total = PASS_COUNT + FAIL_COUNT

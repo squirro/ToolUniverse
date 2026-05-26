@@ -46,9 +46,18 @@ EXPOSE 8000
 #
 # Tool_RAG stays excluded — its embedding-based finder needs a 1.5 B Qwen2
 # model that OOMs sempart. find_tools (LLM-backed) is the discovery path.
+#
+# DisGeNET_* excluded — no DISGENET_API_KEY provisioned, so these tools
+# would only error at call time. Excluding them by name keeps them out of
+# the registry entirely (unreachable via execute_tool, invisible to
+# find_tools). Use OpenTargets for gene-disease associations instead.
+# --exclude-tools takes nargs='+', and being the last flag it consumes
+# every trailing name.
 CMD ["tooluniverse-smcp", \
      "--transport", "http", \
      "--host", "0.0.0.0", \
      "--port", "8000", \
      "--compact-mode", \
-     "--exclude-tools", "Tool_RAG"]
+     "--exclude-tools", "Tool_RAG", \
+     "DisGeNET_search_gene", "DisGeNET_search_disease", "DisGeNET_get_gda", \
+     "DisGeNET_get_vda", "DisGeNET_get_disease_genes"]

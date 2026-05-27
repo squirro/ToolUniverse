@@ -9,6 +9,47 @@ import json, logging
 log = logging.getLogger(__name__)
 
 
+# Module-level cache of the EBI GxA experiment catalog. The full human catalog
+# is ~2.6 MB / 4500+ experiments and the listing endpoint is slow and highly
+# variable (15-40s, intermittently exceeding the request timeout). Downloading
+# it on every differential_expression call made the tool time out and return
+# zero experiments (then an empty "n_studies: 0" stub). Cache it process-wide so
+# only the first call per process pays the cost — a module-level dict survives
+# even if the Squirro runnable is rebuilt per turn, since the module imports once.
+_CATALOG_CACHE: dict = {"data": None, "ts": 0.0}
+_CATALOG_TTL = 12 * 3600  # seconds; the catalog changes rarely
+
+
+def _get_experiments_catalog(timeout=60, retries=1):
+    """Return the cached GxA human-experiment list, fetching if stale.
+
+    Retries once on failure and serves a stale cache rather than returning
+    nothing when a refresh fails.
+    """
+    import urllib.request as _ur
+    import time as _time
+    now = _time.time()
+    cached = _CATALOG_CACHE["data"]
+    if cached is not None and (now - _CATALOG_CACHE["ts"]) < _CATALOG_TTL:
+        return cached
+    url = "https://www.ebi.ac.uk/gxa/json/experiments?species=homo+sapiens"
+    last_err = None
+    for attempt in range(retries + 1):
+        try:
+            req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            exps = json.loads(_ur.urlopen(req, timeout=timeout).read()).get("experiments", [])
+            _CATALOG_CACHE["data"] = exps
+            _CATALOG_CACHE["ts"] = now
+            return exps
+        except Exception as e:
+            last_err = e
+            log.warning("gxa catalog fetch attempt %d/%d failed: %s", attempt + 1, retries + 1, e)
+    if cached is not None:
+        log.warning("gxa catalog refresh failed (%s); serving stale cache", last_err)
+        return cached
+    return []
+
+
 def _is_cancer_indication(indication):
     """Check if the indication is cancer-related."""
     cancer_kws = ["cancer", "carcinoma", "adenocarcinoma", "tumor", "tumour",
@@ -61,18 +102,14 @@ _CANCER_SYNONYMS = {
 }
 
 
-def gxa_find_experiments(indication, timeout=20):
+def gxa_find_experiments(indication, timeout=60):
     """Search EBI Expression Atlas for cancer vs normal experiments.
 
     Returns all matching (accession, description, score) sorted by relevance.
     """
-    import urllib.request as _ur
-    try:
-        url = "https://www.ebi.ac.uk/gxa/json/experiments?species=homo+sapiens"
-        req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        data = json.loads(_ur.urlopen(req, timeout=timeout).read())
-    except Exception as e:
-        log.warning("gxa_find_experiments: failed to list experiments: %s", e)
+    experiments = _get_experiments_catalog(timeout=timeout)
+    if not experiments:
+        log.warning("gxa_find_experiments: empty experiment catalog")
         return []
 
     ind_l = indication.lower()
@@ -108,7 +145,7 @@ def gxa_find_experiments(indication, timeout=20):
                    "epithelial cells", "lymphocyte", "chemopreventive",
                    "phytochemical", "xenograft", "organoid", "spheroid"]
     candidates = []
-    for exp in data.get("experiments", []):
+    for exp in experiments:
         etype = exp.get("experimentType", "")
         if "differential" not in etype.lower():
             continue

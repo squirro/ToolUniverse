@@ -319,12 +319,16 @@ def exec_organs_at_risk(arguments, input_table, output_table, db_path):
             conn.close()
             raise ValueError(f"Input table '{input_table}' not found: {e}")
         conn.close()
+        # Skip candidates that exist but are entirely empty (OpenTargets tables
+        # carry an empty target.approvedSymbol next to populated name /
+        # _input_targetName). `name` is last so a real symbol column wins.
         gene_col = None
         for candidate in ["approvedSymbol", "approvedsymbol", "gene_symbol",
-                           "gene_name", "symbol", "gene",
-                           "target.approvedSymbol", "_input_gene_name"]:
-            if any(c.lower() == candidate.lower() for c in all_cols):
-                gene_col = next(c for c in all_cols if c.lower() == candidate.lower())
+                           "gene_name", "symbol", "gene", "target.approvedSymbol",
+                           "_input_gene_name", "_input_targetName", "name"]:
+            matches = [c for c in all_cols if c.lower() == candidate.lower()]
+            if matches and any(r.get(matches[0]) for r in rows):
+                gene_col = matches[0]
                 break
         if gene_col:
             genes = [r[gene_col] for r in rows if r.get(gene_col)]

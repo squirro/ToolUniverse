@@ -47,10 +47,19 @@ EXPOSE 8000
 # Tool_RAG stays excluded — its embedding-based finder needs a 1.5 B Qwen2
 # model that OOMs sempart. find_tools (LLM-backed) is the discovery path.
 #
-# DisGeNET_* excluded — no DISGENET_API_KEY provisioned, so these tools
-# would only error at call time. Excluding them by name keeps them out of
-# the registry entirely (unreachable via execute_tool, invisible to
-# find_tools). Use OpenTargets for gene-disease associations instead.
+# Key-gated tools excluded — their API keys are not provisioned in .env, so
+# they would only error at call time. Excluding them by name keeps them out
+# of the registry entirely (unreachable via execute_tool, invisible to
+# find_tools). The .env key that gates each family:
+#   DISGENET_API_KEY  -> DisGeNET_*   (use OpenTargets for gene-disease instead)
+#   OMIM_API_KEY      -> OMIM_*
+#   ONCOKB_API_TOKEN  -> OncoKB_*
+#   CLUE_API_KEY      -> CLUE_*
+#   MCULE_API_KEY     -> Mcule_*
+#   USPTO_API_KEY     -> get_patent_* / get_associated_documents_metadata
+#   ADDGENE_API_KEY   -> Addgene_*
+# Semantic Scholar is deliberately NOT excluded: its key is optional (raises
+# the rate limit only), so SemanticScholar_* work key-less.
 #
 # The 10 *_disease_target_score tools (DiseaseTargetScoreTool) are NOT
 # excluded: they were briefly excluded because an invalid efoId crashed them
@@ -67,4 +76,14 @@ CMD ["tooluniverse-smcp", \
      "--compact-mode", \
      "--exclude-tools", "Tool_RAG", \
      "DisGeNET_search_gene", "DisGeNET_search_disease", "DisGeNET_get_gda", \
-     "DisGeNET_get_vda", "DisGeNET_get_disease_genes"]
+     "DisGeNET_get_vda", "DisGeNET_get_disease_genes", \
+     "OMIM_search", "OMIM_get_entry", "OMIM_get_gene_map", "OMIM_get_clinical_synopsis", \
+     "OncoKB_annotate_mutations", "OncoKB_annotate_variant", "OncoKB_annotate_copy_number", \
+     "OncoKB_get_cancer_genes", "OncoKB_get_gene_info", "OncoKB_get_levels", \
+     "CLUE_search_compounds", "CLUE_search_signatures", "CLUE_get_cell_lines", \
+     "CLUE_get_gene_expression", "CLUE_get_perturbation", \
+     "Mcule_get_compound", "Mcule_lookup_compound", "Mcule_get_database", "Mcule_list_databases", \
+     "get_patent_overview_by_text_query", "get_patent_application_metadata", \
+     "get_associated_documents_metadata", "get_patent_continuity_data", \
+     "get_patent_foreign_priority_data", "get_patent_term_adjustment_data", \
+     "Addgene_search_plasmids", "Addgene_get_plasmid", "Addgene_search_depositors"]

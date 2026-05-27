@@ -4,29 +4,31 @@
 **Scope**: sempart-demo + sr-dev, this commit · **Audience**: Squirro IT.
 Companion to `README.md` (ops).
 
-> **Two hosts, one image.** SMCP is deployed on both `sempart-demo` and
-> `sr-dev`. The container, egress surface (§3, Appendix A), and trust
-> properties of the *server itself* are identical — same `smcp:local`
-> image, same loopback bind. What differs is **how Squirro reaches it**:
-> on sempart the GenAI client is a host process (shares host loopback);
-> on sr-dev it is a container (`squirro-service-genai`) with its own
-> loopback, so the client→server hop crosses a container boundary (§1.2).
+> **Two hosts, one image, one flow.** SMCP is deployed on both
+> `sempart-demo` and `sr-dev`. The container, egress surface (§3,
+> Appendix A), trust properties, *and the way Squirro reaches the
+> server* are identical — same `smcp:local` image, same loopback bind,
+> same client→server hop over host loopback. Squirro→SMCP has been
+> tested working on **both** hosts.
 
 
 ## 1. Topology
 
 On both hosts the SMCP container's listener is bound to **host loopback
 only** (`127.0.0.1:8765`): only the host's network namespace can reach
-it. No nginx between Squirro and SMCP. The difference between hosts is
-which side of a container boundary the Squirro MCP *client* sits on.
+it. No nginx between Squirro and SMCP. Squirro's MCP client reaches the
+server over host loopback the same way on both hosts — there is no
+host-specific difference in the client→server hop.
 
-### 1.1 sempart-demo — GenAI is a host process
+### 1.1 Topology — same on both hosts
 
-`sqgenaid` runs directly on the host, so it and the published SMCP port
-share the same loopback. The client→server hop is a plain loopback call.
+On both hosts `sqgenaid` (the Squirro GenAI service) runs directly on the
+host as a **host process**, so it and the published SMCP port share the
+same loopback; the client→server hop is a plain loopback call. The
+diagram below applies unchanged to `sempart-demo` and `sr-dev`.
 
 ```
-   sempart-demo (single Linux VM)
+   sempart-demo / sr-dev (single Linux VM — same flow on both)
    +-------------------------------------------------------------+
    |                                                             |
    |  +----------------+  loopback HTTP  +----------------+      |
@@ -50,64 +52,21 @@ share the same loopback. The client→server hop is a plain loopback call.
 | `127.0.0.1:8765/mcp` | `smcp` container (via `0.0.0.0:8000` inside) | Same host only | **None** (see §4) |
 | `127.0.0.1:8000` | `sqgenaid` host process | Same host only | (Squirro internal) |
 
-### 1.2 sr-dev — GenAI is a container
+### 1.2 sr-dev — identical to sempart
 
-Here Squirro GenAI runs as the `squirro-service-genai` **container**.
-A container has its own loopback, so `127.0.0.1:8765` *inside* that
-container is **not** the host's `127.0.0.1:8765` where SMCP is published.
-The plain loopback hop that works on sempart does **not** work here.
-
-```
-   sr-dev (single Linux VM)
-   +----------------------------------------------------------------+
-   |                                                                |
-   |  +---------------------------+        +----------------+       |
-   |  | squirro-service-genai     |  ????  |     smcp       |       |
-   |  | (Squirro GenAI CONTAINER) | -----> |  (docker)      |       |
-   |  | own net namespace;        |  host  | 127.0.0.1:8765 |       |
-   |  | its 127.0.0.1 ≠ host loopback      | (host loopback)|       |
-   |  +---------------------------+        +--------+-------+       |
-   |        loopback bind blocks container->host;            |HTTPS |
-   |        needs shared docker network OR host-gateway      |      |
-   +---------------------------------------------------------|------+
-                                                             v
-                                              (same egress as §3 / App. A)
-```
-
-Consequences for wiring Squirro → SMCP on sr-dev (one must hold before
-the client can reach the server; **none are configured yet** — the
-container is up and host-side `smoke.sh` passes, but the cross-boundary
-hop is the open integration item):
-
-1. **Shared docker network** — attach `smcp` and `squirro-service-genai`
-   to the same user-defined network; the client uses `http://smcp:8000/mcp`
-   (service DNS). Keeps traffic off the host loopback entirely.
-2. **Docker bridge gateway** — client targets the host gateway IP
-   (e.g. `172.17.0.1:8765`) reachable from the container. Requires SMCP's
-   published port to accept the bridge source, widening the bind beyond
-   strict `127.0.0.1` — re-examine §4 if taken.
-3. **Host networking for `smcp`** — `network_mode: host`; then the
-   container's `127.0.0.1` *is* the host's. Drops the port-mapping
-   isolation; re-examine §4.
-
-Option 1 is preferred: it keeps SMCP off any externally-routable address
-and preserves the §4 "no listener beyond what one host-local peer needs"
-posture, just scoped to a docker network instead of host loopback.
-
-| Address | Listener | Reachable from | Auth |
-|---|---|---|---|
-| `127.0.0.1:8765/mcp` | `smcp` container (via `0.0.0.0:8000` inside) | Host namespace only — **not** the GenAI container as-is | **None** (see §4) |
-| Squirro GenAI | `squirro-service-genai` container | (Squirro internal) | (Squirro internal) |
+`sr-dev` reaches SMCP exactly as sempart does (§1.1): `sqgenaid` runs as
+a host process and calls `http://127.0.0.1:8765/mcp` over host loopback —
+no nginx, no auth. Squirro→SMCP has been tested working on this host.
+There is no container boundary, and no special docker-network /
+bridge-gateway / host-networking wiring is required.
 
 
 ## 2. On-the-wire sequence
 
 Squirro's MCP client (Studio-UI-configured at deploy time with URL
-`http://127.0.0.1:8765/mcp` on sempart; the docker-network/gateway form
-from §1.2 on sr-dev — no auth either way) speaks standard MCP
+`http://127.0.0.1:8765/mcp`, no auth) speaks standard MCP
 streamable-HTTP. One init handshake per session, then `tools/call` per
-LLM tool invocation. The sequence below is identical on both hosts; only
-the client's target URL differs.
+LLM tool invocation. The sequence below is identical on both hosts.
 
 ```
 sqgenaid                            smcp                       OpenAI /
@@ -156,10 +115,10 @@ Key facts:
 
 ## 3. Egress destinations
 
-Two containers on sempart make outbound HTTPS. The table below names
-the hosts a typical session hits; the **full inventory (~315 hosts) is
-in Appendix A** at the end of this document. `.env.template` lists API
-key variables but not hostnames.
+Two components make outbound HTTPS on each host — Squirro GenAI and the
+`smcp` container. The table below names the hosts a typical session
+hits; the **full inventory (~315 hosts) is in Appendix A** at the end of
+this document. `.env.template` lists API key variables but not hostnames.
 
 | Domain | Purpose | From | Auth |
 |---|---|---|---|
@@ -187,11 +146,6 @@ our side.
   the host (`htafer`, non-root, passwordless sudo, not in docker group).
   Changing to `0.0.0.0:8765` or fronting with unauthenticated nginx turns
   the server into an open relay (our OpenAI key + ~30 biomedical APIs).
-  **sr-dev caveat:** wiring the GenAI *container* to SMCP via the
-  bridge-gateway or host-networking options (§1.2 options 2/3) widens the
-  bind past strict host loopback and weakens this control — prefer the
-  shared-docker-network option (§1.2 option 1), which keeps SMCP off any
-  host-routable address while still reaching the container.
 - **Secrets** in `smcp/.env`: gitignored, on-host only, mounted via
   compose `env_file:` (not baked into the image). `.env.template` lists
   every variable; treat `.env` as the most sensitive file here.
@@ -214,12 +168,11 @@ This document covers **sempart-demo + sr-dev**. Status across the
 clusters in scope for the broader DSR-394 work:
 
 - **sempart-demo** (demo): SMCP **deployed**, container healthy, host-side
-  `smoke.sh` green. Squirro→SMCP wired via host loopback (§1.1).
-- **sr-dev** (acceptance): SMCP container **deployed**, healthy, host-side
-  `smoke.sh` green. **Squirro→SMCP not yet wired** — the GenAI container
-  cannot reach host loopback; needs the §1.2 cross-boundary route (prefer
-  shared docker network). Studio-UI registration is additionally blocked
-  by nginx (`POST /studio/*`), so register via API/config, not the UI.
+  `smoke.sh` green. Squirro→SMCP wired via host loopback (§1.1), tested
+  working.
+- **sr-dev** (acceptance): SMCP **deployed**, container healthy, host-side
+  `smoke.sh` green. Squirro→SMCP wired via host loopback exactly as on
+  sempart (§1.1), tested working.
 - **sr-dev-com**: SMCP not deployed.
 - **swiss-rockets.squirro.com** (production): SMCP not deployed. Any
   production rollout that exposes SMCP beyond loopback requires auth,

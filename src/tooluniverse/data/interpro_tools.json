@@ -21,21 +21,238 @@
       "return_format": "JSON"
     },
     "return_schema": {
-      "type": "array",
-      "description": "List of InterPro entries matching the protein",
-      "items": {
-        "type": "object",
-        "properties": {
-          "metadata": {
-            "type": "object",
-            "description": "Entry metadata including accession, name, type, description"
-          },
-          "proteins": {
-            "type": "array",
-            "description": "List of protein information"
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "success"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "metadata": {
+                    "type": "object",
+                    "properties": {
+                      "accession": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "source_database": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "integrated": {
+                        "type": "null"
+                      },
+                      "member_databases": {
+                        "type": "object",
+                        "properties": {
+                          "panther": {
+                            "type": "object",
+                            "properties": {
+                              "PTHR11447": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "prints": {
+                            "type": "object",
+                            "properties": {
+                              "PR00386": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "ssf": {
+                            "type": "object",
+                            "properties": {
+                              "SSF49417": {
+                                "type": "string"
+                              },
+                              "SSF47719": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "pfam": {
+                            "type": "object",
+                            "properties": {
+                              "PF07710": {
+                                "type": "string"
+                              },
+                              "PF00870": {
+                                "type": "string"
+                              },
+                              "PF08563": {
+                                "type": "string"
+                              },
+                              "PF18521": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "cdd": {
+                            "type": "object",
+                            "properties": {
+                              "cd08367": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "cathgene3d": {
+                            "type": "object",
+                            "properties": {
+                              "G3DSA:2.60.40.720": {
+                                "type": "string"
+                              },
+                              "G3DSA:4.10.170.10": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "prosite": {
+                            "type": "object",
+                            "properties": {
+                              "PS00348": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "go_terms": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "identifier": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "category": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "proteins": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "accession": {
+                          "type": "string"
+                        },
+                        "protein_length": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "source_database": {
+                          "type": "string"
+                        },
+                        "organism": {
+                          "type": "string"
+                        },
+                        "in_alphafold": {
+                          "type": "boolean"
+                        },
+                        "in_bfvd": {
+                          "type": "boolean"
+                        },
+                        "entry_protein_locations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "fragments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "start": {
+                                      "type": [
+                                        "integer",
+                                        "number"
+                                      ]
+                                    },
+                                    "end": {
+                                      "type": [
+                                        "integer",
+                                        "number"
+                                      ]
+                                    },
+                                    "dc-status": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              },
+                              "representative": {
+                                "type": "boolean"
+                              },
+                              "model": {
+                                "type": "null"
+                              },
+                              "score": {
+                                "type": "null"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "metadata": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
+          "properties": {
+            "status": {
+              "const": "error"
+            },
+            "error": {
+              "type": "string"
+            }
           }
         }
-      }
+      ]
     },
     "test_examples": [
       {
@@ -72,17 +289,313 @@
       "return_format": "JSON"
     },
     "return_schema": {
-      "type": "array",
-      "description": "List of matching InterPro entries",
-      "items": {
-        "type": "object",
-        "properties": {
-          "metadata": {
-            "type": "object",
-            "description": "Entry metadata including accession, name, type, description"
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "success"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "metadata": {
+                    "type": "object",
+                    "properties": {
+                      "accession": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "source_database": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "integrated": {
+                        "type": "null"
+                      },
+                      "member_databases": {
+                        "type": "object",
+                        "properties": {
+                          "pfam": {
+                            "type": "object",
+                            "properties": {
+                              "PF00365": {
+                                "type": "string"
+                              },
+                              "PF00794": {
+                                "type": "string"
+                              },
+                              "PF00454": {
+                                "type": "string"
+                              },
+                              "PF02110": {
+                                "type": "string"
+                              },
+                              "PF01288": {
+                                "type": "string"
+                              },
+                              "PF01214": {
+                                "type": "string"
+                              },
+                              "PF00069": {
+                                "type": "string"
+                              },
+                              "PF00609": {
+                                "type": "string"
+                              },
+                              "PF01111": {
+                                "type": "string"
+                              },
+                              "PF00871": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "prints": {
+                            "type": "object",
+                            "properties": {
+                              "PR00717": {
+                                "type": "string"
+                              },
+                              "PR00653": {
+                                "type": "string"
+                              },
+                              "PR01099": {
+                                "type": "string"
+                              },
+                              "PR00472": {
+                                "type": "string"
+                              },
+                              "PR00473": {
+                                "type": "string"
+                              },
+                              "PR00296": {
+                                "type": "string"
+                              },
+                              "PR00094": {
+                                "type": "string"
+                              },
+                              "PR00471": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "panther": {
+                            "type": "object",
+                            "properties": {
+                              "PTHR23255": {
+                                "type": "string"
+                              },
+                              "PTHR11740": {
+                                "type": "string"
+                              },
+                              "PTHR23359": {
+                                "type": "string"
+                              },
+                              "PTHR21060": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "profile": {
+                            "type": "object",
+                            "properties": {
+                              "PS51546": {
+                                "type": "string"
+                              },
+                              "PS50290": {
+                                "type": "string"
+                              },
+                              "PS50011": {
+                                "type": "string"
+                              },
+                              "PS51285": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "smart": {
+                            "type": "object",
+                            "properties": {
+                              "SM00144": {
+                                "type": "string"
+                              },
+                              "SM00146": {
+                                "type": "string"
+                              },
+                              "SM00090": {
+                                "type": "string"
+                              },
+                              "SM01085": {
+                                "type": "string"
+                              },
+                              "SM00220": {
+                                "type": "string"
+                              },
+                              "SM00045": {
+                                "type": "string"
+                              },
+                              "SM01084": {
+                                "type": "string"
+                              },
+                              "SM00133": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "cdd": {
+                            "type": "object",
+                            "properties": {
+                              "cd01170": {
+                                "type": "string"
+                              },
+                              "cd00483": {
+                                "type": "string"
+                              },
+                              "cd00464": {
+                                "type": "string"
+                              },
+                              "cd02023": {
+                                "type": "string"
+                              },
+                              "cd01428": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "hamap": {
+                            "type": "object",
+                            "properties": {
+                              "MF_00228": {
+                                "type": "string"
+                              },
+                              "MF_00109": {
+                                "type": "string"
+                              },
+                              "MF_00235": {
+                                "type": "string"
+                              },
+                              "MF_00384": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "ncbifam": {
+                            "type": "object",
+                            "properties": {
+                              "TIGR00694": {
+                                "type": "string"
+                              },
+                              "TIGR01498": {
+                                "type": "string"
+                              },
+                              "TIGR00131": {
+                                "type": "string"
+                              },
+                              "TIGR00235": {
+                                "type": "string"
+                              },
+                              "TIGR00191": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "pirsf": {
+                            "type": "object",
+                            "properties": {
+                              "PIRSF000513": {
+                                "type": "string"
+                              },
+                              "PIRSF000538": {
+                                "type": "string"
+                              },
+                              "PIRSF000676": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "prosite": {
+                            "type": "object",
+                            "properties": {
+                              "PS00794": {
+                                "type": "string"
+                              },
+                              "PS01101": {
+                                "type": "string"
+                              },
+                              "PS00945": {
+                                "type": "string"
+                              },
+                              "PS00944": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "go_terms": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "identifier": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "category": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "metadata": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
+          "properties": {
+            "status": {
+              "const": "error"
+            },
+            "error": {
+              "type": "string"
+            }
           }
         }
-      }
+      ]
     },
     "test_examples": [
       {
@@ -112,74 +625,960 @@
       "return_format": "JSON"
     },
     "return_schema": {
-      "type": "object",
-      "description": "InterPro API response for domain details",
-      "properties": {
-        "status": {
-          "type": "string",
-          "description": "Status of the request (success or error)"
-        },
-        "data": {
+      "oneOf": [
+        {
           "type": "object",
-          "description": "Detailed InterPro entry information",
+          "required": [
+            "status"
+          ],
           "properties": {
-            "metadata": {
+            "status": {
+              "const": "success"
+            },
+            "data": {
               "type": "object",
-              "description": "Entry metadata",
               "properties": {
-                "accession": {
-                  "type": "string",
-                  "description": "InterPro accession ID"
-                },
-                "entry_id": {
-                  "type": "string",
-                  "description": "Entry identifier"
-                },
-                "name": {
+                "metadata": {
                   "type": "object",
-                  "description": "Entry name with short and full forms"
-                },
-                "type": {
-                  "type": "string",
-                  "description": "Entry type (Family, Domain, Repeat, etc.)"
-                },
-                "source_database": {
-                  "type": "string",
-                  "description": "Source database (interpro)"
-                },
-                "description": {
-                  "type": "array",
-                  "description": "Detailed description text"
-                },
-                "go_terms": {
-                  "type": "array",
-                  "description": "Associated Gene Ontology terms"
-                },
-                "hierarchy": {
-                  "type": "object",
-                  "description": "Domain hierarchy information"
-                },
-                "member_databases": {
-                  "type": "object",
-                  "description": "Member database signatures"
+                  "properties": {
+                    "accession": {
+                      "type": "string"
+                    },
+                    "entry_id": {
+                      "type": "null"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "go_terms": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "identifier": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "source_database": {
+                      "type": "string"
+                    },
+                    "member_databases": {
+                      "type": "object",
+                      "properties": {
+                        "profile": {
+                          "type": "object",
+                          "properties": {
+                            "PS50011": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "pfam": {
+                          "type": "object",
+                          "properties": {
+                            "PF00069": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "smart": {
+                          "type": "object",
+                          "properties": {
+                            "SM00220": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "integrated": {
+                      "type": "null"
+                    },
+                    "hierarchy": {
+                      "type": "object",
+                      "properties": {
+                        "accession": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accession": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "children": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "accession": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "type": "string"
+                                    },
+                                    "children": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "accession": {
+                                            "type": "string"
+                                          },
+                                          "name": {
+                                            "type": "string"
+                                          },
+                                          "type": {
+                                            "type": "string"
+                                          },
+                                          "children": {
+                                            "type": "array"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "name": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "short": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "description": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": {
+                            "type": "string"
+                          },
+                          "llm": {
+                            "type": "boolean"
+                          },
+                          "checked": {
+                            "type": "boolean"
+                          },
+                          "updated": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    },
+                    "wikipedia": {
+                      "type": "null"
+                    },
+                    "literature": {
+                      "type": "object",
+                      "properties": {
+                        "PUB00001530": {
+                          "type": "object",
+                          "properties": {
+                            "PMID": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "ISBN": {
+                              "type": "null"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "issue": {
+                              "type": "string"
+                            },
+                            "year": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "URL": {
+                              "type": "null"
+                            },
+                            "raw_pages": {
+                              "type": "string"
+                            },
+                            "medline_journal": {
+                              "type": "string"
+                            },
+                            "ISO_journal": {
+                              "type": "string"
+                            },
+                            "authors": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "DOI_URL": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "PUB00003568": {
+                          "type": "object",
+                          "properties": {
+                            "PMID": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "ISBN": {
+                              "type": "null"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "issue": {
+                              "type": "null"
+                            },
+                            "year": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "URL": {
+                              "type": "null"
+                            },
+                            "raw_pages": {
+                              "type": "string"
+                            },
+                            "medline_journal": {
+                              "type": "string"
+                            },
+                            "ISO_journal": {
+                              "type": "string"
+                            },
+                            "authors": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "DOI_URL": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "PUB00003569": {
+                          "type": "object",
+                          "properties": {
+                            "PMID": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "ISBN": {
+                              "type": "null"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "issue": {
+                              "type": "null"
+                            },
+                            "year": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "URL": {
+                              "type": "null"
+                            },
+                            "raw_pages": {
+                              "type": "string"
+                            },
+                            "medline_journal": {
+                              "type": "string"
+                            },
+                            "ISO_journal": {
+                              "type": "string"
+                            },
+                            "authors": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "DOI_URL": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "PUB00005115": {
+                          "type": "object",
+                          "properties": {
+                            "PMID": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "ISBN": {
+                              "type": "null"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "issue": {
+                              "type": "string"
+                            },
+                            "year": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "URL": {
+                              "type": "null"
+                            },
+                            "raw_pages": {
+                              "type": "string"
+                            },
+                            "medline_journal": {
+                              "type": "string"
+                            },
+                            "ISO_journal": {
+                              "type": "string"
+                            },
+                            "authors": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "DOI_URL": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "PUB00005145": {
+                          "type": "object",
+                          "properties": {
+                            "PMID": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "ISBN": {
+                              "type": "null"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "issue": {
+                              "type": "string"
+                            },
+                            "year": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "URL": {
+                              "type": "null"
+                            },
+                            "raw_pages": {
+                              "type": "string"
+                            },
+                            "medline_journal": {
+                              "type": "string"
+                            },
+                            "ISO_journal": {
+                              "type": "string"
+                            },
+                            "authors": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "DOI_URL": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "PUB00015293": {
+                          "type": "object",
+                          "properties": {
+                            "PMID": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "ISBN": {
+                              "type": "null"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "issue": {
+                              "type": "string"
+                            },
+                            "year": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "URL": {
+                              "type": "null"
+                            },
+                            "raw_pages": {
+                              "type": "string"
+                            },
+                            "medline_journal": {
+                              "type": "string"
+                            },
+                            "ISO_journal": {
+                              "type": "string"
+                            },
+                            "authors": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "DOI_URL": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "PUB00020114": {
+                          "type": "object",
+                          "properties": {
+                            "PMID": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "ISBN": {
+                              "type": "null"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "issue": {
+                              "type": "string"
+                            },
+                            "year": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "URL": {
+                              "type": "null"
+                            },
+                            "raw_pages": {
+                              "type": "string"
+                            },
+                            "medline_journal": {
+                              "type": "string"
+                            },
+                            "ISO_journal": {
+                              "type": "string"
+                            },
+                            "authors": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "DOI_URL": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "PUB00015362": {
+                          "type": "object",
+                          "properties": {
+                            "PMID": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "ISBN": {
+                              "type": "null"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "issue": {
+                              "type": "string"
+                            },
+                            "year": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "URL": {
+                              "type": "null"
+                            },
+                            "raw_pages": {
+                              "type": "string"
+                            },
+                            "medline_journal": {
+                              "type": "string"
+                            },
+                            "ISO_journal": {
+                              "type": "string"
+                            },
+                            "authors": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "DOI_URL": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "PUB00034898": {
+                          "type": "object",
+                          "properties": {
+                            "PMID": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "ISBN": {
+                              "type": "null"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "issue": {
+                              "type": "string"
+                            },
+                            "year": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "URL": {
+                              "type": "null"
+                            },
+                            "raw_pages": {
+                              "type": "string"
+                            },
+                            "medline_journal": {
+                              "type": "string"
+                            },
+                            "ISO_journal": {
+                              "type": "string"
+                            },
+                            "authors": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "DOI_URL": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "PUB00034899": {
+                          "type": "object",
+                          "properties": {
+                            "PMID": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "ISBN": {
+                              "type": "null"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "issue": {
+                              "type": "string"
+                            },
+                            "year": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "URL": {
+                              "type": "null"
+                            },
+                            "raw_pages": {
+                              "type": "string"
+                            },
+                            "medline_journal": {
+                              "type": "string"
+                            },
+                            "ISO_journal": {
+                              "type": "string"
+                            },
+                            "authors": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "DOI_URL": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "set_info": {
+                      "type": "null"
+                    },
+                    "overlaps_with": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "accession": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "counters": {
+                      "type": "object",
+                      "properties": {
+                        "subfamilies": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "domain_architectures": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "interactions": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "matches": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "pathways": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "proteins": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "proteomes": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "sets": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "structural_models": {
+                          "type": "object",
+                          "properties": {
+                            "alphafold": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "bfvd": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            }
+                          }
+                        },
+                        "structures": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "taxa": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        }
+                      }
+                    },
+                    "entry_annotations": {
+                      "type": "object",
+                      "properties": {
+                        "alignment:seed": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        },
+                        "alignment:full": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        }
+                      }
+                    },
+                    "cross_references": {
+                      "type": "object",
+                      "properties": {
+                        "prositedoc": {
+                          "type": "object",
+                          "properties": {
+                            "displayName": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "rank": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "accessions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "accession": {
+                                    "type": "string"
+                                  },
+                                  "url": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "gp": {
+                          "type": "object",
+                          "properties": {
+                            "displayName": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "rank": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "accessions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "accession": {
+                                    "type": "string"
+                                  },
+                                  "url": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "ec": {
+                          "type": "object",
+                          "properties": {
+                            "displayName": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "rank": {
+                              "type": [
+                                "integer",
+                                "number"
+                              ]
+                            },
+                            "accessions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "accession": {
+                                    "type": "string"
+                                  },
+                                  "url": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "is_llm": {
+                      "type": "boolean"
+                    },
+                    "is_reviewed_llm": {
+                      "type": "boolean"
+                    },
+                    "is_updated_llm": {
+                      "type": "boolean"
+                    },
+                    "representative_structure": {
+                      "type": "object",
+                      "properties": {
+                        "accession": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
                 }
               }
+            },
+            "metadata": {
+              "type": "object"
             }
           }
         },
-        "count": {
-          "type": "integer",
-          "description": "Number of results (always 1 for this endpoint)"
-        },
-        "url": {
-          "type": "string",
-          "description": "The API URL that was called"
-        },
-        "error": {
-          "type": "string",
-          "description": "Error message if request failed"
+        {
+          "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
+          "properties": {
+            "status": {
+              "const": "error"
+            },
+            "error": {
+              "type": "string"
+            }
+          }
         }
-      }
+      ]
     },
     "test_examples": [
       {

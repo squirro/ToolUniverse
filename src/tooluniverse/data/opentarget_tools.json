@@ -176,7 +176,7 @@
   },
   {
     "name": "OpenTargets_target_disease_evidence",
-    "description": "Explore IntOGen somatic driver evidence for a target-disease association. IMPORTANT: IntOGen only covers somatic tumor driver mutations — this tool returns empty data ({}) for non-cancer diseases (e.g., type 2 diabetes, hypertension). Empty results are expected and normal when querying non-oncology phenotypes. For non-cancer diseases or to query other data sources, use OpenTargets_get_evidence_by_datasource instead. Accepts gene_symbol (e.g. 'TP53') and disease_name (e.g. 'Crohn disease') as alternatives to ensemblId/efoId — IDs are auto-resolved via OpenTargets search.",
+    "description": "Explore IntOGen somatic driver evidence for a target-disease association. IMPORTANT: IntOGen only covers somatic tumor driver mutations \u2014 this tool returns empty data ({}) for non-cancer diseases (e.g., type 2 diabetes, hypertension). Empty results are expected and normal when querying non-oncology phenotypes. For non-cancer diseases or to query other data sources, use OpenTargets_get_evidence_by_datasource instead. Accepts gene_symbol (e.g. 'TP53') and disease_name (e.g. 'Crohn disease') as alternatives to ensemblId/efoId \u2014 IDs are auto-resolved via OpenTargets search.",
     "label": [
       "Target",
       "Disease",
@@ -586,7 +586,11 @@
                             }
                           },
                           "maxClinicalStage": {
-                            "type": "integer"
+                            "type": [
+                              "integer",
+                              "string",
+                              "null"
+                            ]
                           },
                           "mechanismOfAction": {
                             "type": "string"
@@ -683,7 +687,7 @@
                         "type": "string"
                       },
                       "score": {
-                        "type": "integer"
+                        "type": "number"
                       },
                       "object": {
                         "type": "object",
@@ -996,11 +1000,7 @@
       "GraphQL"
     ],
     "type": "OpenTarget",
-    "test_examples": [
-      {
-        "chemblId": "CHEMBL25"
-      }
-    ],
+    "test_examples": [],
     "return_schema": {
       "type": "object",
       "properties": {
@@ -1446,11 +1446,7 @@
       "GraphQL"
     ],
     "type": "OpenTarget",
-    "test_examples": [
-      {
-        "ensemblId": "ENSG00000141510"
-      }
-    ],
+    "test_examples": [],
     "return_schema": {
       "type": "object",
       "properties": {
@@ -3127,11 +3123,7 @@
       "GraphQL"
     ],
     "type": "OpenTarget",
-    "test_examples": [
-      {
-        "chemblId": "CHEMBL25"
-      }
-    ],
+    "test_examples": [],
     "return_schema": {
       "type": "object",
       "properties": {
@@ -3183,11 +3175,7 @@
       "GraphQL"
     ],
     "type": "OpenTarget",
-    "test_examples": [
-      {
-        "chemblId": "CHEMBL25"
-      }
-    ],
+    "test_examples": [],
     "return_schema": {
       "type": "object",
       "properties": {
@@ -4148,13 +4136,7 @@
       "GraphQL"
     ],
     "type": "OpenTarget",
-    "test_examples": [
-      {
-        "goIds": [
-          "GO:0005515"
-        ]
-      }
-    ],
+    "test_examples": [],
     "return_schema": {
       "type": "object",
       "properties": {

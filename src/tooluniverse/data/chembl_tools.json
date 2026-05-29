@@ -1005,7 +1005,10 @@
                     "type": "string"
                   },
                   "target_chembl_id": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "standard_value": {
                     "type": [
@@ -1610,7 +1613,10 @@
                     "type": "string"
                   },
                   "similarity": {
-                    "type": "number"
+                    "type": [
+                      "number",
+                      "string"
+                    ]
                   }
                 }
               }

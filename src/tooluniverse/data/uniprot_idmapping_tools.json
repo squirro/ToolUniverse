@@ -52,7 +52,13 @@
       "oneOf": [
         {
           "type": "object",
+          "required": [
+            "status"
+          ],
           "properties": {
+            "status": {
+              "const": "success"
+            },
             "data": {
               "type": "object",
               "properties": {
@@ -63,7 +69,10 @@
                   "type": "string"
                 },
                 "result_count": {
-                  "type": "integer"
+                  "type": [
+                    "integer",
+                    "number"
+                  ]
                 },
                 "results": {
                   "type": "array",
@@ -80,42 +89,29 @@
                   }
                 },
                 "failed_ids": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "type": "array"
                 }
               }
             },
             "metadata": {
-              "type": "object",
-              "properties": {
-                "source": {
-                  "type": "string"
-                },
-                "job_id": {
-                  "type": "string"
-                },
-                "endpoint": {
-                  "type": "string"
-                }
-              }
+              "type": "object"
             }
-          },
-          "required": [
-            "data"
-          ]
+          }
         },
         {
           "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
           "properties": {
+            "status": {
+              "const": "error"
+            },
             "error": {
               "type": "string"
             }
-          },
-          "required": [
-            "error"
-          ]
+          }
         }
       ]
     }
@@ -151,7 +147,13 @@
       "oneOf": [
         {
           "type": "object",
+          "required": [
+            "status"
+          ],
           "properties": {
+            "status": {
+              "const": "success"
+            },
             "data": {
               "type": "object",
               "properties": {
@@ -159,7 +161,10 @@
                   "type": "string"
                 },
                 "result_count": {
-                  "type": "integer"
+                  "type": [
+                    "integer",
+                    "number"
+                  ]
                 },
                 "results": {
                   "type": "array",
@@ -178,31 +183,24 @@
               }
             },
             "metadata": {
-              "type": "object",
-              "properties": {
-                "source": {
-                  "type": "string"
-                },
-                "endpoint": {
-                  "type": "string"
-                }
-              }
+              "type": "object"
             }
-          },
-          "required": [
-            "data"
-          ]
+          }
         },
         {
           "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
           "properties": {
+            "status": {
+              "const": "error"
+            },
             "error": {
               "type": "string"
             }
-          },
-          "required": [
-            "error"
-          ]
+          }
         }
       ]
     }
@@ -253,7 +251,13 @@
       "oneOf": [
         {
           "type": "object",
+          "required": [
+            "status"
+          ],
           "properties": {
+            "status": {
+              "const": "success"
+            },
             "data": {
               "type": "object",
               "properties": {
@@ -261,10 +265,16 @@
                   "type": "string"
                 },
                 "species_taxid": {
-                  "type": "integer"
+                  "type": [
+                    "integer",
+                    "number"
+                  ]
                 },
                 "result_count": {
-                  "type": "integer"
+                  "type": [
+                    "integer",
+                    "number"
+                  ]
                 },
                 "results": {
                   "type": "array",
@@ -283,31 +293,24 @@
               }
             },
             "metadata": {
-              "type": "object",
-              "properties": {
-                "source": {
-                  "type": "string"
-                },
-                "endpoint": {
-                  "type": "string"
-                }
-              }
+              "type": "object"
             }
-          },
-          "required": [
-            "data"
-          ]
+          }
         },
         {
           "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
           "properties": {
+            "status": {
+              "const": "error"
+            },
             "error": {
               "type": "string"
             }
-          },
-          "required": [
-            "error"
-          ]
+          }
         }
       ]
     }
@@ -331,12 +334,21 @@
       "oneOf": [
         {
           "type": "object",
+          "required": [
+            "status"
+          ],
           "properties": {
+            "status": {
+              "const": "success"
+            },
             "data": {
               "type": "object",
               "properties": {
                 "group_count": {
-                  "type": "integer"
+                  "type": [
+                    "integer",
+                    "number"
+                  ]
                 },
                 "groups": {
                   "type": "array",
@@ -369,31 +381,24 @@
               }
             },
             "metadata": {
-              "type": "object",
-              "properties": {
-                "source": {
-                  "type": "string"
-                },
-                "endpoint": {
-                  "type": "string"
-                }
-              }
+              "type": "object"
             }
-          },
-          "required": [
-            "data"
-          ]
+          }
         },
         {
           "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
           "properties": {
+            "status": {
+              "const": "error"
+            },
             "error": {
               "type": "string"
             }
-          },
-          "required": [
-            "error"
-          ]
+          }
         }
       ]
     }

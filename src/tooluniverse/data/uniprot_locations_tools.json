@@ -30,63 +30,41 @@
       "oneOf": [
         {
           "type": "object",
+          "required": [
+            "status"
+          ],
           "properties": {
+            "status": {
+              "const": "success"
+            },
             "data": {
               "type": "object",
               "properties": {
                 "id": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Location ID (SL-XXXX)"
+                  "type": "string"
                 },
                 "name": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Location name"
+                  "type": "string"
                 },
                 "definition": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Full text definition"
+                  "type": "string"
                 },
                 "content": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Content descriptor"
+                  "type": "string"
                 },
                 "category": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Category (Cellular component, Topology, Orientation)"
+                  "type": "string"
                 },
                 "note": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Additional notes"
+                  "type": "null"
                 },
                 "synonyms": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "Alternative names"
+                  "type": "array"
                 },
                 "keyword": {
                   "type": [
-                    "object",
-                    "null"
+                    "null",
+                    "object"
                   ],
                   "properties": {
                     "id": {
@@ -95,8 +73,7 @@
                     "name": {
                       "type": "string"
                     }
-                  },
-                  "description": "Associated UniProt keyword"
+                  }
                 },
                 "gene_ontologies": {
                   "type": "array",
@@ -110,22 +87,19 @@
                         "type": "string"
                       }
                     }
-                  },
-                  "description": "Mapped Gene Ontology terms"
+                  }
                 },
                 "reviewed_protein_count": {
                   "type": [
                     "integer",
-                    "null"
-                  ],
-                  "description": "Number of reviewed (Swiss-Prot) proteins in this location"
+                    "number"
+                  ]
                 },
                 "unreviewed_protein_count": {
                   "type": [
                     "integer",
-                    "null"
-                  ],
-                  "description": "Number of unreviewed (TrEMBL) proteins"
+                    "number"
+                  ]
                 },
                 "part_of": {
                   "type": "array",
@@ -139,49 +113,32 @@
                         "type": "string"
                       }
                     }
-                  },
-                  "description": "Parent locations"
+                  }
                 },
                 "children": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "description": "Child (sub-)locations"
+                  "type": "array"
                 }
               }
             },
             "metadata": {
-              "type": "object",
-              "properties": {
-                "source": {
-                  "type": "string"
-                }
-              }
+              "type": "object"
             }
-          },
-          "required": [
-            "data"
-          ]
+          }
         },
         {
           "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
           "properties": {
+            "status": {
+              "const": "error"
+            },
             "error": {
               "type": "string"
             }
-          },
-          "required": [
-            "error"
-          ]
+          }
         }
       ]
     }
@@ -223,51 +180,37 @@
       "oneOf": [
         {
           "type": "object",
+          "required": [
+            "status"
+          ],
           "properties": {
+            "status": {
+              "const": "success"
+            },
             "data": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
                   "id": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "Location ID"
+                    "type": "string"
                   },
                   "name": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "Location name"
+                    "type": "string"
                   },
                   "definition": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "Definition"
+                    "type": "string"
                   },
                   "content": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "Content descriptor"
+                    "type": "string"
                   },
                   "category": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "Category"
+                    "type": "string"
                   },
                   "note": {
                     "type": [
-                      "string",
-                      "null"
+                      "null",
+                      "string"
                     ]
                   },
                   "synonyms": {
@@ -278,63 +221,94 @@
                   },
                   "keyword": {
                     "type": [
-                      "object",
-                      "null"
-                    ]
+                      "null",
+                      "object"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
                   },
                   "gene_ontologies": {
-                    "type": "array"
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "go_id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    }
                   },
                   "reviewed_protein_count": {
                     "type": [
                       "integer",
-                      "null"
+                      "number"
                     ]
                   },
                   "unreviewed_protein_count": {
                     "type": [
                       "integer",
-                      "null"
+                      "number"
                     ]
                   },
                   "part_of": {
-                    "type": "array"
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    }
                   },
                   "children": {
-                    "type": "array"
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    }
                   }
                 }
               }
             },
             "metadata": {
-              "type": "object",
-              "properties": {
-                "source": {
-                  "type": "string"
-                },
-                "query": {
-                  "type": "string"
-                },
-                "returned": {
-                  "type": "integer"
-                }
-              }
+              "type": "object"
             }
-          },
-          "required": [
-            "data"
-          ]
+          }
         },
         {
           "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
           "properties": {
+            "status": {
+              "const": "error"
+            },
             "error": {
               "type": "string"
             }
-          },
-          "required": [
-            "error"
-          ]
+          }
         }
       ]
     }

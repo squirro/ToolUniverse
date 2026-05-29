@@ -602,13 +602,100 @@
     "test_examples": [
       {
         "nct_ids": [
-          "NCT01158625"
+          "NCT04368728"
         ],
         "references": "Study"
       }
     ],
     "return_schema": {
-      "type": "string"
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "success"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "NCT ID": {
+                    "type": "string"
+                  },
+                  "references": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "pmid": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "citation": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "see_also_links": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "url": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "metadata": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
+          "properties": {
+            "status": {
+              "const": "error"
+            },
+            "error": {
+              "type": "string"
+            }
+          }
+        }
+      ]
     }
   },
   {
@@ -650,7 +737,7 @@
     "test_examples": [
       {
         "nct_ids": [
-          "NCT04852770"
+          "NCT04368728"
         ],
         "outcome_measure": "primary"
       }
@@ -658,14 +745,53 @@
     "return_schema": {
       "oneOf": [
         {
-          "type": "string",
-          "description": "Message when no outcome data found or trial has no results"
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "success"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "NCT ID": {
+                        "type": "string"
+                      },
+                      "outcomes": {
+                        "type": "array"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "metadata": {
+              "type": "object"
+            }
+          }
         },
         {
-          "type": "array",
-          "description": "List of outcome result objects",
-          "items": {
-            "type": "object"
+          "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
+          "properties": {
+            "status": {
+              "const": "error"
+            },
+            "error": {
+              "type": "string"
+            }
           }
         }
       ]
@@ -744,16 +870,107 @@
     "test_examples": [
       {
         "nct_ids": [
-          "NCT01158625"
+          "NCT04368728"
         ],
         "organ_systems": [
-          "Cardiac Disorders"
+          "Cardiac Disorders",
+          "Nervous System Disorders"
         ],
         "adverse_event_type": "serious"
       }
     ],
     "return_schema": {
-      "type": "string"
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "success"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "NCT ID": {
+                    "type": "string"
+                  },
+                  "freq_threshold": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "description": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "serious_adverse_events": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "term": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "organSystem": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "metadata": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "status",
+            "error"
+          ],
+          "properties": {
+            "status": {
+              "const": "error"
+            },
+            "error": {
+              "type": "string"
+            }
+          }
+        }
+      ]
     }
   },
   {

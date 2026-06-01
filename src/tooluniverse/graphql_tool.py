@@ -321,8 +321,28 @@ class DiseaseTargetScoreTool(GraphQLTool):
             if not response_data or "data" not in response_data:
                 break
 
-            disease_data = response_data["data"]["disease"]
+            # execute_query() runs remove_none_and_empty_values(), which strips
+            # a null `disease` field — so a not-found disease arrives as
+            # data={} (see its Feature-94A-002 note). Use .get() instead of
+            # ["disease"]; the unguarded access raised KeyError -> surfaced as
+            # "Unexpected error: 'disease'" whenever an invalid efoId (commonly
+            # a disease *name* passed instead of an EFO/MONDO id) was given.
+            disease_data = response_data["data"].get("disease")
             if not disease_data:
+                # First page with no disease => the efoId was not found. Return
+                # an actionable error rather than a silent empty "success" so the
+                # caller knows to resolve the name to an id first. A later page
+                # with no disease just means we've reached the end of results.
+                if page_index == 0 and disease_info is None:
+                    return {
+                        "status": "error",
+                        "error": (
+                            f"No OpenTargets disease found for efoId '{efo_id}'. "
+                            "Pass a valid EFO/MONDO id — resolve a disease name "
+                            "first, e.g. via "
+                            "OpenTargets_get_disease_id_description_by_name."
+                        ),
+                    }
                 break
 
             if disease_info is None:

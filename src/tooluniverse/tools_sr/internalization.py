@@ -262,14 +262,20 @@ def exec_internalization(arguments, input_table, output_table, db_path):
             raise ValueError(f"Input table '{input_table}' not found: {e}")
         conn.close()
 
-        # Find the gene symbol column
-        for candidate in ["approvedSymbol", "approvedsymbol", "gene_symbol", "gene_name", "symbol", "gene",
-                           "target.approvedSymbol", "_input_gene_name"]:
-            if any(c.lower() == candidate.lower() for c in all_cols):
-                gene_col = next(c for c in all_cols if c.lower() == candidate.lower())
+        # Find the gene symbol column — skip candidates that exist but are
+        # entirely empty. OpenTargets-derived tables carry an empty
+        # `target.approvedSymbol` alongside the populated `name` /
+        # `_input_targetName`; picking the empty column yielded "No genes found".
+        # `name` is last (most generic) so a real symbol column always wins.
+        for candidate in ["approvedSymbol", "approvedsymbol", "gene_symbol", "gene_name",
+                           "symbol", "gene", "target.approvedSymbol",
+                           "_input_gene_name", "_input_targetName", "name"]:
+            matches = [c for c in all_cols if c.lower() == candidate.lower()]
+            if matches and any(r.get(matches[0]) for r in rows):
+                gene_col = matches[0]
                 break
         if not gene_col:
-            raise ValueError(f"No gene symbol column found in {all_cols}")
+            raise ValueError(f"No populated gene symbol column found in {all_cols}")
         genes = [r[gene_col] for r in rows if r.get(gene_col)]
 
     if not genes:

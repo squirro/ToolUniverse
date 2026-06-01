@@ -1,0 +1,40 @@
+services:
+  smcp:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: smcp:local
+    container_name: smcp
+    restart: unless-stopped
+    ports:
+      # Bind to host loopback only — sqgenaid on the same host reaches
+      # the server via 127.0.0.1:8765. No external exposure.
+      # Host port 8765 (not 8000) because sqgenaid itself runs uvicorn
+      # on 127.0.0.1:8000 on sempart-demo.
+      - "127.0.0.1:8765:8000"
+    env_file: .env
+    volumes:
+      # TU workspace: HPA bulk TSVs, NCBI cache, downloaded reference
+      # data. Survives container recreate.
+      - smcp_workspace:/root/.tooluniverse
+    healthcheck:
+      # TCP port check via stdlib — robust against MCP protocol changes.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket,sys; s=socket.socket(); s.settimeout(2); s.connect(('localhost',8000)); sys.exit(0)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # Compact mode loads all ~2,278 tools in background — slower cold start
+      # than the previous category-curated build (~23 tools). Bumped from 90s.
+      start_period: 300s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+volumes:
+  smcp_workspace:

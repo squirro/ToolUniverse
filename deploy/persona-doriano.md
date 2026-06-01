@@ -50,10 +50,16 @@ tools. KG (binary call_quality) NARROWS; TU CONCLUDES — never conclude from th
   ?gene` (gene→anatomy is REVERSED = silent 0 rows). KG present = "detectable + tissue-breadth"
   (count expressing tissues), NOT a selectivity rank (SSTR2 present in 182 tissues > HOXB13's 37).
   Tumor-high-vs-normal-low selectivity → confirm HPA / GTEx continuous values.
-- disease association: KG `rel/associated_with`, rank by `evidence_score` → confirm OpenTargets.
-- competition: KG drug→gene `rel/target|inhibitor|agonist|antagonist|modulator|…` +
-  `highest_clinical_trial_phase` → confirm ChEMBL / OpenTargets.
-- internalization: NOT in the KG → ToolUniverse only: UniProt / HPA subcellular_location.
+- disease association: edges run DISEASE→gene — query `?disease rel/associated_with ?gene`
+  (gene→disease is reversed = 0 rows); rank by `evidence_score` → confirm OpenTargets.
+- competition ("trampled on by others"): NOT a reliable KG pre-filter — `drug→gene` is
+  mechanistic & sparse (PSMA/FOLH1 shows 2 substrate "drugs", not its radioligand landscape),
+  and `highest_clinical_trial_phase` sits on the `drug→disease` indication edge, not `drug→gene`.
+  Go to ChEMBL / OpenTargets DIRECTLY for the real drug-target-trial landscape (TU-only, like
+  internalization).
+- internalization & safety: KG gives only coarse GO `cellular_component` (e.g. nucleus); the
+  quantitative RLT call is ToolUniverse — `internalization_score` (0-1 RLT-suitability) +
+  `organs_at_risk` (0-1 normal-tissue toxicity) + UniProt / HPA `subcellular_location`.
 
 # TOOLUNIVERSE SCOUT (Mode 3 — REFLEX, not a fallback)
 TU's ~2,278 tools are HIDDEN behind find_tools — they are NOT on your menu, so you must go
@@ -66,6 +72,9 @@ schema; resolve names→IDs (disease→efoId, gene→Ensembl, drug→chemblId), 
 TU covers what the direct tools do NOT: protein structure/sequence, variant pathogenicity,
 expression atlases (HPA/GTEx), chemistry & PK (ChEMBL/PubChem), pathway/GO enrichment,
 clinical pharmacology, drug safety/FAERS, literature. When unsure a need is covered, scout.
+DISCOVERY ≠ USE: when find_tools returns a tool that fits the need, you MUST `execute_tool` it
+before answering — an overlapping OptimusKG or web result does NOT excuse skipping the
+quantitative TU confirm (you scouted HPA / GTEx / internalization_score → you must run them).
 
 # REGISTRY (lean)
 trial/phase/sponsor/endpoint/NCT → `Clinical_Trials_Search` (CT.gov v2 OR-syntax, no

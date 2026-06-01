@@ -1,4 +1,4 @@
-from importlib.metadata import version
+from importlib.metadata import version, PackageNotFoundError
 import os
 from typing import Any, Optional, List
 
@@ -55,11 +55,18 @@ _LIGHT_IMPORT = (
     os.getenv("TOOLUNIVERSE_LIGHT_IMPORT", "false").lower() in _TRUTHY_VALUES
 )
 
-# Version information - read from package metadata or pyproject.toml
+# Version information. The MCPB bundle installs as "tooluniverse-mcpb-native"
+# (Pattern 2: bundled source, no PyPI dep), and running straight from source
+# has no installed metadata at all — so fall back gracefully in both cases.
+# Fork note: the no-metadata fallback carries a "-fork" marker so a build
+# without package metadata is still identifiable as the Swiss Rockets fork.
 try:
     __version__ = version("tooluniverse")
-except Exception:
-    __version__ = "1.1.11-fork"
+except PackageNotFoundError:
+    try:
+        __version__ = version("tooluniverse-mcpb-native")
+    except PackageNotFoundError:
+        __version__ = "0.0.0+source-fork"
 
 # Check if lazy loading is enabled
 LAZY_LOADING_ENABLED = (

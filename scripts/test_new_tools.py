@@ -65,6 +65,11 @@ def load_all_tool_configs(
     # Filter out known non-tool files or problematic ones if necessary
     # files = [f for f in files if "boltz" not in f.name] # Example exclusion if needed
 
+    # Skip broken_apis/ — those configs document non-functional upstream APIs
+    # and the tools are not registered at runtime, so testing them produces
+    # only false-positive "Tool not found" failures.
+    files = [f for f in files if "broken_apis" not in f.parts]
+
     print(f"🔍 Found {len(files)} config files matching '{search_pattern}'")
 
     for file_path in files:
@@ -186,6 +191,18 @@ def run_tests(
             examples = tool.get("test_examples", [])
             schema = tool.get("return_schema")
 
+            # Skip tools that require user-supplied local files (no fixture
+            # we can ship covers the realistic use case). Tools that declare
+            # `requires_local_input: true` are still loadable and runnable;
+            # the harness just can't exercise them without real input data.
+            if tool.get("requires_local_input"):
+                if args.verbose:
+                    print(
+                        f"  ⏭️  {name}: Skipped (requires user-supplied local input file)"
+                    )
+                stats["skipped"] += 1
+                continue
+
             # Check if tool requires API keys that are not available
             required_keys = tool.get("required_api_keys", [])
             if required_keys:
@@ -208,6 +225,7 @@ def run_tests(
                 "ToolFinderLLM",
                 "ToolFinderEmbedding",
                 "ComposeTool",
+                "EmbeddingDatabase",
             ):
                 # Gemini fallback fails AgenticTool callers with
                 # 'JSON mode not supported here' — agentic framework requires

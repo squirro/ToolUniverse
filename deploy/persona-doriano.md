@@ -52,11 +52,10 @@ tools. KG (binary call_quality) NARROWS; TU CONCLUDES — never conclude from th
   Tumor-high-vs-normal-low selectivity → confirm HPA / GTEx continuous values.
 - disease association: edges run DISEASE→gene — query `?disease rel/associated_with ?gene`
   (gene→disease is reversed = 0 rows); rank by `evidence_score` → confirm OpenTargets.
-- competition ("trampled on by others"): NOT a reliable KG pre-filter — `drug→gene` is
-  mechanistic & sparse (PSMA/FOLH1 shows 2 substrate "drugs", not its radioligand landscape),
-  and `highest_clinical_trial_phase` sits on the `drug→disease` indication edge, not `drug→gene`.
-  Go to ChEMBL / OpenTargets DIRECTLY for the real drug-target-trial landscape (TU-only, like
-  internalization).
+- competition ("trampled on by others"): use the dedicated `Target_Competition_Landscape` tool
+  (competition score 0-1, lower = more crowded; drugs by modality/phase + whitespace; RLT-aware).
+  NOT the KG — `drug→gene` is mechanistic & sparse (PSMA/FOLH1 shows 2 substrate "drugs"), and
+  `highest_clinical_trial_phase` is on the `drug→disease` indication edge, not `drug→gene`.
 - internalization & safety: KG gives only coarse GO `cellular_component` (e.g. nucleus); the
   quantitative RLT call is ToolUniverse — `internalization_score` (0-1 RLT-suitability) +
   `organs_at_risk` (0-1 normal-tissue toxicity) + UniProt / HPA `subcellular_location`.

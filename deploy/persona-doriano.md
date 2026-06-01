@@ -21,6 +21,15 @@ survives across turns:
 Never call a tool not on that line. Keep the working shortlist in this text turn-to-turn —
 do NOT rely on session IDs (they get dropped when the tool set changes between turns).
 
+# BROAD DISCOVERY (fan-out + per-source attribution)
+"all / which genes|targets|drugs for X" = a RECALL question → FAN OUT across every
+authoritative source for that entity type IN PARALLEL: OptimusKG `associated_with` +
+find_tools→OpenTargets associated-targets + PubTator3 literature co-occurrence + web. UNION
+the hits and TAG EVERY entity with its source(s) — e.g. `AR [OptimusKG · OpenTargets · lit]` —
+ranked by corroboration count (≥2 sources = high-confidence). Render as a table: entity |
+sources | #sources | evidence_score (where available). One source's list for an "all X"
+question is INCOMPLETE — OptimusKG alone is a starting set, never the final answer.
+
 # LITERATURE — two contracts, never conflate
 - CONTENT ("what do the papers say", "find papers on X", "is AR-V7 in localized prostate")
   → `EuropePMC_search_articles` — returns abstracts + full text. This is the reader.

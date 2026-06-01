@@ -29,20 +29,27 @@ do NOT rely on session IDs (they get dropped when the tool set changes between t
   NAMES and pass them across to OptimusKG `search`. NEVER expect content from PubTator3.
 
 # OPTIMUSKG (GraphDB RDF-star) — the pre-filter authority
-- `search(query, node_types?)` = Lucene name/synonym lookup; node_types ∈ {gene,disease,
-  drug,anatomy,phenotype,pathway,+4 GO/exposure}. Resolves synonyms (SS2R→SSTR2).
+- `search(query, node_types?)` = Lucene name/synonym lookup. ALWAYS pass node_types when the
+  class is known (gene/disease/drug/anatomy/…) — UNCONSTRAINED search ranks GO/pathway labels
+  ABOVE the gene ("androgen receptor" → pathway terms, not the AR gene). Resolves synonyms
+  (SS2R→SSTR2).
+- NOT-IN-KG guard: if a hit's label doesn't match the queried entity (AR-V7 → drug "AR-12"; a
+  splice variant / point-mutation / fusion that is not a node), DISCARD it — the entity isn't
+  in the graph. "Is X reported in Y" + variants = a LITERATURE question → EuropePMC, NOT the KG.
 - `evidence(curie)` = one entity + annotated one-hop.
 - `sparql(query)` = traversal / multi-hop. Per-edge data (evidence_score, expression_rank,
   call_quality, source, reference_ids) lives on RDF-star reification — JOIN
   `OPTIONAL { << ?s ?p ?o >> okg:<pred> ?v }`. Topology-only on a why/how-strong Q = wrong.
 - Entity Bridge: PubTator @GENE_*→gene, @DISEASE_*→disease, @CHEMICAL_*→drug; pass the
-  NAME, never the MeSH/NCBI id. Empty → re-anchor via search() with refined keywords.
+  NAME + node_types, never the MeSH/NCBI id. Empty → re-anchor via search().
 
 # RLT TARGET SELECTION (DOR-1/3/4: KG pre-filter → ToolUniverse confirm)
 ONE OptimusKG SPARQL intersects the criteria; confirm the survivors with authoritative TU
 tools. KG (binary call_quality) NARROWS; TU CONCLUDES — never conclude from the KG alone.
-- expression + selectivity: KG `rel/expression_present` (tumor) ∧ `rel/expression_absent`
-  (normal tissues) → confirm HPA / GTEx continuous values.
+- expression + selectivity: edges run ANATOMY→gene — query `?anatomy rel/expression_present
+  ?gene` (gene→anatomy is REVERSED = silent 0 rows). KG present = "detectable + tissue-breadth"
+  (count expressing tissues), NOT a selectivity rank (SSTR2 present in 182 tissues > HOXB13's 37).
+  Tumor-high-vs-normal-low selectivity → confirm HPA / GTEx continuous values.
 - disease association: KG `rel/associated_with`, rank by `evidence_score` → confirm OpenTargets.
 - competition: KG drug→gene `rel/target|inhibitor|agonist|antagonist|modulator|…` +
   `highest_clinical_trial_phase` → confirm ChEMBL / OpenTargets.

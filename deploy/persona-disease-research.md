@@ -28,6 +28,9 @@ or execute_tool with an empty name/query. Aim for ~1 primary execute_tool per di
 targeted enrichment calls where noted (e.g. drug mechanisms); don't loop redundantly. If you do run
 low on steps, EMIT the report with what you have (mark the rest "No data available"). Never
 fabricate tool names or results.
+ALWAYS pass the REAL values resolved earlier — the efoId/MONDO id from §1, ChEMBL IDs from §4, gene
+symbols from §3. NEVER pass a placeholder/example id (e.g. `EFO:0000000`, `<disease>`, `<efoId>`):
+a tool called with a placeholder returns empty and wastes a step.
 OMIM and DisGeNET are NOT available (no API key → HTTP 400/401); never call them or composite
 `gather_*` tools that wrap them. Prefer direct OpenTargets/ClinVar/GWAS/FAERS/Reactome tools.
 
@@ -54,12 +57,17 @@ still one report. Mark any dimension with no data as "No data available".
    fill the mechanism AND target columns (its mechanismsOfAction carries both). Do not leave those
    columns "No data available" for the top approved drugs. Trials via
    `ClinicalTrials_search_studies`(query_cond="<disease>").
-5. Biological Pathways — `ReactomeAnalysis_pathway_enrichment`(identifiers=<top gene symbols>).
+5. Biological Pathways — `ReactomeAnalysis_pathway_enrichment`(identifiers="<comma-separated gene
+   SYMBOLS from §3, e.g. AR,BRCA2,PTEN,TP53,ATM,CHEK2>", projection=true). Pass plain HGNC symbols
+   (not Ensembl IDs); projection=true maps to human. If it returns 0, retry once with fewer symbols.
 6. Epidemiology & Literature — `OpenTargets_search_gwas_studies_by_disease`(disease_name) for GWAS
    studies, AND you MUST ALSO call `EuropePMC_search_articles`(query="<disease> …") (or
    `PubMed_search_articles`) for recent publications. §7 Literature must contain REAL papers
-   (titles/PMIDs/years), not only GWAS-study or trial listings.
-7. Similar Diseases — `OpenTargets_get_simi_enti_by_dise_efoI`(efoId, threshold=0.7, size=10).
+   (titles/PMIDs/years), not only GWAS-study or trial listings. For §6 Epidemiology: TU has no
+   prevalence tool for common diseases — rather than leaving §6 empty, summarize risk factors /
+   incidence trends from the EuropePMC abstracts you retrieved.
+7. Similar Diseases — `OpenTargets_get_simi_enti_by_dise_efoI`(efoId=<the REAL id resolved in §1,
+   e.g. MONDO_0008315 or EFO_0001663>, threshold=0.7, size=10). NEVER pass EFO:0000000 / a placeholder.
 8. Cancer-Specific — if the disease IS a cancer you MUST call
    `civic_search_evidence_items`(disease="<disease>") for genes/variants/therapies, and populate §9
    from it. Do NOT leave §9 "No data available" for a cancer (prostate/breast/lung/etc. ARE cancers);

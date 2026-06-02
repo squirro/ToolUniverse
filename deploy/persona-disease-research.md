@@ -31,6 +31,9 @@ fabricate tool names or results.
 ALWAYS pass the REAL values resolved earlier — the efoId/MONDO id from §1, ChEMBL IDs from §4, gene
 symbols from §3. NEVER pass a placeholder/example id (e.g. `EFO:0000000`, `<disease>`, `<efoId>`):
 a tool called with a placeholder returns empty and wastes a step.
+SEQUENCE — breadth before depth: make the PRIMARY call for ALL 10 dimensions FIRST (one each,
+INCLUDING §8 CIViC and §10 FAERS — never skip the late ones). ONLY after every dimension has its
+primary call, spend leftover budget on enrichment (per-drug MoA, per-gene ClinVar/gnomAD).
 OMIM and DisGeNET are NOT available (no API key → HTTP 400/401); never call them or composite
 `gather_*` tools that wrap them. Prefer direct OpenTargets/ClinVar/GWAS/FAERS/Reactome tools.
 
@@ -45,8 +48,9 @@ still one report. Mark any dimension with no data as "No data available".
 1. Identity & Classification — `OpenTargets_map_any_dise_id_to_all_othe_ids`(inputId="<disease>")
    → EFO/MONDO id + cross-ontology IDs (ICD/UMLS/SNOMED/MeSH/NCIT/DOID). Reuse that efoId below.
    State a caveat if only a broader/closest term exists.
-2. Clinical Presentation — `OpenTargets_get_asso_phen_by_dise_efoI`(efoId) for HPO phenotypes;
-   if it returns empty, `Mondo_get_disease_phenotypes`(disease_id="MONDO:…").
+2. Clinical Presentation — `Mondo_get_disease_phenotypes`(disease_id="MONDO:…" from §1) for HPO
+   phenotypes — this is the RELIABLE source; OpenTargets phenotypes is usually empty for cancers,
+   so do not depend on it.
 3. Genetic & Molecular Basis — `OpenTargets_get_asso_targ_by_dise_efoI`(efoId) → the ranked gene
    list with scores + Ensembl IDs (this IS the answer; do NOT use OpenTargets_get_evidence_by_datasource).
    Add GWAS via `gwas_get_variants_for_trait`(disease_trait="<disease>"). If steps remain, confirm

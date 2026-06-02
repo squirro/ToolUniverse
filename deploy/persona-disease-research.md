@@ -46,8 +46,12 @@ still one report. Mark any dimension with no data as "No data available".
 
 # 10 research dimensions — call execute_tool with the NAMED tool (≈1 call each, no find_tools)
 1. Identity & Classification — `OpenTargets_map_any_dise_id_to_all_othe_ids`(inputId="<disease>")
-   → EFO/MONDO id + cross-ontology IDs (ICD/UMLS/SNOMED/MeSH/NCIT/DOID). Reuse that efoId below.
+   → EFO/MONDO id + cross-ontology IDs (ICD/UMLS/SNOMED/MeSH/NCIT/DOID). Reuse that id below.
    State a caveat if only a broader/closest term exists.
+   CRITICAL ID FORMAT: OpenTargets efoId args use the UNDERSCORE id — `MONDO_0008315`, `EFO_0001663`
+   (this tool's `id` field is already underscore). NEVER pass the colon form `MONDO:0008315` to an
+   OpenTargets tool — it silently returns success with empty `{}`. Only §2's Mondo tool uses the
+   colon form `MONDO:0008315`.
 2. Clinical Presentation — `Mondo_get_disease_phenotypes`(disease_id="MONDO:…" from §1) for HPO
    phenotypes — this is the RELIABLE source; OpenTargets phenotypes is usually empty for cancers,
    so do not depend on it.

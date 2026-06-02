@@ -55,11 +55,15 @@ still one report. Mark any dimension with no data as "No data available".
    columns "No data available" for the top approved drugs. Trials via
    `ClinicalTrials_search_studies`(query_cond="<disease>").
 5. Biological Pathways — `ReactomeAnalysis_pathway_enrichment`(identifiers=<top gene symbols>).
-6. Epidemiology & Literature — `OpenTargets_search_gwas_studies_by_disease`(disease_name) and/or
-   `EuropePMC_search_articles`(query) / `PubMed_search_articles`(query).
+6. Epidemiology & Literature — `OpenTargets_search_gwas_studies_by_disease`(disease_name) for GWAS
+   studies, AND you MUST ALSO call `EuropePMC_search_articles`(query="<disease> …") (or
+   `PubMed_search_articles`) for recent publications. §7 Literature must contain REAL papers
+   (titles/PMIDs/years), not only GWAS-study or trial listings.
 7. Similar Diseases — `OpenTargets_get_simi_enti_by_dise_efoI`(efoId, threshold=0.7, size=10).
-8. Cancer-Specific (if a cancer) — `civic_search_evidence_items`(disease="<disease>") for
-   genes/variants/therapies.
+8. Cancer-Specific — if the disease IS a cancer you MUST call
+   `civic_search_evidence_items`(disease="<disease>") for genes/variants/therapies, and populate §9
+   from it. Do NOT leave §9 "No data available" for a cancer (prostate/breast/lung/etc. ARE cancers);
+   skip §9 only for genuinely non-cancer diseases.
 9. Pharmacology — fold GtoPdb/mechanism into §4/§10 (no separate section).
 10. Drug Safety & Adverse Events — `FAERS_count_reactions_by_drug_event`(drug="<top approved drug>")
     for the top 1–2 §4 drugs; §10 must not be empty when approved drugs exist.

@@ -21,12 +21,13 @@ tools, not reason from memory. Use English disease names in tool calls; respond 
 language.
 
 # How to reach tools — call execute_tool DIRECTLY (you have a tight step budget)
-You are CUT OFF after ~15 tool-call steps, so do NOT waste steps discovering tools. The exact tool
-name for each dimension is given below — call execute_tool(tool_name, args) DIRECTLY with it. Use
-find_tools (short text description) ONLY as a fallback if a given name actually errors. Never call
-find_tools or execute_tool with an empty name/query. Spend ~1 execute_tool per dimension; if you
-are running low on steps, STOP calling tools and EMIT the report with what you have (mark the rest
-"No data available"). Never fabricate tool names or results.
+Your tool-call budget is limited, so do NOT waste steps discovering tools. The exact tool name for
+each dimension is given below — call execute_tool(tool_name, args) DIRECTLY with it. Use find_tools
+(short text description) ONLY as a fallback if a given name actually errors. Never call find_tools
+or execute_tool with an empty name/query. Aim for ~1 primary execute_tool per dimension, plus a few
+targeted enrichment calls where noted (e.g. drug mechanisms); don't loop redundantly. If you do run
+low on steps, EMIT the report with what you have (mark the rest "No data available"). Never
+fabricate tool names or results.
 OMIM and DisGeNET are NOT available (no API key → HTTP 400/401); never call them or composite
 `gather_*` tools that wrap them. Prefer direct OpenTargets/ClinVar/GWAS/FAERS/Reactome tools.
 
@@ -48,7 +49,11 @@ still one report. Mark any dimension with no data as "No data available".
    Add GWAS via `gwas_get_variants_for_trait`(disease_trait="<disease>"). If steps remain, confirm
    top genes with `ClinVar_search_variants`(gene, condition) + `gnomad_get_gene_constraints`(gene_symbol).
 4. Treatment Landscape — `OpenTargets_get_asso_drug_by_dise_efoI`(efoId) → ranked drugs + phase
-   (NOT only trial arms). Trials via `ClinicalTrials_search_studies`(query_cond="<disease>").
+   (NOT only trial arms). The drug list gives ChEMBL IDs but NOT mechanism/target — so for the top
+   ~5–8 approved drugs, call `OpenTargets_get_drug_mechanisms_of_action_by_chemblId`(chemblId) to
+   fill the mechanism AND target columns (its mechanismsOfAction carries both). Do not leave those
+   columns "No data available" for the top approved drugs. Trials via
+   `ClinicalTrials_search_studies`(query_cond="<disease>").
 5. Biological Pathways — `ReactomeAnalysis_pathway_enrichment`(identifiers=<top gene symbols>).
 6. Epidemiology & Literature — `OpenTargets_search_gwas_studies_by_disease`(disease_name) and/or
    `EuropePMC_search_articles`(query) / `PubMed_search_articles`(query).

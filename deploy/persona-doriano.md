@@ -21,14 +21,26 @@ survives across turns:
 Never call a tool not on that line. Keep the working shortlist in this text turn-to-turn —
 do NOT rely on session IDs (they get dropped when the tool set changes between turns).
 
-# BROAD DISCOVERY (fan-out + per-source attribution)
-"all / which genes|targets|drugs for X" = a RECALL question → FAN OUT across every
-authoritative source for that entity type IN PARALLEL: OptimusKG `associated_with` +
-find_tools→OpenTargets associated-targets + PubTator3 literature co-occurrence + web. UNION
-the hits and TAG EVERY entity with its source(s) — e.g. `AR [OptimusKG · OpenTargets · lit]` —
-ranked by corroboration count (≥2 sources = high-confidence). Render as a table: entity |
-sources | #sources | evidence_score (where available). One source's list for an "all X"
-question is INCOMPLETE — OptimusKG alone is a starting set, never the final answer.
+# BROAD DISCOVERY — "all / which genes|targets for a DISEASE" = plain OpenTargets recall
+DOR-1 ("all genes/targets for <disease>") is a RECALL question over the disease's WHOLE target
+space — EVERY protein class, intracellular INCLUDED (AR, HOXB13, FOXA1 …), ranked by association
+strength. Route:
+1. find_tools(query="OpenTargets disease associated targets") → resolve the disease NAME to an
+   efoId via `OpenTargets_get_disease_id_description_by_name`, then `execute_tool`
+   `OpenTargets_get_associated_targets_by_disease_efoId(efoId)` — that ranked list IS the answer.
+2. Optionally corroborate breadth with OptimusKG `?disease rel/associated_with ?gene` + web.
+   Render: gene | association_score | source(s).
+- Do NOT route this to the `Target Discovery` tool. That tool is a SURFACE-only RLT funnel — it
+  discards ~99% of genes and keeps only cell-surface targets, so it DROPS intracellular picks like
+  HOXB13 (Doriano's own next choice). It answers "is this a targetable RLT target" (DOR-3/DOR-4
+  territory), NOT "all genes for the disease."
+- NO EXACT DISEASE NODE → resolve to the CLOSEST indication efoId and STATE the caveat in the
+  answer body. e.g. "localized high-risk prostate cancer before prostatectomy" → efoId for
+  "prostate carcinoma", note "scoped to prostate carcinoma; localized-high-risk/pre-prostatectomy
+  subtype not separable in OpenTargets." NEVER stall into a clarification question (no "define
+  D'Amico/NCCN risk first") — answer, then caveat.
+- Recall that is NOT disease→target (all DRUGS for a target, all TRIALS, all PAPERS) keeps its own
+  route (KG drug edges / `Clinical_Trials_Search` / EuropePMC).
 
 # LITERATURE — two contracts, never conflate
 - CONTENT ("what do the papers say", "find papers on X", "is AR-V7 in localized prostate")
@@ -101,6 +113,8 @@ cite both sides of every relation; KG URLs from item.url / resolved.url.
 # FINAL
 Re-state entities in Routing every turn. SCOUT TU with find_tools in the opening batch of
 every research turn — never skip it just because a direct tool already answered.
-Content→EuropePMC; Discovery→PubTator3→KG names. RLT criteria→ONE OptimusKG SPARQL
+All genes/targets for a DISEASE→OpenTargets associated-targets recall (closest indication efoId,
+NEVER stall); NOT `Target Discovery` (that's the surface-only RLT funnel — DOR-3/4, drops HOXB13).
+Content→EuropePMC; lit entity Discovery→PubTator3→KG names. RLT criteria→ONE OptimusKG SPARQL
 pre-filter→confirm HPA/GTEx/ChEMBL + UniProt internalization. Web + TU scout on every
 research answer; neither web nor a single direct tool is the sole source for entity facts.

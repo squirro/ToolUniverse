@@ -60,22 +60,30 @@ still one report. Mark any dimension with no data as "No data available".
     drug, you MUST query FAERS for adverse-event counts on the top drugs — §10 must not be empty
     when drugs exist.
 
-# Evidence grading — MANDATORY, grade EVERY association
-You MUST assign an evidence grade to EVERY gene-disease association in Section 3 and every drug
-in Section 4, shown in a `Grade` column. Do not omit grades — a report without T1-T4 grades is
-incomplete.
-- T1 Strong: replicated GWAS / rare-variant evidence, OR ClinVar pathogenic variants, OR a high
-  OpenTargets genetic_association datasource score, OR an FDA-approved therapy.
-- T2 Moderate: single genetic study, phase II+ trial, strong biological evidence.
-- T3 Association: observational, expression change, pathway membership.
-- T4 Computational: network proximity, text-mining (e.g. OpenTargets europepmc datasource only), predicted.
-For an OpenTargets association, decompose by datasource: genetic_association > literature >
-animal_model. Concordance = confidence: OpenTargets genetic_association datasource agreeing with
-ClinVar/GWAS -> T1; OpenTargets literature/europepmc datasource ONLY -> T3/T4 (text-mined); a GWAS
-hit without a Mendelian variant -> complex susceptibility locus. IMPORTANT: do NOT downgrade to
-T2/T3 merely because OMIM/DisGeNET were unreachable — grade on the sources you DID retrieve
-(OpenTargets datasources, ClinVar, GWAS). e.g. APP/PSEN1/PSEN2 with genetic_association + ClinVar
-support are T1.
+# Evidence grading — MANDATORY, grade EVERY association from data you ALREADY have
+You MUST put a T1-T4 grade on EVERY gene in Section 3 and EVERY drug in Section 4. NEVER write
+"No data available" or leave a Grade blank when an OpenTargets score or a clinical stage exists.
+ClinVar/gnomAD are a BONUS, NOT a precondition — a gene with only an OpenTargets score is fully
+gradable from that score. These are deterministic lookup tables; apply them mechanically.
+
+GENES — grade DIRECTLY from the OpenTargets association `score` you retrieved:
+- score >= 0.7        -> T1   (a high score IS strong genetic_association evidence — T1 on score alone)
+- 0.5 <= score < 0.7  -> T2
+- 0.3 <= score < 0.5  -> T3
+- score < 0.3         -> T4
+(Then bump to T1 if ClinVar pathogenic variants or a genome-wide-significant GWAS hit also exist.)
+So AR 0.867, BRCA2 0.858, PTEN 0.848, CHEK2 0.817, TP53 0.762, ATM 0.761 are ALL T1 — NOT T3.
+
+DRUGS — grade DIRECTLY from maximumClinicalStage:
+- APPROVAL                         -> T1   (it IS an approved therapy)
+- PHASE_3 / PHASE_2_3              -> T2
+- PHASE_2 / PHASE_1_2 / PHASE_1   -> T3
+- PRECLINICAL / IND / UNKNOWN     -> T4
+So every APPROVAL-stage drug (abiraterone, enzalutamide, olaparib, docetaxel…) is T1 — NOT T2.
+
+Do NOT downgrade because OMIM/DisGeNET were unreachable, or because you didn't run ClinVar for a
+particular gene. Grade on what you DID retrieve. A `Grade` column full of T3/"No data" when you
+hold scores ≥0.8 and APPROVAL-stage drugs is WRONG.
 
 # Mechanistic synthesis (Sections 3 & 5)
 Sections 3 and 5 are SYNTHESIS, not just lists. Trace the pathogenic cascade: causal

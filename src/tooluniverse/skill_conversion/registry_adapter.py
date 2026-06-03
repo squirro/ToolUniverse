@@ -70,7 +70,12 @@ def make_smcp_probe(call: Callable[[str], dict]) -> Probe:
         result = call(tool_name)
         if not isinstance(result, dict) or "error" in result or "name" not in result:
             return {"exists": False, "signature": None}
-        signature = result.get("parameter_schema") or result.get("required_parameters")
+        # Prefer parameter_schema when the key is present (a legitimately empty {}
+        # is a valid signature); only fall back to required_parameters if absent.
+        if "parameter_schema" in result:
+            signature = result["parameter_schema"]
+        else:
+            signature = result.get("required_parameters")
         return {"exists": True, "signature": signature}
 
     return probe
@@ -110,11 +115,14 @@ class RegistryAdapter:
             )
         else:
             probed = self.probe(tool_ref)
+            exists = probed["exists"]
             fact = ToolFact(
                 name=tool_ref,
-                exists=probed["exists"],
+                exists=exists,
                 signature=probed.get("signature"),
-                available=True,
+                # Invariant: available ⟹ exists. A tool that isn't there can't be
+                # used; the seed only ever subtracts availability, never adds it.
+                available=exists,
                 quirk=self.quirk_seed(tool_ref),
             )
 

@@ -45,6 +45,17 @@ def test_cache_miss_probes_once_and_returns_toolfact():
     assert probe.calls == ["ClinVar_search_variants"]  # probed exactly once
 
 
+def test_nonexistent_tool_is_not_available():
+    """Invariant: available ⟹ exists. A probe miss yields exists=False AND available=False."""
+    probe = CountingProbe({})  # unknown tools probe as {"exists": False, "signature": None}
+    adapter = RegistryAdapter(cluster="sr-dev", probe=probe, cache={})
+
+    fact = adapter.resolve("Ghost_tool")
+
+    assert fact.exists is False
+    assert fact.available is False
+
+
 def test_cache_hit_skips_probe_and_miss_writes_back():
     """First resolve probes + writes back; the second is served from cache, no probe."""
     probe = CountingProbe({"ClinVar_search_variants": {"exists": True,

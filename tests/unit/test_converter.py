@@ -6,8 +6,11 @@ from tooluniverse.skill_conversion.registry_adapter import RegistryAdapter
 
 pytestmark = pytest.mark.unit
 
-ROUTER = ('description: "STEP 2: tooluniverse-crispr-screen-analysis (MAGeCK), '
-          'tooluniverse-proteomics-analysis (mass spec)."')
+# Real router phrasing: the analysis set lives in the STEP-2 "this exact list
+# (never invent): … Use for …" clause (parse_router_analysis_skills scopes to it).
+ROUTER = ('description: "Router. STEP 2 routing — pick a sub-skill name from this exact '
+          'list (never invent): tooluniverse-crispr-screen-analysis (MAGeCK), '
+          'tooluniverse-proteomics-analysis (mass spec). Use for CSV/VCF analysis."')
 
 GOLDEN_SOURCE = "# disease SKILL source"
 GOLDEN_PERSONA = "# disease persona converted"

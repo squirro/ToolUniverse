@@ -9,6 +9,7 @@ import pytest
 from tooluniverse.skill_conversion.registry_adapter import (
     RegistryAdapter,
     ToolFact,
+    default_unavailable,
     make_smcp_probe,
 )
 
@@ -139,3 +140,128 @@ def test_make_smcp_probe_maps_get_tool_info():
     }
     # the not-found stub echoes the name but total_found=0 → must be exists False
     assert probe("No_Such_Tool") == {"exists": False, "signature": None}
+
+
+# ---------------------------------------------------------------------------
+# Fix 1 — alias-resolution fallback for shortened tool names (DSR-509)
+# ---------------------------------------------------------------------------
+
+class CountingCall:
+    """Stub for the raw get_tool_info caller injected into make_smcp_probe.
+
+    Returns the batch shape {"total_found": N, "tools": [...]} keyed per tool name.
+    Unknown names echo the SMCP not-found stub: total_found=0, tools=[{name: <echoed>}].
+    """
+
+    def __init__(self, catalog=None):
+        # catalog: {tool_name: {"total_found": N, "tools": [...]}}
+        self._catalog = catalog or {}
+        self.calls = []
+
+    def __call__(self, tool_name: str) -> dict:
+        self.calls.append(tool_name)
+        return self._catalog.get(
+            tool_name,
+            {"total_found": 0, "tools": [{"name": tool_name}]},
+        )
+
+
+def test_long_name_miss_then_shortened_hit():
+    """A long full name that misses on exact probe HITS on the shortened name.
+
+    The probe must:
+    - issue the first call with the full name (which returns total_found=0 / stub)
+    - detect the name is long enough to be shortened
+    - issue a second call with the shortened name (which returns a real match)
+    - return exists=True with the short tool's signature
+    """
+    full = "OpenTargets_get_associated_targets_by_disease_efoId"   # 51 chars
+    short = "OpenTargets_get_asso_targ_by_dise_efoI"               # 38 chars
+    expected_sig = {"efoId": {"type": "string"}}
+
+    call_stub = CountingCall(
+        catalog={
+            short: {
+                "total_found": 1,
+                "tools": [{"name": short, "parameter": expected_sig}],
+            }
+        }
+    )
+
+    probe = make_smcp_probe(call_stub)
+    result = probe(full)
+
+    assert result == {"exists": True, "signature": expected_sig}
+    assert call_stub.calls == [full, short], (
+        "probe must issue exact call first, then shortened call on miss"
+    )
+
+
+def test_short_name_miss_no_second_call():
+    """A short name (≤45 chars) that misses does NOT trigger a second call.
+
+    shorten_tool_name is a no-op for names within the limit, so
+    short == full and no extra call should be made.
+    """
+    short_name = "ClinVar_search_variants"   # 23 chars — already within 45
+
+    call_stub = CountingCall()  # empty catalog → every name misses
+
+    probe = make_smcp_probe(call_stub)
+    result = probe(short_name)
+
+    assert result == {"exists": False, "signature": None}
+    assert call_stub.calls == [short_name], (
+        "exactly one call on a short-name miss — no alias fallback"
+    )
+
+
+def test_exact_name_hit_only_one_call():
+    """An exact-name HIT on the first try returns exists=True with one call only."""
+    tool = "ClinVar_search_variants"
+    sig = {"gene": {"type": "string"}}
+
+    call_stub = CountingCall(
+        catalog={
+            tool: {
+                "total_found": 1,
+                "tools": [{"name": tool, "parameter": sig}],
+            }
+        }
+    )
+
+    probe = make_smcp_probe(call_stub)
+    result = probe(tool)
+
+    assert result == {"exists": True, "signature": sig}
+    assert call_stub.calls == [tool], (
+        "exact hit must not trigger a second alias-resolution call"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Fix 2 — ADMETAI registered-but-broken seed (DSR-509)
+# ---------------------------------------------------------------------------
+
+def test_admetai_seeded_unavailable():
+    """ADMETAI tools are seeded unavailable: registered but broken (missing package)."""
+    assert default_unavailable("ADMETAI_predict_BBB_penetrance") is True
+
+
+def test_omim_disgenet_still_seeded_unavailable():
+    """Regression: OMIM/DisGeNET unavailability seeds survive the ADMETAI addition."""
+    assert default_unavailable("OMIM_search") is True
+    assert default_unavailable("DisGeNET_search_gene") is True
+
+
+def test_admetai_resolve_short_circuits_no_probe():
+    """RegistryAdapter.resolve for ADMETAI must short-circuit to available=False with no probe call."""
+    probe = CountingProbe({
+        "ADMETAI_predict_BBB_penetrance": {"exists": True, "signature": {"smiles": "string"}},
+    })
+    adapter = RegistryAdapter(cluster="sr-dev", probe=probe, cache={})
+
+    fact = adapter.resolve("ADMETAI_predict_BBB_penetrance")
+
+    assert fact.available is False
+    assert probe.calls == [], "seeded-unavailable tools must NOT be probed"

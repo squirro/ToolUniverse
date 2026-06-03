@@ -14,8 +14,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Optional
 
+from ..tool_name_utils import shorten_tool_name
+
 # A probe takes a tool name and returns {"exists": bool, "signature": dict|None}.
 Probe = Callable[[str], dict]
+
+# The SMCP cluster deploys shortened names for tools whose original name
+# exceeds this threshold.
+_SMCP_MAX_NAME_LENGTH = 45
 
 
 # --- hand-seeded facts from the disease-research learnings -------------------
@@ -36,14 +42,27 @@ def default_quirk(tool_name: str) -> Optional[str]:
     return None
 
 
-# Key-gated families with no API key on these clusters → unavailable. The converter
-# drops/substitutes them (e.g. OpenTargets for gene-disease in place of DisGeNET);
-# that substitution is the converter's concern, not the adapter's.
-_UNAVAILABLE_PREFIXES = ("OMIM", "DisGeNET")
+# Two distinct reasons for hand-seeded unavailability (both resolve to "drop it"
+# in the converter, but the root cause differs):
+#
+#   ABSENT / NO API KEY — OMIM, DisGeNET: tools are not deployed on this cluster
+#   because no API key is configured; the probe would return total_found=0.
+#   The converter substitutes OpenTargets for gene-disease queries.
+#
+#   REGISTERED BUT BROKEN — ADMETAI: tools ARE registered in the TU catalog and
+#   WOULD pass the probe (returns a real hit), but executing one fails at runtime
+#   with "ADMETModel requires 'admet-ai' package" because the pip extra is not
+#   installed on this cluster (OOM risk). Mark unavailable so the converter never
+#   emits an ADMETAI call.
+_UNAVAILABLE_PREFIXES = ("OMIM", "DisGeNET", "ADMETAI")
 
 
 def default_unavailable(tool_name: str) -> bool:
-    """True if a tool is hand-seeded as unavailable (no API key) on this cluster."""
+    """True if a tool is hand-seeded as unavailable on this cluster.
+
+    Covers both absent/key-gated tools (OMIM, DisGeNET) and tools that are
+    registered but broken at runtime due to a missing Python package (ADMETAI).
+    """
     return tool_name.startswith(_UNAVAILABLE_PREFIXES)
 
 
@@ -56,6 +75,24 @@ class ToolFact:
     signature: Optional[dict]
     available: bool
     quirk: Optional[str]
+
+
+def _check_hit(name: str, result: dict) -> Optional[dict]:
+    """Return the hit dict ``{"exists": True, "signature": ...}`` if *result* is a
+    real ``get_tool_info`` match for *name*, else ``None``.
+
+    A hit requires both ``total_found >= 1`` AND an entry in ``tools[]`` whose
+    ``name`` field exactly equals *name*.  The not-found stub echoes the name with
+    ``total_found == 0``; we must key on ``total_found``, not name presence alone.
+    """
+    if not isinstance(result, dict) or result.get("total_found", 0) < 1:
+        return None
+    match = next(
+        (t for t in result.get("tools", []) if t.get("name") == name), None
+    )
+    if match is None:
+        return None
+    return {"exists": True, "signature": match.get("parameter")}
 
 
 def make_smcp_probe(call: Callable[[str], dict]) -> Probe:
@@ -71,18 +108,31 @@ def make_smcp_probe(call: Callable[[str], dict]) -> Probe:
     and the caller MUST request one name at a time to avoid truncation. The live MCP
     session is injected at ``call``; this parse is pure. (Verified against sr-dev SMCP,
     DSR-508 — the earlier flat ``{name, parameter_schema}`` contract was wrong.)
+
+    **Alias-resolution fallback (DSR-509):** The SMCP cluster deploys tools whose
+    original names exceed ``_SMCP_MAX_NAME_LENGTH`` (45 chars) under their *shortened*
+    form computed by :func:`~tooluniverse.tool_name_utils.shorten_tool_name`.  A probe
+    on the full name therefore misses; ``execute_tool`` alias-resolves at runtime, but
+    ``get_tool_info`` does not.  On a miss, if the shortened form differs from the
+    original, a second ``call`` is made with the shortened name so that the probe
+    correctly reports ``exists=True`` and returns the deployed tool's signature.
     """
 
     def probe(tool_name: str) -> dict:
-        result = call(tool_name)
-        if not isinstance(result, dict) or result.get("total_found", 0) < 1:
-            return {"exists": False, "signature": None}
-        match = next(
-            (t for t in result.get("tools", []) if t.get("name") == tool_name), None
-        )
-        if match is None:
-            return {"exists": False, "signature": None}
-        return {"exists": True, "signature": match.get("parameter")}
+        # First try the exact (possibly full / original) name.
+        hit = _check_hit(tool_name, call(tool_name))
+        if hit is not None:
+            return hit
+
+        # Alias-resolution fallback: if the name is long enough to be shortened
+        # on the cluster, retry with the shortened form.
+        short = shorten_tool_name(tool_name, _SMCP_MAX_NAME_LENGTH)
+        if short != tool_name:
+            hit = _check_hit(short, call(short))
+            if hit is not None:
+                return hit
+
+        return {"exists": False, "signature": None}
 
     return probe
 

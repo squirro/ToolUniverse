@@ -45,7 +45,7 @@ class Converter:
         self.golden_source = golden_source
         self.golden_persona = golden_persona
 
-    def convert(self, skill_dir, *, router_md: str, prompt_out) -> ConvertedSkill:
+    def convert(self, skill_dir, *, router_md: str, prompt_out, direction: str = "disease") -> ConvertedSkill:
         skill_dir = Path(skill_dir)
         name = skill_dir.name
         skill_md = (skill_dir / "SKILL.md").read_text()
@@ -57,11 +57,13 @@ class Converter:
 
         facts = [self.adapter.resolve(r) for r in extract_tool_refs(skill_md)]
         available = [f for f in facts if f.available]
-        subs = [substitute(f, self.adapter)
+        subs = [substitute(f, self.adapter, direction)
                 for f in facts if not f.available and is_substitutable(f.name)]
+        unavailable = [f.name for f in facts
+                       if not f.available and not is_substitutable(f.name)]
         escalations = tuple(sub.original for sub in subs if sub.escalate)
 
-        block = render_grounded_facts(available, subs)
+        block = render_grounded_facts(available, subs, unavailable)
         prompt = build_converter_prompt(
             target_skill_md=skill_md,
             golden_source=self.golden_source,

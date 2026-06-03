@@ -41,3 +41,21 @@ def test_is_substitutable_only_for_seeded_families():
     assert is_substitutable("OMIM_search")
     assert is_substitutable("DisGeNET_search_gene")
     assert not is_substitutable("ClinVar_search_variants")
+
+
+def test_disgenet_disease_direction_substitutes_to_opentargets():
+    fact = ToolFact(name="DisGeNET_search_gene", exists=False,
+                    signature=None, available=False, quirk=None)
+    adapter = _adapter({"OpenTargets_get_asso_targ_by_dise_efoI"})
+    sub = substitute(fact, adapter, direction="disease")
+    assert "OpenTargets_get_asso_targ_by_dise_efoI" in sub.alternatives
+    assert sub.escalate is False
+
+
+def test_disgenet_target_direction_does_not_use_disease_to_target_tool():
+    """A target-centric skill must NOT get the disease->target substitute (no efoId in hand)."""
+    fact = ToolFact(name="DisGeNET_search_gene", exists=False,
+                    signature=None, available=False, quirk=None)
+    adapter = _adapter({"OpenTargets_get_asso_targ_by_dise_efoI"})
+    sub = substitute(fact, adapter, direction="target")
+    assert "OpenTargets_get_asso_targ_by_dise_efoI" not in sub.alternatives

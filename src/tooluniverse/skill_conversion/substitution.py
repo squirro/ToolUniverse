@@ -15,20 +15,26 @@ from dataclasses import dataclass
 
 from .registry_adapter import RegistryAdapter, ToolFact
 
-# Seeded family-prefix → (candidate alternatives, rationale). Harvested from the
-# disease-research port + each skill's "Fallback Chains" table.
-_SUBSTITUTIONS: dict[str, tuple[tuple[str, ...], str]] = {
-    "OMIM": (
-        ("OpenTargets_get_asso_targ_by_dise_efoI", "ClinVar_search_variants",
-         "gwas_get_variants_for_trait"),
-        "OMIM has no API key on this cluster; cover gene-disease with OpenTargets "
-        "genetic_association scores + ClinVar pathogenic variants + GWAS hits.",
-    ),
-    "DisGeNET": (
-        ("OpenTargets_get_asso_targ_by_dise_efoI",),
-        "DisGeNET has no API key; OpenTargets association-targets covers the "
-        "gene-disease links DisGeNET would have text-mined.",
-    ),
+# Seeded family-prefix → {direction → (candidate alternatives, rationale)}. The
+# substitute is DIRECTIONAL: a disease-centric query holds an efoId (so a disease→target
+# tool helps); a target/gene-centric query does not, so it needs a gene→variant route or
+# escalates. Harvested from the disease-research port + grounded on sr-dev.
+_SUBSTITUTIONS: dict[str, dict[str, tuple[tuple[str, ...], str]]] = {
+    "OMIM": {
+        "disease": (("OpenTargets_get_asso_targ_by_dise_efoI", "ClinVar_search_variants",
+                     "gwas_get_variants_for_trait"),
+                    "OMIM key-gated; disease→gene via OpenTargets assoc + ClinVar + GWAS."),
+        "target": (("ClinVar_search_variants", "gnomad_get_gene_constraints"),
+                   "OMIM key-gated; gene→disease via ClinVar pathogenic variants + gnomAD constraint."),
+        "drug": ((), "OMIM (gene-disease) has no drug-centric substitute; omit."),
+    },
+    "DisGeNET": {
+        "disease": (("OpenTargets_get_asso_targ_by_dise_efoI",),
+                    "DisGeNET key-gated; disease→target via OpenTargets association-targets."),
+        "target": (("ClinVar_search_variants",),
+                   "DisGeNET key-gated; gene→disease via ClinVar (curated associations unavailable)."),
+        "drug": ((), "DisGeNET (gene-disease) has no drug-centric substitute; omit."),
+    },
 }
 
 
@@ -54,11 +60,16 @@ def is_substitutable(tool_name: str) -> bool:
     return _family(tool_name) is not None
 
 
-def substitute(fact: ToolFact, adapter: RegistryAdapter) -> Substitution:
-    """Build a grounded substitution for an unavailable ``fact`` (must be substitutable)."""
+def substitute(fact: ToolFact, adapter: RegistryAdapter, direction: str = "disease") -> Substitution:
+    """Build a grounded, DIRECTION-appropriate substitution for an unavailable ``fact``.
+
+    ``direction`` is the converted skill's query orientation ('disease' | 'target' | 'drug').
+    Candidates are re-grounded through the adapter; escalate if none resolve available."""
     prefix = _family(fact.name)
     if prefix is None:
         return Substitution(fact.name, (), f"No seeded substitute for {fact.name}", True)
-    candidates, rationale = _SUBSTITUTIONS[prefix]
+    by_dir = _SUBSTITUTIONS[prefix]
+    candidates, rationale = by_dir.get(
+        direction, ((), f"No {direction}-direction substitute seeded for {fact.name}"))
     grounded = tuple(c for c in candidates if adapter.resolve(c).available)
     return Substitution(fact.name, grounded, rationale, escalate=not grounded)

@@ -72,3 +72,15 @@ def test_unavailable_seeded_family_is_substituted_in_prompt(tmp_path):
     assert "SUBSTITUTE" in seen["prompt"].upper()
     assert "DisGeNET_search_gene" in seen["prompt"]
     assert result.escalations == ()  # OpenTargets alt is available → no escalation
+
+
+def test_dead_nonsubstitutable_tool_listed_do_not_call(tmp_path):
+    seen = {}
+    conv = _converter(lambda p: seen.update(prompt=p) or "BODY",
+                      available_names={"UniProt_get_function_by_accession"})
+    skill_md = ("Call `UniProt_get_function_by_accession`(accession) and "
+                "`OpenTargets_get_target_safety_profile_by_ensemblID`(ensemblId).")
+    skill_dir = _write_skill(tmp_path, "tooluniverse-target-research", skill_md)
+    conv.convert(skill_dir, router_md=ROUTER, prompt_out=tmp_path / "p.md")
+    assert "DO NOT CALL" in seen["prompt"].upper()
+    assert "OpenTargets_get_target_safety_profile_by_ensemblID" in seen["prompt"]

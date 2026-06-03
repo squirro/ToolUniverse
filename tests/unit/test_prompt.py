@@ -39,3 +39,13 @@ def test_build_converter_prompt_contains_all_four_parts():
     assert "GROUNDED FACTS HERE" in prompt          # grounded facts
     assert "# Target Research SKILL" in prompt      # target to convert
     assert TRANSFORM_CHECKLIST.splitlines()[0] in prompt  # the checklist
+
+
+def test_render_grounded_facts_lists_unavailable_do_not_call():
+    block = render_grounded_facts(
+        available=[],
+        substitutions=[],
+        unavailable=["OpenTargets_get_target_safety_profile_by_ensemblID"],
+    )
+    assert "DO NOT CALL" in block.upper()
+    assert "OpenTargets_get_target_safety_profile_by_ensemblID" in block

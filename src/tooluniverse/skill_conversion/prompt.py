@@ -36,7 +36,11 @@ Apply these transforms (the golden pair shows each in action):
 """
 
 
-def render_grounded_facts(available: list[ToolFact], substitutions: list[Substitution]) -> str:
+def render_grounded_facts(
+    available: list[ToolFact],
+    substitutions: list[Substitution],
+    unavailable: list[str] = (),
+) -> str:
     """Render the grounded tool-facts block injected into the converter prompt."""
     lines: list[str] = ["## AVAILABLE TOOLS (grounded on this cluster — use exactly these names)"]
     for f in available:
@@ -51,6 +55,11 @@ def render_grounded_facts(available: list[ToolFact], substitutions: list[Substit
                 lines.append(f"- {s.original}: NO grounded alternative — ESCALATE TO HUMAN. {s.rationale}")
             else:
                 lines.append(f"- {s.original}: SUBSTITUTE with {', '.join(s.alternatives)}. {s.rationale}")
+    if unavailable:
+        lines.append("")
+        lines.append("## UNAVAILABLE — DO NOT CALL (referenced by the skill but not on this cluster; no grounded substitute)")
+        for name in unavailable:
+            lines.append(f"- {name}")
     return "\n".join(lines)
 
 

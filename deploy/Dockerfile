@@ -38,6 +38,13 @@ ENV TOOLUNIVERSE_LOG_LEVEL=INFO \
 
 EXPOSE 8000
 
+# Serve the converted disease-research SOP body via the get_skill tool
+# (ADR-0005 / DSR-505). Direct copy of the canonical converged body — single
+# source of truth, so the served body cannot drift from the persona-direct
+# baseline it is benchmarked against. Placed after pip install so editing the
+# body does not bust the install layer cache.
+COPY deploy/persona-disease-research.md /app/served-skills/disease-research.md
+
 # Compact mode: TU loads all ~2,278 tools in the background but only exposes
 # 5 in tools/list — list_tools, grep_tools, get_tool_info, execute_tool,
 # find_tools. The LLM discovers via find_tools/grep_tools/list_tools and
@@ -74,6 +81,7 @@ CMD ["tooluniverse-smcp", \
      "--host", "0.0.0.0", \
      "--port", "8000", \
      "--compact-mode", \
+     "--skills-dir", "/app/served-skills", \
      "--exclude-tools", "Tool_RAG", \
      "DisGeNET_search_gene", "DisGeNET_search_disease", "DisGeNET_get_gda", \
      "DisGeNET_get_vda", "DisGeNET_get_disease_genes", \

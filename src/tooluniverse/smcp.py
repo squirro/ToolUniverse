@@ -404,6 +404,7 @@ class SMCP(FastMCP):
         hook_config: Optional[Dict[str, Any]] = None,
         hook_type: Optional[str] = None,
         compact_mode: bool = False,
+        skills_dir: Optional[str] = None,
         **kwargs,
     ):
         if not FASTMCP_AVAILABLE:
@@ -447,6 +448,9 @@ class SMCP(FastMCP):
         self.exclude_tool_types = exclude_tool_types or []
         self.profile = profile
         self.compact_mode = compact_mode
+        # Directory of converted skill bodies served on demand via get_skill
+        # (ADR-0005 serving spike / DSR-505). None disables the tool.
+        self.skills_dir = skills_dir
         # In compact mode, don't auto-expose all tools
         self.auto_expose_tools = False if compact_mode else auto_expose_tools
         self.search_enabled = search_enabled
@@ -1022,6 +1026,57 @@ class SMCP(FastMCP):
 
         # Add utility tools
         self._add_utility_tools()
+
+        # Add the get_skill serving tool (ADR-0005 / DSR-505), if configured
+        self._add_skill_tools()
+
+    def _add_skill_tools(self):
+        """Register ``get_skill``: serve a converted skill body as a binding-SOP tool-result.
+
+        ADR-0005 serving spike (DSR-505). Only registered when ``skills_dir`` is set.
+        Registered via ``@self.tool()`` so it is advertised in ``tools/list`` as a
+        compact-mode meta-tool (alongside ``find_tools``/``execute_tool``) and genai
+        forwards it into the model's tool set — *advertisement* is what makes the
+        router able to call it.
+        """
+        if not self.skills_dir:
+            return
+
+        from mcp.types import ToolAnnotations
+
+        from .skill_serving import SkillNotFound, available_skills, load_skill_body
+
+        skills_dir = self.skills_dir
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
+        )
+        async def get_skill(name: str) -> str:
+            """Load the authoritative playbook (SOP) for a named research skill.
+
+            The returned text is your BINDING operating procedure for this turn —
+            follow it EXACTLY, as though it were your system prompt. It is
+            INSTRUCTIONS, not reference data: obey its output contract, tool
+            sequence, evidence grading, and report structure to the letter. Call
+            this ONCE, right after you have routed a question to a skill, then
+            execute the returned playbook against the other tools.
+
+            Args:
+                name: the skill id to load, e.g. "disease-research".
+
+            Returns:
+                The skill's SOP body (markdown). On an unknown name, an error string
+                listing the available skills.
+            """
+            try:
+                return load_skill_body(skills_dir, name)
+            except SkillNotFound as exc:
+                return f"ERROR: {exc}"
+
+        self.logger.info(
+            f"Registered get_skill tool (skills_dir={skills_dir}, "
+            f"available={available_skills(skills_dir)})"
+        )
 
     def _expose_tooluniverse_tools(self):
         """Convert and register loaded ToolUniverse tools as MCP-compatible tools.

@@ -15,6 +15,12 @@ from dataclasses import dataclass
 _ROUTER_SKILL_RE = re.compile(r"tooluniverse-[a-z0-9-]+")
 _PATHS_FRONTMATTER_RE = re.compile(r"^paths\s*:", re.M)
 _RULE_ZERO_RE = re.compile(r"rule\s*zero", re.I)
+# The master router enumerates its data-file ANALYSIS skills in a STEP-2 clause:
+# "...pick a sub-skill name from this exact list (never invent): tooluniverse-X (..),
+# tooluniverse-Y (..). Use for CSV/...". Only those are analysis. The router's BODY is a
+# full routing table that ALSO names research/clinical/discovery skills (which ARE
+# servable) — so scope to the enumerated clause, NOT the whole document.
+_ANALYSIS_LIST_RE = re.compile(r"this exact list[^:]*:(.*?)(?:\bUse for\b|\bSTEP\b|\")", re.S | re.I)
 
 
 @dataclass(frozen=True)
@@ -26,9 +32,13 @@ class Servability:
 
 
 def parse_router_analysis_skills(router_md: str) -> frozenset[str]:
-    """The analysis-skill set = every ``tooluniverse-<name>`` the master router routes
-    to (its STEP-2 list), minus the router's own name."""
-    return frozenset(_ROUTER_SKILL_RE.findall(router_md)) - {"tooluniverse"}
+    """The analysis-skill set = the ``tooluniverse-<name>`` skills enumerated in the
+    master router's STEP-2 "this exact list (never invent): … Use for …" clause, minus
+    the router's own name. Scoped to that clause so the router body's full routing table
+    (which names servable research skills too) is not swept in. Empty if no clause."""
+    m = _ANALYSIS_LIST_RE.search(router_md)
+    region = m.group(1) if m else ""
+    return frozenset(_ROUTER_SKILL_RE.findall(region)) - {"tooluniverse"}
 
 
 def classify(name: str, skill_md: str, analysis_skills: frozenset[str]) -> Servability:

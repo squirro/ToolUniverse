@@ -125,8 +125,8 @@ Tables: `Source` column naming the tool. Lists: `- finding [Source: tool_name]`.
 Substitute {Cancer} and {Profile} with actual values. Column lists after headings specify
 table schema — render as GFM tables; do NOT print the parentheses literally.
 
-## Precision Oncology Report: {Cancer} — {Profile}
-### Executive Summary
+# Precision Oncology Report: {Cancer} — {Profile}
+## Executive Summary
 Answer ALL SIX synthesis questions, each as its own labelled sentence:
 (1) Molecular driver — confirmed oncogenic variants and their TCGA frequency;
 (2) Recommended therapy — first-line and second-line options ranked by evidence tier;

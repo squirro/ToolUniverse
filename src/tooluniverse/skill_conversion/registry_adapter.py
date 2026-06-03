@@ -59,24 +59,30 @@ class ToolFact:
 
 
 def make_smcp_probe(call: Callable[[str], dict]) -> Probe:
-    """Adapt a ``get_tool_info`` caller into the :data:`Probe` contract.
+    """Adapt a SMCP ``get_tool_info`` caller into the :data:`Probe` contract.
 
-    ``call(tool_name)`` returns the raw SMCP ``get_tool_info`` result — a dict with
-    ``name``/``parameter_schema`` for a known tool, or an ``error`` (or empty) for an
-    unknown one. The live MCP session is injected at ``call``; this parse is pure.
+    ``call(tool_name)`` performs a single-name ``get_tool_info`` and returns its RAW
+    result. ⚠️ ``get_tool_info`` is a **batch** meta-tool (its arg is ``tool_names``, a
+    list) whose result is ``{"total_found": N, "tools": [{"name","parameter",...}]}``.
+    A **not-found** name is NOT an error — it echoes a STUB tool with that name but
+    ``total_found == 0``; and a *multi-name* batch **truncates ``tools[]`` to ~16**
+    regardless of ``total_found``. So existence MUST key on ``total_found >= 1`` plus an
+    exact-name match — never on the mere presence of a ``name`` (which the stub also has),
+    and the caller MUST request one name at a time to avoid truncation. The live MCP
+    session is injected at ``call``; this parse is pure. (Verified against sr-dev SMCP,
+    DSR-508 — the earlier flat ``{name, parameter_schema}`` contract was wrong.)
     """
 
     def probe(tool_name: str) -> dict:
         result = call(tool_name)
-        if not isinstance(result, dict) or "error" in result or "name" not in result:
+        if not isinstance(result, dict) or result.get("total_found", 0) < 1:
             return {"exists": False, "signature": None}
-        # Prefer parameter_schema when the key is present (a legitimately empty {}
-        # is a valid signature); only fall back to required_parameters if absent.
-        if "parameter_schema" in result:
-            signature = result["parameter_schema"]
-        else:
-            signature = result.get("required_parameters")
-        return {"exists": True, "signature": signature}
+        match = next(
+            (t for t in result.get("tools", []) if t.get("name") == tool_name), None
+        )
+        if match is None:
+            return {"exists": False, "signature": None}
+        return {"exists": True, "signature": match.get("parameter")}
 
     return probe
 

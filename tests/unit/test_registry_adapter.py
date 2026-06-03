@@ -114,15 +114,22 @@ def test_omim_and_disgenet_seeded_unavailable():
 
 
 def test_make_smcp_probe_maps_get_tool_info():
-    """make_smcp_probe adapts a get_tool_info caller into the Probe contract."""
+    """make_smcp_probe adapts a get_tool_info caller into the Probe contract.
+
+    get_tool_info is a BATCH meta-tool: a found single-name request returns
+    {"total_found": 1, "tools": [{"name","parameter"}]}; a NOT-FOUND name is not an
+    error — it echoes a stub tool with that name but total_found=0. Existence keys on
+    total_found + exact-name match, NOT on name presence (DSR-508, real sr-dev shape)."""
     def call(tool_name):
         catalog = {
             "ClinVar_search_variants": {
-                "name": "ClinVar_search_variants",
-                "parameter_schema": {"gene": {"type": "string"}},
+                "total_found": 1,
+                "tools": [{"name": "ClinVar_search_variants",
+                           "parameter": {"gene": {"type": "string"}}}],
             }
         }
-        return catalog.get(tool_name, {"error": f"Tool '{tool_name}' not found."})
+        # the real not-found shape: total_found=0 with a name-echoing stub tool
+        return catalog.get(tool_name, {"total_found": 0, "tools": [{"name": tool_name}]})
 
     probe = make_smcp_probe(call)
 
@@ -130,4 +137,5 @@ def test_make_smcp_probe_maps_get_tool_info():
         "exists": True,
         "signature": {"gene": {"type": "string"}},
     }
+    # the not-found stub echoes the name but total_found=0 → must be exists False
     assert probe("No_Such_Tool") == {"exists": False, "signature": None}

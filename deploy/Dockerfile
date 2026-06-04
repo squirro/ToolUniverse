@@ -56,6 +56,9 @@ COPY deploy/persona-clinical-trial-matching.md       /app/served-skills/clinical
 COPY deploy/persona-pharmacogenomics.md              /app/served-skills/pharmacogenomics.md
 COPY deploy/persona-chemical-compound-retrieval.md   /app/served-skills/chemical-compound-retrieval.md
 COPY deploy/persona-small-molecule-discovery.md      /app/served-skills/small-molecule-discovery.md
+# DSR-510 gap-close (Doriano demo): literature-deep-research answers AR-V7 prevalence-
+# by-stage — variant frequency lives in primary literature, not OpenTargets/ClinVar.
+COPY deploy/persona-literature-deep-research.md      /app/served-skills/literature-deep-research.md
 
 # Compact mode: TU loads all ~2,278 tools in the background but only exposes
 # 5 in tools/list — list_tools, grep_tools, get_tool_info, execute_tool,

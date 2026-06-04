@@ -38,12 +38,24 @@ ENV TOOLUNIVERSE_LOG_LEVEL=INFO \
 
 EXPOSE 8000
 
-# Serve the converted disease-research SOP body via the get_skill tool
-# (ADR-0005 / DSR-505). Direct copy of the canonical converged body — single
+# Serve the converted skill SOP bodies via the get_skill tool (ADR-0005 /
+# DSR-505/510). Each is a direct copy of its canonical converged body — single
 # source of truth, so the served body cannot drift from the persona-direct
-# baseline it is benchmarked against. Placed after pip install so editing the
-# body does not bust the install layer cache.
-COPY deploy/persona-disease-research.md /app/served-skills/disease-research.md
+# baseline it is benchmarked against. Placed after pip install so editing a body
+# does not bust the install layer cache. The served set is the DSR-509 gate-PASS
+# bodies; persona-router.md routes user intent to the right name via get_skill.
+COPY deploy/persona-disease-research.md              /app/served-skills/disease-research.md
+COPY deploy/persona-drug-research.md                 /app/served-skills/drug-research.md
+COPY deploy/persona-drug-mechanism-research.md       /app/served-skills/drug-mechanism-research.md
+COPY deploy/persona-drug-repurposing.md              /app/served-skills/drug-repurposing.md
+COPY deploy/persona-drug-regulatory.md               /app/served-skills/drug-regulatory.md
+COPY deploy/persona-drug-target-validation.md        /app/served-skills/drug-target-validation.md
+COPY deploy/persona-precision-oncology.md            /app/served-skills/precision-oncology.md
+COPY deploy/persona-cancer-variant-interpretation.md /app/served-skills/cancer-variant-interpretation.md
+COPY deploy/persona-clinical-trial-matching.md       /app/served-skills/clinical-trial-matching.md
+COPY deploy/persona-pharmacogenomics.md              /app/served-skills/pharmacogenomics.md
+COPY deploy/persona-chemical-compound-retrieval.md   /app/served-skills/chemical-compound-retrieval.md
+COPY deploy/persona-small-molecule-discovery.md      /app/served-skills/small-molecule-discovery.md
 
 # Compact mode: TU loads all ~2,278 tools in the background but only exposes
 # 5 in tools/list — list_tools, grep_tools, get_tool_info, execute_tool,

@@ -59,6 +59,15 @@ COPY deploy/persona-small-molecule-discovery.md      /app/served-skills/small-mo
 # DSR-510 gap-close (Doriano demo): literature-deep-research answers AR-V7 prevalence-
 # by-stage — variant frequency lives in primary literature, not OpenTargets/ClinVar.
 COPY deploy/persona-literature-deep-research.md      /app/served-skills/literature-deep-research.md
+# DSR-509 wave-2 remaining (gated grounded-PASS on sempart cap=60, 2026-06-04).
+COPY deploy/persona-pharmacovigilance.md             /app/served-skills/pharmacovigilance.md
+COPY deploy/persona-toxicology.md                    /app/served-skills/toxicology.md
+COPY deploy/persona-adverse-event-detection.md       /app/served-skills/adverse-event-detection.md
+COPY deploy/persona-clinical-trial-design.md         /app/served-skills/clinical-trial-design.md
+COPY deploy/persona-variant-interpretation.md        /app/served-skills/variant-interpretation.md
+COPY deploy/persona-rare-disease-diagnosis.md        /app/served-skills/rare-disease-diagnosis.md
+# drug-drug-interaction: rescued to grounded-only via persona hardening (DailyMed_parse_drug_interactions dual-setid).
+COPY deploy/persona-drug-drug-interaction.md         /app/served-skills/drug-drug-interaction.md
 
 # Compact mode: TU loads all ~2,278 tools in the background but only exposes
 # 5 in tools/list — list_tools, grep_tools, get_tool_info, execute_tool,

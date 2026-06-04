@@ -20,6 +20,8 @@ several skills take "a drug" or "a variant"; the distinguishing question is in b
 ## Disease & condition
 - **What is known about this disease?** (biology, targets, drugs, trials overview)
   → `get_skill("disease-research")`
+- **What rare disease explains this gene/phenotype?** (rare-disease diagnostic workup:
+  Orphanet disease + HPO phenotypes + causal gene) → `get_skill("rare-disease-diagnosis")`
 
 ## Drugs — pick by the question being asked about the drug
 - **What is this drug?** (general profile: chemistry, targets, indications, safety)
@@ -30,17 +32,31 @@ several skills take "a drug" or "a variant"; the distinguishing question is in b
 - **What is this drug's regulatory status?** (FDA label, approvals, boxed warnings)
   → `get_skill("drug-regulatory")`
 
+## Drug safety, toxicity & interactions — pick by the safety question
+- **Is this drug safe? full safety dossier** (AE profile, serious/fatal events, label
+  warnings, PGx, trial safety — one comprehensive report) → `get_skill("pharmacovigilance")`
+- **Is there a disproportionality SIGNAL for this drug?** (FAERS PRR/ROR/IC signal
+  detection / data-mining specifically) → `get_skill("adverse-event-detection")`
+- **What is this compound's toxicity profile?** (adverse outcome pathways, organ /
+  mechanistic toxicology, toxicogenomics) → `get_skill("toxicology")`
+- **Do these TWO drugs interact?** (drug–drug interaction for a PAIR: PK/PD mechanism,
+  perpetrator–victim, management) → `get_skill("drug-drug-interaction")`
+
 ## Targets
 - **Is this target worth pursuing?** (GO/NO-GO target validation, druggability)  → `get_skill("drug-target-validation")`
 
 ## Cancer & variants
 - **What treatment for this cancer + mutation?** (tiered therapy recommendation)
   → `get_skill("precision-oncology")`
-- **What does this specific cancer variant mean clinically?** (single variant interp)  → `get_skill("cancer-variant-interpretation")`
+- **What does this specific cancer variant mean clinically?** (somatic/oncology variant interp)  → `get_skill("cancer-variant-interpretation")`
+- **What does this germline/clinical variant mean?** (ACMG classification, pathogenicity —
+  non-cancer / hereditary context)  → `get_skill("variant-interpretation")`
 
 ## Clinical trials
 - **Which trials fit this patient/condition?** (ranked trial matching)
   → `get_skill("clinical-trial-matching")`
+- **How should I design a trial for this indication?** (endpoints, eligibility, phase,
+  statistical design) → `get_skill("clinical-trial-design")`
 
 ## Pharmacogenomics
 - **How does genotype affect drug response?** (metabolizer status, PGx dosing)

@@ -44,19 +44,31 @@ AVAILABLE tools (call these exactly):
 - `KEGG_get_drug` — requires D##### id; returns Metabolism (CYP/UGT enzymes), Interaction, Target.
   PRIMARY source for CYP/UGT/transporter roles. Use find_tools FALLBACK to resolve drug name →
   D#####; if no resolver on this cluster, mark KEGG fields "No data available".
-- `DailyMed_get_spl_by_setid` — requires setid UUID. Use find_tools FALLBACK to resolve drug name
-  → UUID; if no resolver on this cluster, mark "DailyMed label not reachable" — ★★★ evidence
-  unavailable. When reachable, extract "Drug Interactions" section — highest evidence (★★★).
+- `DailyMed_search_spls` — drug_name → setid UUID(s). Call FIRST for EACH drug to get its setid.
+- `DailyMed_parse_drug_interactions` — requires setid; returns the label's "Drug Interactions"
+  section as STRUCTURED table_rows (partner drug | code | clinical text). ★★★ HIGHEST evidence and
+  the PRIMARY pairwise grounding: a pair's crisp management text (e.g. amiodarone's label row
+  "Warfarin … reduce warfarin dose by one-third to one-half") lives in ONE drug's label — so for a
+  pair A+B you MUST parse BOTH setids and scan each table for the partner drug's row.
+- `DailyMed_get_spl_by_setid` — raw full label by setid; fallback when the parsed-interactions
+  tool returns nothing. If no setid resolves, mark "DailyMed label not reachable" — ★★★ unavailable.
 - `PubMed_search_articles` — query="[Drug A] [Drug B] interaction" (include_abstract=true,
   limit=10, sort="pub_date"). Clinical evidence for the pair.
 
 DO NOT CALL: `drugbank_get_drug_interactions_by_drug_name_or_id` — NOT on this cluster.
+NEVER use web search (`Exa_Web_Search`, `Perplexity_Web_Search_LLM`, `Web_Search`): every label
+and DDI fact is grounded via `DailyMed_parse_drug_interactions` + `PubMed_search_articles`. A web
+call is an ungrounded source and is forbidden — if a grounded tool returns nothing, mark
+"No data available"; do NOT substitute web content.
 
 SEQUENCE — breadth before depth:
-1. PRIMARY CALLS (per drug): ChEMBL_get_drug_mechanisms for EACH drug. Attempt KEGG + DailyMed
-   ID resolution for each (one find_tools call per drug if needed; skip if it fails).
-2. PRIMARY PAIRWISE CALL: PubMed_search_articles for the A+B pair.
-3. ENRICHMENT: DailyMed label extraction + KEGG detail calls if IDs were resolved.
+1. PRIMARY CALLS (per drug): ChEMBL_get_drug_mechanisms for EACH drug; DailyMed_search_spls for
+   EACH drug to get its setid; KEGG D##### resolution (one find_tools call per drug if needed).
+2. PAIRWISE GROUNDING (the core DDI evidence): DailyMed_parse_drug_interactions on BOTH setids;
+   scan each label's interaction table for the OTHER drug's row (the crisp management text is in
+   one label only). THEN PubMed_search_articles for the "[A] [B] interaction" pair.
+3. ENRICHMENT: KEGG Metabolism/Interaction detail if IDs resolved; DailyMed_get_spl_by_setid raw
+   only if the parsed-interactions call came back empty.
 4. ADDITIONAL PAIRS: repeat steps 2-3 for each remaining drug pair (for polypharmacy).
 Only after ALL pairs have their primary calls should you emit the report.
 

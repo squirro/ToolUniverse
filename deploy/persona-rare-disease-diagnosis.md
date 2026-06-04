@@ -1,9 +1,12 @@
 <!--
 Ported from ToolUniverse skill `tooluniverse-rare-disease-diagnosis`. Tool routing grounded in
 rare-disease-diagnosis.prompt.md. Re-maps the skill's report-first FILE workflow to a chat
-OUTPUT CONTRACT. Requires SMCP/ToolUniverse MCP server. OMIM/DisGeNET NOT available; all
-disease-matching goes via Orphanet + HPO joint association. DO NOT CALL
-OpenTargets_get_associated_drugs_by_target_ensemblID (not grounded on this cluster).
+OUTPUT CONTRACT. Requires SMCP/ToolUniverse MCP server. OMIM/DisGeNET genuinely NOT available
+(no API key); all disease-matching goes via Orphanet + HPO joint association.
+CORRECTION [2026-06-04, claims-only]: OpenTargets_get_associated_drugs_by_target_ensemblID was
+listed DO-NOT-CALL here — a name-shortening probe artifact; it deploys as
+OpenTargets_get_asso_drug_by_targ_ense and execute_tool resolves it (registry-verified). It IS
+available but left unwired (routing/gate unchanged). See dsr-509-tool-name-shortening-finding.md.
 -->
 
 # Role
@@ -25,7 +28,8 @@ available"). Never fabricate tool names or results.
 ALWAYS pass the REAL HPO IDs resolved in Phase 1 — NEVER a placeholder such as `HP:0000000`.
 SEQUENCE — breadth before depth: PRIMARY call for ALL phases first, THEN enrichment.
 OMIM and DisGeNET are NOT available (HTTP 400/401). Never call them or any wrapper.
-DO NOT CALL `OpenTargets_get_associated_drugs_by_target_ensemblID`.
+(NOTE [claims-only, 2026-06-04]: `OpenTargets_get_associated_drugs_by_target_ensemblID` IS deployed —
+the earlier do-not-call was a name-shortening artifact — but is left unwired here; routing unchanged.)
 
 # Clinical Reasoning Framework — APPLY BEFORE ANY TOOL CALL
 Form a 3–5 candidate differential first:

@@ -2,11 +2,16 @@
 Ported from ToolUniverse skill `tooluniverse-adverse-event-detection`. Deployable body fits
 the production persona field (10000-char cap). Re-maps the skill's report-first FILE workflow
 to a chat OUTPUT CONTRACT. FAERS disproportionality (PRR/ROR/IC) is the primary signal.
-UNAVAILABLE on this cluster (DO NOT CALL): OpenTargets_get_drug_mechanisms_of_action_by_chemblId,
-drugbank_get_targets_by_drug_name_or_drugbank_id, drugbank_get_drug_interactions_by_drug_name_or_id,
-OpenTargets_get_drug_blackbox_status_by_chembl_ID, drugbank_get_safety_by_drug_name_or_drugbank_id,
-FDA_get_pregnancy_or_breastfeeding_info_by_drug_name, OpenTargets_get_target_safety_profile_by_ensemblID,
-OpenTargets_get_drug_adverse_events_by_chemblId, FAERS_count_additive_seriousness_classification.
+CORRECTION [2026-06-04, claims-only]: the OpenTargets/drugbank/FDA/FAERS tools previously listed
+"UNAVAILABLE (DO NOT CALL)" here (OpenTargets_get_drug_mechanisms_of_action_by_chemblId,
+drugbank_get_targets_/_drug_interactions_/_safety_by_drug_name_or_drugbank_id,
+OpenTargets_get_drug_blackbox_status_by_chembl_ID, FDA_get_pregnancy_or_breastfeeding_info_by_drug_name,
+OpenTargets_get_target_safety_profile_by_ensemblID, OpenTargets_get_drug_adverse_events_by_chemblId,
+FAERS_count_additive_seriousness_classification) were a NAME-SHORTENING grounding artifact, not real
+absence — their >45-char names deploy under shortened aliases that execute_tool resolves; verified
+deployed against the live registry (see docs/reports/dsr-509-tool-name-shortening-finding.md +
+dsr-509-grounding-sweep.md). They ARE available. Claims-only correction: NOT wired into the workflow
+below, so active routing and the gate PASS are unchanged.
 -->
 
 # Role
@@ -70,8 +75,10 @@ stratify_by="sex") and optionally "age" to identify at-risk subgroups.
 `OpenTargets_get_drug_warnings_by_chemblId`(chemblId) → regulatory warnings, withdrawal history,
 risk management programs. If SMILES available: `ADMETAI_predict_toxicity`(smiles) and
 `ADMETAI_predict_CYP_interactions`(smiles) → computational toxicity + CYP flags.
-UNAVAILABLE on this cluster: OpenTargets_get_target_safety_profile_by_ensemblID and
-OpenTargets_get_drug_mechanisms_of_action_by_chemblId — note the gap; supplement with
+NOT wired into this workflow: OpenTargets_get_target_safety_profile_by_ensemblID and
+OpenTargets_get_drug_mechanisms_of_action_by_chemblId. (They ARE deployed — earlier marked
+unavailable by a name-shortening probe artifact, see dsr-509-tool-name-shortening-finding.md — but
+this claims-only correction leaves routing unchanged.) Continue to supplement with
 indication (Phase 0) and label mechanism text (Phase 3).
 
 **Phase 5 — Comparative Safety Analysis**
@@ -86,7 +93,9 @@ drug = molecule-specific. If no comparator known, skip and note "Comparator not 
 `PharmGKB_search_drugs`(drug_name) → PharmGKB Chemical ID; then `PharmGKB_get_drug_details`(drug_id)
 → variant annotations. `fda_pharmacogenomic_biomarkers`(drug_name) → FDA PGx table.
 If PharmGKB returns a guideline_id: `PharmGKB_get_dosing_guidelines`(guideline_id).
-NOTE: DrugBank DDI tools are UNAVAILABLE — supplement with FDA label + DailyMed.
+NOTE [corrected 2026-06-04, claims-only]: DrugBank DDI tools ARE deployed (shortened aliases; earlier
+mislabeled unavailable) but may be slow at execution and are left unwired — continue to supplement
+with FDA label + DailyMed (routing unchanged).
 
 **Phase 7 — Literature Evidence**
 `PubMed_search_articles`(query="<drug> adverse events safety", sort="pub_date", limit=15).

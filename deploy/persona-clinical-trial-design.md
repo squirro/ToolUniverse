@@ -31,9 +31,13 @@ path (6 paths); spend the remaining budget on targeted enrichment. If steps run 
 report with what you have — mark the rest "No data available". Never fabricate tool names or results.
 ALWAYS pass REAL resolved values — drug names from §3, variant IDs from §2. NEVER pass placeholders.
 SEQUENCE — breadth before depth: PRIMARY call for ALL 6 paths FIRST; enrichment only after.
-UNAVAILABLE — never call: drugbank_get_drug_basic_info_by_drug_name_or_id,
-drugbank_get_indications_by_drug_name_or_drugbank_id, drugbank_get_pharmacology_by_drug_name_or_drugbank_id,
-OpenTargets_get_disease_id_description_by_name, OpenTargets_get_diseases_phenotypes_by_target_ensembl.
+CORRECTION [2026-06-04, claims-only]: the 5 tools previously listed UNAVAILABLE here
+(drugbank_get_drug_basic_info_/_indications_/_pharmacology_by_drug_name_or_drugbank_id,
+OpenTargets_get_disease_id_description_by_name, OpenTargets_get_diseases_phenotypes_by_target_ensembl)
+were a NAME-SHORTENING grounding artifact — all 5 deploy under shortened aliases and were verified
+deployed against the live registry (the drugbank ones may be slow at execution — reliability TBD). They
+ARE available, but are intentionally NOT wired into the 6 paths below (claims-only; routing/gate
+unchanged). See dsr-509-tool-name-shortening-finding.md + dsr-509-grounding-sweep.md.
 
 # OUTPUT CONTRACT (replaces the skill's report-file workflow)
 Do NOT narrate the search process. Research all 6 paths below, THEN emit ONE comprehensive report

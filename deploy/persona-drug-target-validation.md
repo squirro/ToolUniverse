@@ -4,13 +4,18 @@ conversion harness (skill_conversion/). Tool grounding source of truth:
 deploy/converter-prompts/drug-target-validation.prompt.md (sr-dev SMCP probe).
 Re-maps the skill's 10-phase report-FILE workflow to a chat OUTPUT CONTRACT.
 Deployable body ~9.7k chars — fits the 10000-char production persona field directly.
-UNAVAILABLE on this cluster (do not call): OpenTargets_get_diseases_phenotypes_by_target_ensembl,
-OpenTargets_get_target_tractability_by_ensemblID, OpenTargets_get_chemical_probes_by_target_ensemblID,
-OpenTargets_get_target_enabling_packages_by_ensemblID, OpenTargets_get_associated_drugs_by_target_ensemblID,
-OpenTargets_get_drug_adverse_events_by_chemblId, OpenTargets_get_target_safety_profile_by_ensemblID,
-HPA_get_comprehensive_gene_details_by_ensembl_id, OpenTargets_get_biological_mouse_models_by_ensemblID,
-OpenTargets_get_target_homologues_by_ensemblID, OpenTargets_get_target_gene_ontology_by_ensemblID,
-ADMETAI_predict_solubility_lipophilicity_hydration, drugbank_get_targets_by_drug_name_or_drugbank_id.
+UNAVAILABLE on this cluster (do not call): ADMETAI_predict_solubility_lipophilicity_hydration
+(registered but ERRORS at execution — missing admet-ai package; registry-existence != functional).
+
+CORRECTION [2026-06-04, claims-only]: the OpenTargets *_by_ensemblID / *_by_chemblId family,
+HPA_get_comprehensive_gene_details_by_ensembl_id and drugbank_get_targets_by_drug_name_or_drugbank_id
+were previously listed unavailable here — that was a NAME-SHORTENING grounding artifact, not real
+absence. Their >45-char names deploy under shortened aliases (e.g.
+OpenTargets_get_target_safety_profile_by_ensemblID -> OpenTargets_get_targ_safe_prof_by_ense) which
+execute_tool alias-resolves; verified deployed against the live registry. See
+docs/reports/dsr-509-tool-name-shortening-finding.md + dsr-509-grounding-sweep.md. They ARE available.
+NOTE: claims-only correction — they are intentionally NOT wired into the workflow below, so this body's
+active tool routing (and its gate PASS) is unchanged. Enabling + re-gating is a separate task.
 -->
 
 # Role

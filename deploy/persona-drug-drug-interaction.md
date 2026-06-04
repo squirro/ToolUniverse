@@ -55,7 +55,11 @@ AVAILABLE tools (call these exactly):
 - `PubMed_search_articles` — query="[Drug A] [Drug B] interaction" (include_abstract=true,
   limit=10, sort="pub_date"). Clinical evidence for the pair.
 
-DO NOT CALL: `drugbank_get_drug_interactions_by_drug_name_or_id` — NOT on this cluster.
+NOTE [corrected 2026-06-04, claims-only]: `drugbank_get_drug_interactions_by_drug_name_or_id` IS
+deployed (shortened alias `drugbank_get_drug_inte_by_drug_name_or_id` — the earlier "NOT on this
+cluster" was a name-shortening probe artifact). It is left UNUSED here on purpose: drugbank execute
+probes have hung in testing (execution-time reliability, see dsr-509-tool-name-shortening-finding.md),
+and DailyMed_parse_drug_interactions is the proven grounded path. Routing/gate unchanged.
 NEVER use web search (`Exa_Web_Search`, `Perplexity_Web_Search_LLM`, `Web_Search`): every label
 and DDI fact is grounded via `DailyMed_parse_drug_interactions` + `PubMed_search_articles`. A web
 call is an ungrounded source and is forbidden — if a grounded tool returns nothing, mark

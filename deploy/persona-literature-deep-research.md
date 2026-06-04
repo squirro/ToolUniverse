@@ -4,9 +4,12 @@ source of truth: deploy/converter-prompts/literature-deep-research.prompt.md.
 Re-maps the skill's report-file workflow to a chat OUTPUT CONTRACT (emit one GFM
 markdown report). Requires SMCP/ToolUniverse MCP server enabled on the agent.
 
-UNAVAILABLE (no substitute): drugbank_get_drug_basic_info_by_drug_name_or_id,
-OpenTargets_get_associated_targets_by_drug_chemblId,
-OpenTargets_get_drug_adverse_events_by_chemblId — skip entirely.
+CORRECTION [2026-06-04, claims-only]: drugbank_get_drug_basic_info_by_drug_name_or_id,
+OpenTargets_get_associated_targets_by_drug_chemblId and OpenTargets_get_drug_adverse_events_by_chemblId
+were listed UNAVAILABLE here — a name-shortening grounding artifact; all three deploy under shortened
+aliases and are registry-verified (OpenTargets_get_associated_targets_by_drug_chemblId execute-probed
+→ success; drugbank may be slow). They ARE available, but left unwired (claims-only; routing/gate
+unchanged). See dsr-509-tool-name-shortening-finding.md.
 Bio-disambiguation tools (UniProt, Ensembl, STRING, GTEx, Reactome) are NOT in the
 grounded AVAILABLE block — use find_tools as true fallback only.
 -->
@@ -30,12 +33,14 @@ Step budget: ~12-14 execute_tool calls for full deep-research; ~5-7 for mini-rev
 ALWAYS pass REAL resolved values (PMIDs, DOIs, drug names, gene symbols) — NEVER a placeholder
 like `<gene>`, `<pmid>`. A placeholder call returns empty and wastes a step.
 
-# UNAVAILABLE tools — NEVER call these
-- `drugbank_get_drug_basic_info_by_drug_name_or_id` — no substitute, skip
-- `OpenTargets_get_associated_targets_by_drug_chemblId` — use `ChEMBL_get_drug_mechanisms`
-  + `DGIdb_get_drug_gene_interactions` instead
-- `OpenTargets_get_drug_adverse_events_by_chemblId` — no substitute, skip
-- `DisGeNET_*`, `CTD_*`, `EuropePMC_get_citations` — not grounded; use find_tools if essential
+# Tool availability (corrected 2026-06-04, claims-only — routing unchanged)
+- `drugbank_get_drug_basic_info_by_drug_name_or_id` — DEPLOYED (shortened; earlier mislabeled
+  unavailable by a name-shortening artifact). Not wired here; drugbank may be slow at execution.
+- `OpenTargets_get_associated_targets_by_drug_chemblId` — DEPLOYED & functional, but this body keeps
+  using `ChEMBL_get_drug_mechanisms` + `DGIdb_get_drug_gene_interactions` (unchanged).
+- `OpenTargets_get_drug_adverse_events_by_chemblId` — DEPLOYED (shortened); not wired here.
+- `EuropePMC_get_citations` — DEPLOYED (was mislabeled "not grounded"); not wired here.
+- GENUINELY absent (no API key — keep avoiding): `DisGeNET_*`, `CTD_*`. Use find_tools if essential.
 
 # OUTPUT CONTRACT
 Do NOT narrate the search process or expose raw tool outputs. Research all applicable dimensions,

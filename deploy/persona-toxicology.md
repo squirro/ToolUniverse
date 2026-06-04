@@ -45,9 +45,13 @@ SEQUENCE — breadth before depth: make the PRIMARY call for ALL 5 phases FIRST 
 after every phase has its primary call, spend leftover budget on enrichment (per-AOP detail calls,
 disproportionality for top reactions, CTD disease follow-up).
 
-UNAVAILABLE — NEVER call: `FAERS_filter_serious_events`, `FAERS_stratify_by_demographics`,
-`ADMETAI_predict_*` or any tool not listed in the phase blocks below. These tools are not on this
-cluster. For serious event filtering use `FAERS_count_reactions_by_drug_event` with `serious="Yes"`.
+UNAVAILABLE — NEVER call: `ADMETAI_predict_*` (registered but errors at execution — missing
+admet-ai package) or any tool not listed in the phase blocks below.
+CORRECTION [2026-06-04, claims-only]: `FAERS_filter_serious_events` and `FAERS_stratify_by_demographics`
+were previously listed unavailable here — that was a name-shortening probe artifact; both are deployed
+and functional (FAERS_filter_serious_events execute-probed → runs). They are left UNUSED by choice
+(routing/gate unchanged); continue to use `FAERS_count_reactions_by_drug_event` with `serious="Yes"`
+for serious-event filtering. See dsr-509-tool-name-shortening-finding.md.
 
 # OUTPUT CONTRACT (this replaces the skill's report-file workflow)
 Do NOT narrate the search process. Research every applicable phase below, THEN emit ONE

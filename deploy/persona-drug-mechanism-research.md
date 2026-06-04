@@ -3,7 +3,11 @@ Ported from ToolUniverse skill `tooluniverse-drug-mechanism-research`. Grounded 
 source of truth: AVAILABLE block in drug-mechanism-research.prompt.md + live-proven tools
 in the golden disease-research converted persona (same cluster). find_tools is the
 sanctioned fallback only for dimensions with no grounded/live-proven name.
-DO NOT CALL: OpenTargets_get_associated_targets_by_drug_chemblId.
+CORRECTION [2026-06-04, claims-only]: OpenTargets_get_associated_targets_by_drug_chemblId was
+previously listed DO-NOT-CALL here — that was a name-shortening grounding artifact; it deploys as
+OpenTargets_get_asso_targ_by_drug_chem and execute_tool resolves it (verified deployed). It IS
+available, but is intentionally NOT wired into the workflow below (claims-only; routing/gate unchanged).
+See docs/reports/dsr-509-tool-name-shortening-finding.md.
 -->
 
 # Role
@@ -27,9 +31,10 @@ ALWAYS pass REAL resolved values — ChEMBL ID from §1, gene symbols from §2. 
 a placeholder (`CHEMBL0000000`, `<drug>`, `<target>`): a placeholder wastes a step and
 returns nothing. SEQUENCE — breadth before depth: primary call for ALL dimensions first;
 enrichment only after every dimension has its primary call.
-NEVER call `OpenTargets_get_associated_targets_by_drug_chemblId` — unavailable on this
-cluster (GraphQL schema change). The MOA tool's mechanismsOfAction rows carry the target
-gene symbols; extract them from there.
+NOTE [corrected 2026-06-04, claims-only]: `OpenTargets_get_associated_targets_by_drug_chemblId` is
+actually AVAILABLE and functional (execute-probed CHEMBL941 → success; the earlier "GraphQL schema
+change" belief is stale). It is left out of this workflow by choice, not necessity — continue to
+extract target gene symbols from the MOA tool's mechanismsOfAction rows (routing/gate unchanged).
 
 # GROUNDED TOOLS (call execute_tool directly)
 

@@ -38,36 +38,25 @@ ENV TOOLUNIVERSE_LOG_LEVEL=INFO \
 
 EXPOSE 8000
 
-# Serve the converted skill SOP bodies via the get_skill tool (ADR-0005 /
-# DSR-505/510). Each is a direct copy of its canonical converged body — single
-# source of truth, so the served body cannot drift from the persona-direct
-# baseline it is benchmarked against. Placed after pip install so editing a body
-# does not bust the install layer cache. The served set is the DSR-509 gate-PASS
-# bodies; persona-router.md routes user intent to the right name via get_skill.
-COPY deploy/persona-disease-research.md              /app/served-skills/disease-research.md
-COPY deploy/persona-drug-research.md                 /app/served-skills/drug-research.md
-COPY deploy/persona-drug-mechanism-research.md       /app/served-skills/drug-mechanism-research.md
-COPY deploy/persona-drug-repurposing.md              /app/served-skills/drug-repurposing.md
-COPY deploy/persona-drug-regulatory.md               /app/served-skills/drug-regulatory.md
-COPY deploy/persona-drug-target-validation.md        /app/served-skills/drug-target-validation.md
-COPY deploy/persona-precision-oncology.md            /app/served-skills/precision-oncology.md
-COPY deploy/persona-cancer-variant-interpretation.md /app/served-skills/cancer-variant-interpretation.md
-COPY deploy/persona-clinical-trial-matching.md       /app/served-skills/clinical-trial-matching.md
-COPY deploy/persona-pharmacogenomics.md              /app/served-skills/pharmacogenomics.md
-COPY deploy/persona-chemical-compound-retrieval.md   /app/served-skills/chemical-compound-retrieval.md
-COPY deploy/persona-small-molecule-discovery.md      /app/served-skills/small-molecule-discovery.md
-# DSR-510 gap-close (Doriano demo): literature-deep-research answers AR-V7 prevalence-
-# by-stage — variant frequency lives in primary literature, not OpenTargets/ClinVar.
-COPY deploy/persona-literature-deep-research.md      /app/served-skills/literature-deep-research.md
-# DSR-509 wave-2 remaining (gated grounded-PASS on sempart cap=60, 2026-06-04).
-COPY deploy/persona-pharmacovigilance.md             /app/served-skills/pharmacovigilance.md
-COPY deploy/persona-toxicology.md                    /app/served-skills/toxicology.md
-COPY deploy/persona-adverse-event-detection.md       /app/served-skills/adverse-event-detection.md
-COPY deploy/persona-clinical-trial-design.md         /app/served-skills/clinical-trial-design.md
-COPY deploy/persona-variant-interpretation.md        /app/served-skills/variant-interpretation.md
-COPY deploy/persona-rare-disease-diagnosis.md        /app/served-skills/rare-disease-diagnosis.md
-# drug-drug-interaction: rescued to grounded-only via persona hardening (DailyMed_parse_drug_interactions dual-setid).
-COPY deploy/persona-drug-drug-interaction.md         /app/served-skills/drug-drug-interaction.md
+# Serve EVERY converted skill SOP body via the get_skill tool (ADR-0005 /
+# DSR-505/510). Glob-copy persona-<name>.md → /app/served-skills/<name>.md so a
+# newly gated body is served by ADDING THE FILE — not by editing this Dockerfile.
+# This closes the DSR-510 "only ~13 served" gap: the served set is now every
+# converted research body in deploy/, single source of truth (the served body
+# cannot drift from the persona-direct baseline it is benchmarked against).
+# EXCLUDED (not get_skill-served): router / router-spike (the dispatcher persona,
+# applied to the AGENT), doriano / smcp-only (non-skill personas). Placed after
+# pip install so editing a body does not bust the install layer cache.
+COPY deploy/persona-*.md /tmp/served/
+RUN mkdir -p /app/served-skills \
+ && for f in /tmp/served/persona-*.md; do \
+      name="$(basename "$f" .md)"; name="${name#persona-}"; \
+      case "$name" in router|router-spike|doriano|smcp-only) continue ;; esac; \
+      cp "$f" "/app/served-skills/$name.md"; \
+    done \
+ && rm -rf /tmp/served \
+ && echo "[served-skills] $(ls -1 /app/served-skills | wc -l) bodies:" \
+ && ls -1 /app/served-skills | sed 's/\.md$//' | sort
 
 # Compact mode: TU loads all ~2,278 tools in the background but only exposes
 # 5 in tools/list — list_tools, grep_tools, get_tool_info, execute_tool,

@@ -12,6 +12,7 @@ authors = [
 dependencies = [
     "requests>=2.32.0",
     "numpy>=2.2.0",
+    "bm25s>=0.2.0", # find_skill catalog search (ADR-0009); BM25 over served-skill metadata
     "sympy>=1.12.0", # Symbolic mathematics for Python executor
     "graphql-core>=3.2.0",
     "fastapi>=0.116.0",

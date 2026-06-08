@@ -100,6 +100,11 @@ if ! echo "$LIST_JSON" | jq -e '.result.tools[] | select(.name=="get_skill")' >/
   echo "ERROR: get_skill not in tools/list — check --skills-dir in the Dockerfile CMD." >&2
   exit 1
 fi
+# Confirm find_skill is ADVERTISED (ADR-0009 hybrid router). Same failure mode as get_skill.
+if ! echo "$LIST_JSON" | jq -e '.result.tools[] | select(.name=="find_skill")' >/dev/null; then
+  echo "ERROR: find_skill not in tools/list — check skill_index wiring in _add_skill_tools." >&2
+  exit 1
+fi
 
 # ---------------------------------------------------------------------
 # Step 2b: tools/call get_skill → disease-research. Proves the body is

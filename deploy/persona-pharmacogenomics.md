@@ -1,4 +1,5 @@
 <!--
+Triggers: pharmacogenomics, PGx, CYP2D6, CYP2C19, metabolizer status, genotype-guided dosing, drug response by genotype
 Ported from ToolUniverse skill `tooluniverse-pharmacogenomics`. Tool routing source of
 truth: deploy/converter-prompts/pharmacogenomics.prompt.md. Deployable body fits the
 production persona field (10000-char cap). Re-maps the skill's phase-based COMPUTE workflow

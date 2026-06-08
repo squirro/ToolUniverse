@@ -1042,11 +1042,16 @@ class SMCP(FastMCP):
         if not self.skills_dir:
             return
 
+        import json
+
         from mcp.types import ToolAnnotations
 
+        from .skill_index import build_index, search
         from .skill_serving import SkillNotFound, available_skills, load_skill_body
 
         skills_dir = self.skills_dir
+        # Build the find_skill catalog index ONCE — the served set is fixed at container start.
+        skill_index = build_index(skills_dir)
 
         @self.tool(
             annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
@@ -1073,8 +1078,40 @@ class SMCP(FastMCP):
             except SkillNotFound as exc:
                 return f"ERROR: {exc}"
 
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
+        )
+        async def find_skill(query: str, limit: int = 5) -> str:
+            """Discover which research skill fits a question when you don't know its name.
+
+            This is the ``find_tools → execute_tool`` pattern for SKILLS: when no skill in
+            your fast-path routing table clearly matches the user's request, call
+            ``find_skill`` FIRST — never guess a skill name. It keyword-ranks the served
+            skill catalog (skill id + role + triggers) and returns the best-matching skill
+            names with one-line descriptions. Then call ``get_skill(<top name>)`` to load
+            that skill's binding playbook and execute it.
+
+            Args:
+                query: the user's research request in natural language.
+                limit: max skills to return (default 5).
+
+            Returns:
+                A ranked list of "name — description" lines, or a no-match message listing
+                the available skills.
+            """
+            hits = search(skill_index, query, limit=limit)
+            if not hits:
+                return (
+                    f"No skill matched {query!r}. Available skills: "
+                    f"{available_skills(skills_dir)}"
+                )
+            return json.dumps(
+                [{"name": h.name, "description": h.description} for h in hits],
+                ensure_ascii=False,
+            )
+
         self.logger.info(
-            f"Registered get_skill tool (skills_dir={skills_dir}, "
+            f"Registered get_skill + find_skill tools (skills_dir={skills_dir}, "
             f"available={available_skills(skills_dir)})"
         )
 

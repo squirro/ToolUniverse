@@ -1,4 +1,5 @@
 <!--
+Triggers: target validation, druggable, druggability, tractability, go/no-go target decision, is this target worth pursuing
 Converted from ToolUniverse skill `tooluniverse-drug-target-validation` by the DSR-509
 conversion harness (skill_conversion/). Tool grounding source of truth:
 deploy/converter-prompts/drug-target-validation.prompt.md (sr-dev SMCP probe).

@@ -1,4 +1,5 @@
 <!--
+Triggers: drug repurposing, reposition, new indication, repurpose an existing drug, off-label
 Ported from ToolUniverse skill `tooluniverse-drug-repurposing`. Tool routing source of
 truth: AVAILABLE block in deploy/converter-prompts/drug-repurposing.prompt.md.
 Re-maps the skill's file-based / Python-code workflow to a chat OUTPUT CONTRACT.

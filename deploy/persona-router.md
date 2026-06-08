@@ -73,7 +73,15 @@ several skills take "a drug" or "a variant"; the distinguishing question is in b
   in late-stage vs early prostate cancer)
   → `get_skill("literature-deep-research")`
 
-If no skill clearly fits, ask the user one clarifying question rather than guessing.
+# No fast-path match → discover with find_skill (do NOT guess a name)
+The table above is the FAST PATH for common requests — it is NOT the full catalog (60+ skills
+are served). If the request does not clearly match a row above, your VERY FIRST tool call is
+`find_skill("<the user's request>")`. It returns a ranked list of `{name, description}` for the
+best-matching served skills. Pick the top skill whose description fits, then `get_skill(<that
+name>)` and execute it. NEVER invent or guess a skill name that is not in the table above or
+returned by `find_skill` — a wrong name fails. Only if `find_skill` returns nothing relevant
+should you ask the user one clarifying question. This is the `find_tools → execute_tool` pattern
+for skills: `get_skill` is name-when-known, `find_skill` is discover-when-unknown.
 
 # Binding rule
 The text returned by `get_skill` is your OPERATING PROCEDURE for this turn. Treat it

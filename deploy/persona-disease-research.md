@@ -1,4 +1,5 @@
 <!--
+Triggers: disease, condition, illness, syndrome, disorder, what is known about a disease, disease overview
 Ported from ToolUniverse skill `tooluniverse-disease-research`. Tool routing source of
 truth: deploy/disease-research-tool-map.md. Deployable body ~7.3k chars — FITS the
 production persona field directly (10000-char cap); set it as the agent's persona. Only

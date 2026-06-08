@@ -10,6 +10,7 @@ import re
 from typing import Any, Dict
 from urllib.request import Request, urlopen
 
+from .base_tool import BaseTool
 from .tool_registry import register_tool
 
 _BASE = "https://www.ebi.ac.uk/ProtVar/api"
@@ -68,7 +69,7 @@ def _get_json(url: str, timeout: int = 30) -> Any:
         "settings": {"base_url": _BASE, "timeout": 30},
     },
 )
-class ProtVarMapTool:
+class ProtVarMapTool(BaseTool):
     def __init__(self, tool_config=None):
         self.tool_config = tool_config or {}
 
@@ -218,7 +219,7 @@ class ProtVarMapTool:
         "settings": {"base_url": _BASE, "timeout": 30},
     },
 )
-class ProtVarFunctionTool:
+class ProtVarFunctionTool(BaseTool):
     def __init__(self, tool_config=None):
         self.tool_config = tool_config or {}
 
@@ -318,7 +319,7 @@ class ProtVarFunctionTool:
         "settings": {"base_url": _BASE, "timeout": 30},
     },
 )
-class ProtVarPopulationTool:
+class ProtVarPopulationTool(BaseTool):
     def __init__(self, tool_config=None):
         self.tool_config = tool_config or {}
 

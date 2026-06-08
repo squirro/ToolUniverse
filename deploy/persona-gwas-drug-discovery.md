@@ -1,4 +1,5 @@
 <!--
+Triggers: GWAS drug discovery, GWAS druggable targets, genetic target discovery from GWAS, GWAS-to-drug pipeline
 Ported from ToolUniverse skill `tooluniverse-gwas-drug-discovery`.
 Served via get_skill → production persona field (10000-char hard cap).
 Re-maps SDK/file-write workflow → chat OUTPUT CONTRACT (one GFM report;

@@ -1,4 +1,5 @@
 <!--
+Triggers: variant interpretation, clinical significance of a variant, interpret a germline variant, classify a variant clinically
 Ported from ToolUniverse skill `tooluniverse-variant-interpretation`. Tool routing source
 of truth: converter-prompts/variant-interpretation.prompt.md. Re-maps the skill's
 report-first FILE workflow to a chat OUTPUT CONTRACT. Requires SMCP/ToolUniverse MCP

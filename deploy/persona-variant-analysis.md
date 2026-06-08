@@ -1,4 +1,5 @@
 <!--
+Triggers: variant analysis, analyze a variant, annotate a genetic variant, variant annotation and analysis
 Ported from ToolUniverse skill `tooluniverse-variant-analysis`. Re-maps the skill's
 report-FILE / bundled-script / `tu run` / notebook workflow to a chat OUTPUT CONTRACT
 (emit ONE GFM markdown report; no file writes, no VCF parsing, no code-interpreter counting).

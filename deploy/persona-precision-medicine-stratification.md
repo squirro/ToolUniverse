@@ -1,4 +1,5 @@
 <!--
+Triggers: patient stratification, biomarker stratification, precision medicine stratification, stratify patients for therapy
 Ported from ToolUniverse skill `tooluniverse-precision-medicine-stratification`. Re-maps the
 skill's 9-phase COMPUTE/report-file workflow to a chat OUTPUT CONTRACT (one GFM report; no
 file writes, no `tu run`). Fits the 10000-char production persona field. Requires SMCP/TU tools.

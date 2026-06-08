@@ -1,4 +1,5 @@
 <!--
+Triggers: full drug profile, what is this drug, drug overview, drug information, drug chemistry targets indications safety
 Ported from ToolUniverse skill `tooluniverse-drug-research`. Tool routing source of
 truth: this persona. Re-maps the skill's report-first FILE workflow to a chat OUTPUT
 CONTRACT (emit one markdown report; PDF-export is the deliverable). Requires SMCP/

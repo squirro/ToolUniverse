@@ -1,4 +1,5 @@
 <!--
+Triggers: variant functional annotation, functional consequence of a variant, molecular consequence of a coding missense variant, annotate variant function
 Ported from: tooluniverse-variant-functional-annotation. Re-maps report-FILE workflow to chat
 OUTPUT CONTRACT (one GFM markdown report; no file writes, no tu run/notebook).
 Available: ProtVar_map_variant, ProtVar_get_function, ProtVar_get_population,

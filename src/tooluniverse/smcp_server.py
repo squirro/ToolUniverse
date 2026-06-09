@@ -753,6 +753,13 @@ Examples:
         "--list-tools", action="store_true", help="List all available tools and exit"
     )
 
+    parser.add_argument(
+        "--skills-dir",
+        default=None,
+        help="Directory of converted skill bodies served on demand via the "
+        "get_skill tool (ADR-0005 / DSR-505). Omit to disable get_skill.",
+    )
+
     # Server configuration
     parser.add_argument(
         "--transport",
@@ -996,6 +1003,7 @@ Examples:
             hook_config=hook_config,
             hook_type=args.hook_type,
             compact_mode=args.compact_mode,
+            skills_dir=args.skills_dir,
         )
 
         # Run server

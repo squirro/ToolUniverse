@@ -93,6 +93,43 @@ if ! echo "$LIST_JSON" | jq -e '.result.tools[] | select(.name=="execute_tool")'
   exit 1
 fi
 
+# Confirm get_skill is ADVERTISED (ADR-0005 / DSR-505 serving spike). The router
+# can only invoke it if it appears in tools/list — "advertised" is the thing that
+# silently breaks. Absence ⇒ --skills-dir missing from the Dockerfile CMD.
+if ! echo "$LIST_JSON" | jq -e '.result.tools[] | select(.name=="get_skill")' >/dev/null; then
+  echo "ERROR: get_skill not in tools/list — check --skills-dir in the Dockerfile CMD." >&2
+  exit 1
+fi
+# Confirm find_skill is ADVERTISED (ADR-0009 hybrid router). Same failure mode as get_skill.
+if ! echo "$LIST_JSON" | jq -e '.result.tools[] | select(.name=="find_skill")' >/dev/null; then
+  echo "ERROR: find_skill not in tools/list — check skill_index wiring in _add_skill_tools." >&2
+  exit 1
+fi
+
+# ---------------------------------------------------------------------
+# Step 2b: tools/call get_skill → disease-research. Proves the body is
+# SERVED at the MCP layer (distinct from the LLM OBEYING it). Catches a
+# missing/empty served-skills dir before any live agent run.
+# ---------------------------------------------------------------------
+echo "[2b] tools/call get_skill → disease-research …"
+SKILL_RESP=$(curl -fsS -X POST "$URL" \
+              -H "$HDR_TYPE" -H "Accept: $ACCEPT" -H "$HDR_SESSION" \
+              -d '{"jsonrpc":"2.0","id":3,"method":"tools/call",
+                   "params":{"name":"get_skill",
+                             "arguments":{"name":"disease-research"}}}')
+SKILL_JSON=$(echo "$SKILL_RESP" | sse_payload)
+SKILL_TEXT=$(echo "$SKILL_JSON" | jq -r '.result.content[0].text // ""')
+case "$SKILL_TEXT" in
+  ERROR:*) echo "ERROR: get_skill returned: $SKILL_TEXT" >&2; exit 1 ;;
+esac
+# The served body is the converted disease-research SOP — assert a stable marker.
+if ! echo "$SKILL_TEXT" | grep -q "OUTPUT CONTRACT"; then
+  echo "ERROR: get_skill body missing expected SOP marker (OUTPUT CONTRACT)." >&2
+  echo "$SKILL_TEXT" | head -c 300 >&2
+  exit 1
+fi
+echo "      → served disease-research body (${#SKILL_TEXT} chars)"
+
 # ---------------------------------------------------------------------
 # Step 3: execute_tool → search_clinical_trials. Proves the agent flow:
 #   tools/call(execute_tool) → TU dispatches to a background-loaded tool

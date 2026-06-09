@@ -38,6 +38,26 @@ ENV TOOLUNIVERSE_LOG_LEVEL=INFO \
 
 EXPOSE 8000
 
+# Serve EVERY converted skill SOP body via the get_skill tool (ADR-0005 /
+# DSR-505/510). Glob-copy persona-<name>.md → /app/served-skills/<name>.md so a
+# newly gated body is served by ADDING THE FILE — not by editing this Dockerfile.
+# This closes the DSR-510 "only ~13 served" gap: the served set is now every
+# converted research body in deploy/, single source of truth (the served body
+# cannot drift from the persona-direct baseline it is benchmarked against).
+# EXCLUDED (not get_skill-served): router / router-spike (the dispatcher persona,
+# applied to the AGENT), doriano / smcp-only (non-skill personas). Placed after
+# pip install so editing a body does not bust the install layer cache.
+COPY deploy/persona-*.md /tmp/served/
+RUN mkdir -p /app/served-skills \
+ && for f in /tmp/served/persona-*.md; do \
+      name="$(basename "$f" .md)"; name="${name#persona-}"; \
+      case "$name" in router|router-spike|doriano|smcp-only) continue ;; esac; \
+      cp "$f" "/app/served-skills/$name.md"; \
+    done \
+ && rm -rf /tmp/served \
+ && echo "[served-skills] $(ls -1 /app/served-skills | wc -l) bodies:" \
+ && ls -1 /app/served-skills | sed 's/\.md$//' | sort
+
 # Compact mode: TU loads all ~2,278 tools in the background but only exposes
 # 5 in tools/list — list_tools, grep_tools, get_tool_info, execute_tool,
 # find_tools. The LLM discovers via find_tools/grep_tools/list_tools and
@@ -74,6 +94,7 @@ CMD ["tooluniverse-smcp", \
      "--host", "0.0.0.0", \
      "--port", "8000", \
      "--compact-mode", \
+     "--skills-dir", "/app/served-skills", \
      "--exclude-tools", "Tool_RAG", \
      "DisGeNET_search_gene", "DisGeNET_search_disease", "DisGeNET_get_gda", \
      "DisGeNET_get_vda", "DisGeNET_get_disease_genes", \

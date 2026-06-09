@@ -22,7 +22,7 @@ Detailed tool chains, fallback strategies, and examples for comprehensive scient
 **Step 3: Get Structures**
 - `alphafold_get_prediction` → AlphaFold predicted structure
 - `get_protein_metadata_by_pdb_id` → Experimental PDB structures
-- `PDBe_get_entry_summary` → PDB entry details
+- `pdbe_get_entry_summary` → PDB entry details
 
 **Step 4: Get Function & Pathways**
 - `GO_get_annotations_for_gene` → Gene Ontology terms
@@ -44,7 +44,7 @@ Detailed tool chains, fallback strategies, and examples for comprehensive scient
 **Step 7: Get Variants & Disease**
 - `gnomad_get_gene_constraints` → Genetic constraint scores
 - `gnomad_get_gene` → Population variants
-- `clinvar_search_variants` → Clinical variants
+- `ClinVar_search_variants` → Clinical variants
 - `UniProt_get_disease_variants_by_accession` → Disease variants
 - `OpenTargets_get_diseases_phenotypes_by_target_ensembl` → Disease associations
 
@@ -65,7 +65,7 @@ Detailed tool chains, fallback strategies, and examples for comprehensive scient
 
 **Step 1: Resolve Compound Identity**
 - `PubChem_get_CID_by_compound_name` → Get PubChem CID
-- `ChEMBL_search_compounds` → Get ChEMBL ID
+- `ChEMBL_search_molecules` → Get ChEMBL ID
 - `DailyMed_search_spls` → Check if approved drug
 - `PharmGKB_search_drugs` → Get PharmGKB ID
 
@@ -75,10 +75,10 @@ Detailed tool chains, fallback strategies, and examples for comprehensive scient
 - `ADMETAI_predict_solubility_lipophilicity_hydration` → Solubility data
 
 **Step 3: Get Targets & Bioactivity**
-- `ChEMBL_get_bioactivity_by_chemblid` → Bioactivity data
-- `ChEMBL_get_target_by_chemblid` → Target proteins
+- `ChEMBL_search_activities` → Bioactivity data
+- `ChEMBL_get_target` → Target proteins
 - `DGIdb_get_drug_info` → Drug-gene interactions
-- `PubChem_get_bioactivity_summary_by_CID` → PubChem bioactivity
+- `PubChem_get_compound_bioactivity` → PubChem bioactivity
 
 **Step 4: Get ADMET Predictions**
 - `ADMETAI_predict_bioavailability` → Absorption predictions
@@ -125,7 +125,7 @@ Detailed tool chains, fallback strategies, and examples for comprehensive scient
 **Step 3: Get Associated Genes**
 - `OpenTargets_get_associated_targets_by_disease_efoId` → Associated genes
 - `OpenTargets_target_disease_evidence` → Evidence details
-- `clinvar_search_variants` → Pathogenic variants
+- `ClinVar_search_variants` → Pathogenic variants
 
 **Step 4: Get GWAS Associations**
 - `gwas_search_associations` → GWAS hits
@@ -136,7 +136,7 @@ Detailed tool chains, fallback strategies, and examples for comprehensive scient
 **Step 5: Get Treatment Options**
 - `OpenTargets_get_associated_drugs_by_disease_efoId` → Approved/trial drugs
 - `search_clinical_trials` → Clinical trials
-- `GtoPdb_list_diseases` → Guide to Pharmacology
+- `GtoPdb_search_diseases` → Guide to Pharmacology
 
 **Step 6: Get Pathways**
 - `Reactome_get_diseases` → Disease pathways
@@ -162,29 +162,29 @@ Detailed tool chains, fallback strategies, and examples for comprehensive scient
 | `PubMed_search_articles` | `EuropePMC_search_articles` | `openalex_search_works` | `SemanticScholar_search_papers` |
 | `PubMed_get_cited_by` | `EuropePMC_get_citations` | OpenAlex citations | Manual search |
 | `PubMed_get_related` | `EuropePMC_get_references` | SemanticScholar | Keyword expansion |
-| `PubMed_get_article` | `EuropePMC_get_article` | `Crossref_get_work` | - |
+| `PubMed_get_article` | `EuropePMC_search_articles` | `Crossref_get_work` | - |
 
 ### Protein/Gene Tools
 | Primary | Fallback 1 | Fallback 2 |
 |---------|------------|------------|
 | `UniProt_get_entry_by_accession` | `proteins_api_get_protein` | NCBI protein |
-| `UniProt_search` | `proteins_api_search_proteins` | MyGene search |
+| `UniProt_search` | `proteins_api_search` | MyGene search |
 | `GTEx_get_median_gene_expression` | `HPA_get_rna_expression_by_source` | Document unavailable |
 | `alphafold_get_prediction` | `alphafold_get_summary` | PDB experimental |
 
 ### Drug/Compound Tools
 | Primary | Fallback 1 | Fallback 2 |
 |---------|------------|------------|
-| `PubChem_get_CID_by_compound_name` | `ChEMBL_search_compounds` + SMILES → CID | Manual search |
-| `ChEMBL_get_bioactivity_by_chemblid` | `PubChem_get_bioactivity_summary_by_CID` | - |
-| `DailyMed_search_spls` | `PubChem_get_drug_label_info_by_CID` | FDA label search |
+| `PubChem_get_CID_by_compound_name` | `ChEMBL_search_molecules` + SMILES → CID | Manual search |
+| `ChEMBL_search_activities` | `PubChem_get_compound_bioactivity` | - |
+| `DailyMed_search_spls` | `FDA_get_drug_label` | FDA label search |
 | `ADMETAI_predict_*` | Document "Predictions unavailable" | - |
 
 ### Disease Tools
 | Primary | Fallback 1 | Fallback 2 |
 |---------|------------|------------|
 | `OSL_get_efo_id_by_disease_name` | `ols_search_efo_terms` | `OpenTargets_get_disease_id_description_by_name` |
-| `clinvar_search_variants` | `gnomad_get_gene` | OpenTargets variants |
+| `ClinVar_search_variants` | `gnomad_get_gene` | OpenTargets variants |
 | `gwas_search_associations` | `gwas_get_variants_for_trait` | OpenTargets GWAS |
 
 ### Clinical Tools
@@ -216,7 +216,7 @@ Detailed tool chains, fallback strategies, and examples for comprehensive scient
 |------|-----|------|
 | Name → PubChem CID | `PubChem_get_CID_by_compound_name` |
 | SMILES → PubChem CID | `PubChem_get_CID_by_SMILES` |
-| Name → ChEMBL ID | `ChEMBL_search_compounds` |
+| Name → ChEMBL ID | `ChEMBL_search_molecules` |
 | CID → Properties | `PubChem_get_compound_properties_by_CID` |
 | Name → PharmGKB ID | `PharmGKB_search_drugs` |
 

@@ -12,7 +12,7 @@ Computational pipeline for designing peptide/subunit vaccine candidates through 
 
 Vaccine design requires presenting the right epitopes to elicit protective immunity — not just any immune response, but one that is neutralizing, durable, and broadly applicable. For T-cell vaccines, the core tool is MHC binding prediction (IEDB tools): predict peptide-MHC affinity across multiple HLA alleles, then select epitopes with broad coverage of the target population. For antibody vaccines, prioritize surface-exposed conserved regions — a deeply buried or hypervariable region makes a poor antibody target. MHC binding does not equal immunogenicity; many good binders are not immunogenic in vivo due to tolerance, poor processing, or lack of T-cell help. A multi-epitope strategy (combining MHC-I for CD8+ CTL response, MHC-II for CD4+ helper response, and B-cell epitopes for antibody induction) is more robust than any single epitope. Conservation across pathogen strains is critical — an epitope that mutates under immune pressure (like HIV envelope hypervariable regions) is a poor vaccine target.
 
-**LOOK UP DON'T GUESS**: Do not predict MHC binding or population coverage from memory — use `IEDB_predict_mhci_binding` and `IEDB_predict_mhcii_binding` for predictions and `iedb_search_epitopes` for validated experimental data. Do not assume what's on the pathogen surface; retrieve annotated sequences from UniProt or BVBRC.
+**LOOK UP DON'T GUESS**: Do not predict MHC binding or population coverage from memory — use `IEDB_predict_mhci_binding` / `IEDB_predict_mhcii_binding` for T-cell predictions, `IEDB_predict_bcell_epitopes` for antibody (B-cell) epitope prediction, and `iedb_search_epitopes` for validated experimental data. Do not assume what's on the pathogen surface; retrieve annotated sequences from UniProt or BVBRC.
 
 **Key principles**:
 1. **Epitope-driven** — vaccines work by presenting epitopes to T/B cells; start with epitope prediction
@@ -39,6 +39,7 @@ Vaccine design requires presenting the right epitopes to elicit protective immun
 
 | Tool | Use For |
 |------|---------|
+| `IEDB_predict_bcell_epitopes` | De-novo predict linear B-cell (antibody) epitopes from sequence (BepiPred/Emini/…) |
 | `iedb_search_epitopes` | Search experimentally validated epitopes |
 | `iedb_get_epitope_mhc` | Get detailed epitope data (assay results, MHC restriction) |
 | `iedb_search_mhc` | Search validated MHC binding assay data |
@@ -149,23 +150,37 @@ B-cell epitopes trigger antibody production. Look for:
 - **Conformational epitopes**: 3D surface patches (requires structural data)
 
 ```python
-# Check for known B-cell epitopes
+# De-novo predict LINEAR B-cell epitopes along the antigen sequence (BepiPred).
+# Returns contiguous predicted epitope regions + per-residue scores.
+IEDB_predict_bcell_epitopes(sequence="[antigen_aa_sequence]", method="Bepipred")
+# Cross-check against KNOWN experimentally validated epitopes
 iedb_search_epitopes(query="[protein_name]", epitope_type="B cell")
 # Get structure for conformational epitope prediction
 alphafold_get_prediction(uniprot_id="[accession]")
 ```
 
-**B-cell epitope criteria**: Surface-exposed loops, hydrophilic regions, flexible regions (high B-factor). Combine computational prediction with structural analysis.
+**B-cell epitope criteria**: Surface-exposed loops, hydrophilic regions, flexible regions (high B-factor). Prefer `IEDB_predict_bcell_epitopes` regions that also fall on surface-exposed loops in the structure; the `method` arg also supports Emini (surface accessibility), Kolaskar-Tongaonkar (antigenicity), and Parker (hydrophilicity).
 
 ### Phase 3: Population Coverage
 
-```python
-# Search for epitopes restricted to common HLA alleles in target population
-# NOTE: No HLA frequency tool exists in ToolUniverse. For population coverage:
-# 1. Use IEDB Analysis Resource (tools.iedb.org/population) for population coverage calculation
-# 2. Use the HLA supertype strategy (see above) to ensure broad coverage
-# 3. Search PubMed for published HLA frequency data: PubMed_search_articles(query="HLA allele frequency [population]")
+No HLA-frequency tool exists in ToolUniverse, but the coverage math is packaged in
+`scripts/population_coverage.py`. Pass the HLA alleles your selected epitopes bind
+(from the `IEDB_predict_mhci/mhcii_binding` results) and get the % of the
+population covered:
+
+```bash
+# Broad first-pass estimate (bundled average frequencies):
+python scripts/population_coverage.py --alleles "HLA-A*02:01,HLA-A*01:01,HLA-A*03:01,HLA-A*24:02,HLA-B*07:02,HLA-B*08:01,HLA-B*44:02"
+# -> {"overall_coverage": 73.6, "per_locus_coverage_pct": {"A": 62.9, "B": 28.9}, ...}
+
+# Population-SPECIFIC: supply real allele frequencies (ALLELE<TAB>FREQ) for the
+# target ethnicity from the Allele Frequency Net Database (allelefrequencies.net)
+# or the IEDB population-coverage tool (tools.iedb.org/population):
+python scripts/population_coverage.py --alleles-file covered.txt --freq-file afnd_han_chinese.tsv
 ```
+The bundled default is an approximate broad average — do NOT report it as coverage
+for a specific ethnicity; use `--freq-file` with AFND/IEDB data for that. Also use
+the HLA supertype strategy to ensure your epitope set spans the common supertypes.
 
 **Population coverage targets**:
 

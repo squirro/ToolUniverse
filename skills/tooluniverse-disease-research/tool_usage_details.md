@@ -39,8 +39,8 @@ tu.tools.MedlinePlus_connect_lookup_by_code(cs=icd_oid, c=icd_code)
 tu.tools.OpenTargets_get_associated_targets_by_disease_efoId(efoId=efo_id)
 tu.tools.OpenTargets_target_disease_evidence(efoId=efo_id, ensemblId=gene_id)  # top genes
 tu.tools.ClinVar_search_variants(condition=disease_name, max_results=50)
-tu.tools.clinvar_get_variant_details(variant_id=vid)  # top variants
-tu.tools.clinvar_get_clinical_significance(variant_id=vid)
+tu.tools.ClinVar_get_variant_details(variant_id=vid)  # top variants
+tu.tools.ClinVar_get_clinical_significance(variant_id=vid)
 tu.tools.gwas_search_associations(disease_trait=disease_name, size=50)
 tu.tools.gwas_get_variants_for_trait(disease_trait=disease_name, size=50)
 tu.tools.gwas_get_associations_for_trait(disease_trait=disease_name, size=50)
@@ -63,8 +63,8 @@ tu.tools.get_clinical_trial_conditions_and_interventions(nct_ids=nct_list)
 tu.tools.get_clinical_trial_eligibility_criteria(nct_ids=nct_list)
 tu.tools.get_clinical_trial_outcome_measures(nct_ids=nct_list)
 tu.tools.extract_clinical_trial_outcomes(nct_ids=nct_list)
-tu.tools.GtoPdb_list_diseases(name=disease_name)
-tu.tools.GtoPdb_get_disease(disease_id=gtopdb_id)
+tu.tools.GtoPdb_search_diseases(name=disease_name)
+tu.tools.GtoPdb_search_diseases(disease_id=gtopdb_id)
 ```
 
 ---
@@ -127,10 +127,10 @@ tu.tools.civic_search_molecular_profiles(limit=50)
 ## Section 9: Pharmacology
 
 ```python
-tu.tools.GtoPdb_get_targets(target_type=type, limit=50)  # GPCR, ion channel, etc
-tu.tools.GtoPdb_get_target(target_id=tid)
-tu.tools.GtoPdb_get_target_interactions(target_id=tid)
-tu.tools.GtoPdb_search_interactions(approved_only=True)
+tu.tools.GtoPdb_search_targets(target_type=type, limit=50)  # GPCR, ion channel, etc
+tu.tools.GtoPdb_search_targets(target_id=tid)
+tu.tools.GtoPdb_get_interactions(target_id=tid)
+tu.tools.GtoPdb_get_interactions(approved_only=True)
 tu.tools.GtoPdb_list_ligands(ligand_type="Approved")
 ```
 

@@ -44,10 +44,13 @@ class BaseRESTTool(BaseTool):
         """
         Get parameter name mappings from argument names to API parameter names.
 
-        Override this in subclasses to provide custom mappings.
+        Reads ``fields.param_mapping`` from the tool config so pure config-driven
+        BaseRESTTool entries can rename query params without a Python subclass
+        (e.g. OData APIs needing {"filter": "$filter", "top": "$top"}).
+        Subclasses may still override to provide mappings in code.
         Example: {"limit": "rows", "query": "q"}
         """
-        return {}
+        return self.tool_config.get("fields", {}).get("param_mapping", {})
 
     def _build_url(self, args: Dict[str, Any]) -> str:
         """
@@ -135,6 +138,16 @@ class BaseRESTTool(BaseTool):
             if "default" in prop and prop["default"] is not None:
                 params[param_mapping.get(key, key)] = prop["default"]
 
+        # Inject an API token from an environment variable into a query param
+        # when configured. Config: {"env_var": "WAQI_API_KEY", "param": "token"}.
+        # If the env var is unset the config default (e.g. a public "demo"
+        # token) is left in place, so this is a non-breaking opt-in.
+        auth_param_cfg = self.tool_config.get("fields", {}).get("auth_param")
+        if auth_param_cfg:
+            env_value = os.environ.get(auth_param_cfg.get("env_var", ""), "")
+            if env_value:
+                params[auth_param_cfg.get("param", "token")] = env_value
+
         return params
 
     def _process_response(
@@ -218,6 +231,20 @@ class BaseRESTTool(BaseTool):
         """
         url = None
         try:
+            # Normalize case-sensitive params before building the request.
+            # Some backends (e.g. CPIC's PostgREST `name=eq.{name}` filter) only
+            # match lowercase values, so a capitalized input silently returns an
+            # empty success. `fields.lowercase_params` lists params to downcase.
+            lowercase_params = (
+                self.tool_config.get("fields", {}).get("lowercase_params") or []
+            )
+            if lowercase_params:
+                arguments = dict(arguments)
+                for key in lowercase_params:
+                    value = arguments.get(key)
+                    if isinstance(value, str):
+                        arguments[key] = value.lower()
+
             url = self._build_url(arguments)
             params = self._build_params(arguments)
 

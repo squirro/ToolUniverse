@@ -26,7 +26,7 @@ for v in variants:
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `ClinVar_search_variants` | Search variants | `query`, `gene` |
-| `clinvar_get_variant_details` | Get variant details | `variant_id` |
+| `ClinVar_get_variant_details` | Get variant details | `variant_id` |
 
 ### COSMIC - Somatic Cancer Mutations (NEW)
 
@@ -178,8 +178,8 @@ Aggregate genomic data across cancer studies.
 | `cBioPortal_get_cancer_studies` | List available studies | `limit` |
 | `cBioPortal_get_mutations` | Mutations for genes | `study_id`, `gene_list` |
 | `cBioPortal_get_molecular_profiles` | Study molecular profiles | `study_id` |
-| `cBioPortal_get_sample_clinical_data` | Clinical data | `study_id`, `sample_ids` |
-| `cBioPortal_get_patient_clinical_data` | Patient clinical data | `study_id`, `patient_ids` |
+| `cBioPortal_get_clinical_data` | Clinical data | `study_id`, `sample_ids` |
+| `cBioPortal_get_clinical_data` | Patient clinical data | `study_id`, `patient_ids` |
 
 **Example - Query mutations across studies**:
 ```python
@@ -263,7 +263,7 @@ Cancer cell line dependency data from CRISPR knockout screens.
 | `DepMap_get_cell_lines` | List cell lines with metadata | `tissue`, `cancer_type`, `page_size` |
 | `DepMap_search_cell_lines` | Search by name | `query` |
 | `DepMap_get_cell_line` | Detailed cell line info | `model_id` OR `model_name` |
-| `DepMap_get_drug_response` | Drug sensitivity data | `drug_name` |
+| Drug sensitivity (IC50/AUC) | No TU tool — run `scripts/gdsc_drug_response.py` (GDSC bulk data) | `drug` / `cell-line` / `target` |
 
 **Example - Assess target essentiality**:
 ```python
@@ -304,9 +304,9 @@ cells = tu.tools.DepMap_get_cell_lines(
 
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
-| `OpenTargets_get_associated_drugs_by_target_ensemblId` | Drugs for target | `ensemblId` (camelCase!) |
-| `OpenTargets_get_disease_associated_targets` | Targets for disease | `efoId` |
-| `OpenTargets_get_target_tractability` | Druggability | `ensemblId` |
+| `OpenTargets_get_associated_drugs_by_target_ensemblID` | Drugs for target | `ensemblId` (camelCase!) |
+| `OpenTargets_get_associated_targets_by_disease_efoId` | Targets for disease | `efoId` |
+| `OpenTargets_get_target_tractability_by_ensemblID` | Druggability | `ensemblId` |
 
 **Parameter Note**: Always use `ensemblId` (camelCase), NOT `ensemblID`.
 
@@ -334,7 +334,7 @@ cells = tu.tools.DepMap_get_cell_lines(
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `search_clinical_trials` | Search trials | `condition`, `intervention`, `status`, `pageSize` |
-| `get_clinical_trial_by_nct_id` | Get trial details | `nct_id` |
+| `ClinicalTrials_get_study` | Get trial details | `nct_id` |
 | `get_clinical_trial_eligibility_criteria` | Eligibility | `nct_ids` (list) |
 
 **Common Status Values**: "Recruiting", "Active, not recruiting", "Completed"
@@ -348,15 +348,15 @@ cells = tu.tools.DepMap_get_cell_lines(
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `MyGene_query_genes` | Search genes | `q`, `species` |
-| `MyGene_get_gene_by_id` | Get gene info | `geneid` |
+| `MyGene_get_gene_annotation` | Get gene info | `geneid` |
 
 ### UniProt
 
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `UniProt_search` | Search proteins | `query`, `organism` |
-| `UniProt_get_protein_by_accession` | Get protein | `accession` |
-| `UniProt_get_protein_sequence` | Get sequence | `accession` |
+| `UniProt_get_entry_by_accession` | Get protein | `accession` |
+| `UniProt_get_sequence_by_accession` | Get sequence | `accession` |
 
 ---
 
@@ -384,7 +384,7 @@ cells = tu.tools.DepMap_get_cell_lines(
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `PubMed_search_articles` | Search articles | `query`, `limit` |
-| `PubMed_get_article_details` | Get article | `pmid` |
+| `PubMed_get_article` | Get article | `pmid` |
 
 ### EuropePMC
 
@@ -453,7 +453,7 @@ pathways = tu.tools.kegg_get_gene_info(gene_id="hsa:1956")  # EGFR
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `PubMed_search_articles` | Search papers | `query`, `limit` |
-| `PubMed_get_article_details` | Get abstract | `pmid` |
+| `PubMed_get_article` | Get abstract | `pmid` |
 
 ### BioRxiv/MedRxiv - Preprints
 
@@ -495,7 +495,7 @@ gene_ids = resolve_gene(tu, "EGFR")
 civic_ev = get_civic_evidence(tu, "EGFR", "L858R")
 
 # 3. Get approved drugs
-drugs = tu.tools.OpenTargets_get_associated_drugs_by_target_ensemblId(
+drugs = tu.tools.OpenTargets_get_associated_drugs_by_target_ensemblID(
     ensemblId=gene_ids['ensembl']
 )
 

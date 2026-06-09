@@ -262,18 +262,18 @@ similar = tu.tools.PubChem_search_compounds_by_similarity(
 ```
 **Use**: Structure-based repurposing - find approved drug analogs
 
-#### PubChem_get_bioactivity_summary_by_CID
+#### PubChem_get_compound_bioactivity
 ```python
-bioactivity = tu.tools.PubChem_get_bioactivity_summary_by_CID(
+bioactivity = tu.tools.PubChem_get_compound_bioactivity(
     cid=2244
 )
 # Returns: Active/inactive assay counts
 ```
 **Use**: Evidence of biological activity
 
-#### ChEMBL_get_bioactivity_by_chemblid
+#### ChEMBL_search_activities
 ```python
-bioactivity = tu.tools.ChEMBL_get_bioactivity_by_chemblid(
+bioactivity = tu.tools.ChEMBL_search_activities(
     chembl_id="CHEMBL25"
 )
 # Returns: Detailed bioactivity data (IC50, EC50, etc.)
@@ -374,7 +374,7 @@ protein = tu.tools.UniProt_get_entry_by_accession(
 ### Result Limits
 
 Recommended limits by tool:
-- `OpenTargets_get_associated_targets`: 20-50 (prioritize by score)
+- `OpenTargets_get_associated_targets_by_disease_efoId`: 20-50 (prioritize by score)
 - `DGIdb_get_drug_gene_interactions`: No limit (returns all)
 - `ChEMBL_search_drugs`: 10-20
 - `PubMed_search_articles`: 50-100 for thorough analysis

@@ -161,36 +161,68 @@ class AllianceGenomeTool(BaseTool):
             url, headers={"Accept": "application/json"}, timeout=self.timeout
         )
         response.raise_for_status()
-        data = response.json()
+        payload = response.json()
 
-        species = data.get("species", {})
-        locations = data.get("genomeLocations", [])
+        # The Alliance API nests the gene record under a top-level "gene" key.
+        # Fall back to the payload itself for resilience against schema drift.
+        data = payload.get("gene") or payload
+
+        def _text(obj):
+            """Alliance wraps labels as {formatText, displayText}; unwrap them."""
+            if isinstance(obj, dict):
+                return obj.get("displayText") or obj.get("formatText")
+            return obj
+
+        taxon = data.get("taxon") or {}
+        taxon_species = taxon.get("species") or {}
+        # genomic location moved to geneGenomicLocationAssociations
+        locations = (
+            data.get("geneGenomicLocationAssociations")
+            or data.get("genomeLocations")
+            or []
+        )
         loc_info = locations[0] if locations else {}
-        xrefs = data.get("crossReferenceMap", {})
 
-        # Extract cross-references
-        other_xrefs = xrefs.get("other", [])
-        xref_list = [
-            {"name": x.get("name"), "url": x.get("crossRefCompleteUrl")}
-            for x in other_xrefs[:10]
+        synonyms = [
+            _text(s) for s in (data.get("geneSynonyms") or data.get("synonyms") or [])
         ]
+
+        # cross-references: new schema is a flat list of {referencedCurie, displayName}
+        cross_refs = data.get("crossReferences")
+        if cross_refs is None:
+            cross_refs = (data.get("crossReferenceMap") or {}).get("other", [])
+        xref_list = [
+            {
+                "name": x.get("displayName") or x.get("name"),
+                "curie": x.get("referencedCurie"),
+                "url": x.get("crossRefCompleteUrl"),
+            }
+            for x in cross_refs[:10]
+        ]
+
+        gene_type = data.get("geneType") or data.get("soTerm") or {}
 
         return {
             "status": "success",
             "data": {
-                "id": data.get("id"),
-                "symbol": data.get("symbol"),
-                "name": data.get("name"),
+                "id": data.get("primaryExternalId") or data.get("id"),
+                "symbol": _text(data.get("geneSymbol")) or data.get("symbol"),
+                "name": _text(data.get("geneFullName")) or data.get("name"),
                 "species": {
-                    "name": species.get("name"),
-                    "short_name": species.get("shortName"),
-                    "taxon_id": species.get("taxonId"),
-                    "data_provider": species.get("dataProviderShortName"),
+                    "name": taxon.get("name") or taxon_species.get("fullName"),
+                    "short_name": taxon_species.get("displayName")
+                    or taxon_species.get("abbreviation"),
+                    "taxon_id": taxon.get("curie") or taxon.get("taxonId"),
+                    "data_provider": (data.get("dataProvider") or {}).get(
+                        "abbreviation"
+                    )
+                    if isinstance(data.get("dataProvider"), dict)
+                    else data.get("dataProvider"),
                 },
                 "gene_synopsis": data.get("geneSynopsis"),
                 "automated_gene_synopsis": data.get("automatedGeneSynopsis"),
-                "synonyms": data.get("synonyms", []),
-                "so_term": data.get("soTerm", {}).get("name"),
+                "synonyms": synonyms,
+                "so_term": gene_type.get("name"),
                 "genomic_location": {
                     "chromosome": loc_info.get("chromosome"),
                     "start": loc_info.get("start"),
@@ -202,7 +234,6 @@ class AllianceGenomeTool(BaseTool):
             },
             "metadata": {
                 "query_gene_id": gene_id,
-                "data_provider": data.get("dataProvider"),
                 "source": "Alliance of Genome Resources",
             },
         }
@@ -221,13 +252,13 @@ class AllianceGenomeTool(BaseTool):
         limit = int(arguments.get("limit", 10))
         # When filtering by species, fetch more candidates so client-side filtering
         # still returns enough results (Alliance has no server-side species filter).
+        # The autocomplete endpoint no longer honours a `category=gene` query
+        # param (it returns zero results) and mixes gene/disease/dataset hits,
+        # so fetch a buffer unfiltered and keep gene hits client-side. The gene
+        # id is now in `curie` (was `primaryKey`).
         _SPECIES_FETCH_MULTIPLIER = 5
-        fetch_limit = (
-            min(limit * _SPECIES_FETCH_MULTIPLIER, 100)
-            if species_prefix
-            else min(limit, 50)
-        )
-        params = {"q": query, "category": "gene", "limit": fetch_limit}
+        fetch_limit = min(max(limit * _SPECIES_FETCH_MULTIPLIER, 25), 100)
+        params = {"q": query, "limit": fetch_limit}
 
         response = requests.get(
             f"{ALLIANCE_BASE}/search_autocomplete",
@@ -236,21 +267,29 @@ class AllianceGenomeTool(BaseTool):
             timeout=self.timeout,
         )
         response.raise_for_status()
-        results = response.json().get("results", [])
+        raw_results = response.json().get("results", [])
+
+        # Keep only gene hits (autocomplete also returns diseases, GO terms,
+        # datasets, …).
+        gene_results = [
+            r for r in raw_results if r.get("category") == "gene_search_result"
+        ]
 
         if species_prefix:
-            results = [
-                r for r in results if r.get("primaryKey", "").startswith(species_prefix)
+            gene_results = [
+                r
+                for r in gene_results
+                if str(r.get("curie", "")).startswith(species_prefix)
             ]
 
         genes = [
             {
                 "symbol": r.get("symbol"),
                 "name": r.get("name"),
-                "gene_id": r.get("primaryKey"),
-                "category": r.get("category"),
+                "gene_id": r.get("curie"),
+                "category": "gene",
             }
-            for r in results[:limit]
+            for r in gene_results[:limit]
         ]
 
         metadata: Dict[str, Any] = {
@@ -260,6 +299,24 @@ class AllianceGenomeTool(BaseTool):
         }
         if species_name:
             metadata["species"] = species_name
+
+        # Alliance's autocomplete matches gene symbols/synonyms, not descriptive
+        # gene *names*: e.g. "insulin" returns GO terms and diseases but no gene,
+        # while the symbol "INS" returns the genes. When no gene matched but other
+        # entity types did, say so instead of an indistinguishable empty result.
+        if not genes and raw_results:
+            other = sorted(
+                {
+                    str(r.get("category", "")).replace("_search_result", "")
+                    for r in raw_results
+                }
+            )
+            metadata["note"] = (
+                f"No gene matched '{query}'. The Alliance autocomplete matches gene "
+                f"symbols/synonyms rather than descriptive names, and it instead "
+                f"matched: {', '.join(c for c in other if c)}. Try the official gene "
+                "symbol (e.g. 'INS' for insulin)."
+            )
 
         return {"status": "success", "data": genes, "metadata": metadata}
 
@@ -295,9 +352,17 @@ class AllianceGenomeTool(BaseTool):
         phenotypes = []
         for r in results:
             subject = r.get("subject", {})
+            # subject.geneSymbol is now a {formatText, displayText} object, not
+            # a plain `symbol` string — unwrap it (was returning null).
+            gene_symbol_obj = subject.get("geneSymbol")
+            gene_symbol = (
+                gene_symbol_obj.get("displayText") or gene_symbol_obj.get("formatText")
+                if isinstance(gene_symbol_obj, dict)
+                else subject.get("symbol")
+            )
             phenotypes.append(
                 {
-                    "gene_symbol": subject.get("symbol"),
+                    "gene_symbol": gene_symbol,
                     "gene_id": subject.get("primaryExternalId"),
                     "phenotype_statement": r.get("phenotypeStatement"),
                 }

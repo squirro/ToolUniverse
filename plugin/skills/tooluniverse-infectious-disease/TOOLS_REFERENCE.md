@@ -6,14 +6,14 @@
 
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
-| `NCBI_Taxonomy_search` | Search taxonomy database | `query` |
-| `NCBI_Taxonomy_get_by_id` | Get details by TaxID | `taxid` |
-| `NCBI_Taxonomy_get_lineage` | Get full lineage | `taxid` |
+| `NCBIDatasets_suggest_taxonomy` | Search taxonomy database | `query` |
+| `NCBIDatasets_get_taxonomy` | Get details by TaxID | `taxid` |
+| `NCBIDatasets_get_taxonomy` | Get full lineage | `taxid` |
 
 **Example - Classify pathogen**:
 ```python
 # Search for pathogen
-tax = tu.tools.NCBI_Taxonomy_search(query="SARS-CoV-2")
+tax = tu.tools.NCBIDatasets_suggest_taxonomy(query="SARS-CoV-2")
 # Returns: {"taxid": 2697049, "scientific_name": "...", "lineage": [...]}
 ```
 
@@ -22,8 +22,8 @@ tax = tu.tools.NCBI_Taxonomy_search(query="SARS-CoV-2")
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `UniProt_search` | Search proteins | `query`, `organism` |
-| `UniProt_get_protein_by_accession` | Get protein details | `accession` |
-| `UniProt_get_protein_sequence` | Get sequence | `accession` |
+| `UniProt_get_entry_by_accession` | Get protein details | `accession` |
+| `UniProt_get_sequence_by_accession` | Get sequence | `accession` |
 
 **Example - Get viral proteins**:
 ```python
@@ -112,15 +112,15 @@ def assess_structure_quality(structure_result):
 |------|---------|----------------|
 | `ChEMBL_search_drugs` | Search approved drugs | `query`, `max_phase` |
 | `ChEMBL_get_molecule` | Get drug details | `molecule_chembl_id` |
-| `ChEMBL_get_drug_mechanisms_of_action` | Get MOA | `molecule_chembl_id` |
+| `ChEMBL_get_drug_mechanisms` | Get MOA | `molecule_chembl_id` |
 
 ### DrugBank Tools
 
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `drugbank_vocab_search` | Search drugs | `query` |
-| `DrugBank_get_drug` | Get drug details | `drugbank_id` |
-| `DrugBank_get_targets` | Get drug targets | `drugbank_id` |
+| `drugbank_get_drug_basic_info_by_drug_name_or_id` | Get drug details | `drugbank_id` |
+| `drugbank_get_targets_by_drug_name_or_drugbank_id` | Get drug targets | `drugbank_id` |
 
 ### Docking Tools (NVIDIA NIM)
 
@@ -149,7 +149,7 @@ result = tu.tools.NvidiaNIM_diffdock(
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `kegg_search_pathway` | Search pathways | `query` |
-| `kegg_get_pathway_genes` | Get genes in pathway | `pathway_id` |
+| `KEGG_get_pathway_genes` | Get genes in pathway | `pathway_id` |
 | `kegg_get_gene_info` | Get gene details | `gene_id` |
 | `kegg_find_genes` | Find genes by keyword | `query`, `database` |
 
@@ -161,7 +161,7 @@ pathways = tu.tools.kegg_search_pathway(
 )
 
 # Get essential genes
-genes = tu.tools.kegg_get_pathway_genes(
+genes = tu.tools.KEGG_get_pathway_genes(
     pathway_id="ko03030"  # DNA replication
 )
 ```
@@ -170,14 +170,14 @@ genes = tu.tools.kegg_get_pathway_genes(
 
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
-| `Reactome_search_pathway` | Search pathways | `query`, `species` |
-| `Reactome_get_pathway_participants` | Get pathway entities | `pathway_id` |
-| `Reactome_get_hierarchy` | Get pathway tree | `pathway_id` |
+| `ReactomeContent_search` | Search pathways | `query`, `species` |
+| `Reactome_get_participants` | Get pathway entities | `pathway_id` |
+| `Reactome_get_pathway_hierarchy` | Get pathway tree | `pathway_id` |
 
 **Example - Host-pathogen interaction pathways**:
 ```python
 # Host response to infection
-pathways = tu.tools.Reactome_search_pathway(
+pathways = tu.tools.ReactomeContent_search(
     query="viral infection response",
     species="Homo sapiens"
 )
@@ -192,7 +192,7 @@ pathways = tu.tools.Reactome_search_pathway(
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `PubMed_search_articles` | Search articles | `query`, `limit` |
-| `PubMed_get_article_details` | Get article | `pmid` |
+| `PubMed_get_article` | Get article | `pmid` |
 
 **Example - Search outbreak literature**:
 ```python
@@ -246,7 +246,7 @@ arxiv = tu.tools.ArXiv_search_papers(
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `openalex_search_works` | Search with citations | `query`, `limit` |
-| `SemanticScholar_search` | AI-ranked search | `query`, `limit` |
+| `SemanticScholar_search_papers` | AI-ranked search | `query`, `limit` |
 
 **Example - Find high-impact papers**:
 ```python
@@ -258,7 +258,7 @@ papers = tu.tools.openalex_search_works(
 # Returns: {"cited_by_count": 5234, ...}
 
 # AI-ranked papers
-ranked = tu.tools.SemanticScholar_search(
+ranked = tu.tools.SemanticScholar_search_papers(
     query="SARS-CoV-2 drug resistance",
     limit=20
 )
@@ -269,7 +269,7 @@ ranked = tu.tools.SemanticScholar_search(
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|
 | `search_clinical_trials` | Search trials | `condition`, `intervention`, `status` |
-| `get_clinical_trial_by_nct_id` | Get trial details | `nct_id` |
+| `ClinicalTrials_get_study` | Get trial details | `nct_id` |
 
 **Example - Find active trials**:
 ```python
@@ -291,7 +291,7 @@ def analyze_outbreak(tu, pathogen_name):
     """Complete outbreak intelligence workflow."""
     
     # Phase 1: Identify pathogen
-    taxonomy = tu.tools.NCBI_Taxonomy_search(query=pathogen_name)
+    taxonomy = tu.tools.NCBIDatasets_suggest_taxonomy(query=pathogen_name)
     taxid = taxonomy['taxid']
     
     # Phase 2: Get target proteins
@@ -303,7 +303,7 @@ def analyze_outbreak(tu, pathogen_name):
     # Phase 3: Predict structures for top targets
     structures = {}
     for protein in proteins[:3]:  # Top 3 targets
-        seq = tu.tools.UniProt_get_protein_sequence(
+        seq = tu.tools.UniProt_get_sequence_by_accession(
             accession=protein['accession']
         )
         struct = tu.tools.NvidiaNIM_alphafold2(sequence=seq)
@@ -424,7 +424,7 @@ def transfer_knowledge(tu, novel_pathogen, reference_pathogen):
 ### Taxonomy
 | Primary | Fallback 1 | Fallback 2 |
 |---------|------------|------------|
-| `NCBI_Taxonomy_search` | `UniProt_taxonomy` | Manual NCBI query |
+| `NCBIDatasets_suggest_taxonomy` | `UniProtTaxonomy_search` | Manual NCBI query |
 
 ### Structure Prediction
 | Primary | Fallback 1 | Fallback 2 |
@@ -445,15 +445,15 @@ def transfer_knowledge(tu, novel_pathogen, reference_pathogen):
 ### Pathway Analysis (NEW)
 | Primary | Fallback 1 | Fallback 2 |
 |---------|------------|------------|
-| `kegg_search_pathway` | `Reactome_search_pathway` | `WikiPathways_search` |
-| `kegg_get_pathway_genes` | `Reactome_get_pathway_participants` | Gene list extraction |
+| `kegg_search_pathway` | `ReactomeContent_search` | `WikiPathways_search` |
+| `KEGG_get_pathway_genes` | `Reactome_get_participants` | Gene list extraction |
 
 ### Literature (ENHANCED)
 | Primary | Fallback 1 | Fallback 2 |
 |---------|------------|------------|
 | `PubMed_search_articles` | `openalex_search_works` | Google Scholar |
 | `EuropePMC_search_articles` (source='PPR') | `web_search` (site:biorxiv.org) | ArXiv q-bio |
-| `openalex_search_works` | `SemanticScholar_search` | Manual citation |
+| `openalex_search_works` | `SemanticScholar_search_papers` | Manual citation |
 
 ---
 
@@ -461,7 +461,7 @@ def transfer_knowledge(tu, novel_pathogen, reference_pathogen):
 
 | Tool | Wrong | Correct |
 |------|-------|---------|
-| `NCBI_Taxonomy_search` | `name="virus"` | `query="virus"` |
+| `NCBIDatasets_suggest_taxonomy` | `name="virus"` | `query="virus"` |
 | `UniProt_search` | `name="protease"` | `query="protease"` |
 | `ChEMBL_search_targets` | `target="Mpro"` | `query="Mpro"` |
 | `NvidiaNIM_diffdock` | `protein_file=path` | `protein=content` |

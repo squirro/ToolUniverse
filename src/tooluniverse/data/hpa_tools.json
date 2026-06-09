@@ -32,14 +32,54 @@
     "output_description": "Returns a list of matching entries from the Human Protein Atlas.",
     "test_examples": [
       {
-        "search_query": "machine learning optimization",
+        "search_query": "EGFR",
         "columns": "g,gs,gd",
         "format": "json"
       }
     ],
     "return_schema": {
-      "type": "array"
-    }
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "status": {
+                            "type": "string",
+                            "enum": [
+                                "success"
+                            ]
+                        },
+                        "data": {
+                            "type": "array",
+                            "items": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": [
+                        "status",
+                        "data"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "status": {
+                            "type": "string",
+                            "enum": [
+                                "error"
+                            ]
+                        },
+                        "error": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "status",
+                        "error"
+                    ]
+                }
+            ]
+        }
   },
   {
     "type": "HPASearchGenesTool",

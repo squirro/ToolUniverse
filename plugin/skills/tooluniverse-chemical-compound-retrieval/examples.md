@@ -68,14 +68,17 @@ cid_result = tu.tools.PubChem_get_CID_by_compound_name(
 cid = cid_result["data"]["cid"]
 
 # Get bioactivity
-bioactivity = tu.tools.PubChem_get_bioactivity_summary_by_CID(
+bioactivity = tu.tools.PubChem_get_compound_bioactivity(
     cid=cid
 )
 
 print(f"Active in {bioactivity['data']['active_assay_count']} assays")
 
 # Get drug label information
-drug_info = tu.tools.PubChem_get_drug_label_info_by_CID(cid=cid)
+# FDA labels are keyed by drug name, not CID -- resolve the name first
+_syn = tu.tools.PubChem_get_compound_synonyms_by_CID(cid=cid)
+_name = _syn['data'][0] if isinstance(_syn, dict) and _syn.get('data') else None
+drug_info = tu.tools.FDA_get_drug_label(drug_name=_name)
 
 # Get patents
 patents = tu.tools.PubChem_get_associated_patents_by_CID(cid=cid)
@@ -91,7 +94,7 @@ cid_result = tu.tools.PubChem_get_CID_by_compound_name(
 )
 
 # Search in ChEMBL
-chembl_result = tu.tools.ChEMBL_search_compounds(
+chembl_result = tu.tools.ChEMBL_search_molecules(
     query="gefitinib",
     limit=5
 )
@@ -100,12 +103,12 @@ if chembl_result["data"]:
     chembl_id = chembl_result["data"][0]["molecule_chembl_id"]
     
     # Get bioactivity from ChEMBL
-    activity = tu.tools.ChEMBL_get_bioactivity_by_chemblid(
+    activity = tu.tools.ChEMBL_search_activities(
         chembl_id=chembl_id
     )
     
     # Get targets
-    targets = tu.tools.ChEMBL_get_target_by_chemblid(
+    targets = tu.tools.ChEMBL_get_target(
         chembl_id=chembl_id
     )
     
@@ -149,7 +152,7 @@ logp = props["data"]["XLogP"]
 print(f"MW: {mw}, LogP: {logp}")
 
 # 3. Get bioactivity
-bio = tu.tools.PubChem_get_bioactivity_summary_by_CID(cid=cid)
+bio = tu.tools.PubChem_get_compound_bioactivity(cid=cid)
 print(f"Active in {bio['data']['active_assay_count']} assays")
 
 # 4. Find similar active compounds

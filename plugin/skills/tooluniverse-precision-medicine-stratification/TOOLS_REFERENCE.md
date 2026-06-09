@@ -14,9 +14,9 @@
 ### Phase 2: Genetic Risk Assessment
 | Tool | Parameters | Response | Purpose |
 |------|-----------|----------|---------|
-| `clinvar_search_variants` | `gene`, `significance`, `limit` | Variant list with clinical significance | Pathogenic variant search |
-| `clinvar_get_variant_details` | `variant_id` | Full variant details | Specific variant pathogenicity |
-| `clinvar_get_clinical_significance` | `variant_id` | Clinical significance classification | Quick pathogenicity check |
+| `ClinVar_search_variants` | `gene`, `significance`, `limit` | Variant list with clinical significance | Pathogenic variant search |
+| `ClinVar_get_variant_details` | `variant_id` | Full variant details | Specific variant pathogenicity |
+| `ClinVar_get_clinical_significance` | `variant_id` | Clinical significance classification | Quick pathogenicity check |
 | `EnsemblVEP_annotate_rsid` | `variant_id` (NOT `rsid`) | VEP annotation with SIFT/PolyPhen | Variant impact prediction |
 | `EnsemblVEP_annotate_hgvs` | `hgvs_notation`, `species` | VEP annotation | HGVS variant annotation |
 | `OpenTargets_target_disease_evidence` | `ensemblId`, `efoId`, `size` | Evidence items with scores | Gene-disease evidence strength |
@@ -97,9 +97,9 @@
 ### Phase 8: Clinical Trial Matching
 | Tool | Parameters | Response | Purpose |
 |------|-----------|----------|---------|
-| `clinical_trials_search` | `action='search_studies'`, `condition`, `intervention`, `limit` | `{total_count, studies}` | Trial search |
+| `ClinicalTrials_search_studies` | `action='search_studies'`, `condition`, `intervention`, `limit` | `{total_count, studies}` | Trial search |
 | `search_clinical_trials` | `query_term` (REQUIRED), `condition`, `intervention`, `pageSize` | `{studies, total_count}` | Alternative trial search |
-| `clinical_trials_get_details` | `action='get_study_details'`, `nct_id` | Full study | Trial details |
+| `ClinicalTrials_get_study` | `action='get_study_details'`, `nct_id` | Full study | Trial details |
 | `get_clinical_trial_eligibility_criteria` | `nct_ids` (array), `eligibility_criteria='all'` | Eligibility criteria | Biomarker eligibility |
 
 ## Total Tool Count

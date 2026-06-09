@@ -20,7 +20,7 @@ Create `metformin_drug_report.md` with all section headers and `[Researching...]
 cid_result = tu.tools.PubChem_get_CID_by_compound_name(compound_name="metformin")
 # → CID: 4091
 
-chembl_result = tu.tools.ChEMBL_search_compounds(query="metformin", limit=1)
+chembl_result = tu.tools.ChEMBL_search_molecules(query="metformin", limit=1)
 # → CHEMBL1431
 
 dailymed_result = tu.tools.DailyMed_search_spls(drug_name="metformin")
@@ -68,10 +68,10 @@ solubility = tu.tools.ADMETAI_predict_solubility_lipophilicity_hydration(smiles=
 
 ```python
 # ChEMBL bioactivity
-bioactivity = tu.tools.ChEMBL_get_bioactivity_by_chemblid(chembl_id="CHEMBL1431")
+bioactivity = tu.tools.ChEMBL_search_activities(chembl_id="CHEMBL1431")
 # → Activity data
 
-targets = tu.tools.ChEMBL_get_target_by_chemblid(chembl_id="CHEMBL1431")
+targets = tu.tools.ChEMBL_get_target(chembl_id="CHEMBL1431")
 # → Target list with UniProt
 
 # DGIdb drug-gene interactions
@@ -197,7 +197,7 @@ metabolic complication. Risk increases with renal impairment, hepatic impairment
 age ≥65, radiologic studies with contrast, surgery, excessive alcohol intake, and 
 hypoxic states.
 
-*Source: FDA Label via `PubChem_get_drug_label_info_by_CID`*
+*Source: FDA Label via `FDA_get_drug_label`*
 ```
 
 ### Step 8: Pharmacogenomics
@@ -391,7 +391,10 @@ deaths = tu.tools.FAERS_count_death_related_by_drug(
 )
 
 # Label for black box warnings
-label = tu.tools.PubChem_get_drug_label_info_by_CID(cid=2764)  # Ciprofloxacin CID
+# FDA labels are keyed by drug name, not CID -- resolve the name first
+_syn = tu.tools.PubChem_get_compound_synonyms_by_CID(cid=2764)
+_name = _syn['data'][0] if isinstance(_syn, dict) and _syn.get('data') else None
+label = tu.tools.FDA_get_drug_label(drug_name=_name)
 
 # Literature on safety
 safety_lit = tu.tools.PubMed_search_articles(

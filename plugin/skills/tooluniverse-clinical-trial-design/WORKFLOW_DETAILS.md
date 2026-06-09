@@ -37,7 +37,7 @@ l858r_variants = [v for v in egfr_variants['data']
                   if 'L858R' in v.get('name', '')]
 
 # Also check population databases for allele frequency
-gnomad_egfr = tu.tools.gnomAD_search_gene_variants(
+gnomad_egfr = tu.tools.gnomad_search_variants(
     gene="EGFR"
 )
 # Filter to L858R and sum allele frequencies
@@ -85,12 +85,12 @@ soc_pharmacology = tu.tools.drugbank_get_pharmacology_by_drug_name_or_drugbank_i
 )
 
 # Step 3.2: Check FDA Orange Book for approved generics
-orange_book = tu.tools.FDA_OrangeBook_search_drugs(
+orange_book = tu.tools.FDA_OrangeBook_search_drug(
     ingredient=soc_drug
 )
 
 # Step 3.3: Find FDA approval details
-fda_approval = tu.tools.FDA_get_drug_approval_history(
+fda_approval = tu.tools.OpenFDA_get_approval_history(
     drug_name=soc_drug
 )
 

@@ -157,7 +157,7 @@ tu.tools.OpenTargets_target_disease_evidence(
 # Returns: evidence details, mutation data
 ```
 
-### clinvar_search_variants
+### ClinVar_search_variants
 **Purpose**: Search ClinVar for variants
 ```python
 tu.tools.ClinVar_search_variants(condition="breast cancer", max_results=20)
@@ -166,17 +166,17 @@ tu.tools.ClinVar_search_variants(gene="BRCA1", max_results=20)
 # Returns: variant IDs, count
 ```
 
-### clinvar_get_variant_details
+### ClinVar_get_variant_details
 **Purpose**: Get variant details by ClinVar ID
 ```python
-tu.tools.clinvar_get_variant_details(variant_id="12345")
+tu.tools.ClinVar_get_variant_details(variant_id="12345")
 # Returns: variant information
 ```
 
-### clinvar_get_clinical_significance
+### ClinVar_get_clinical_significance
 **Purpose**: Get pathogenicity classification
 ```python
-tu.tools.clinvar_get_clinical_significance(variant_id="12345")
+tu.tools.ClinVar_get_clinical_significance(variant_id="12345")
 # Returns: clinical significance data
 ```
 
@@ -577,48 +577,48 @@ tu.tools.civic_search_molecular_profiles(limit=50)
 
 ## 9. Pharmacology (GtoPdb)
 
-### GtoPdb_list_diseases
+### GtoPdb_search_diseases
 **Purpose**: Search diseases
 ```python
-tu.tools.GtoPdb_list_diseases(name="diabetes", limit=20)
+tu.tools.GtoPdb_search_diseases(name="diabetes", limit=20)
 # Returns: diseases with IDs, OMIM, DOID
 ```
 
-### GtoPdb_get_disease
+### GtoPdb_search_diseases
 **Purpose**: Get disease details
 ```python
-tu.tools.GtoPdb_get_disease(disease_id=652)
+tu.tools.GtoPdb_search_diseases(disease_id=652)
 # Returns: targets, ligands, description
 ```
 
-### GtoPdb_get_targets
+### GtoPdb_search_targets
 **Purpose**: Get pharmacological targets
 ```python
-tu.tools.GtoPdb_get_targets(target_type="GPCR", limit=20)
+tu.tools.GtoPdb_search_targets(target_type="GPCR", limit=20)
 # Returns: targets with drugs, ligands
 ```
 
-### GtoPdb_get_target
+### GtoPdb_search_targets
 **Purpose**: Get target details
 ```python
-tu.tools.GtoPdb_get_target(target_id=290)
+tu.tools.GtoPdb_search_targets(target_id=290)
 # Returns: detailed target info
 ```
 
-### GtoPdb_get_target_interactions
+### GtoPdb_get_interactions
 **Purpose**: Get target-ligand interactions
 ```python
-tu.tools.GtoPdb_get_target_interactions(
+tu.tools.GtoPdb_get_interactions(
     target_id=290,
     action_type="Agonist"
 )
 # Returns: interactions with affinity
 ```
 
-### GtoPdb_search_interactions
+### GtoPdb_get_interactions
 **Purpose**: Search drug-target interactions
 ```python
-tu.tools.GtoPdb_search_interactions(
+tu.tools.GtoPdb_get_interactions(
     approved_only=True,
     limit=100
 )

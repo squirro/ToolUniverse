@@ -24,6 +24,42 @@
     ]
   },
   {
+    "name": "BGPT_API_KEY",
+    "requirement": "optional",
+    "type": "secret",
+    "domain": "Literature & Evidence",
+    "register_url": "https://bgpt.pro/mcp/",
+    "purpose": "BGPT paid-tier API key for structured scientific-evidence search.",
+    "without": "The first 50 results are free without a key; the key unlocks continued access after the free allowance is exhausted.",
+    "used_by": [
+      "bgpt_tools.json"
+    ]
+  },
+  {
+    "name": "BIOCYC_EMAIL",
+    "requirement": "required",
+    "type": "secret",
+    "domain": "Biological Pathways",
+    "register_url": "https://biocyc.org/signup.shtml",
+    "purpose": "BioCyc account email \u2014 unlocks MetaCyc pathway/compound/reaction web services.",
+    "without": "MetaCyc tools are blocked without an account (paired with the password).",
+    "used_by": [
+      "metacyc_tools.json"
+    ]
+  },
+  {
+    "name": "BIOCYC_PASSWORD",
+    "requirement": "required",
+    "type": "secret",
+    "domain": "Biological Pathways",
+    "register_url": "https://biocyc.org/signup.shtml",
+    "purpose": "BioCyc account password \u2014 authenticates the MetaCyc web-service session.",
+    "without": "Required together with the BioCyc email.",
+    "used_by": [
+      "metacyc_tools.json"
+    ]
+  },
+  {
     "name": "BIOGRID_ACCESS_KEY",
     "requirement": "required",
     "type": "secret",
@@ -230,6 +266,30 @@
     ]
   },
   {
+    "name": "IUCN_API_KEY",
+    "requirement": "optional",
+    "type": "secret",
+    "domain": "Ecology & Biodiversity",
+    "register_url": "https://api.iucnredlist.org/",
+    "purpose": "Retrieve IUCN Red List conservation status for species.",
+    "without": "The tool returns a clear error explaining how to register; no data without it.",
+    "used_by": [
+      "iucn_tools.json"
+    ]
+  },
+  {
+    "name": "LDLINK_TOKEN",
+    "requirement": "optional",
+    "type": "secret",
+    "domain": "Genomics & Variants",
+    "register_url": "https://ldlink.nih.gov/?tab=apiaccess",
+    "purpose": "Compute population-specific LD proxies for a SNP.",
+    "without": "The tool returns a clear error explaining how to register; no data without it.",
+    "used_by": [
+      "ldlink_tools.json"
+    ]
+  },
+  {
     "name": "MCULE_API_KEY",
     "requirement": "optional",
     "type": "secret",
@@ -302,6 +362,18 @@
     "without": "The tool finder falls back to local embeddings without it.",
     "used_by": [
       "embedding_tools.json"
+    ]
+  },
+  {
+    "name": "OPENGWAS_JWT",
+    "requirement": "required",
+    "type": "secret",
+    "domain": "Genetics & Variants",
+    "register_url": "https://api.opengwas.io",
+    "purpose": "Fetch GWAS instruments and variant associations from the IEU OpenGWAS database for custom Mendelian randomization.",
+    "without": "OpenGWAS tools are blocked without it. The token is free after registration.",
+    "used_by": [
+      "opengwas_tools.json"
     ]
   },
   {
@@ -387,6 +459,18 @@
     "without": "Leave blank unless you run your own USPTO server.",
     "used_by": [
       "uspto_downloader_tools.json"
+    ]
+  },
+  {
+    "name": "WAQI_API_KEY",
+    "requirement": "optional",
+    "type": "secret",
+    "domain": "Other",
+    "register_url": "https://aqicn.org/data-platform/token/",
+    "purpose": "Fetch real per-city air quality data from the World Air Quality Index API.",
+    "without": "Falls back to the public 'demo' token, which returns a fixed sample station (Shanghai) for every city. The key is free.",
+    "used_by": [
+      "waqi_tools.json"
     ]
   }
 ]

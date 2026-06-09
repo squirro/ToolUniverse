@@ -49,10 +49,7 @@
     "test_examples": [
       {
         "drug_name": "Aspirin",
-        "ndc": "0002-3228-30",
-        "rxcui": "1191",
-        "setid": "030d9bca-a934-6ef9-e063-6394a90a8277",
-        "pagesize": 1,
+        "pagesize": 2,
         "page": 1
       }
     ],
@@ -87,13 +84,13 @@
               "type": "integer"
             },
             "previous_page": {
-              "type": "string"
+              "type": ["string", "integer", "null"]
             },
             "previous_page_url": {
               "type": "string"
             },
             "next_page": {
-              "type": "string"
+              "type": ["string", "integer", "null"]
             }
           }
         }

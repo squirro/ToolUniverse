@@ -76,7 +76,7 @@ Complete reference of 225+ ToolUniverse tools for target research, organized by 
 | `cBioPortal_get_genes` | `keyword` | Cancer gene search |
 | `civic_search_genes` | `gene_symbol` | CIViC gene info |
 | `gnomad_get_gene` | `gene_symbol` | gnomAD gene data |
-| `gnomad_search_variants_genes` | `query` | gnomAD gene search |
+| `gnomad_search_variants` | `query` | gnomAD gene search |
 | `gnomad_get_gene_constraints` | `gene_symbol` | Constraint scores |
 
 ## 3. Drug-Target Interactions
@@ -112,10 +112,10 @@ Complete reference of 225+ ToolUniverse tools for target research, organized by 
 |------|------------|---------|
 | `drugbank_get_targets_by_drug_name_or_drugbank_id` | `query`, `exact_match`, `limit` | Drug targets |
 | `drugbank_get_drug_name_and_description_by_target_name` | `target_name` | Drugs for target |
-| `GtoPdb_get_target` | `target_id` | GtoPdb target info |
-| `GtoPdb_get_targets` | `family_id` | List targets |
+| `GtoPdb_search_targets` | `target_id` | GtoPdb target info |
+| `GtoPdb_search_targets` | `family_id` | List targets |
 | `GtoPdb_search_ligands` | `target_id` | Target-ligand interactions |
-| `GtoPdb_search_interactions` | `query` | Interaction search |
+| `GtoPdb_get_interactions` | `query` | Interaction search |
 
 ### STITCH
 
@@ -180,7 +180,7 @@ CRISPR knockout essentiality data from cancer cell lines.
 | `DepMap_get_cell_lines` | `tissue`, `cancer_type`, `page_size` | Cell line metadata |
 | `DepMap_search_cell_lines` | `query` | Search cell lines |
 | `DepMap_get_cell_line` | `model_id` OR `model_name` | Detailed cell line info |
-| `DepMap_get_drug_response` | `drug_name` | Drug sensitivity data |
+| Drug sensitivity (GDSC) | `drug` / `cell-line` / `target` | No TU tool — run the precision-oncology skill's `scripts/gdsc_drug_response.py` (GDSC bulk data, IC50/AUC) |
 
 **Effect Score Interpretation**:
 | Score | Meaning |
@@ -543,9 +543,9 @@ actives = tu.tools.PubChem_get_assay_active_compounds(aid=504526)
 
 | Tool | Parameters | Returns |
 |------|------------|---------|
-| `clinvar_search_variants` | `gene`, `condition`, `variant_id`, `max_results` | Variant search |
-| `clinvar_get_variant_details` | `variant_id` | Variant details |
-| `clinvar_get_clinical_significance` | `variant_id` | Clinical significance |
+| `ClinVar_search_variants` | `gene`, `condition`, `variant_id`, `max_results` | Variant search |
+| `ClinVar_get_variant_details` | `variant_id` | Variant details |
+| `ClinVar_get_clinical_significance` | `variant_id` | Clinical significance |
 
 ### dbSNP
 
@@ -642,8 +642,8 @@ actives = tu.tools.PubChem_get_assay_active_compounds(aid=504526)
 | `gwas_get_studies_for_trait` | `trait` | Studies for trait |
 | `gwas_search_associations` | `query` | GWAS associations |
 | `gwas_get_associations_for_trait` | `trait` | Associations for trait |
-| `GtoPdb_list_diseases` | - | GtoPdb diseases |
-| `GtoPdb_get_disease` | `disease_id` | Disease details |
+| `GtoPdb_search_diseases` | - | GtoPdb diseases |
+| `GtoPdb_search_diseases` | `disease_id` | Disease details |
 | `Reactome_get_diseases` | - | Reactome diseases |
 | `OSL_get_efo_id_by_disease_name` | `disease_name` | EFO ID lookup |
 

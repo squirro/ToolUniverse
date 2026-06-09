@@ -40,12 +40,18 @@ default_tool_files = {
     "enrichr_ext": os.path.join(current_dir, "data", "enrichr_ext_tools.json"),
     "HumanBase": os.path.join(current_dir, "data", "humanbase_tools.json"),
     "OpenAlex": os.path.join(current_dir, "data", "openalex_tools.json"),
+    # BGPT - structured full-text study evidence (methods, sample size,
+    # limitations, conflicts, how_to_falsify). Free for 50 results, then
+    # BGPT_API_KEY. Requested in issue #204.
+    "bgpt": os.path.join(current_dir, "data", "bgpt_tools.json"),
     # Literature search tools
     "literature_search": os.path.join(
         current_dir, "data", "literature_search_tools.json"
     ),
     "arxiv": os.path.join(current_dir, "data", "arxiv_tools.json"),
     "crossref": os.path.join(current_dir, "data", "crossref_tools.json"),
+    # Retraction / correction status check (Crossref + Retraction Watch data)
+    "retraction": os.path.join(current_dir, "data", "retraction_tools.json"),
     "simbad": os.path.join(current_dir, "data", "simbad_tools.json"),
     "dblp": os.path.join(current_dir, "data", "dblp_tools.json"),
     "pubmed": os.path.join(current_dir, "data", "pubmed_tools.json"),
@@ -251,6 +257,8 @@ default_tool_files = {
     ),
     "embedding": os.path.join(current_dir, "data", "embedding_tools.json"),
     "gwas": os.path.join(current_dir, "data", "gwas_tools.json"),
+    # PGS Catalog - published polygenic scores (EMBL-EBI)
+    "pgs_catalog": os.path.join(current_dir, "data", "pgs_catalog_tools.json"),
     # GWAS Summary Statistics - full variant-level summary stats from deposited studies
     "gwas_sumstats": os.path.join(current_dir, "data", "gwas_sumstats_tools.json"),
     "admetai": os.path.join(current_dir, "data", "admetai_tools.json"),
@@ -284,6 +292,8 @@ default_tool_files = {
     "ensembl": os.path.join(current_dir, "data", "ensembl_tools.json"),
     "clinvar": os.path.join(current_dir, "data", "clinvar_tools.json"),
     "intervar": os.path.join(current_dir, "data", "intervar_tools.json"),
+    # GeneBe - independent ACMG/AMP auto-classifier (+ AlphaMissense, gnomAD)
+    "genebe": os.path.join(current_dir, "data", "genebe_tools.json"),
     "cancervar": os.path.join(current_dir, "data", "cancervar_tools.json"),
     "geo": os.path.join(current_dir, "data", "geo_tools.json"),
     "dbsnp": os.path.join(current_dir, "data", "dbsnp_tools.json"),
@@ -378,11 +388,17 @@ default_tool_files = {
     "sabiork": os.path.join(current_dir, "data", "sabiork_tools.json"),
     # SAbDab - Structural Antibody Database
     "sabdab": os.path.join(current_dir, "data", "sabdab_tools.json"),
+    # Antibody Registry - RRID resolution + search for research antibodies
+    "antibody_registry": os.path.join(
+        current_dir, "data", "antibody_registry_tools.json"
+    ),
     # IMGT - International ImMunoGeneTics Information System
     "imgt": os.path.join(current_dir, "data", "imgt_tools.json"),
     # Metabolite tools - PubChem + CTD (replaces broken HMDB API)
     "metabolite": os.path.join(current_dir, "data", "metabolite_tools.json"),
     # MetaCyc - Metabolic Pathway Database
+    # BioCyc gates its web services behind a free account; set BIOCYC_EMAIL +
+    # BIOCYC_PASSWORD to authenticate (the tool logs in for a session cookie).
     "metacyc": os.path.join(current_dir, "data", "metacyc_tools.json"),
     # ZINC - Virtual Screening Library
     "zinc": os.path.join(current_dir, "data", "zinc_tools.json"),
@@ -432,6 +448,8 @@ default_tool_files = {
     "swissdock": os.path.join(current_dir, "data", "swissdock_tools.json"),
     # LIPID MAPS - Lipid Structure Database (lipidomics)
     "lipidmaps": os.path.join(current_dir, "data", "lipidmaps_tools.json"),
+    # SwissLipids - SIB lipid database (independent of LIPID MAPS; adds adduct m/z)
+    "swisslipids": os.path.join(current_dir, "data", "swisslipids_tools.json"),
     # USDA FoodData Central - Food composition and nutrient database
     "fooddata_central": os.path.join(
         current_dir, "data", "fooddata_central_tools.json"
@@ -496,6 +514,9 @@ default_tool_files = {
     # Install with: pip install tooluniverse[circuit]
     # HPO - Human Phenotype Ontology (phenotype terms, hierarchy, clinical genetics)
     "hpo": os.path.join(current_dir, "data", "hpo_tools.json"),
+    "encori": os.path.join(current_dir, "data", "encori_tools.json"),
+    "ldlink": os.path.join(current_dir, "data", "ldlink_tools.json"),
+    "iucn": os.path.join(current_dir, "data", "iucn_tools.json"),
     # Reactome Analysis Service - Pathway enrichment/overrepresentation analysis
     "reactome_analysis": os.path.join(
         current_dir, "data", "reactome_analysis_tools.json"
@@ -619,7 +640,9 @@ default_tool_files = {
     # MyDisease.info - BioThings disease annotation aggregator (MONDO, DO, CTD, HPO, DisGeNET)
     "mydisease": os.path.join(current_dir, "data", "mydisease_tools.json"),
     # EBI OxO - Ontology cross-reference mappings across biomedical databases
-    "oxo": os.path.join(current_dir, "data", "oxo_tools.json"),
+    # Archived at: src/tooluniverse/data/broken_apis/oxo_tools.json
+    # EBI retired the OxO service (all endpoints hang); use OLS (ols_* tools) instead.
+    # "oxo": os.path.join(current_dir, "data", "oxo_tools.json"),
     # InterPro Domain Architecture - Protein domain positions, structure mapping, clan members
     "interpro_domain_arch": os.path.join(
         current_dir, "data", "interpro_domain_arch_tools.json"
@@ -729,6 +752,8 @@ default_tool_files = {
     # ClinicalTrials.gov - World's largest clinical trial registry (572,000+ trials)
     # EpiGraphDB - Mendelian Randomization, genetic correlations, drug repurposing via GWAS
     "epigraphdb": os.path.join(current_dir, "data", "epigraphdb_tools.json"),
+    # OpenGWAS (IEU) - custom two-sample MR instruments (tophits + harmonized outcome effects)
+    "opengwas": os.path.join(current_dir, "data", "opengwas_tools.json"),
     # Foldseek - Fast protein structure similarity search (AlphaFold DB, PDB)
     "foldseek": os.path.join(current_dir, "data", "foldseek_tools.json"),
     # MedGen - NCBI medical genetics (conditions, genes, HPO, OMIM aggregation)

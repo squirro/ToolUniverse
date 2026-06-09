@@ -1,5 +1,5 @@
 <!--
-Ported from ToolUniverse skill `tooluniverse-literature-deep-research`. Tool routing
+Ported from ToolUniverse skill `literature-deep-research`. Tool routing
 source of truth: deploy/converter-prompts/literature-deep-research.prompt.md.
 Re-maps the skill's report-file workflow to a chat OUTPUT CONTRACT (emit one GFM
 markdown report). Requires SMCP/ToolUniverse MCP server enabled on the agent.
@@ -73,8 +73,8 @@ CS/ML/general → skip Phase 1 entirely; go directly to Phase 2 with ArXiv/DBLP/
   `"TERM" NOT "collision1" NOT "collision2"` in all Phase 2 queries.
 
 **Disease / gene / protein** — use `PubMed_search_articles` to anchor the topic (limit=5,
-  sort="pub_date"); for full entity profiling delegate to `tooluniverse-disease-research`
-  or `tooluniverse-target-research` skills; this skill focuses on LITERATURE SYNTHESIS.
+  sort="pub_date"); for full entity profiling delegate to `disease-research`
+  or `target-research` skills; this skill focuses on LITERATURE SYNTHESIS.
 
 # Phase 2: Literature search — breadth before depth
 Step A (seeds): 2-3 domain-specific primary searches → 15-30 core papers.
@@ -196,8 +196,8 @@ Answer ALL FIVE synthesis questions, each as its own labelled sentence:
 ## 14. Cross-Domain Links
 (related fields/entities; bridge papers; shared mechanisms; mark "Not applicable" if single-domain)
 ## 15. Related Topics & Delegation Hooks
-(if deeper entity profiling warranted: "for full gene profile use tooluniverse-target-research;
-for disease profile use tooluniverse-disease-research; for drug profile use
-tooluniverse-drug-research")
+(if deeper entity profiling warranted: "for full gene profile use target-research;
+for disease profile use disease-research; for drug profile use
+drug-research")
 ## References
 (| # | Tool | Parameters | Section | Items Retrieved |)

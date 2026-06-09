@@ -1,12 +1,12 @@
 <!--
-Ported from ToolUniverse skill `tooluniverse-protein-structure-prediction`. Grounded on
+Ported from ToolUniverse skill `protein-structure-prediction`. Grounded on
 sempart SMCP (compact mode) — all 12 tools below confirmed deployed live (ESMFold,
 AlphaFold DB, RCSB, ProtVar, ProtParam, UniProt, MyGene). Re-maps the skill's
 filesystem/Python workflow to a chat OUTPUT CONTRACT (emit ONE markdown report;
 PDF-export is the deliverable). Requires the agent to have the MCP server
 (SMCP/ToolUniverse) tools enabled — NOT the default Squirro paragraph_retriever (which
 yields doc-RAG, not TU). This is a structure-PREDICTION skill (sequence → 3D model);
-for retrieval-only of a known PDB ID, route to tooluniverse-protein-structure-retrieval.
+for retrieval-only of a known PDB ID, route to protein-structure-retrieval.
 -->
 
 # Role

@@ -1,0 +1,115 @@
+# Build and Push the SMCP (compact-mode ToolUniverse-as-MCP) Docker image.
+#
+# Modeled on Michal Skroban's house example, kept as close as possible.
+# THREE deliberate deltas from his template, all recorded in ADR-0010
+# ("Build the SMCP image from `swiss-rockets`, never from `main`",
+# docs/adr/0010 in swiss-rockets-delivery) — each marked `DELTA n` below:
+#   1. trigger branch is `swiss-rockets`, not `main`
+#   2. IMAGE_NAME is pinned to `mcp/tooluniverse`, not `${{ github.repository }}`
+#   3. build `deploy/Dockerfile` (the SR compact-mode image), not the root Dockerfile
+# Everything else (SHA pins, secret names, tag strategy, step order) matches his.
+
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - swiss-rockets        # DELTA 1: NOT main. `main` is a manual-fork-sync mirror of
+                             # upstream mims-harvard:main (manual != reviewed); it must never
+                             # produce a deployable image. Upstream reaches swiss-rockets only
+                             # via a reviewed PR `main -> swiss-rockets`.
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - swiss-rockets        # DELTA 1 (cont.): PR target is swiss-rockets; build-only, no push.
+
+env:
+  REGISTRY: registry.squirro.com
+  # DELTA 2: override Michal's `${{ github.repository }}` default. For this fork that would be
+  # `squirro/ToolUniverse` — which also has UPPERCASE letters a Docker/Harbor repo path rejects.
+  # The Harbor project is `mcp`; the image is `mcp/tooluniverse`.
+  IMAGE_NAME: mcp/tooluniverse
+
+# Minimal token permissions — principle of least privilege
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Push
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---------------------------------------------------------------
+      # 1. Checkout — pin to commit SHA, not a floating tag
+      #    actions/checkout v4.2.2
+      # ---------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      # ---------------------------------------------------------------
+      # 2. Set up Docker Buildx (required for cache + multi-platform)
+      #    docker/setup-buildx-action v3.10.0
+      # ---------------------------------------------------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      # ---------------------------------------------------------------
+      # 3. Log in to Harbor — only on pushes (not PRs from forks)
+      #    docker/login-action v3.4.0
+      #
+      #    Required secrets (Michal adds in repo/org Settings -> Secrets):
+      #      HARBOR_USERNAME  — Harbor robot account name
+      #      HARBOR_PASSWORD  — Harbor robot account secret
+      # ---------------------------------------------------------------
+      - name: Log in to Harbor registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      # ---------------------------------------------------------------
+      # 4. Extract metadata — generates tags and OCI labels automatically
+      #    docker/metadata-action v5.7.0
+      #
+      #    Tag strategy (unchanged from Michal's example):
+      #      - branch name         (e.g. swiss-rockets)
+      #      - PR number           (e.g. pr-42)  — image is built but NOT pushed
+      #      - semver from git tag (e.g. 1.2.3, 1.2)
+      #      - short git SHA       (e.g. sha-a1b2c3d)
+      #    Flux pins the IMMUTABLE tags (sha-<short> / 1.2.3), never the rolling branch tag.
+      # ---------------------------------------------------------------
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      # ---------------------------------------------------------------
+      # 5. Build and (conditionally) push
+      #    docker/build-push-action v6.15.0
+      #
+      #    push: false on PRs — builds and validates the image without pushing,
+      #    so fork contributors can't trigger a registry push. GHA cache keeps
+      #    subsequent builds fast.
+      # ---------------------------------------------------------------
+      - name: Build and push Docker image
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: .                 # CI checkout root == TU repo root == libs/tooluniverse/
+          file: deploy/Dockerfile    # DELTA 3: the SR compact-mode image, not the root Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64     # x86 cluster; no arm64 (== Michal's default; his arm64 line stays off)
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

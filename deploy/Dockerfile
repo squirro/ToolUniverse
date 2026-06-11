@@ -1,14 +1,31 @@
-FROM python:3.12-slim
+# Amazon Linux 2023 base instead of python:3.12-slim (Debian). Rationale:
+# python:3.12-slim ships perl-base + ncurses CVEs that Debian has NOT patched
+# (CVE-2026-42496/CVE-2026-8376 CRITICAL, CVE-2025-69720 HIGH, all marked
+# "affected"/"fix_deferred" with no Fixed Version — unpatchable in place).
+# AL2023 is rebuilt ~daily and actively patched: a clean trivy scan of the
+# bare base (0 CRITICAL/HIGH). TU only needs Python >=3.10 (pyproject
+# requires-python), and AL2023 ships a patched python3.11 (3.11.15) — which
+# ALSO matches the cluster's documented Python 3.11 runtime (image/cluster
+# parity). See ADR-0011.
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
-# Runtime libs that TU's binary wheels need at runtime
-# (epam.indigo → libxrender/libxext/libsm/libx11/libexpat;
+# Predictable UTF-8 locale (AL2023 defaults to C; some TU tools assume UTF-8).
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
+# Python 3.11 + the runtime libs TU's binary wheels need at runtime
+# (epam.indigo → libXrender/libXext/libSM/libX11/expat;
 #  faiss-cpu / numpy / scipy → libgomp;
-#  build-time → gcc/g++ for anything that needs to compile)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      gcc g++ \
-      libxrender1 libxext6 libsm6 libx11-6 libexpat1 \
-      libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
+#  build-time → gcc/gcc-c++ + python3.11-devel for any sdist that compiles).
+# dnf package names differ from Debian: gcc-c++ (not g++), capitalised libX*,
+# expat (not libexpat1), libgomp (not libgomp1). install_weak_deps=False keeps
+# the dependency closure (and thus the CVE surface) minimal.
+RUN dnf install -y --setopt=install_weak_deps=False \
+      python3.11 python3.11-pip python3.11-devel \
+      gcc gcc-c++ \
+      libXrender libXext libSM libX11 expat \
+      libgomp \
+    && dnf clean all && rm -rf /var/cache/dnf
 
 WORKDIR /app/tu_src
 
@@ -28,10 +45,14 @@ COPY src/ ./src/
 #      no local model needed
 # To re-enable Tool_RAG later: change to `.[embedding]` here AND remove
 # Tool_RAG from --exclude-tools below.
-RUN pip install --no-cache-dir -e .
+# Explicit python3.11 (AL2023's default python3 is 3.9). pip stamps the
+# tooluniverse-smcp console-script shebang with this interpreter.
+RUN python3.11 -m pip install --no-cache-dir -e .
 
-# Trim build-only toolchain; runtime libs stay.
-RUN apt-get purge -y gcc g++ && apt-get autoremove -y
+# Trim build-only toolchain; runtime libs stay. Shrinks the trivy-visible
+# package set (gcc / -devel carry their own advisories) now that wheels are in.
+RUN dnf remove -y gcc gcc-c++ python3.11-devel \
+    && dnf clean all && rm -rf /var/cache/dnf
 
 ENV TOOLUNIVERSE_LOG_LEVEL=INFO \
     PYTHONUNBUFFERED=1

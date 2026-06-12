@@ -15,8 +15,10 @@ services:
     env_file: .env
     volumes:
       # TU workspace: HPA bulk TSVs, NCBI cache, downloaded reference
-      # data. Survives container recreate.
-      - smcp_workspace:/root/.tooluniverse
+      # data. Survives container recreate. Mounted at the non-root app
+      # user's HOME (uid 10001) — the named volume inherits the image dir's
+      # 10001 ownership on first mount, so the non-root process can write it.
+      - smcp_workspace:/home/app/.tooluniverse
     healthcheck:
       # TCP port check via stdlib — robust against MCP protocol changes.
       test:

@@ -79,6 +79,26 @@ RUN mkdir -p /app/served-skills \
  && echo "[served-skills] $(ls -1 /app/served-skills | wc -l) bodies:" \
  && ls -1 /app/served-skills | sed 's/\.md$//' | sort
 
+# Non-root hardening. Placed AFTER every root-owned build step (pip install,
+# served-skills COPY/RUN write to /app). Nothing in the CMD needs privilege:
+# port 8000 is unprivileged (no CAP_NET_BIND_SERVICE) and the only runtime
+# writes go to TU_DATA_DIR / $HOME/.tooluniverse. AL2023's minimal base ships
+# no shadow-utils (no useradd), so create the account by appending to
+# /etc/passwd directly — zero added packages, keeping the CVE surface minimal
+# (the point of the AL2023 rebase, ADR-0011). Relocate the TU workspace out of
+# /root (mode 0700, root-only) into the app HOME so the non-root process — and
+# a K8s PVC mounted there with fsGroup 10001 — can write it. /app/served-skills
+# is cp'd mode 644 (world-readable), so uid 10001 reads it fine — no chown.
+# Numeric uid 10001 satisfies the restricted PodSecurity Standard (runAsNonRoot
+# / mustRunAsNonRoot reject a USER that doesn't resolve to a non-zero uid).
+RUN printf 'app:x:10001:10001::/home/app:/sbin/nologin\n' >> /etc/passwd \
+ && printf 'app:x:10001:\n' >> /etc/group \
+ && mkdir -p /home/app/.tooluniverse \
+ && chown -R 10001:10001 /home/app
+ENV HOME=/home/app \
+    TU_DATA_DIR=/home/app/.tooluniverse/cache
+USER 10001
+
 # Compact mode: TU loads all ~2,278 tools in the background but only exposes
 # 5 in tools/list — list_tools, grep_tools, get_tool_info, execute_tool,
 # find_tools. The LLM discovers via find_tools/grep_tools/list_tools and

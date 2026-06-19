@@ -111,8 +111,11 @@ Evidence grades: T1 = human clinical proof; T2 = functional experimental evidenc
 - Hub identification: which targets are most connected in the drug-disease subnetwork
 - Shortest paths between drug targets and disease genes: how many hops, through which intermediaries
 - Network proximity Z-score: are drug targets closer to disease module than random expectation
+  - Use the **`Network_proximity`** tool — Guney/Barabasi (2016) + Menche (2015) set-distance with a degree-matched Z-score, computed deterministically from a graph you supply (inline `edges` or an `edgelist_path`) plus two node sets (`set_a`/`set_b`, or the aliases `targets`/`disease_genes`). `measure` = `closest` (default), `shortest`, or `separation` (s_AB < 0 ⇒ overlapping modules). Returns `value`, `z_score`, `p_value`.
+  - **Feed it the edges from Phase 2.** Tested end-to-end: `STRING_get_network` returns rows with `preferredName_A`/`preferredName_B` (gene symbols) — map each to a `[A, B]` pair and pass as `edges`; the IDs line up with symbol-based gene sets natively (no conversion).
+  - **Use a LARGE interactome for the null.** A small query-centered subnetwork (e.g. `STRING_get_network` with a low `limit`) makes the degree-matched random sets nearly identical to the real ones, giving an uninformative `z>0, p≈1`. For a meaningful Z, pull the broad interactome (high `limit`, or a full network via `NDEx_get_network`), not just the immediate neighborhood. (The skill's `scripts/network_proximity.py`, which downloads the full STRING network, is the CLI equivalent.)
 - Functional enrichment to identify shared biological processes
-- Tools: `STRING_functional_enrichment`, `STRING_ppi_enrichment`, `enrichr_gene_enrichment_analysis`, `ReactomeAnalysis_pathway_enrichment`
+- Tools: `Network_proximity`, `STRING_functional_enrichment`, `STRING_ppi_enrichment`, `enrichr_gene_enrichment_analysis`, `ReactomeAnalysis_pathway_enrichment`
 
 ### Phase 4: Drug Repurposing Predictions
 - Identify drugs targeting disease genes (disease-to-compound mode)

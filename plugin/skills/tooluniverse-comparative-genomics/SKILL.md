@@ -43,12 +43,14 @@ Understanding conservation requires distinguishing between types of evolutionary
 
 **Low conservation in one lineage has two possible explanations: relaxed selection or positive selection.** Use the dN/dS ratio (nonsynonymous to synonymous substitution rate) to distinguish them. A dN/dS ratio near 1 suggests neutral evolution — the gene is no longer under purifying selection (relaxed constraint, possibly reflecting loss of function in that lineage). A dN/dS ratio > 1 indicates positive selection — the gene is diverging faster than neutral expectation, often because it is adapting to a new environment or function. A dN/dS ratio << 1 is the signature of purifying selection (functional constraint). When a vertebrate gene shows high divergence in a specific branch of the tree, ask which explanation applies before concluding that function is lost.
 
-**Computing dN/dS** (no TU tool does this — use the bundled script). The data path: `ensembl_get_homology(...)` → the 1:1 ortholog IDs → `EnsemblSeq_get_id_sequence(id=..., type="cds")` for each → codon-align the two CDS (orthologous CDS are usually directly alignable; for divergent pairs align the protein and back-translate) → run `scripts/dnds.py`:
+**Computing dN/dS.** The data path: `ensembl_get_homology(...)` → the 1:1 ortholog IDs → `EnsemblSeq_get_id_sequence(id=..., type="cds")` for each → codon-align the two CDS (orthologous CDS are usually directly alignable; for divergent pairs align the protein and back-translate) → compute dN/dS. Prefer the **`Sequence_dn_ds`** tool — one call returns structured `dN`, `dS`, `dN_dS`, per-site counts, and an interpretation:
 
-```bash
-python scripts/dnds.py human_CDS.fasta mouse_CDS.fasta   # or --seq1 ATG... --seq2 ATG...
 ```
-It implements the Nei-Gojobori estimator with Jukes-Cantor correction (dN validated against Biopython NG86) and returns dN, dS, dN/dS, and an interpretation (>1 positive, ~1 neutral/relaxed, <<1 purifying). `dN/dS` is `null` when dS is 0 or uncorrectable (too few/too many substitutions) — do not over-interpret a single high-divergence pair without enough synonymous sites.
+Sequence_dn_ds(seq1="ATG...", seq2="ATG...")        # inline codon-aligned CDS
+Sequence_dn_ds(fasta1_path="human.fa", fasta2_path="mouse.fa")
+```
+
+It implements the Nei-Gojobori (1986) estimator with Jukes-Cantor correction (the bundled `scripts/dnds.py` is the identical CLI form, validated against Biopython NG86). `dN_dS` is `null` when dS is 0 or uncorrectable (too few/too many substitutions) — do not over-interpret a single high-divergence pair without enough synonymous sites.
 
 **Ortholog relationship type shapes interpretation.** A 1:1 ortholog (one gene in human, one in mouse) is the highest-confidence functional equivalent — it has not been duplicated in either lineage, so it most likely performs the same ancestral role. A 1:many relationship (one gene in human, multiple in mouse) means the target species has duplicated the gene; the copies may have subfunctionalized (each copy performs a subset of the original roles) or neofunctionalized (one copy gained a new role). Do not assume both copies retain full ancestral function. A many:many relationship reflects complex duplication history in both species and requires analyzing each paralog pair individually.
 
@@ -143,6 +145,8 @@ Phenotype ontologies by species: Human = HP (HPO), Mouse = MP (Mammalian Phenoty
 
 From the gene tree, assess: (1) how many species contain a member of this gene family; (2) when gene duplication events occurred (ancient vs. recent); (3) whether the gene family expanded in particular lineages. A gene present in a single copy across all vertebrates (deep conservation, no duplication) is likely under strong selective constraint.
 
+**Genome-assembly context for a comparison species**: When a species' ortholog calls look incomplete or you need the underlying reference assembly, use `NCBIDatasets_list_genomes_by_taxon` (params `taxon` as tax_id, `limit`, `reference_only`) to find the reference genome, `NCBIDatasets_get_genome_assembly` (param `accession`) for assembly metrics (contiguity/N50/completeness — a fragmented assembly can cause spurious "missing ortholog" calls), and `NCBIDatasets_get_sequence_reports` (param `accession`) for the chromosome/scaffold replicon map. For a full assembly-QC workflow on microbial genomes, see the `tooluniverse-microbial-genome-characterization` skill.
+
 ---
 
 ## Synthesis Questions
@@ -159,7 +163,7 @@ When interpreting the assembled evidence, work through these questions:
 
 ## Fallback Strategies
 
-- **Ortholog not found in Ensembl Compara**: Try `ensembl_get_homology`, then `OpenTargets_get_target_homologues_by_ensemblID`, then BLAST as last resort
+- **Ortholog not found in Ensembl Compara**: Try `ensembl_get_homology`, then `OpenTargets_get_target_homologues_by_ensemblID`, then BLAST as last resort. If a species is absent from Compara, confirm a reference assembly exists via `NCBIDatasets_list_genomes_by_taxon` and check its contiguity with `NCBIDatasets_get_genome_assembly` before concluding the gene is truly absent
 - **Sequence retrieval fails**: Use `ensembl_get_homology` with `sequence="cdna"` as alternative to NCBI
 - **UniProt returns empty with reviewed:true**: Try without that filter; organism may have only TrEMBL entries
 - **Monarch returns no data**: Use `MonarchV3_get_associations` with `category="biolink:GeneToPhenotypicFeatureAssociation"` as alternative

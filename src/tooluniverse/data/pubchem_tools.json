@@ -1033,5 +1033,305 @@
         }
       }
     }
+  },
+  {
+    "name": "PubChem_get_substance_by_SID",
+    "description": "Retrieve a PubChem SUBSTANCE (SID, depositor-level) record by its Substance ID. Unlike the CID/compound tools, this returns the raw depositor submission: the source/depositor name, the depositor's own source identifier, deposited synonyms, comments (often SMILES/InChI), cross-references (registry IDs, patents), and the list of linked compound CIDs that PubChem standardized this substance into. Returns found=false when the SID does not exist.",
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "sid": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "PubChem Substance ID (SID), a positive integer, e.g., 223766453."
+        }
+      },
+      "required": [
+        "sid"
+      ]
+    },
+    "fields": {
+      "endpoint": "/substance/sid/{sid}/JSON",
+      "use_pugview": false,
+      "substance_record": true,
+      "input_description": "Input is a PubChem Substance ID (sid). The tool fetches the raw PC_Substances record plus the linked compound CIDs.",
+      "output_description": "Returns {status, found, data, metadata}. On found=true, data has: sid, source_name (depositor source id), source_id (depositor's own record id), synonyms (list), comment (list, often SMILES/InChI), registry_ids (list), xrefs (raw list), linked_cids (list of CIDs). On a non-existent SID, found=false."
+    },
+    "type": "PubChemRESTTool",
+    "test_examples": [
+      {
+        "sid": 223766453
+      }
+    ],
+    "return_schema": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Successful substance lookup.",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "success"
+              ]
+            },
+            "found": {
+              "type": "boolean"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "sid": {
+                  "type": [
+                    "integer",
+                    "string"
+                  ]
+                },
+                "source_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source_id": {
+                  "type": [
+                    "string",
+                    "integer",
+                    "null"
+                  ]
+                },
+                "synonyms": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "comment": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "registry_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "xrefs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "linked_cids": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              }
+            },
+            "metadata": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "status",
+            "found",
+            "data"
+          ]
+        },
+        {
+          "type": "object",
+          "description": "Error during substance lookup.",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "error"
+              ]
+            },
+            "error": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "error"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "PubChem_get_substances_by_source",
+    "description": "Reverse sourcing: list ALL PubChem substance SIDs deposited/offered by a specific chemical vendor or data source (e.g., 'Combi-Blocks', 'Sigma-Aldrich', 'Enamine', 'TCI'). This is the inverse of the forward CID->vendor lookup (PubChem_get_compound_xrefs_by_CID): it answers 'what does vendor X actually stock/sell' by returning that depositor's full substance (SID) catalog. The 'source' name must match a PubChem registered substance source name exactly (case-sensitive) -- use PubChem_list_substance_sources first to validate/normalize the vendor name. Result lists can be very large (hundreds of thousands of SIDs).",
+    "parameter": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Exact PubChem substance source / vendor name (case-sensitive), e.g., \"Combi-Blocks\", \"Sigma-Aldrich\", \"Enamine\". Multi-word names with spaces are accepted (e.g., \"Aaron Chemicals LLC\"). Validate the name with PubChem_list_substance_sources to avoid an empty/404 result."
+        },
+        "vendor": {
+          "type": "string",
+          "description": "Alias for source. The vendor/source name to retrieve SIDs for."
+        }
+      },
+      "required": []
+    },
+    "fields": {
+      "endpoint": "/substance/sourceall/{source}/sids/JSON",
+      "use_pugview": false,
+      "input_description": "Input is a single 'source' (vendor/depositor) name exactly as registered in PubChem. The tool requests every substance SID attributed to that source.",
+      "output_description": "Returns {status:'success', data:{IdentifierList:{SID:[...]}}}. data.IdentifierList.SID is the list of all PubChem Substance IDs offered/deposited by that source. Use each SID with PubChem_get_substance_by_SID to expand to the depositor record and linked compound CIDs. An unknown/misspelled source name yields a PubChem HTTP 404 returned as status:'error'."
+    },
+    "type": "PubChemRESTTool",
+    "test_examples": [
+      {
+        "source": "Combi-Blocks"
+      }
+    ],
+    "return_schema": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Successful reverse-sourcing lookup.",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "success"
+              ]
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "IdentifierList": {
+                  "type": "object",
+                  "properties": {
+                    "SID": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "status",
+            "data"
+          ]
+        },
+        {
+          "type": "object",
+          "description": "Error (e.g., unknown source name -> HTTP 404).",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "error"
+              ]
+            },
+            "error": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "error"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "PubChem_list_substance_sources",
+    "description": "Vendor/source directory: enumerate the full master roster of chemical vendors and data sources registered as PubChem SUBSTANCE depositors (~919 sources, including Enamine, Sigma-Aldrich, TCI, Combi-Blocks). Use this to discover which suppliers PubChem aggregates and to validate/normalize a vendor name (exact, case-sensitive) BEFORE a reverse-sourcing query with PubChem_get_substances_by_source. Takes no parameters.",
+    "parameter": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "fields": {
+      "endpoint": "/sources/substance/JSON",
+      "use_pugview": false,
+      "input_description": "No input parameters. Returns the complete substance source directory.",
+      "output_description": "Returns {status:'success', data:{InformationList:{SourceName:[...]}}}. data.InformationList.SourceName is the alphabetical list of every registered substance source/vendor name. Each name can be used verbatim as the 'source' argument of PubChem_get_substances_by_source."
+    },
+    "type": "PubChemRESTTool",
+    "test_examples": [
+      {}
+    ],
+    "return_schema": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Successful source directory listing.",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "success"
+              ]
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "InformationList": {
+                  "type": "object",
+                  "properties": {
+                    "SourceName": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "status",
+            "data"
+          ]
+        },
+        {
+          "type": "object",
+          "description": "Error retrieving the source directory.",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "error"
+              ]
+            },
+            "error": {
+              "type": "string"
+            },
+            "detail": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "error"
+          ]
+        }
+      ]
+    }
   }
 ]

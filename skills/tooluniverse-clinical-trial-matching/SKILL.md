@@ -1,6 +1,6 @@
 ---
 name: tooluniverse-clinical-trial-matching
-description: AI-driven patient-to-trial matching for precision oncology and rare-disease care. Transforms a patient's molecular profile (mutations, biomarkers, expression) and clinical state into ranked clinical-trial recommendations with evidence tiers. Searches ClinicalTrials.gov plus cross-references CIViC, OpenTargets, ChEMBL, and FDA labels. Use for matching patients to trials by genotype, biomarker-driven trial selection, and trial-eligibility scoring.
+description: AI-driven patient-to-trial matching for precision oncology and rare-disease care. Transforms a patient's molecular profile (mutations, biomarkers, expression) and clinical state into ranked clinical-trial recommendations with evidence tiers. Searches ClinicalTrials.gov, the EU CTIS register (European/EEA trials), AND the ISRCTN registry (UK/international) plus cross-references CIViC, OpenTargets, ChEMBL, and FDA labels. Use for matching patients to trials by genotype, biomarker-driven trial selection, trial-eligibility scoring, and finding trials across the US, Europe, and the UK.
 disable-model-invocation: true
 ---
 
@@ -129,9 +129,15 @@ Phase 10: Report Synthesis
 
 | Tool | Key Parameters | Notes |
 |------|---------------|-------|
-| `search_clinical_trials` | `query_term` (REQ), `condition`, `intervention`, `pageSize` | Main search |
+| `search_clinical_trials` | `query_term` (REQ), `condition`, `intervention`, `pageSize` | Main search (ClinicalTrials.gov, U.S./global) |
 | `search_clinical_trials` | `action="search_studies"` (REQ), `condition`, `intervention`, `limit` | Alternative search |
 | `get_clinical_trial_descriptions` | `action="get_study_details"` (REQ), `nct_id` (REQ) | Full trial details |
+| `CTIS_search_trials` | `query` (REQ), `limit`, `page` | **EU/EEA trials** (EU CTIS register, since 2022) — complements ClinicalTrials.gov |
+| `CTIS_get_trial` | `ct_number` (REQ, e.g. `2022-503001-38-01`) | Full EU trial detail (Part I/II, member states, results) |
+| `ISRCTN_search_trials` | `query` (REQ), `limit` | **ISRCTN registry** (UK-based, WHO-primary, international) — a third source |
+| `ISRCTN_get_trial` | `isrctn_id` (REQ, e.g. `ISRCTN12336055`) | Full ISRCTN trial detail + cross-ref ids (DOI/EudraCT/NCT) |
+
+**Geographic coverage**: ClinicalTrials.gov is U.S.-centric but global; many EU/EEA-only trials appear *only* in the EU CTIS register, and UK/international trials in **ISRCTN**. For a comprehensive search — or any patient who could enroll outside the U.S. — query `search_clinical_trials`, `CTIS_search_trials`, **and** `ISRCTN_search_trials`, then merge (the three registers list largely disjoint trials; ISRCTN records carry DOI/EudraCT/NCT cross-refs you can use to dedupe against the others). Each register has its own id namespace and detail tool: NCT→`get_clinical_trial_*`, CT number→`CTIS_get_trial`, ISRCTN id→`ISRCTN_get_trial`.
 
 ### Batch Trial Detail Tools (all take `nct_ids` array)
 

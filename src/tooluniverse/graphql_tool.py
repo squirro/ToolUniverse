@@ -176,8 +176,13 @@ class OpentargetTool(GraphQLTool):
             else:
                 return {
                     "status": "error",
-                    "error": f"Could not resolve disease name to EFO ID. "
-                    "Try passing efoId directly (e.g. EFO_0000384 for Crohn's disease).",
+                    # Must cite a LIVE id. EFO has migrated its disease branch to
+                    # MONDO and obsoleted the EFO disease terms, so the example
+                    # this message used to give (EFO_0000384) resolves to nothing
+                    # -- an error message recommending a dead identifier.
+                    "error": f"Could not resolve disease name to a disease ID. "
+                    "Try passing efoId directly (e.g. MONDO_0005011 for Crohn "
+                    "disease); OpenTargets indexes diseases under MONDO ids.",
                 }
 
         result = super().run(arguments)

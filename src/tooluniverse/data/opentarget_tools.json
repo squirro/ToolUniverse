@@ -26,7 +26,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384"
+        "efoId": "MONDO_0005011"
       }
     ],
     "return_schema": {
@@ -211,7 +211,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384",
+        "efoId": "MONDO_0005011",
         "ensemblId": "ENSG00000141510"
       }
     ],
@@ -294,7 +294,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384",
+        "efoId": "MONDO_0005011",
         "ensemblId": "ENSG00000141510",
         "datasourceIds": [
           "europepmc"
@@ -655,7 +655,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384",
+        "efoId": "MONDO_0005011",
         "threshold": 1.0,
         "size": 1
       }
@@ -921,7 +921,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384"
+        "efoId": "MONDO_0005011"
       }
     ],
     "return_schema": {
@@ -2355,7 +2355,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384"
+        "efoId": "MONDO_0005011"
       }
     ],
     "return_schema": {
@@ -2425,7 +2425,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384"
+        "efoId": "MONDO_0005011"
       }
     ],
     "return_schema": {
@@ -2495,7 +2495,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384"
+        "efoId": "MONDO_0005011"
       }
     ],
     "return_schema": {
@@ -2545,7 +2545,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384"
+        "efoId": "MONDO_0005011"
       }
     ],
     "return_schema": {
@@ -2612,7 +2612,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384"
+        "efoId": "MONDO_0005011"
       }
     ],
     "return_schema": {
@@ -2674,7 +2674,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000384"
+        "efoId": "MONDO_0005011"
       }
     ],
     "return_schema": {
@@ -4374,7 +4374,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "entityId": "EFO_0000384",
+        "entityId": "MONDO_0005011",
         "startYear": 2023,
         "startMonth": 0,
         "endYear": 2023,

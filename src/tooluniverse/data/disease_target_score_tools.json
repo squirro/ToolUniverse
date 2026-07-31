@@ -82,7 +82,7 @@
     "type": "DiseaseTargetScoreTool",
     "test_examples": [
       {
-        "efoId": "EFO_0000339",
+        "efoId": "MONDO_0011996",
         "datasourceId": "chembl",
         "pageSize": 100
       }
@@ -167,7 +167,7 @@
     "type": "DiseaseTargetScoreTool",
     "test_examples": [
       {
-        "efoId": "EFO_0000339",
+        "efoId": "MONDO_0011996",
         "pageSize": 100
       }
     ]
@@ -243,7 +243,7 @@
     "type": "DiseaseTargetScoreTool",
     "test_examples": [
       {
-        "efoId": "EFO_0000339",
+        "efoId": "MONDO_0011996",
         "pageSize": 100
       }
     ]
@@ -319,7 +319,7 @@
     "type": "DiseaseTargetScoreTool",
     "test_examples": [
       {
-        "efoId": "EFO_0000339",
+        "efoId": "MONDO_0011996",
         "pageSize": 100
       }
     ]
@@ -395,7 +395,7 @@
     "type": "DiseaseTargetScoreTool",
     "test_examples": [
       {
-        "efoId": "EFO_0000339",
+        "efoId": "MONDO_0011996",
         "pageSize": 100
       }
     ]
@@ -471,7 +471,7 @@
     "type": "DiseaseTargetScoreTool",
     "test_examples": [
       {
-        "efoId": "EFO_0000339",
+        "efoId": "MONDO_0011996",
         "pageSize": 100
       }
     ]
@@ -547,7 +547,7 @@
     "type": "DiseaseTargetScoreTool",
     "test_examples": [
       {
-        "efoId": "EFO_0000339",
+        "efoId": "MONDO_0011996",
         "pageSize": 100
       }
     ]
@@ -623,7 +623,7 @@
     "type": "DiseaseTargetScoreTool",
     "test_examples": [
       {
-        "efoId": "EFO_0000339",
+        "efoId": "MONDO_0011996",
         "pageSize": 100
       }
     ]
@@ -699,7 +699,7 @@
     "type": "DiseaseTargetScoreTool",
     "test_examples": [
       {
-        "efoId": "EFO_0000339",
+        "efoId": "MONDO_0011996",
         "pageSize": 100
       }
     ]
@@ -775,7 +775,7 @@
     "type": "DiseaseTargetScoreTool",
     "test_examples": [
       {
-        "efoId": "EFO_0000339",
+        "efoId": "MONDO_0011996",
         "pageSize": 100
       }
     ]

@@ -203,6 +203,29 @@ class OpentargetTool(GraphQLTool):
                     modified_arguments[each_arg] = arg_value.replace("-", " ")
             result = super().run(modified_arguments)
 
+        # An id the platform cannot resolve comes back as {"data": {"disease": null}},
+        # and remove_none_and_empty_values strips the null to leave {"data": {}}.
+        # execute_query documents that callers are meant to tell that apart from a
+        # real empty result -- no caller ever did, so it surfaced as
+        # {"status": "success", "data": {}}. An agent reads that as "this disease
+        # genuinely has no associated targets" and reports a confident wrong answer
+        # it has no way to question.
+        if result.get("status") == "success" and "disease(" in self.query_schema:
+            data = result.get("data") or {}
+            if not data.get("disease"):
+                requested = arguments.get("efoId") or arguments.get("diseaseIds")
+                return {
+                    "status": "error",
+                    "error": (
+                        f"OpenTargets could not resolve the disease id {requested!r}, "
+                        "so there is no result to report (this is not an empty result "
+                        "set). The platform indexes many diseases under MONDO ids and "
+                        "plain EFO ids frequently do not resolve -- EFO_0000384 returns "
+                        "nothing while MONDO_0004975 returns data. Pass the MONDO id, "
+                        "or pass disease_name instead and it will be resolved by search."
+                    ),
+                }
+
         return result
 
 

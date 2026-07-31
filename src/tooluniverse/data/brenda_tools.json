@@ -44,7 +44,7 @@
           "description": "Alias for ec_number. Enzyme identifier in EC notation (e.g., 1.1.1.1)."
         }
       },
-      "required": []
+      "required": ["ec_number"]
     },
     "return_schema": {
       "type": "object",
@@ -103,7 +103,7 @@
           "description": "Alias for ec_number. Enzyme identifier in EC notation (e.g., 1.1.1.1)."
         }
       },
-      "required": []
+      "required": ["ec_number"]
     },
     "return_schema": {
       "type": "object",
@@ -162,7 +162,7 @@
           "description": "Alias for ec_number. Enzyme identifier in EC notation (e.g., 1.1.1.1)."
         }
       },
-      "required": []
+      "required": ["ec_number"]
     },
     "return_schema": {
       "type": "object",
@@ -214,7 +214,7 @@
           "description": "Alias for ec_number. Enzyme identifier in EC notation (e.g., 1.1.1.1)."
         }
       },
-      "required": []
+      "required": ["ec_number"]
     },
     "return_schema": {
       "type": "object",

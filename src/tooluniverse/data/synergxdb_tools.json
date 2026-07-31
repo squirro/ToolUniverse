@@ -2,7 +2,7 @@
   {
     "name": "SYNERGxDB_search_combos",
     "type": "SYNERGxDBTool",
-    "description": "Search drug combination synergy scores in SYNERGxDB. Returns synergy metrics (Bliss, Loewe, HSA, ZIP) for drug pairs across cancer cell lines. Filter by drug IDs, cell line/tissue, and dataset. The database integrates 22,507 unique drug combinations from 9 major studies (NCI-ALMANAC, MERCK, MIT-MELANOMA, VISAGE, DECREASE, YALE-TNBC, YALE-PDAC, STANFORD, CLOUD). Positive ZIP scores indicate synergy. Use list_drugs first to find drug IDs. NOTE: SYNERGxDB covers pairwise in vitro cytotoxicity screening; standard-of-care clinical regimens (FOLFOX, FOLFIRI, CAPOX, R-CHOP) and most targeted therapies/biologics (BRAF/MEK/KRAS inhibitors, immune checkpoint inhibitors, monoclonal antibodies) are not represented.",
+    "description": "Search drug combination synergy scores in SYNERGxDB. Returns synergy metrics (Bliss, Loewe, HSA, ZIP) for drug pairs across cancer cell lines. Filter by drug IDs, cell line/tissue, and dataset. The database integrates 22,507 unique drug combinations from 9 major studies (NCI-ALMANAC, MERCK, MIT-MELANOMA, VISAGE, DECREASE, YALE-TNBC, YALE-PDAC, STANFORD, CLOUD). Positive ZIP scores indicate synergy. Use list_drugs first to find drug IDs. NOTE: SYNERGxDB covers pairwise in vitro cytotoxicity screening; standard-of-care clinical regimens (FOLFOX, FOLFIRI, CAPOX, R-CHOP) and most targeted therapies/biologics (BRAF/MEK/KRAS inhibitors, immune checkpoint inhibitors, monoclonal antibodies) are not represented. At least one of drug_id_1, drug_id_2, drug_name_1, drug_name_2, or dataset is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {

@@ -1313,7 +1313,7 @@
           "description": "Alias for drug_chembl_id. ChEMBL ID (e.g., \"CHEMBL3301622\")."
         }
       },
-      "required": []
+      "required": ["drug_chembl_id"]
     },
     "return_schema": {
       "type": "object",

@@ -59,7 +59,7 @@
   {
     "name": "SIDER_get_drug_side_effects",
     "type": "SiderTool",
-    "description": "Get the list of known side effects for a drug from SIDER, including frequency data when available. Side effects are extracted from drug labels and include MedDRA codes, frequency percentages from clinical trials (e.g., '21% - 57.5%'), and placebo comparison rates. Provide either a drug name (will auto-search) or a SIDER drug ID from SIDER_search_drug. Returns adverse reactions recorded in official drug labels.",
+    "description": "Get the list of known side effects for a drug from SIDER, including frequency data when available. Side effects are extracted from drug labels and include MedDRA codes, frequency percentages from clinical trials (e.g., '21% - 57.5%'), and placebo comparison rates. Provide either a drug name (will auto-search) or a SIDER drug ID from SIDER_search_drug. Returns adverse reactions recorded in official drug labels. At least one of sider_drug_id or drug_name is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -123,7 +123,7 @@
   {
     "name": "SIDER_get_drug_indications",
     "type": "SiderTool",
-    "description": "Get the therapeutic indications for a drug from SIDER. Indications are medical conditions that a drug is approved to treat, extracted from the indications and usage sections of drug labels. Returns MedDRA-coded conditions with descriptions. Provide either a drug name or SIDER drug ID.",
+    "description": "Get the therapeutic indications for a drug from SIDER. Indications are medical conditions that a drug is approved to treat, extracted from the indications and usage sections of drug labels. Returns MedDRA-coded conditions with descriptions. Provide either a drug name or SIDER drug ID. At least one of sider_drug_id or drug_name is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -176,7 +176,7 @@
   {
     "name": "SIDER_get_drugs_for_side_effect",
     "type": "SiderTool",
-    "description": "Find all drugs associated with a specific side effect in SIDER. Returns drugs known to cause the given adverse reaction, with frequency information when available (e.g., '7%', '5% - 18%', 'postmarketing', 'common'). Provide either a MedDRA code (e.g., C0018681 for headache) or a side effect name (will auto-search). Useful for drug safety comparisons and adverse event analysis.",
+    "description": "Find all drugs associated with a specific side effect in SIDER. Returns drugs known to cause the given adverse reaction, with frequency information when available (e.g., '7%', '5% - 18%', 'postmarketing', 'common'). Provide either a MedDRA code (e.g., C0018681 for headache) or a side effect name (will auto-search). Useful for drug safety comparisons and adverse event analysis. At least one of meddra_code or side_effect_name is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {

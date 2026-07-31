@@ -67,7 +67,7 @@
   {
     "name": "MolecularFormula_analyze",
     "type": "ScientificCalculatorTool",
-    "description": "Analyze a molecular formula to calculate molar mass, degrees of unsaturation (DoU), and elemental composition (mass percentages). OR determine empirical/molecular formula from combustion analysis data (masses of CO2, H2O produced from burning a sample). Supports elements: C, H, N, O, S, P, F, Cl, Br, I. Use for: formula analysis, combustion analysis problems, elemental composition, molecular weight calculation.",
+    "description": "Analyze a molecular formula to calculate molar mass, degrees of unsaturation (DoU), and elemental composition (mass percentages). OR determine empirical/molecular formula from combustion analysis data (masses of CO2, H2O produced from burning a sample). Supports elements: C, H, N, O, S, P, F, Cl, Br, I. Use for: formula analysis, combustion analysis problems, elemental composition, molecular weight calculation. formula is required for the analyze_formula mode; a call omitting it returns an error.",
     "parameter": {
       "type": "object",
       "properties": {

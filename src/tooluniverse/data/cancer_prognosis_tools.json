@@ -33,7 +33,7 @@
           "description": "Maximum number of patient records to return (default 500, max 2000)"
         }
       },
-      "required": []
+      "required": ["cancer"]
     },
     "return_schema": {
       "oneOf": [
@@ -168,7 +168,7 @@
           "description": "Upper bound on sample records to return (default 500, max 2000). Actual count may be lower if some samples lack expression data for the requested gene."
         }
       },
-      "required": []
+      "required": ["cancer"]
     },
     "return_schema": {
       "oneOf": [
@@ -320,7 +320,7 @@
           "description": "Search query. Alias for keyword (e.g., 'lung', 'breast', 'TCGA')."
         }
       },
-      "required": []
+      "required": ["keyword"]
     },
     "return_schema": {
       "oneOf": [
@@ -411,7 +411,7 @@
           "description": "Alias for cancer. cBioPortal study ID (e.g., 'brca_tcga', 'luad_tcga')."
         }
       },
-      "required": []
+      "required": ["cancer"]
     },
     "return_schema": {
       "oneOf": [

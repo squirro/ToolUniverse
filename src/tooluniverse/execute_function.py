@@ -759,6 +759,32 @@ class ToolUniverse:
         """Get API key from environment variables."""
         return os.getenv(key_name)
 
+    def _tool_unavailable_message(self, function_name: str) -> str:
+        """Why this tool cannot be called, in terms the caller can act on.
+
+        A "required API key" that is really a package-presence flag must not be
+        reported as a credential: there is nothing to obtain, and an agent that
+        follows the instruction sets the variable, satisfies the gate, and fails
+        further in. When the tool declares `required_packages`, say that instead.
+        """
+        missing_keys = getattr(self, "_excluded_api_key_tools", {}).get(function_name)
+        packages = getattr(self, "_excluded_tool_packages", {}).get(function_name)
+        if missing_keys and packages:
+            names = ", ".join(packages)
+            return (
+                f"Tool '{function_name}' needs the Python package(s) {names}, "
+                f"which are not installed in this environment. This is not a "
+                f"credential -- install them, e.g. `pip install {packages[0].replace('_', '-')}`, "
+                f"and retry."
+            )
+        if missing_keys:
+            return (
+                f"Tool '{function_name}' requires API key(s) not set: "
+                f"{', '.join(missing_keys)}. "
+                "Set them as environment variables and retry."
+            )
+        return f"Tool '{function_name}' not found even after loading tools"
+
     def _check_api_key_requirements(self, tool_config):
         """
         Check if a tool's required API keys are available.
@@ -968,6 +994,7 @@ class ToolUniverse:
             self.all_tool_dict = {}
             self.tool_category_dicts = {}
             self._excluded_api_key_tools = {}
+        self._excluded_tool_packages = {}
 
         # Handle tools_file parameter (alternative to include_tools)
         if tools_file:
@@ -1294,6 +1321,15 @@ class ToolUniverse:
                 if not all_keys_available:
                     all_missing_keys.update(missing_keys)
                     self._excluded_api_key_tools[tool_name] = list(missing_keys)
+                    # Some "keys" are really package-presence flags (e.g.
+                    # CELLXGENE_CENSUS_PACKAGE_INSTALLED). Keep the packages the
+                    # tool declares so the error can name the actual remedy
+                    # instead of telling the caller to set a credential that
+                    # does not exist.
+                    if each.get("required_packages"):
+                        self._excluded_tool_packages[tool_name] = list(
+                            each["required_packages"]
+                        )
                     self.logger.debug(
                         f"Skipping tool '{tool_name}' due to missing API keys: {', '.join(missing_keys)}"
                     )
@@ -3155,15 +3191,7 @@ class ToolUniverse:
                             validate,
                         )
                     else:
-                        _missing_keys = self._excluded_api_key_tools.get(function_name)
-                        if _missing_keys:
-                            error_msg = (
-                                f"Tool '{function_name}' requires API key(s) not set: "
-                                f"{', '.join(_missing_keys)}. "
-                                "Set them as environment variables and retry."
-                            )
-                        else:
-                            error_msg = f"Tool '{function_name}' not found even after loading tools"
+                        error_msg = self._tool_unavailable_message(function_name)
                         return self._create_dual_format_error(
                             ToolUnavailableError(
                                 error_msg,
@@ -3337,17 +3365,7 @@ class ToolUniverse:
                         validate,
                     )
                 else:
-                    _missing_keys = self._excluded_api_key_tools.get(function_name)
-                    if _missing_keys:
-                        error_msg = (
-                            f"Tool '{function_name}' requires API key(s) not set: "
-                            f"{', '.join(_missing_keys)}. "
-                            "Set them as environment variables and retry."
-                        )
-                    else:
-                        error_msg = (
-                            f"Tool '{function_name}' not found even after loading tools"
-                        )
+                    error_msg = self._tool_unavailable_message(function_name)
                     return self._create_dual_format_error(
                         ToolUnavailableError(
                             error_msg,
@@ -3855,16 +3873,8 @@ class ToolUniverse:
 
             # Check again after loading
             if function_name not in self.all_tool_dict:
-                missing_keys = self._excluded_api_key_tools.get(function_name)
-                if missing_keys:
-                    return ToolUnavailableError(
-                        f"Tool '{function_name}' requires API key(s) not set: "
-                        f"{', '.join(missing_keys)}. "
-                        "Set them as environment variables and retry.",
-                        retriable=False,
-                    )
                 return ToolUnavailableError(
-                    f"Tool '{function_name}' not found even after loading tools",
+                    self._tool_unavailable_message(function_name),
                     retriable=False,
                 )
 

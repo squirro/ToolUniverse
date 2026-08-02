@@ -49,6 +49,17 @@ COPY src/ ./src/
 # tooluniverse-smcp console-script shebang with this interpreter.
 RUN python3.11 -m pip install --no-cache-dir -e .
 
+# Two optional dependencies that unblock tools for no measured image cost --
+# both are pure-Python wheels (1.79 GB before and after):
+#   zeep    -> BRENDA_* (5 tools; SOAP client. Also needs BRENDA_EMAIL/PASSWORD)
+#   py3Dmol -> visualize_molecule_3d, visualize_protein_structure_3d
+# Deliberately NOT installed: rdkit + biopython would add ~170 MB for 10 tools
+# (DrugProps_*, RDKit_*, Chem_sa_score, visualize_molecule_2d, BLAST_*,
+# Structure_annotate_per_residue), and the ADMETAI/ESM stacks need heavy ML
+# dependencies that would OOM sempart's ~4 GB headroom -- the same reason
+# Tool_RAG is excluded above.
+RUN python3.11 -m pip install --no-cache-dir zeep py3Dmol
+
 # Trim build-only toolchain; runtime libs stay. Shrinks the trivy-visible
 # package set (gcc / -devel carry their own advisories) now that wheels are in.
 RUN dnf remove -y gcc gcc-c++ python3.11-devel \
@@ -122,6 +133,64 @@ USER 10001
 # Semantic Scholar is deliberately NOT excluded: its key is optional (raises
 # the rate limit only), so SemanticScholar_* work key-less.
 #
+# Second wave (2026-08-02), same rule applied to the families the audit found
+# still reaching the registry with no credential behind them. Squirro confirmed
+# which keys are provisioned; these are not among them:
+#   UMLS_API_KEY      -> umls_* / snomed_* / loinc_* / icd_search_codes
+#                        (one key gates all five; SR has no UMTS/UMLS licence)
+#   IUCN_API_KEY      -> IUCN_*        (conservation status; no biomedical use)
+#   PHARMVAR_API_KEY  -> PharmVar_*
+#   OPENGWAS_TOKEN    -> OpenGWAS_*
+#   LDLINK_TOKEN      -> LDlink_*
+#   (no key defined)  -> SynBioHub_* / MetaCyc_* / USCensus_*
+# CELLxGENE_* is excluded for a different reason wearing the same clothes: its
+# "API key" is a synthetic gate you set to '1' after `pip install
+# cellxgene-census`. It is a missing package, not a missing credential, and the
+# package is a heavy one.
+#
+# DrugBank (all 19) is excluded on LICENSING, not on behaviour: the dataset is
+# not licensed for commercial use, and Swiss Rockets is a commercial user. This
+# supersedes the narrower DSR-635 exclusion, which covered only the 15 XMLTools
+# (each parses its own ~11 GB copy of drugbank_full_database.xml and OOMs the
+# server) and lived in the audit harness -- a workaround in the harness cannot
+# keep a licence, because the harness is not what ships. The four DatasetTools
+# were never in that list and three of them return data, so this removes
+# working tools by intent: expect the count to fall by three.
+# The same rule already applies upstream of us in OptimusKG, whose atlas is
+# licence-filtered (its DrugBank-derived DDI edges went from 1.35M to 1.6K).
+#
+# Third wave: a credential that is CONFIGURED but REJECTED buys nothing over one
+# that is absent -- the tool can still only error, so the same rule applies.
+#   BioGRID_*  BIOGRID_ACCESS_KEY is set; the service answers 401 "Your Access
+#              Key is Not Valid". Re-admit once a registered key is issued.
+#   ICD11_*    ICD_CLIENT_SECRET is set; the WHO OAuth token endpoint answers
+#              400 invalid_client, so the paired ICD_CLIENT_ID looks stale.
+#              Re-admit once the pair authenticates.
+# Both are one line to undo: delete the names below and rebuild.
+#
+# Fourth wave: all 50 AgenticTools. Each is a `prompt` with {placeholder} slots
+# and nothing else -- no data access, and not one of the 50 can call another
+# tool. TU fills the template and sends it to a SECOND LLM, so they are gated on
+# an LLM API key this deployment does not set, and every call has been answering
+# "not found even after loading tools". They are blocked rather than revived:
+# 18 of them only exist to author TU tools, and the rest would answer biomedical
+# questions generatively with no grounding, which is the failure mode the
+# persona exists to prevent. Recording them here also stops 50 definitions the
+# server never loads from counting as probe failures -- they were 50 of the 64
+# `error_probe_arg` in the 2026-08-02 baseline.
+#
+# Fifth wave: seven tools no argument can rescue.
+#   python_script_runner / phykit_batch_analysis / run_deseq2_analysis
+#     need a file on this container's filesystem, and nothing can put one there.
+#     python_code_executor already runs code from an inline string and works.
+#   FlyBase_get_gene_expression / ZFIN_get_gene_expression
+#     read an Alliance endpoint that was withdrawn: /alleles and /phenotypes
+#     still answer 200 for the same gene, every expression path 404s. Use
+#     Bgee_* or ExpressionAtlas_* for cross-species expression instead.
+#   Finish            agent-loop control; its SpecialTool type is not registered.
+#   ToolDescriptionOptimizer
+#     authors TU tools and needs the same LLM key the AgenticTools needed.
+#
 # The 10 *_disease_target_score tools (DiseaseTargetScoreTool) are NOT
 # excluded: they were briefly excluded because an invalid efoId crashed them
 # with KeyError: 'disease', now fixed in graphql_tool.py (they return a clean
@@ -148,4 +217,56 @@ CMD ["tooluniverse-smcp", \
      "get_patent_overview_by_text_query", "get_patent_application_metadata", \
      "get_associated_documents_metadata", "get_patent_continuity_data", \
      "get_patent_foreign_priority_data", "get_patent_term_adjustment_data", \
-     "Addgene_search_plasmids", "Addgene_get_plasmid", "Addgene_search_depositors"]
+     "Addgene_search_plasmids", "Addgene_get_plasmid", "Addgene_search_depositors", \
+     "umls_search_concepts", "umls_get_concept_details", "snomed_search_concepts", \
+     "loinc_search_codes", "icd_search_codes", \
+     "CELLxGENE_download_h5ad", "CELLxGENE_get_cell_metadata", "CELLxGENE_get_census_versions", \
+     "CELLxGENE_get_embeddings", "CELLxGENE_get_expression_data", \
+     "CELLxGENE_get_gene_metadata", "CELLxGENE_get_presence_matrix", \
+     "MetaCyc_get_compound", "MetaCyc_get_pathway", "MetaCyc_get_reaction", \
+     "MetaCyc_search_pathways", \
+     "SynBioHub_search_parts", "SynBioHub_get_collections", "SynBioHub_get_part", \
+     "PharmVar_get_alleles", "PharmVar_list_genes", \
+     "OpenGWAS_get_mr_instruments", "USCensus_get_population", \
+     "IUCN_get_conservation_status", "LDlink_get_proxies", \
+     "drugbank_filter_drugs_by_name", \
+     "drugbank_get_drug_basic_info_by_drug_name_or_id", \
+     "drugbank_get_drug_chemistry_by_drug_name_or_drugbank_id", \
+     "drugbank_get_drug_desc_pharmacology_by_moa", \
+     "drugbank_get_drug_interactions_by_drug_name_or_id", \
+     "drugbank_get_drug_name_and_description_by_indication", \
+     "drugbank_get_drug_name_and_description_by_pathway_name", \
+     "drugbank_get_drug_name_and_description_by_target_name", \
+     "drugbank_get_drug_products_by_name_or_drugbank_id", \
+     "drugbank_get_drug_references_by_drug_name_or_id", \
+     "drugbank_get_indications_by_drug_name_or_drugbank_id", \
+     "drugbank_get_pathways_reactions_by_drug_or_id", \
+     "drugbank_get_pharmacology_by_drug_name_or_drugbank_id", \
+     "drugbank_get_safety_by_drug_name_or_drugbank_id", \
+     "drugbank_get_targets_by_drug_name_or_drugbank_id", \
+     "drugbank_full_search", "drugbank_links_search", \
+     "drugbank_vocab_filter", "drugbank_vocab_search", \
+     "BioGRID_get_interactions", "BioGRID_get_chemical_interactions", \
+     "BioGRID_get_ptms", "BioGRID_search_by_pubmed", \
+     "ICD11_search_diseases", "ICD11_get_entity", "ICD11_browse_hierarchy", \
+     "ADMETAnalyzerAgent", "AdvancedCodeQualityAnalyzer", "AdverseEventICDMapper", \
+     "AdverseEventPredictionQuestionGenerator", \
+     "AdverseEventPredictionQuestionGeneratorWithContext", "ArgumentDescriptionOptimizer", \
+     "ClinicalTrialDesignAgent", "CodeQualityAnalyzer", "CompoundDiscoveryAgent", \
+     "DataAnalysisValidityReviewer", "DescriptionAnalyzer", "DescriptionQualityEvaluator", \
+     "DiseaseAnalyzerAgent", "DomainExpertValidator", "DrugInteractionAnalyzerAgent", \
+     "DrugOptimizationAgent", "EthicalComplianceReviewer", "ExperimentalDesignScorer", \
+     "HypothesisGenerator", "IntentAnalyzerAgent", "KeywordExtractorAgent", \
+     "LabelGenerator", "LiteratureContextReviewer", "LiteratureSynthesisAgent", \
+     "MedicalLiteratureReviewer", "MedicalTermNormalizer", "MethodologyRigorReviewer", \
+     "NoveltySignificanceReviewer", "OverallSummaryAgent", "PackageAnalyzer", \
+     "ProtocolOptimizer", "QualityCheckerAgent", "QuestionRephraser", \
+     "ReferenceInfoAnalyzer", "ReproducibilityTransparencyReviewer", "ResultSummarizerAgent", \
+     "ResultsInterpretationReviewer", "ScientificTextSummarizer", "TestCaseGenerator", \
+     "TestResultsAnalyzer", "ToolCompatibilityAnalyzer", "ToolMetadataGenerator", \
+     "ToolMetadataStandardizer", "ToolOutputSummarizer", "ToolQualityEvaluator", \
+     "ToolRelationshipDetector", "UnifiedToolGenerator", "WritingPresentationReviewer", \
+     "XMLToolOptimizer", "call_agentic_human", \
+     "python_script_runner", "phykit_batch_analysis", "run_deseq2_analysis", \
+     "FlyBase_get_gene_expression", "ZFIN_get_gene_expression", \
+     "Finish", "ToolDescriptionOptimizer"]

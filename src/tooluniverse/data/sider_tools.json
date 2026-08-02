@@ -110,12 +110,12 @@
     "test_examples": [
       {
         "operation": "get_side_effects",
-        "drug_name": "ibuprofen",
+        "drug_name": "aspirin",
         "limit": 10
       },
       {
         "operation": "get_side_effects",
-        "sider_drug_id": "4091",
+        "sider_drug_id": "2244",
         "limit": 10
       }
     ]

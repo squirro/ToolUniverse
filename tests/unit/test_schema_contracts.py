@@ -22,6 +22,7 @@ Two shapes, two fixes:
 import glob
 import json
 import os
+import re
 
 import pytest
 
@@ -76,6 +77,10 @@ ONE_OF = [
     ("SynBioHub_get_part", ("part_uri", "display_id")),
     # Conditional on the mode rather than on a sibling parameter.
     ("MolecularFormula_analyze", ("formula",)),
+    # Both refuse a term-only call: snippets need a document to read, and the
+    # audit probe's {"terms": [...]} was rejected as "Provide either ...".
+    ("ArXiv_get_pdf_snippets", ("arxiv_id", "pdf_url")),
+    ("SemanticScholar_get_pdf_snippets", ("paper_id", "open_access_pdf_url")),
 ]
 
 # Words that signal a conditional requirement to a reader.
@@ -142,4 +147,45 @@ def test_conditional_requirement_is_stated_in_the_description(name, alternatives
     assert any(m in description for m in CONDITIONAL_MARKERS), (
         f"{name}'s description names the parameters but does not say one of "
         f"them is required; add an explicit 'at least one of ...' statement"
+    )
+
+
+# A description that names a filter the schema does not declare sends the model
+# to construct a call it has no way to validate. Same defect as the two above,
+# arriving from the opposite direction: the prose is ahead of the contract.
+FILTER_TOKEN = re.compile(r"\b([a-z][a-z0-9]*(?:_[a-z0-9]+)*__[a-z]+)\b")
+
+
+def _undeclared_filters(tool) -> list[str]:
+    """Filters the prose names that the schema does not declare."""
+    schema = tool.get("parameter") or {}
+    properties = schema.get("properties") or {}
+    prose = (tool.get("description") or "") + " ".join(
+        (p or {}).get("description", "") for p in properties.values()
+    )
+    return sorted(set(FILTER_TOKEN.findall(prose)) - set(properties))
+
+
+@pytest.mark.unit
+def test_no_description_names_a_filter_its_schema_does_not_declare():
+    """Django-style `field__operator` filters read as instructions, not prose.
+
+    ChEMBL_search_activities told the model to "prefer starting from a known
+    target (`target_chembl_id__exact`)" while declaring `target_chembl_id`.
+    Both work upstream -- verified equivalent, 3,570 activities for CHEMBL298 --
+    so the tool was never broken; the model was pointed at a name it cannot find
+    in its own schema, which is the same defect as an undeclared requirement
+    arriving from the opposite direction.
+
+    Checked in one pass over every definition rather than per tool: 2,400
+    parametrised cases to name one offender is a lot of test for one fact.
+    """
+    offenders = {
+        name: undeclared
+        for name, tool in sorted(TOOLS.items())
+        if tool.get("parameter") and (undeclared := _undeclared_filters(tool))
+    }
+    assert not offenders, (
+        "descriptions naming a filter the schema does not declare: "
+        + "; ".join(f"{n} -> {f}" for n, f in offenders.items())
     )

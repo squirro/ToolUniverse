@@ -111,6 +111,13 @@ class FAERSAnalyticsTool(BaseTool):
                     "error": "Must provide drug_name and adverse_event",
                 }
 
+            # Resolve the drug ONCE, and remember which field knew it, so every
+            # count below describes the same population and the envelope can say
+            # which one. Searching only generic_name reported a brand name as no
+            # data at all.
+            resolved_field, drug_total = self._resolve_drug_field(drug_name)
+            self._resolved_drug_field = resolved_field
+
             # Get counts for 2x2 table
             # a = drug + event
             a = self._get_faers_count(drug_name, adverse_event)
@@ -163,6 +170,21 @@ class FAERSAnalyticsTool(BaseTool):
                 "status": "success",
                 "drug_name": drug_name,
                 "adverse_event": adverse_event,
+                # Which population this statistic actually describes. Without it
+                # a reader cannot tell a brand-only cohort from the union of every
+                # reported spelling -- and for this drug that is the difference
+                # between ROR 7.2 and 12.0.
+                "case_definition": {
+                    "query_term": drug_name,
+                    "resolved_field": resolved_field,
+                    "drug_report_total": drug_total,
+                    "note": (
+                        "Reports were matched on this single openFDA field. Other "
+                        "spellings of the same product may exist under other fields "
+                        "and are NOT included; widening the definition can change "
+                        "the estimate materially for some signals."
+                    ),
+                },
                 "contingency_table": {
                     "a_drug_and_event": a,
                     "b_drug_no_event": b,
@@ -567,12 +589,55 @@ class FAERSAnalyticsTool(BaseTool):
 
     # Helper methods for statistical calculations
 
+    # Fields tried, in order, when turning a drug name into a query. `generic_name`
+    # stays first so existing numbers do not move; the rest exist because a BRAND
+    # name matched none of them before. Measured 2026-08-03:
+    #   generic_name:"Lutathera"           -> 404, no match
+    #   brand_name:"Lutathera"             -> 5,551
+    #   medicinalproduct.exact:"LUTATHERA" -> 5,550
+    DRUG_NAME_FIELDS = (
+        "patient.drug.openfda.generic_name",
+        "patient.drug.openfda.brand_name",
+        "patient.drug.openfda.substance_name",
+        "patient.drug.medicinalproduct.exact",
+    )
+
+    def _field_total(self, field: str, term: str):
+        """Report total for one field, or None when that field does not match.
+
+        None means "this field has nothing", which is different from a transport
+        failure -- that is allowed to raise, so it cannot be mistaken for a zero.
+        """
+        url = f'{FDA_BASE_URL}?search={field}:"{term}"&limit=1'
+        response = requests.get(url, timeout=30)
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        total = response.json().get("meta", {}).get("results", {}).get("total", 0)
+        return total or None
+
+    def _resolve_drug_field(self, drug_name: str):
+        """Find the first field that knows this drug. Returns (field, total).
+
+        Returning the field is the point: the caller reports it, so an agent can
+        state which population its statistic describes instead of implying that
+        every spelling of the drug was counted.
+        """
+        for field in self.DRUG_NAME_FIELDS:
+            total = self._field_total(field, drug_name)
+            if total:
+                return field, total
+        return None, None
+
     def _get_faers_count(self, drug_name: str = None, adverse_event: str = None) -> int:
         """Get count of FAERS reports matching criteria."""
         try:
             query_parts = []
             if drug_name:
-                query_parts.append(f'patient.drug.openfda.generic_name:"{drug_name}"')
+                field = getattr(self, "_resolved_drug_field", None) or (
+                    "patient.drug.openfda.generic_name"
+                )
+                query_parts.append(f'{field}:"{drug_name}"')
             if adverse_event:
                 query_parts.append(
                     f'patient.reaction.reactionmeddrapt:"{adverse_event}"'
@@ -591,8 +656,15 @@ class FAERSAnalyticsTool(BaseTool):
             data = response.json()
             return data.get("meta", {}).get("results", {}).get("total", 0)
 
-        except Exception:
-            return 0
+        except requests.HTTPError as exc:
+            # openFDA answers 404 to a search that matches nothing. That IS a
+            # zero. Anything else -- timeout, connection reset, 5xx -- is us
+            # failing to ask, and must not be reported as an absent drug: a bare
+            # `except: return 0` here made a dead network indistinguishable from
+            # "Insufficient data".
+            if exc.response is not None and exc.response.status_code == 404:
+                return 0
+            raise
 
     def _get_faers_total_count(self) -> int:
         """Get total number of reports in FAERS database."""

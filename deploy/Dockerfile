@@ -133,11 +133,16 @@ USER 10001
 # Semantic Scholar is deliberately NOT excluded: its key is optional (raises
 # the rate limit only), so SemanticScholar_* work key-less.
 #
+# The five UMLS-gated tools (umls_*, snomed_*, loinc_*, icd_search_codes) were
+# excluded here and have been RE-ADMITTED. The key was never unavailable: the
+# env file holds a valid 36-character key followed by an inline comment, and
+# `--env-file` keeps the comment (a shell would have dropped it), so what
+# reached the service was key-plus-prose. Comments now sit on their own line in
+# .env/.env.template, and all five return real payloads.
+#
 # Second wave (2026-08-02), same rule applied to the families the audit found
 # still reaching the registry with no credential behind them. Squirro confirmed
 # which keys are provisioned; these are not among them:
-#   UMLS_API_KEY      -> umls_* / snomed_* / loinc_* / icd_search_codes
-#                        (one key gates all five; SR has no UMTS/UMLS licence)
 #   IUCN_API_KEY      -> IUCN_*        (conservation status; no biomedical use)
 #   PHARMVAR_API_KEY  -> PharmVar_*
 #   OPENGWAS_TOKEN    -> OpenGWAS_*
@@ -161,8 +166,12 @@ USER 10001
 #
 # Third wave: a credential that is CONFIGURED but REJECTED buys nothing over one
 # that is absent -- the tool can still only error, so the same rule applies.
-#   BioGRID_*  BIOGRID_ACCESS_KEY is set; the service answers 401 "Your Access
-#              Key is Not Valid". Re-admit once a registered key is issued.
+#   BioGRID_*  SETTLED 2026-08-03: excluded permanently. Two different keys are
+#              refused 401 "Your Access Key is Not Valid" across every request
+#              form (accessKey/accesskey, trailing slash, http, several
+#              endpoints), and this is NOT the env-file comment bug — BioGRID
+#              was never among the affected variables. The client has confirmed
+#              no webservice key will be available. Do not re-investigate.
 #   ICD11_*    ICD_CLIENT_SECRET is set; the WHO OAuth token endpoint answers
 #              400 invalid_client, so the paired ICD_CLIENT_ID looks stale.
 #              Re-admit once the pair authenticates.
@@ -191,6 +200,29 @@ USER 10001
 #   ToolDescriptionOptimizer
 #     authors TU tools and needs the same LLM key the AgenticTools needed.
 #
+# Sixth wave: 29 tools whose upstream gives nothing usable, each having failed
+# IDENTICALLY in two sweeps a day apart. One reading is not evidence -- on
+# 2026-08-02 USGSWater, RNAcentral, UniChem and SwissTargetPrediction looked
+# just as dead and all four recovered by 2026-08-03.
+#   Pharos_*      502 for two days.   TargetMine_*  503.
+#   POWO_* T3DB_* CellMarker_*        403, bot-blocked.
+#   ZINC_*        HTTP 200 with an HTML challenge page on every route, which is
+#                 why the wrapper reports "Invalid JSON" and not a status code.
+#   CTD_*         the RENCI Automat mirror has no registered backends at all,
+#                 and ctdbase.org redirects a batch query to an interactive page.
+#   NvidiaNIM_    alphafold2, alphafold2_multimer, boltz2, maisi — 504. NAMED
+#                 INDIVIDUALLY: the other 12 NvidiaNIM tools return data
+#                 (esmfold, openfold2/3, rfdiffusion, proteinmpnn, diffdock …)
+#                 and a family-wide block would have removed them.
+#   HPA_get_protein_interactions_by_gene — upstream withdrew the `ppi` column.
+#
+# NOT excluded, though they look similar: Bgee_*, LOVD_*, Rfam_*,
+# MetabolomicsWorkbench_* answer a direct request but fail through the wrapper,
+# so they are suspected wrapper bugs. BindingDB was in that group until it
+# turned out to be sending `pdbs=…;…` where the API wants `pdb=…,…` — the
+# service answers 500 to the wrong parameter name, which is indistinguishable
+# from being down.
+#
 # The 10 *_disease_target_score tools (DiseaseTargetScoreTool) are NOT
 # excluded: they were briefly excluded because an invalid efoId crashed them
 # with KeyError: 'disease', now fixed in graphql_tool.py (they return a clean
@@ -218,8 +250,6 @@ CMD ["tooluniverse-smcp", \
      "get_associated_documents_metadata", "get_patent_continuity_data", \
      "get_patent_foreign_priority_data", "get_patent_term_adjustment_data", \
      "Addgene_search_plasmids", "Addgene_get_plasmid", "Addgene_search_depositors", \
-     "umls_search_concepts", "umls_get_concept_details", "snomed_search_concepts", \
-     "loinc_search_codes", "icd_search_codes", \
      "CELLxGENE_download_h5ad", "CELLxGENE_get_cell_metadata", "CELLxGENE_get_census_versions", \
      "CELLxGENE_get_embeddings", "CELLxGENE_get_expression_data", \
      "CELLxGENE_get_gene_metadata", "CELLxGENE_get_presence_matrix", \
@@ -269,4 +299,16 @@ CMD ["tooluniverse-smcp", \
      "XMLToolOptimizer", "call_agentic_human", \
      "python_script_runner", "phykit_batch_analysis", "run_deseq2_analysis", \
      "FlyBase_get_gene_expression", "ZFIN_get_gene_expression", \
-     "Finish", "ToolDescriptionOptimizer"]
+     "Finish", "ToolDescriptionOptimizer", \
+     "Pharos_get_disease_targets", "Pharos_get_target", "Pharos_get_tdl_summary", \
+     "Pharos_search_targets", \
+     "CellMarker_list_cell_types", "CellMarker_search_by_cell_type", \
+     "CellMarker_search_by_gene", "CellMarker_search_cancer_markers", \
+     "ZINC_get_compound", "ZINC_get_purchasable", "ZINC_search_by_properties", \
+     "ZINC_search_by_smiles", "ZINC_search_compounds", \
+     "CTD_get_chemical_diseases", "CTD_get_chemical_gene_interactions", \
+     "CTD_get_disease_chemicals", "CTD_get_gene_chemicals", "CTD_get_gene_diseases", \
+     "TargetMine_search", "TargetMine_search_genes", \
+     "POWO_get_taxon", "POWO_search_plants", "T3DB_get_toxin", "T3DB_search_toxins", \
+     "NvidiaNIM_alphafold2", "NvidiaNIM_alphafold2_multimer", "NvidiaNIM_boltz2", \
+     "NvidiaNIM_maisi", "HPA_get_protein_interactions_by_gene"]

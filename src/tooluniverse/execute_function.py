@@ -28,6 +28,7 @@ import copy
 import inspect
 import json
 import random
+import re
 import string
 import os
 import time
@@ -756,8 +757,26 @@ class ToolUniverse:
         return list(self.tool_files.keys())
 
     def _get_api_key(self, key_name: str):
-        """Get API key from environment variables."""
-        return os.getenv(key_name)
+        """Get API key from environment variables, without the env-file's prose.
+
+        A shell strips `KEY=value  # note`; Docker's `--env-file` does not --
+        everything after the first `=` is the value, and a comment is only a
+        comment on its own line. Twelve variables in the deployed .env carry an
+        inline comment, which breaks two ways: a real key arrives corrupted (a
+        valid UMLS key was rejected until the comment was stripped), and a
+        key-less line like `KEY=   # get one at ...` looks *set* to the
+        availability check, then goes out as an HTTP header and fails header
+        validation with a message naming nothing anyone can act on.
+
+        Only a `#` that begins a comment is treated as one -- preceded by
+        whitespace or at the start -- so a credential containing a literal hash
+        survives intact.
+        """
+        raw = os.getenv(key_name)
+        if raw is None:
+            return None
+        value = re.split(r"(?:^|\s)#", raw, maxsplit=1)[0]
+        return value.strip().strip('"').strip("'") or None
 
     def _tool_unavailable_message(self, function_name: str) -> str:
         """Why this tool cannot be called, in terms the caller can act on.

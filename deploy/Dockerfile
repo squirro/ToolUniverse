@@ -199,6 +199,14 @@ USER 10001
 #   Finish            agent-loop control; its SpecialTool type is not registered.
 #   ToolDescriptionOptimizer
 #     authors TU tools and needs the same LLM key the AgenticTools needed.
+#   ToolDiscover
+#     same reason, one step removed: its generation stage calls
+#     UnifiedToolGenerator (tool_discover.py:444), an AgenticTool already
+#     excluded above, and verified unreachable on the served image. Its
+#     "string indices must be integers" crash is the composition script
+#     subscripting that error string as a dict, so fixing the crash only moves
+#     the failure one line later. Excluding it turns a misleading `error` row
+#     into an honest `excluded` one.
 #
 # Sixth wave: 29 tools whose upstream gives nothing usable, each having failed
 # IDENTICALLY in two sweeps a day apart. One reading is not evidence -- on
@@ -216,12 +224,19 @@ USER 10001
 #                 and a family-wide block would have removed them.
 #   HPA_get_protein_interactions_by_gene — upstream withdrew the `ppi` column.
 #
-# NOT excluded, though they look similar: Bgee_*, LOVD_*, Rfam_*,
-# MetabolomicsWorkbench_* answer a direct request but fail through the wrapper,
-# so they are suspected wrapper bugs. BindingDB was in that group until it
-# turned out to be sending `pdbs=…;…` where the API wants `pdb=…,…` — the
-# service answers 500 to the wrong parameter name, which is indistinguishable
-# from being down.
+# NOT excluded, and no longer suspected: the Bgee_*/LOVD_*/Rfam_*/
+# MetabolomicsWorkbench_* group turned out to be wrapper bugs, all now fixed
+# and measured as ok_data. Each answered a direct request and failed only
+# through us, and in each case the error text named something other than the
+# cause: Bgee wanted a trailing slash (403 from a Cloudflare interstitial, next
+# to a docstring correctly saying no auth was needed), LOVD wanted a
+# lovd_cookie_check cookie (an HTML bot-check page served as 200, surfacing as
+# a JSON parse error), and Rfam's /structures route wants the format as a query
+# parameter rather than an Accept header (500 on a live route returning 149 KB).
+# MetabolomicsWorkbench needed nothing: its failure was a transport error.
+# BindingDB was the first of this group, sending `pdbs=…;…` where the API wants
+# `pdb=…,…` — the service answers 500 to the wrong parameter name, which is
+# indistinguishable from being down.
 #
 # The 10 *_disease_target_score tools (DiseaseTargetScoreTool) are NOT
 # excluded: they were briefly excluded because an invalid efoId crashed them
@@ -299,7 +314,7 @@ CMD ["tooluniverse-smcp", \
      "XMLToolOptimizer", "call_agentic_human", \
      "python_script_runner", "phykit_batch_analysis", "run_deseq2_analysis", \
      "FlyBase_get_gene_expression", "ZFIN_get_gene_expression", \
-     "Finish", "ToolDescriptionOptimizer", \
+     "Finish", "ToolDescriptionOptimizer", "ToolDiscover", \
      "Pharos_get_disease_targets", "Pharos_get_target", "Pharos_get_tdl_summary", \
      "Pharos_search_targets", \
      "CellMarker_list_cell_types", "CellMarker_search_by_cell_type", \

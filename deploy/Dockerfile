@@ -49,16 +49,30 @@ COPY src/ ./src/
 # tooluniverse-smcp console-script shebang with this interpreter.
 RUN python3.11 -m pip install --no-cache-dir -e .
 
-# Two optional dependencies that unblock tools for no measured image cost --
-# both are pure-Python wheels (1.79 GB before and after):
-#   zeep    -> BRENDA_* (5 tools; SOAP client. Also needs BRENDA_EMAIL/PASSWORD)
-#   py3Dmol -> visualize_molecule_3d, visualize_protein_structure_3d
-# Deliberately NOT installed: rdkit + biopython would add ~170 MB for 10 tools
-# (DrugProps_*, RDKit_*, Chem_sa_score, visualize_molecule_2d, BLAST_*,
-# Structure_annotate_per_residue), and the ADMETAI/ESM stacks need heavy ML
-# dependencies that would OOM sempart's ~4 GB headroom -- the same reason
+# Optional dependencies that unblock tools the deployment actually wants.
+#   zeep      -> BRENDA_* (5 tools; SOAP client. Also needs BRENDA_EMAIL/PASSWORD)
+#   py3Dmol   -> visualize_molecule_3d, visualize_protein_structure_3d
+#   rdkit     -> DrugProps_* (3), RDKit_* (2), Chem_sa_score,
+#                visualize_molecule_2d/_3d          [8 tools]
+#   biopython -> BLAST_* (2), Structure_annotate_per_residue
+#   freesasa  -> Structure_annotate_per_residue's relative-SASA calculation
+#
+# rdkit + biopython cost ~170 MB and were previously declined on that basis.
+# They are now wanted: cheminformatics is core to the SR use case, and the
+# ~170 MB is disk, not the resident memory the OOM constraint is about.
+#
+# ORDERING MATTERS. freesasa publishes no wheel for this platform (pip
+# --only-binary reports "from versions: none"), so it compiles from C source and
+# must be installed while gcc is still present -- i.e. HERE, before the dnf
+# remove below. Moving this line after that removal fails with
+# "command 'gcc' failed: No such file or directory".
+#
+# Still deliberately NOT installed, and now excluded outright rather than left
+# to fail: the ADMETAI (9) and ESM (9) stacks and Tool_Finder need local model
+# inference. There is no ML-capable instance to run them on, so the packages
+# would add weight for tools that could never answer -- the same reason
 # Tool_RAG is excluded above.
-RUN python3.11 -m pip install --no-cache-dir zeep py3Dmol
+RUN python3.11 -m pip install --no-cache-dir zeep py3Dmol rdkit biopython freesasa
 
 # Trim build-only toolchain; runtime libs stay. Shrinks the trivy-visible
 # package set (gcc / -devel carry their own advisories) now that wheels are in.
@@ -244,6 +258,38 @@ USER 10001
 # "resolve the name to an id first" error). The persona still steers
 # "most associated" queries to OpenTargets_get_associated_targets_by_disease_efoId.
 #
+# Seventh wave: 21 tools that need compute or credentials this deployment will
+# not have, plus 8 whose upstream does not answer. Previously they sat as
+# `needs_package` and `error`, which reads as "someone should get to this" --
+# they are decisions, so they are recorded as decisions.
+#
+#   ADMETAI_* (9), ESM_* (9), Tool_Finder
+#     local model inference. There is NO ML-capable instance in the estate, so
+#     these are out of scope rather than pending an install: admet-ai, the esm
+#     protein language model, and Tool_Finder's torch embedding stack would all
+#     load models the host cannot hold. Tool_Finder specifically duplicates
+#     find_tools, which reaches the same breadth via Tool_Finder_LLM over
+#     OpenAI and needs no local model. Same reason as Tool_RAG.
+#   advanced_literature_search_agent, open_deep_research_agent
+#     need `smolagents` AND an Azure OpenAI credential. Even installed they
+#     would answer biomedical questions generatively through a second LLM,
+#     which is what the 50 AgenticTools are excluded for.
+#
+# Eighth wave: 8 tools whose upstream gives nothing usable, each verified by an
+# independent request at 2026-08-03, not inferred from a sweep:
+#   PathwayCommons_get_neighborhood / _get_pathway   no response within 100s.
+#   SGD_get_interactions                             no response within 100s.
+#   NvidiaNIM_openfold3   HTTP 500 "Internal server error". NAMED INDIVIDUALLY:
+#                         12 other NvidiaNIM tools return data.
+#   SwissDock_dock_ligand submits, then the docking job fails server-side.
+#   SwissTargetPrediction_predict  200 with no job URL to poll.
+#   UniChem_search_compound        timeout. THE WEAKEST OF THESE: it answered in
+#                         an earlier sweep, so re-probe before believing it is
+#                         gone -- excluded because it has now failed twice.
+#   get_webpage_text_from_url      needs Playwright browsers (~400 MB of
+#                         Chromium) that the image does not install; the web
+#                         search tools cover this ground. DSR-640.
+#
 # --exclude-tools takes nargs='+', and being the last flag it consumes
 # every trailing name.
 CMD ["tooluniverse-smcp", \
@@ -326,4 +372,19 @@ CMD ["tooluniverse-smcp", \
      "TargetMine_search", "TargetMine_search_genes", \
      "POWO_get_taxon", "POWO_search_plants", "T3DB_get_toxin", "T3DB_search_toxins", \
      "NvidiaNIM_alphafold2", "NvidiaNIM_alphafold2_multimer", "NvidiaNIM_boltz2", \
-     "NvidiaNIM_maisi", "HPA_get_protein_interactions_by_gene"]
+     "NvidiaNIM_maisi", "HPA_get_protein_interactions_by_gene", \
+     "ADMETAI_predict_BBB_penetrance", "ADMETAI_predict_CYP_interactions", \
+     "ADMETAI_predict_bioavailability", "ADMETAI_predict_clearance_distribution", \
+     "ADMETAI_predict_nuclear_receptor_activity", \
+     "ADMETAI_predict_physicochemical_properties", \
+     "ADMETAI_predict_solubility_lipophilicity_hydration", \
+     "ADMETAI_predict_stress_response", "ADMETAI_predict_toxicity", \
+     "ESM_explain_variant_mechanism", "ESM_fold_protein", \
+     "ESM_generate_protein_sequence", "ESM_get_protein_embedding", \
+     "ESM_get_region_sae_features", "ESM_get_sae_features", "ESM_score_sequence", \
+     "ESM_score_variant_sae_batch", "ESM_score_variant_sae_disruption", \
+     "Tool_Finder", "advanced_literature_search_agent", "open_deep_research_agent", \
+     "PathwayCommons_get_neighborhood", "PathwayCommons_get_pathway", \
+     "SGD_get_interactions", "NvidiaNIM_openfold3", "SwissDock_dock_ligand", \
+     "SwissTargetPrediction_predict", "UniChem_search_compound", \
+     "get_webpage_text_from_url"]

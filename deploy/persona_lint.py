@@ -54,8 +54,9 @@ def get_skill_names(text: str) -> list[str]:
 def served_skill_names(deploy_dir: str | Path) -> set[str]:
     """Names served via get_skill: ``persona-<name>.md`` minus the dispatcher personas."""
     deploy = Path(deploy_dir)
-    excluded = {"router", "router-spike", "smcp-only", "prod-base", "prod-neutral",
-                "prod-weighted", "doriano"}
+    excluded = {"router", "router-spike", "smcp-only", "prod-base", "prod",
+                "prod-demo-4k", "prod-demo-10k", "prod-neutral-4k",
+                "prod-weighted-4k", "doriano"}
     names = set()
     for p in deploy.glob("persona-*.md"):
         name = p.stem[len("persona-"):]

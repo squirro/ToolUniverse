@@ -290,6 +290,31 @@ USER 10001
 #                         Chromium) that the image does not install; the web
 #                         search tools cover this ground. DSR-640.
 #
+# Ninth wave: 3 tools that answer an empty list instead of failing, each for a
+# reason no argument can fix. They were the last unexplained `ok_empty` rows.
+#   Tool_Finder_LLM
+#     needs an LLM key this deployment does not set. It logs the failure and
+#     RETURNS [], so an agent calling it via execute_tool gets a confident
+#     nothing. Excluding it does NOT weaken discovery: find_tools was already
+#     answering from its keyword path, and returns the identical results with
+#     this excluded (measured, not assumed -- `search_method=llm` returns 0
+#     tools while auto/keyword/embedding return the same 3). Note that a
+#     `find_tools` docstring elsewhere still credits the LLM finder; the honest
+#     description is keyword matching. If an LLM key is ever provisioned
+#     (DSR-639), remove this entry to get the ranked search back.
+#   ESM_describe_sae_feature
+#     runs SAE inference over a protein panel, and that inference is
+#     ESM_get_sae_features -- excluded above with the rest of the ESM stack. Each
+#     panel protein fails and is skipped by a bare `continue`, so every feature
+#     id reports 0 activations across 10 proteins. Verified on four different
+#     ids; sparse features would not all be empty. Same shape as ToolDiscover:
+#     a composed tool whose dependency cannot run here.
+#   BGPT_search_paper_evidence
+#     bgpt.pro is FREEMIUM. The response carries `free_results_remaining`, and
+#     once it hits zero the endpoint answers **HTTP 402 Payment Required**. It
+#     will work for a couple of calls and then never again, which is worse than
+#     not shipping it. Needs a paid subscription, not a fix.
+#
 # --exclude-tools takes nargs='+', and being the last flag it consumes
 # every trailing name.
 CMD ["tooluniverse-smcp", \
@@ -387,4 +412,5 @@ CMD ["tooluniverse-smcp", \
      "PathwayCommons_get_neighborhood", "PathwayCommons_get_pathway", \
      "SGD_get_interactions", "NvidiaNIM_openfold3", "SwissDock_dock_ligand", \
      "SwissTargetPrediction_predict", "UniChem_search_compound", \
-     "get_webpage_text_from_url"]
+     "get_webpage_text_from_url", \
+     "Tool_Finder_LLM", "ESM_describe_sae_feature", "BGPT_search_paper_evidence"]

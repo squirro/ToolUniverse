@@ -315,6 +315,12 @@ USER 10001
 #     will work for a couple of calls and then never again, which is worse than
 #     not shipping it. Needs a paid subscription, not a fix.
 #
+# --max-workers 15: SMCP's default is 5 (smcp.py:402), so a skill that fires a
+# dozen tool calls queues them five at a time — pure added latency on exactly the
+# turns that already look slow (DSR-627 saw 13 calls precede a user-visible
+# timeout). It must sit BEFORE --exclude-tools, which takes nargs='+' and would
+# otherwise swallow it as a tool name.
+#
 # --exclude-tools takes nargs='+', and being the last flag it consumes
 # every trailing name.
 CMD ["tooluniverse-smcp", \
@@ -323,6 +329,7 @@ CMD ["tooluniverse-smcp", \
      "--port", "8000", \
      "--compact-mode", \
      "--skills-dir", "/app/served-skills", \
+     "--max-workers", "15", \
      "--exclude-tools", "Tool_RAG", \
      "DisGeNET_search_gene", "DisGeNET_search_disease", "DisGeNET_get_gda", \
      "DisGeNET_get_vda", "DisGeNET_get_disease_genes", \

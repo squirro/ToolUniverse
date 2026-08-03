@@ -65,6 +65,46 @@ def served_skill_names(deploy_dir: str | Path) -> set[str]:
     return names
 
 
+def excluded_tool_names(dockerfile_text: str) -> set[str]:
+    """Tool names the shipped image removes, parsed from its ``--exclude-tools``.
+
+    The image is the authority on what is served, so the list is read rather than
+    copied — a duplicated list drifts, and a drifted list is how a skill ends up
+    naming a tool nobody serves.
+
+    ``--exclude-tools`` takes ``nargs='+'`` and is deliberately the last flag, so
+    everything after it is a tool name. Anything before it (``--max-workers 15``)
+    is not.
+    """
+    marker = '"--exclude-tools"'
+    start = dockerfile_text.find(marker)
+    if start == -1:
+        return set()
+    tail = dockerfile_text[start + len(marker):]
+    end = tail.find("]")
+    if end != -1:
+        tail = tail[:end]
+    return {
+        name
+        for name in re.findall(r'"([^"]+)"', tail)
+        if not name.startswith("--")
+    }
+
+
+def unserved_tools(text: str, excluded: set[str]) -> list[str]:
+    """Excluded tool names a skill body tells the agent to call, in sorted order.
+
+    Matched against the excluded SET rather than by identifier shape: prose is full
+    of things that look like tool names, and a shape-based matcher would flag them.
+    Code spans are NOT stripped here, unlike the inline-link check — a name in
+    backticks inside a skill body is still an instruction to call it.
+    """
+    return sorted(
+        name for name in excluded
+        if re.search(rf"\b{re.escape(name)}\b", text)
+    )
+
+
 def check_body(text: str, deploy_dir: str | Path) -> tuple[list[str], list[str]]:
     """Return ``(errors, warnings)`` for one persona body.
 
@@ -87,5 +127,19 @@ def check_body(text: str, deploy_dir: str | Path) -> tuple[list[str], list[str]]
     for name in get_skill_names(text):
         if name not in served:
             errors.append(f'get_skill("{name}") names no served persona-{name}.md')
+
+    # A body that names an unserved tool sends the agent to
+    # "Tool 'X' not found even after loading tools" -- which reads as a registry
+    # bug and burns an iteration against a default cap of 10 (DSR-644).
+    #
+    # WARNING, not error, ON PURPOSE: 33 of the 76 served bodies trip this today,
+    # so failing hard would land the rule red and get it switched off. Promote it
+    # to an error once the bodies are reconciled; the warning is what produces
+    # that work list.
+    dockerfile = Path(deploy_dir) / "Dockerfile"
+    if dockerfile.is_file():
+        excluded = excluded_tool_names(dockerfile.read_text())
+        for name in unserved_tools(text, excluded):
+            warnings.append(f"names {name}, which the image does not serve")
 
     return errors, warnings

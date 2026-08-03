@@ -35,7 +35,11 @@ class EnsemblComparaTool(BaseTool):
 
     def __init__(self, tool_config: Dict[str, Any]):
         super().__init__(tool_config)
-        self.timeout = tool_config.get("timeout", 30)
+        # Ensembl computes homology for a query it has not served before, which
+        # has been measured at 41-85s; the same query then returns from cache in
+        # 0.2s. A 30s default therefore failed every FIRST query for a gene and
+        # passed every repeat.
+        self.timeout = tool_config.get("timeout", 120)
         fields = tool_config.get("fields", {})
         self.endpoint = fields.get("endpoint", "orthologues")
 

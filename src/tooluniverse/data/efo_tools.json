@@ -99,7 +99,7 @@
       "type": "object",
       "properties": {
         "iri": {"type": "string", "description": "Term IRI returned by `ols_search_efo_terms`."},
-        "obo_id": {"type": "string", "description": "OBO ID like 'EFO:0000400' (will be converted to an EFO IRI)."}
+        "obo_id": {"type": "string", "description": "OBO ID. For DISEASES use a MONDO id, e.g. 'MONDO:0005015' -- EFO has obsoleted its own disease terms (EFO:0000311 'cancer', EFO:0000408 'disease' and EFO:0000400 'diabetes mellitus' are all marked obsolete and have no children) in favour of the MONDO classes it imports. EFO's live native terms are traits and measurements, e.g. 'EFO:0004340' (body mass index). Converted to the IRI its namespace uses."}
       },
       "oneOf": [{"required": ["iri"]}, {"required": ["obo_id"]}]
     },
@@ -138,18 +138,18 @@
   {
     "type": "OLSRESTTool",
     "name": "ols_get_efo_term_children",
-    "description": "List children of an EFO term (ontology hierarchy). Provide `iri` or `obo_id`.\n\nTip: use `ols_search_efo_terms` first, then pass the returned `obo_id` or `iri`.",
+    "description": "List children of a disease/phenotype term in the EFO hierarchy. Provide `iri` or `obo_id`.\n\nEFO imports MONDO, HP, GO and others, so MONDO ids work here and are usually the better choice for diseases: 'MONDO:0005015' (diabetes mellitus) returns 11 children through EFO against 8 through MONDO alone, because EFO adds its own subclasses.\n\nTip: use `ols_search_efo_terms` first, then pass the returned `obo_id` or `iri`. A term with no children may simply be obsolete -- 'EFO:0000400' is labelled 'obsolete_diabetes mellitus' and correctly has none.",
     "parameter": {
       "type": "object",
       "properties": {
         "iri": {"type": "string", "description": "Term IRI returned by `ols_search_efo_terms`."},
-        "obo_id": {"type": "string", "description": "OBO ID like 'EFO:0000400' (will be converted to an EFO IRI)."},
+        "obo_id": {"type": "string", "description": "OBO ID. For DISEASES use a MONDO id, e.g. 'MONDO:0005015' -- EFO has obsoleted its own disease terms (EFO:0000311 'cancer', EFO:0000408 'disease' and EFO:0000400 'diabetes mellitus' are all marked obsolete and have no children) in favour of the MONDO classes it imports. EFO's live native terms are traits and measurements, e.g. 'EFO:0004340' (body mass index). Converted to the IRI its namespace uses."},
         "size": {"type": "integer", "description": "Maximum number of children to return.", "default": 20}
       },
       "oneOf": [{"required": ["iri"]}, {"required": ["obo_id"]}]
     },
     "test_examples": [
-      {"obo_id": "EFO:0000400", "size": 2}
+      {"obo_id": "MONDO:0005015", "size": 2}
     ],
     "return_schema": {
       "type": "object",

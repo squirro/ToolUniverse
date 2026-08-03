@@ -213,11 +213,11 @@ class EnsemblComparaTool(BaseTool):
         data = response.json()
 
         # Extract tree info
-        tree_id = (
-            data.get("tree", {}).get("id")
-            if isinstance(data.get("tree"), dict)
-            else data.get("id")
-        )
+        # The tree id sits beside `tree`, not inside it: `tree` holds taxonomy,
+        # branch_length, events, confidence and children, with no id of its own.
+        tree_id = data.get("id")
+        if not tree_id and isinstance(data.get("tree"), dict):
+            tree_id = data["tree"].get("id")
         rooted = data.get("rooted", True)
 
         # Get Newick tree from the response if available
@@ -250,18 +250,24 @@ class EnsemblComparaTool(BaseTool):
         if len(members) >= max_members:
             return
         if isinstance(node, dict):
-            # Leaf node has 'id' and 'species'
-            if "id" in node and "species" in node:
+            # A leaf is a node with no children. It carries `id`, `sequence` and
+            # `taxonomy` -- there is NO `species` key, which is why requiring one
+            # skipped all 206 members of the BRCA1 tree.
+            children = node.get("children") or []
+            if not children and "id" in node:
                 gene_id = node.get("id", {})
                 if isinstance(gene_id, dict):
                     gene_id = gene_id.get("accession", "")
+                taxonomy = node.get("taxonomy")
+                if isinstance(taxonomy, dict):
+                    species = taxonomy.get("scientific_name", "")
+                else:
+                    # Older payloads used a flat `species`; accept both.
+                    species = node.get("species", "")
+                    if isinstance(species, dict):
+                        species = species.get("scientific_name", "")
                 members.append(
-                    {
-                        "gene_id": str(gene_id),
-                        "species": node.get("species", {}).get("scientific_name", "")
-                        if isinstance(node.get("species"), dict)
-                        else str(node.get("species", "")),
-                    }
+                    {"gene_id": str(gene_id), "species": str(species)}
                 )
             # Traverse children
             for child in node.get("children", []):

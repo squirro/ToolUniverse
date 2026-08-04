@@ -665,6 +665,19 @@ class FAERSAnalyticsTool(BaseTool):
         return sorted(seen.values())
 
     @staticmethod
+    def expand_terms(drug_name: str, openfda_block) -> List[str]:
+        """The caller's term first, then the product's other names.
+
+        The caller's own spelling anchors the list because it defines the narrow
+        cohort that stays PRIMARY. Everything after it widens the union.
+        """
+        terms = [drug_name]
+        for name in FAERSAnalyticsTool.synonyms_from_openfda(openfda_block):
+            if name.upper() != drug_name.upper():
+                terms.append(name)
+        return terms
+
+    @staticmethod
     def candidate_terms(field: str, drug_name: str) -> List[str]:
         """Spellings worth probing for one field.
 
@@ -710,20 +723,26 @@ class FAERSAnalyticsTool(BaseTool):
         p, s = primary.get("ROR"), sensitivity.get("ROR")
         if p is None or s is None or p <= 0 or s <= 0:
             return None
+        pc, sc = primary.get("cases") or 0, sensitivity.get("cases") or 0
         crosses = (p >= 1.0) != (s >= 1.0)
         ratio = max(p, s) / min(p, s)
-        if not crosses and ratio < 1.5:
+        # Case count is judged alongside the ROR, not instead of it. Measured on
+        # LUTATHERA/myelodysplastic syndrome, the union holds 48% more cases while
+        # the ROR ratio is only 1.44 -- under a ROR-only gate that read as
+        # agreement, which is the opposite of what a reader needs to know.
+        case_shift = (max(pc, sc) / min(pc, sc)) if min(pc, sc) > 0 else 0
+        if not crosses and ratio < 1.5 and case_shift < 1.2:
             return None
-        lead = (
-            "The signal changes DIRECTION across the two populations"
-            if crosses
-            else "The two populations disagree materially"
-        )
+        if crosses:
+            lead = "The signal changes DIRECTION across the two populations"
+        elif ratio >= 1.5:
+            lead = "The two populations disagree materially"
+        else:
+            lead = "The two populations rest on materially different case counts"
         return (
-            f"{lead}: ROR {p} ({primary.get('cases')} cases) under the narrow "
-            f"definition vs {s} ({sensitivity.get('cases')} cases) under the union. "
-            "Report which population any quoted number describes; the ROR 1.0 line "
-            "is the no-signal boundary."
+            f"{lead}: ROR {p} ({pc} cases) under the narrow definition vs "
+            f"{s} ({sc} cases) under the union. Report which population any quoted "
+            "number describes; the ROR 1.0 line is the no-signal boundary."
         )
 
     def _count_url(self, search_query: str, count_field: str) -> str:
@@ -810,11 +829,11 @@ class FAERSAnalyticsTool(BaseTool):
             return {
                 "computed": True,
                 "definition": (
-                    "union of every openFDA FIELD that matches this drug NAME "
-                    "(brand/substance/medicinalproduct). It does NOT include other "
-                    "SPELLINGS of the same product: LUTATHERA's reports also appear "
-                    "under the generic name LUTETIUM LU 177 DOTATATE, and widening "
-                    "to those is a separate, larger cohort not computed here."
+                    "union over every openFDA field AND every other name openFDA "
+                    "gives this product (its NDC-derived brand/generic/substance "
+                    "set). Known limit: only NDC-matched reports carry that name "
+                    "set, so an as-reported spelling that never mapped stays out "
+                    "of this cohort."
                 ),
                 "fields_unioned": [f"{f}:\"{t}\"" for f, t in fields],
                 "narrow_field": resolved_field,
@@ -841,12 +860,44 @@ class FAERSAnalyticsTool(BaseTool):
         because `.exact` fields need a different casing than the rest.
         """
         matches = []
-        for field in self.DRUG_NAME_FIELDS:
-            for term in self.candidate_terms(field, drug_name):
-                if self._field_total(field, term):
-                    matches.append((field, term))
-                    break
+        for term in self.expand_terms(drug_name, self._openfda_block(drug_name)):
+            for field in self.DRUG_NAME_FIELDS:
+                for probe in self.candidate_terms(field, term):
+                    if (field, probe) in matches:
+                        continue
+                    if self._field_total(field, probe):
+                        matches.append((field, probe))
+                        break
         return matches
+
+    def _openfda_block(self, drug_name: str):
+        """openFDA's NDC-derived name set for the entry matching this drug.
+
+        Returns None when nothing matches or the report carries no block -- both
+        are ordinary, not errors, and simply mean no expansion is available.
+        """
+        try:
+            field, _ = self._resolve_drug_field(drug_name)
+            if not field:
+                return None
+            term = self.candidate_terms(field, drug_name)[-1]
+            url = f'{FDA_BASE_URL}?search={field}:"{term}"&limit=1'
+            api_key = os.getenv("FDA_API_KEY")
+            if api_key:
+                url += f"&api_key={api_key}"
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            results = response.json().get("results") or []
+            wanted = drug_name.upper()
+            for drug in (results[0].get("patient", {}) if results else {}).get("drug", []):
+                block = drug.get("openfda") or {}
+                names = self.synonyms_from_openfda(block)
+                if any(wanted in n or n in wanted for n in names):
+                    return block
+            return None
+        except Exception:
+            # Expansion is an enhancement; never let it break the analysis.
+            return None
 
     def _count_for_population(self, population_query: str, adverse_event: str = None) -> int:
         """Report count for an explicit population query, 404 meaning a true zero."""

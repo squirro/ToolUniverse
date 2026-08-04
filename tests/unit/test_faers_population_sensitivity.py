@@ -129,6 +129,35 @@ def test_synonyms_are_deduplicated_case_insensitively():
 
 
 @pytest.mark.unit
+def test_the_query_term_anchors_the_expanded_term_list():
+    """The caller's own term stays FIRST -- it defines the narrow/primary cohort."""
+    terms = FAERSAnalyticsTool.expand_terms("Lutathera", LUTATHERA_OPENFDA)
+
+    assert terms[0] == "Lutathera"
+
+
+@pytest.mark.unit
+def test_expansion_adds_the_other_spellings_of_the_same_product():
+    terms = FAERSAnalyticsTool.expand_terms("Lutathera", LUTATHERA_OPENFDA)
+
+    assert "LUTETIUM LU 177 DOTATATE" in terms
+    assert "LUTETIUM OXODOTREOTIDE LU-177" in terms
+
+
+@pytest.mark.unit
+def test_expansion_does_not_repeat_the_query_term_in_another_casing():
+    """"LUTATHERA" from the openfda block is the same term the caller gave."""
+    terms = FAERSAnalyticsTool.expand_terms("Lutathera", LUTATHERA_OPENFDA)
+
+    assert sum(1 for t in terms if t.upper() == "LUTATHERA") == 1
+
+
+@pytest.mark.unit
+def test_no_openfda_block_means_no_expansion():
+    assert FAERSAnalyticsTool.expand_terms("Aspirin", None) == ["Aspirin"]
+
+
+@pytest.mark.unit
 def test_a_material_divergence_is_called_out():
     """LUTATHERA/MDS: 7.2 vs 12.0 is the case a reader must not miss."""
     note = FAERSAnalyticsTool.divergence_note(
@@ -137,6 +166,22 @@ def test_a_material_divergence_is_called_out():
 
     assert note is not None
     assert "7.2" in note and "12.0" in note
+
+
+@pytest.mark.unit
+def test_a_big_case_count_shift_is_material_even_at_a_modest_ror_ratio():
+    """Measured live: LUTATHERA/MDS is 31 cases ROR 7.564 narrow, 46/10.866 union.
+
+    The ROR ratio is 1.44, under a 1.5 gate, yet the union holds 48% more cases.
+    Judging materiality on the derived statistic alone let that read as agreement.
+    Case count is the more interpretable driver and is what a reader must see.
+    """
+    note = FAERSAnalyticsTool.divergence_note(
+        {"ROR": 7.564, "cases": 31}, {"ROR": 10.866, "cases": 46}
+    )
+
+    assert note is not None
+    assert "46" in note and "31" in note
 
 
 @pytest.mark.unit

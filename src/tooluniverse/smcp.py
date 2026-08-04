@@ -1057,14 +1057,43 @@ class SMCP(FastMCP):
             annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
         )
         async def get_skill(name: str) -> str:
-            """Load the authoritative playbook (SOP) for a named research skill.
+            """Load and execute the authoritative PLAYBOOK (a hardened SOP) for a named
+            biomedical/chemistry research skill.
 
-            The returned text is your BINDING operating procedure for this turn —
-            follow it EXACTLY, as though it were your system prompt. It is
-            INSTRUCTIONS, not reference data: obey its output contract, tool
-            sequence, evidence grading, and report structure to the letter. Call
-            this ONCE, right after you have routed a question to a skill, then
-            execute the returned playbook against the other tools.
+            WHAT IT RETURNS — the returned markdown is your BINDING operating procedure for
+            this turn: treat it EXACTLY as if it were your system prompt. It is INSTRUCTIONS,
+            not reference data. Obey its required outputs, the tools it tells you to call and
+            the order, its evidence grading, and its exact report structure, to the letter.
+            Do not summarise it, second-guess it, or substitute your own method. Call get_skill
+            ONCE, right after you classify the question to a skill, then carry out the returned
+            playbook using the other tools (execute_tool, web search, code interpreter).
+
+            WHEN TO USE — any question that turns on a gene, protein, variant, drug, compound,
+            SMILES, pathway, target-disease link, clinical trial, or toxicity. Choose the skill
+            by the INTENT (the question being asked), not by keywords:
+              - disease overview (biology, targets, drugs, trials) -> "disease-research"
+              - rare disease from a gene/phenotype -> "rare-disease-diagnosis"
+              - drug profile -> "drug-research"; mechanism of action -> "drug-mechanism-research";
+                new uses/repurposing -> "drug-repurposing"; label/approval status -> "drug-regulatory"
+              - full safety dossier -> "pharmacovigilance"; FAERS disproportionality signal ->
+                "adverse-event-detection"; toxicity / adverse-outcome pathways -> "toxicology";
+                interaction of TWO drugs -> "drug-drug-interaction"
+              - target GO/NO-GO druggability -> "drug-target-validation"
+              - cancer + mutation therapy -> "precision-oncology"; somatic/cancer variant ->
+                "cancer-variant-interpretation"; germline/ACMG variant -> "variant-interpretation"
+              - trials for ONE patient (ranked) -> "clinical-trial-matching"; how to design a
+                trial -> "clinical-trial-design"
+              - genotype -> drug response (PGx) -> "pharmacogenomics"
+              - look up a compound -> "chemical-compound-retrieval"; discover small molecules ->
+                "small-molecule-discovery"
+              - prevalence/incidence from primary literature -> "literature-deep-research"
+            This list is the FAST PATH, not the full catalog (60+ skills are served). If nothing
+            here clearly fits, call find_skill(query) FIRST to discover the right name — NEVER
+            guess a skill name (a wrong name fails).
+
+            DISAMBIGUATION — aggregate / counting / landscape trial questions ("how many Phase 2
+            trials target X", "the competitive trial landscape") are NOT "clinical-trial-matching"
+            (which ranks trials for a single patient); use "disease-research" or web search instead.
 
             Args:
                 name: the skill id to load, e.g. "disease-research".
@@ -1082,22 +1111,28 @@ class SMCP(FastMCP):
             annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
         )
         async def find_skill(query: str, limit: int = 5) -> str:
-            """Discover which research skill fits a question when you don't know its name.
+            """Discover which research skill fits a question when its name is not in the
+            get_skill fast-path list.
 
-            This is the ``find_tools → execute_tool`` pattern for SKILLS: when no skill in
-            your fast-path routing table clearly matches the user's request, call
-            ``find_skill`` FIRST — never guess a skill name. It keyword-ranks the served
-            skill catalog (skill id + role + triggers) and returns the best-matching skill
-            names with one-line descriptions. Then call ``get_skill(<top name>)`` to load
-            that skill's binding playbook and execute it.
+            This is the find_tools -> execute_tool pattern, applied to SKILLS: when no skill
+            clearly matches the user's request, call find_skill FIRST — never guess a skill
+            name. It keyword-ranks the FULL served-skill catalog (60+ skills, each by its id +
+            role + triggers) and returns the best matches as a JSON list of {name, description}.
+            Then call get_skill(<the top matching name>) to load and execute that skill's
+            binding playbook.
+
+            Use find_skill for the long tail (e.g. GWAS fine-mapping, structural variant
+            analysis, immunogenomics, network pharmacology, expression retrieval) that the
+            get_skill fast-path list does not enumerate. If it returns nothing relevant, ask the
+            user one clarifying question rather than guessing.
 
             Args:
                 query: the user's research request in natural language.
                 limit: max skills to return (default 5).
 
             Returns:
-                A ranked list of "name — description" lines, or a no-match message listing
-                the available skills.
+                A JSON list of {name, description} ranked by fit, or a no-match message listing
+                all available skills.
             """
             hits = search(skill_index, query, limit=limit)
             if not hits:
@@ -1236,20 +1271,32 @@ class SMCP(FastMCP):
             use_advanced_search: bool = True,
             search_method: str = "auto",
         ) -> str:
-            """
-            Find and search available ToolUniverse tools using AI-powered search.
+            """Discover an individual ToolUniverse database tool (~2,278 are available:
+            UniProt, ChEMBL, Open Targets, ClinicalTrials.gov, HPA, AlphaFold, PubChem, FAERS,
+            EPO, GWAS Catalog, KEGG, Reactome, and many more) using AI-powered search.
 
-            This tool provides the same functionality as the tools/find MCP method.
+            WHEN TO USE — for an ad-hoc biomedical/chemistry FACT when no get_skill playbook
+            fits. find_tools locates the right tool; you then run it with
+            execute_tool(name, arguments) over the schema it returns.
+
+            WORKFLOW: find_tools("<5-10 word description of what you need>") -> read the returned
+            tool schemas -> execute_tool(tool_name, arguments). Resolve entity names to IDs first
+            (disease -> EFO, drug -> ChEMBL, gene -> Ensembl/UniProt); never fabricate an ID.
+
+            IMPORTANT — pass ONLY `query`. Do NOT pass `categories` unless you can name a valid
+            database category exactly: speculative or topical names (e.g. "biology", "genetics",
+            "oncology") silently return ZERO tools. Omitting `categories` searches everything,
+            which is what you want.
 
             Args:
-                query: Search query describing the desired functionality
-                categories: Optional list of categories to filter by
-                limit: Maximum number of results to return (default: 10)
-                use_advanced_search: Use AI-powered search if available (default: True)
-                search_method: Specific search method - 'auto', 'llm', 'embedding', 'keyword' (default: 'auto')
+                query: natural-language description of the functionality you need.
+                categories: advanced — leave unset unless you know exact DB category names.
+                limit: maximum number of results (default: 10).
+                use_advanced_search: use AI-powered search if available (default: True).
+                search_method: 'auto' | 'llm' | 'embedding' | 'keyword' (default: 'auto').
 
             Returns:
-                JSON string containing matching tools with detailed information
+                JSON of matching tools with their input schemas, ready to pass to execute_tool.
             """
             return await self._perform_tool_search(
                 query, categories, limit, use_advanced_search, search_method

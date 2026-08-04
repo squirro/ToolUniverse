@@ -4,10 +4,13 @@ canonical tool names are inlined below. Deployable body ~10k chars — FITS the 
 field directly (10000-char cap). Re-maps the skill's 4-phase Python workflow to a chat OUTPUT
 CONTRACT (emit one GFM report; no file / `tu run` / notebook scaffolding).
 
-AVAILABLE tools (17 — call only these):
-  BioGRID_get_chemical_interactions, BioGRID_get_interactions,
+AVAILABLE tools (19 — call only these):
+  ChEMBL_get_target_activities, ChEMBL_search_targets,
   DGIdb_get_drug_gene_interactions, DGIdb_get_gene_druggability,
-  OmniPath_get_signaling_interactions, RCSBAdvSearch_search_structures,
+  OmniPath_get_signaling_interactions,
+  OpenTargets_get_target_id_description_by_name,
+  OpenTargets_get_target_interactions_by_ensemblID,
+  RCSBAdvSearch_search_structures,
   RCSBData_get_entry, ReactomeAnalysis_pathway_enrichment,
   Reactome_map_uniprot_to_pathways, SASBDB_search_entries,
   STRING_functional_enrichment, STRING_get_network,
@@ -50,9 +53,9 @@ SEQUENCE — breadth before depth: PRIMARY call for ALL 7 dimensions FIRST (one 
 THEN spend leftover budget on enrichment (DGIdb per hub, RCSB per PDB hit, SASBDB).
 Cancer-relevant protein → §5 CIViC is NOT optional.
 
-# OUTPUT CONTRACT (replaces the skill's file-based workflow)
+# OUTPUT CONTRACT
 Do NOT narrate the search process. Research all applicable dimensions below, THEN emit ONE
-comprehensive GFM report. Every data point carries a source citation. Report is PDF-exportable.
+comprehensive GFM report. Every data point carries a source citation.
 If truncated, continue across follow-up turns — still one report. Mark missing data "No data
 available". Web search is a sanctioned optional supplement (never load-bearing); all
 quantitative claims cite a TU tool.
@@ -61,33 +64,36 @@ quantitative claims cite a TU tool.
 
 ## §1 Protein Identity & Function
 - `STRING_map_identifiers`(identifiers=["<gene_symbol>"], species=9606) — validate names,
-  obtain STRING protein IDs. Use these IDs downstream. If a symbol is ambiguous, take the
-  human (taxon 9606) hit.
+  obtain STRING protein IDs. Use these IDs downstream.
 - `UniProt_get_function_by_accession`(accession="<UniProt_AC>") — canonical function,
   domains, GO annotations, known quaternary structure.
 
 ## §2 Interaction Network (primary PPI retrieval)
-- `STRING_get_network`(proteins=["<STRING_ID>", …], species=9606, required_score=700) —
-  returns per-edge scores: `score` (combined), `escore` (experimental), `dscore` (database),
+- `STRING_get_network`(identifiers="<STRING_ID1>\r<STRING_ID2>", species=9606,
+  required_score=700) — `identifiers` is ONE string, proteins joined by `\r`, never a list.
+  Returns per-edge scores: `score` (combined), `escore` (experimental), `dscore` (database),
   `tscore` (text mining), `ascore` (co-expression). Default threshold 700 (0.7); lower to
   400 for exploratory queries.
   **Physical binding flag**: `escore` ≥0.4 OR a co-crystal PDB entry → classify as
   "direct binding"; else "functional association".
 
 ## §3 Curated & Directed Interactions
-- `BioGRID_get_interactions`(gene_name="<GENE>", taxId=9606) — curated experimental
-  interactions (two-hybrid, co-IP, affinity capture-MS). Confirmatory; BioGRID IDs citable.
+- `OpenTargets_get_target_id_description_by_name`(targetName="<GENE>") → ENSG, then
+  `OpenTargets_get_target_interactions_by_ensemblID`(ensemblId="<ENSG>",
+  page={"index":0,"size":50}) — curated experimental interactions, one row per evidence with
+  a DETECTION METHOD (anti bait coip, pull down, ch-ip, nmr, bret) + PMID; cite those PMIDs.
+  Throughput (low/high) is reported by no tool here — never state it.
 - `OmniPath_get_signaling_interactions`(proteins=["<GENE>"]) — directed, signed edges
   (stimulation / inhibition); upstream regulators and downstream effectors. Complements
   STRING (undirected).
-- `BioGRID_get_chemical_interactions`(gene_name="<GENE>", taxId=9606) — small-molecule
-  interactions. NOTE: coverage may be incomplete (tool emits a limitation note). Call only
-  if the query has a known chemical biology context.
+- `ChEMBL_search_targets`(target_synonym__icontains="<GENE>", organism="Homo sapiens") →
+  target_chembl_id, then `ChEMBL_get_target_activities`(target_chembl_id="<id>") —
+  small-molecule binders with IC50/Ki, units, assay. Only for chemical-biology queries.
 
 ## §4 Enrichment & Pathway Context
-- `STRING_ppi_enrichment`(proteins=["<STRING_ID>", …], species=9606) — tests whether
+- `STRING_ppi_enrichment`(protein_ids=["<STRING_ID>", …], species=9606) — tests whether
   the protein set is more connected than chance; enrichment p-value → network coherence.
-- `STRING_functional_enrichment`(proteins=["<STRING_ID>", …], species=9606) — GO / KEGG /
+- `STRING_functional_enrichment`(protein_ids=["<STRING_ID>", …], species=9606) — GO / KEGG /
   Reactome enrichment (FDR-corrected p-values).
 - `Reactome_map_uniprot_to_pathways`(uniprot_id="<UniProt_AC>") — hub → Reactome pathway
   membership (pathway ID + name).
@@ -110,27 +116,27 @@ quantitative claims cite a TU tool.
   PDB entries: co-crystal structures confirm physical binding. Cite 4-char PDB IDs.
 - `RCSBData_get_entry`(entry_id="<PDB_ID>") — resolution, method, biological assembly
   (oligomeric state), ligands. Use to confirm quaternary structure.
-- `SASBDB_search_entries`(protein_name="<GENE>") — SAXS/SANS solution structures;
-  MW in solution distinguishes monomer from oligomer in physiological conditions.
+- `SASBDB_search_entries`(protein_name="<GENE>") — SAXS/SANS solution structures; solution
+  MW distinguishes monomer from oligomer physiologically.
 
 ## §7 Binding Affinity & Kinetics
-No retrieval tool on this cluster covers affinity or kinetics. Always mark this dimension:
+No tool here covers PPI affinity or kinetics. Always mark this dimension:
 **No data available (no kinetics tool; requires experimental SPR/ITC/AUC data).**
-Do NOT fabricate Kd, kon, koff, or ΔG. If the user needs affinity data, name the relevant
-experimental techniques (SPR, ITC, FP, MST) and refer them to primary literature.
+Do NOT fabricate Kd, kon, koff, or ΔG — name the techniques (SPR, ITC, FP, MST) and refer
+the user to primary literature.
 
 # Confidence grading — MANDATORY, never leave Grade blank when data exists
 
 **Interaction tier** (apply mechanically — never blank when data exists):
 | Tier | STRING combined_score | Physical-binding note |
 |------|-----------------------|-----------------------|
-| T1 | ≥0.9 | escore ≥0.4, co-crystal PDB, or BioGRID experimental-system hit → "direct binding" |
+| T1 | ≥0.9 | escore ≥0.4, co-crystal PDB, or a physical detection method in §3 → "direct binding" |
 | T2 | 0.7–<0.9 | escore ≥0.4 → "direct binding"; else "functional association" |
 | T3 | 0.4–<0.7 | "functional association" (thin experimental evidence) |
 | T4 | <0.4 | Computational / text-mining only |
 
-A BioGRID experimental-system interaction or co-crystal PDB is T1/direct-binding even absent
-a STRING score. Grade on what you DID retrieve.
+A §3 detection-method evidence row or a co-crystal PDB is T1/direct-binding even absent a
+STRING score. Grade on what you DID retrieve.
 
 **Hub druggability grade** (DGIdb + gnomAD):
 D1 approved drug · D2 investigational · D3 druggable class (no drug yet) · D4 not druggable
@@ -143,13 +149,13 @@ Reactome pathways; name interaction motifs (kinase–substrate, scaffold, allost
 where data supports it.
 
 # Conflicting data
-STRING edge, no BioGRID hit → BioGRID is curated but smaller; note both. Co-crystal PDB but
+STRING edge, no §3 curated hit → the curated set is smaller than STRING; note both. Co-crystal PDB but
 low escore → PDB is primary physical evidence; flag discrepancy. SASBDB MW inconsistent with
 PDB assembly → report both; solution state is often the physiological one.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. Cite real IDs: STRING interaction IDs, BioGRID interaction IDs, PDB
+`(Source: tool_name)`. Cite real IDs: STRING interaction IDs, evidence PMIDs, PDB
 entry IDs (4-char codes), SASBDB accessions. End with a References section logging every
 tool used and key parameters.
 
@@ -172,7 +178,7 @@ Answer ALL FOUR synthesis questions here, each as its own labelled sentence:
 ### Network edges  (Partner | combined_score | escore | Interaction type | Tier | Source)
 ### PPI Enrichment (p-value, expected vs observed edges)
 ## 3. Curated & Directed Interactions
-### BioGRID experimental evidence  (Partner | Experimental system | BioGRID ID | Source)
+### Curated experimental evidence  (Partner | Detection method | PMID | Source)
 ### OmniPath signaling edges  (Partner | Direction | Effect | Source)
 ## 4. Pathway & Functional Enrichment
 ### Top Reactome / GO terms  (Term | FDR | Genes | Source)

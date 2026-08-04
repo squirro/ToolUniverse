@@ -43,7 +43,7 @@ SMILES, and ChEMBL ID you retrieved. NEVER pass a placeholder like `"CANONICAL_S
 SEQUENCE — identity before breadth: §1 (identity resolution) MUST run first because the canonical
 SMILES and IDs it produces are preconditions for every other dimension. THEN make the PRIMARY call
 for ALL remaining dimensions (one each) before spending leftover budget on enrichment. Never skip
-the commercial sourcing or target-prediction dimensions.
+the commercial sourcing or target-inference dimensions.
 
 ADMETAI tools are NOT installed on this cluster — NEVER call them. Route all ADMET/physchem to
 `SwissADME_calculate_adme` and `SwissADME_check_druglikeness`. ML-only endpoints (hERG, DILI,
@@ -124,11 +124,22 @@ Note violations; comment if exceptions are justified by therapeutic context (mac
 hERG cardiotoxicity, DILI, mutagenicity, and per-isoform CYP substrate/inhibitor predictions
 require ADMETAI (not installed): mark those rows "No data available".
 
-## §5 — Target Prediction (novel or poorly-characterised compounds)
-`SwissTargetPrediction_predict`(operation="predict", smiles="<real SMILES>",
-organism="Homo_sapiens", top_n=20) → predicted protein targets with probability scores.
-If SwissTargetPrediction times out after one attempt, note "Prediction timed out — cross-reference
-§3 ChEMBL activities for known targets" and continue.
+## §5 — Nearest-Neighbour Target Inference (novel or poorly-characterised compounds)
+De-novo target prediction is NOT available on this cluster — nothing served predicts targets for
+an unseen molecule from its structure. Infer targets from the nearest KNOWN neighbours instead.
+**Step 5a**: `ChEMBL_search_similar_molecules`(query="<real SMILES>", similarity_threshold=70,
+max_results=10) → ChEMBL neighbours ranked by Tanimoto. All THREE args are required; the
+similarity comes back as a STRING percent (e.g. "78.35"), not a float.
+**Step 5b**: for the top 3–5 neighbours, `ChEMBL_get_molecule_targets`(molecule_chembl_id="<CHEMBL…>",
+limit=25) → the targets those neighbours are active against.
+FILTER the rows: keep `organism == "Homo sapiens"`, and DROP the junk this endpoint emits —
+"Unchecked", "No relevant target", and cell-line rows (e.g. "K562"). It deduplicates ASSAY
+records, not curated targets.
+Report Tanimoto as a CONFIDENCE PROXY, explicitly NOT a probability, and name the neighbour each
+inferred target came from. State plainly in §5 that no probability-scored de-novo target
+prediction exists here. Do NOT call `SwissTargetPrediction_organisms` as a consolation — it only
+lists proteomes for a predictor this image does not serve.
+If §5 yields nothing usable, cross-reference §3 ChEMBL activities for known targets.
 
 ## §6 — Commercial Availability & Sourcing
 **eMolecules** (200+ suppliers — often returns search URLs, not direct data):
@@ -169,8 +180,9 @@ make-on-demand / not found).
 (Rule | Pass/Fail | Notes | Source)
 ### ADMET Notes
 (note any PAINS alerts, BOILED-Egg BBB/GI prediction; flag hERG/DILI/mutagenicity as "No data available — ADMETAI not installed")
-## 5. Target Prediction
-(Target | UniProt | Probability | Source)
+## 5. Target Inference (nearest-neighbour)
+(Inferred target | Target ChEMBL ID / UniProt | Organism | Nearest neighbour (ChEMBL ID) | Tanimoto % — confidence PROXY, not a probability | Source)
+State explicitly that no de-novo target prediction is available on this deployment.
 ## 6. Commercial Availability & Sourcing
 (Supplier | Catalog / URL | Availability | Source)
 ## References  — | # | Tool | Parameters | Section | Result summary |

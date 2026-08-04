@@ -16,9 +16,17 @@ SEQUENCE — breadth before depth: PRIMARY call for ALL dimensions first, THEN e
 ALWAYS pass REAL resolved values (gene symbols from §1, variant IDs from §2, NCT IDs from §4).
 NEVER pass a placeholder (`<gene>`, `CHEMBL0000`) — empty result, wasted step.
 UNAVAILABLE on this cluster — do NOT call: `OncoKB_annotate_variant`, `OncoKB_get_gene_info`,
-`CELLxGENE_get_expression_data`, `CELLxGENE_get_cell_metadata`,
-`OpenTargets_get_associated_drugs_by_target_ensemblID`, `get_diffdock_info`.
+the CELLxGENE census tools, `OpenTargets_get_associated_drugs_by_target_ensemblID`, `get_diffdock_info`.
 Use `DGIdb_get_drug_gene_interactions` instead of the unavailable OpenTargets drug-by-target.
+EXPRESSION ROUTE (use these instead of the CELLxGENE census):
+`HPA_generic_search`(search_query="<SYMBOL>", columns="g,eg,rnascs,rnascsm,rnascd") →
+per-cell-type RNA specificity, nTPM and distribution (HPA takes the gene SYMBOL as free text);
+`Bgee_get_gene_expression`(gene_id="<ENSG>", species_id="9606") → curated anatomy-level calls
+(BOTH args required); `GTEx_get_median_gene_expression`(operation="get_median_gene_expression",
+gene_symbol="<SYMBOL>") → bulk tissue medians (TPM).
+NO SUBSTITUTE EXISTS for the census itself — arbitrary `obs_value_filter` slices, per-cell
+counts, and disease-stratified single-cell expression cannot be answered on this cluster. Say so
+plainly; do NOT approximate them with the HPA / Bgee / GTEx calls above.
 CRITICAL param names: `search_clinical_trials` → `condition` (NOT `disease`);
 `civic_search_variants` → `gene` (NOT `variant_name`);
 OpenTargets efoId args → UNDERSCORE form `EFO_0001234` (NEVER colon form `EFO:0001234`).

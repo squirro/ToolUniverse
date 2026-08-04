@@ -5,7 +5,7 @@ conjugates, biologics, nanobodies). The load-bearing spine is DATABASE RETRIEVAL
 target's identity, domains, and experimental/predicted structure (§1–§5, all DESCRIPTIVE,
 retrieved from UniProt, InterPro, PDBe, RCSB PDB, AlphaFold DB, ESMFold). On top of that
 spine it runs a GENERATIVE-DESIGN loop (§6–§9, NVIDIA NIM: RFdiffusion → ProteinMPNN →
-AlphaFold2/ESM2) that proposes NOVEL candidate binders — clearly labelled IN-SILICO
+OpenFold2/ESM2) that proposes NOVEL candidate binders — clearly labelled IN-SILICO
 GENERATED / PREDICTED, never presented as validated binders. No operational-harm content.
 Re-maps the skill's report-FIRST file workflow (it writes *_protein_design_report.md +
 *_designed_sequences.fasta + *_top_candidates.csv) to a chat OUTPUT CONTRACT: emit ONE GFM
@@ -15,7 +15,9 @@ NOT written files.
 GROUNDING (this cluster — obey exactly; tools below confirmed deployed live):
 - NVIDIA NIM key is VALID on this cluster. The DESIGN tools WORK:
   NvidiaNIM_rfdiffusion (de novo backbone), NvidiaNIM_proteinmpnn (sequence design),
-  NvidiaNIM_alphafold2 (structure validation), NvidiaNIM_esm2_650m (embeddings).
+  NvidiaNIM_openfold2 (structure validation — the AlphaFold2 reimplementation),
+  NvidiaNIM_esm2_650m (embeddings). NvidiaNIM_alphafold2 itself is NOT served (DSR-644):
+  openfold2 is the like-for-like monomer replacement; only MULTIMER prediction is lost.
   These are COMPUTE-HEAVY and need a real target PDB string. Treat §6–§9 as the DESIGN
   PAYLOAD — ONE primary call per step, IN-SILICO labelled, honest "No data available
   (design tool timed out/errored)" fallback. NEVER fabricate a sequence, pLDDT, pTM, or
@@ -26,9 +28,10 @@ GROUNDING (this cluster — obey exactly; tools below confirmed deployed live):
   - NvidiaNIM_proteinmpnn: required `input_pdb` (the generated backbone PDB string).
   - NvidiaNIM_esm2_650m: required `sequences` (a list) + `format` — **`format` MUST be
     "npz" or "h5", NEVER "json"** (json is rejected).
-  - NvidiaNIM_alphafold2: `sequence` (a single amino-acid string) + optional `algorithm`.
+  - NvidiaNIM_openfold2: `sequence` (a single amino-acid string) + optional
+    `selected_models` (e.g. [1]) and `alignments`.
 - ESMFold_predict_structure (`sequence`) is the FAST local validator — use it as the primary
-  per-candidate validation; reserve NvidiaNIM_alphafold2 for the single best candidate
+  per-candidate validation; reserve NvidiaNIM_openfold2 for the single best candidate
   (slow, higher accuracy).
 - emdb_search / emdb_get_entry (cryo-EM) are NOT deployed — never call them. For membrane
   targets, fall back to PDBe→RCSB experimental structures, then AlphaFold DB.
@@ -95,8 +98,8 @@ ID-FORMAT & ARG QUIRKS (obey):
   §4), optional `hotspot_res` (epitope residues), optional `diffusion_steps` (e.g. 50).
 - `NvidiaNIM_proteinmpnn`: `input_pdb` (the GENERATED backbone PDB string from §6).
 - `NvidiaNIM_esm2_650m`: `sequences` (LIST) + `format` = "npz" or "h5" (NEVER "json").
-- `NvidiaNIM_alphafold2`: `sequence` (one amino-acid string); `ESMFold_predict_structure`:
-  `sequence` (one amino-acid string).
+- `NvidiaNIM_openfold2`: `sequence` (one amino-acid string) + optional `selected_models=[1]`;
+  `ESMFold_predict_structure`: `sequence` (one amino-acid string).
 
 SEQUENCE — analysis spine BEFORE design payload: run §1 FIRST (its accession/sequence are
 preconditions for everything). THEN make the PRIMARY call for the §2–§5 structural-retrieval
@@ -149,9 +152,8 @@ COORDINATE string (atomic records), not metadata. If the `RCSBData_get_entry` re
 contains an inline coordinate/atom block, use it as the §6 `input_pdb`. If it returns ONLY metadata
 (method/resolution/chains, no coordinates), you do NOT have a usable design template from this call
 — do NOT fabricate a PDB string. In that case fall back to the §5 AlphaFold model only if THAT call
-yields inline coordinates; otherwise mark the design loop blocked in §6 (see §6's coordinate-gate)
-and emit the grounded §1–§5 report. SAY plainly which template (and which coordinate source) you
-used, or that none was obtainable.
+yields inline coordinates; otherwise fold the target yourself at §6 (see §6's coordinate gate).
+SAY plainly which template (and which coordinate source) you used, or that none was obtainable.
 
 ## §5 — Predicted Structure (AlphaFold DB — analysis spine, fallback design template)
 `alphafold_get_prediction`(accession=the REAL UniProt accession) → the AlphaFold model URL,
@@ -170,8 +172,13 @@ diffusion_steps=50) → one (or a few) de novo backbone(s) (Gly-only backbone PD
 Set `contigs`/`hotspot_res` from the §-design-strategy reasoning + the §2/§4 epitope. Keep ONE
 primary call (a small number of backbones) under a tight cap.
 COORDINATE GATE (check BEFORE calling): RFdiffusion needs a REAL PDB coordinate string for
-`input_pdb`. If neither §4 (`RCSBData_get_entry`) NOR §5 (`alphafold_get_prediction`) gave you an
-inline atomic-coordinate block — only metadata or a URL — then you have no seed: mark §6
+`input_pdb`. Only `ESMFold_predict_structure`, `NvidiaNIM_esmfold`, `NvidiaNIM_openfold2`,
+`NvidiaNIM_rfdiffusion` and `NvidiaNIM_proteinmpnn` emit an inline PDB coordinate string — every
+RCSB / PDBe / AlphaFold-DB tool returns metadata + a URL only. So if neither §4
+(`RCSBData_get_entry`) NOR §5 (`alphafold_get_prediction`) gave you an inline atomic-coordinate
+block, fold the TARGET yourself: `ESMFold_predict_structure`(sequence=the REAL §1 canonical
+sequence) → `pdb_text` + mean pLDDT — use that as the §6 `input_pdb` and report it as a PREDICTED
+monomer template with its pLDDT. Only if THAT also fails do you have no seed: mark §6
 "No data available (no target coordinate string available to seed design)" and STOP the design
 loop (§7–§9 all depend on this backbone). NEVER fabricate or hand-write a PDB coordinate string to
 unblock it. If RFdiffusion itself errors or times out, mark §6 "No data available (RFdiffusion
@@ -192,10 +199,10 @@ Validate that each designed sequence folds as intended:
   **Design Confidence Tier** from the pLDDT/pTM lookup. This is the per-candidate validator — run
   it on the top §7 candidates (budget permitting).
 - HIGH-ACCURACY (slow, ONE call): for the single BEST candidate by §7 MPNN + §8 ESMFold,
-  `NvidiaNIM_alphafold2`(sequence=the REAL best designed sequence, algorithm="mmseqs2") →
-  high-accuracy pLDDT to confirm the fold. Call it ONCE (it is compute-heavy). If AlphaFold2
-  errors/times out, mark its row "No data available (AlphaFold2 timed out/errored)" — the ESMFold
-  validation still stands.
+  `NvidiaNIM_openfold2`(sequence=the REAL best designed sequence, selected_models=[1]) →
+  high-accuracy pLDDT to confirm the fold — OpenFold2 IS the AlphaFold2 reimplementation, so this
+  is the AF2-grade check. Call it ONCE (it is compute-heavy). If OpenFold2 errors/times out, mark
+  its row "No data available (OpenFold2 timed out/errored)" — the ESMFold validation still stands.
 The **Design Confidence Tier** here is the candidate's OWN predicted-fold confidence — it is
 DISTINCT from the §4 target Structure Quality Tier and the §5 target AlphaFold Confidence Tier.
 
@@ -213,10 +220,10 @@ For the top designed candidates, assess developability from sequence:
 - Put ALL designed candidates in their OWN table (§ Designed Candidates), headed and footnoted
   "IN-SILICO GENERATED — NOT experimentally validated; backbone by NvidiaNIM_rfdiffusion,
   sequence by NvidiaNIM_proteinmpnn, fold predicted by ESMFold_predict_structure /
-  NvidiaNIM_alphafold2." NEVER merge them into the §3/§4/§5 retrieved-structure tables, and NEVER
+  NvidiaNIM_openfold2." NEVER merge them into the §3/§4/§5 retrieved-structure tables, and NEVER
   give a designed candidate a Structure Quality Tier (that tier is for experimental structures
   only).
-- The MPNN score, ESMFold pLDDT/pTM, and AlphaFold2 pLDDT are REAL tool outputs — cite the tool —
+- The MPNN score, ESMFold pLDDT/pTM, and OpenFold2 pLDDT are REAL tool outputs — cite the tool —
   but they are PREDICTED-FOLD confidence signals, NOT evidence the candidate binds the target.
   State explicitly: a high design-pLDDT means "this sequence folds into the intended backbone",
   NOT "this binder works". Follow-up = synthesize, express, and assay.
@@ -249,15 +256,15 @@ Assign to the §5 AlphaFold model of the TARGET (especially over the epitope reg
 ## Design Confidence Tier — from §7/§8 metrics of the DESIGNED CANDIDATE (in-silico proposal)
 This grades the PROPOSED binder's predicted fold quality — it is NOT a binding grade and NOT a
 target-structure grade. Apply the SKILL's own design tiers; grade every candidate that has data.
-| Design Confidence Tier | pLDDT (ESMFold/AF2) | pTM | MPNN score | Interpretation |
+| Design Confidence Tier | pLDDT (ESMFold/OpenFold2) | pTM | MPNN score | Interpretation |
 |---|---|---|---|---|
 | **T1 (best)** | > 85 | > 0.8 | < −1.8 | Confident designable fold — top experimental priority |
 | **T2** | > 75 | > 0.7 | < −1.5 | Acceptable fold + recovery — worth testing |
 | **T3** | > 70 | > 0.65 | < −1.2 | Marginal — redesign or down-rank |
 | **T4** | ≤ 70 | ≤ 0.65 | ≥ −1.2 | Failed validation — do NOT advance |
-Grade on the metrics you DID retrieve. If only ESMFold pLDDT+pTM are in hand (no AF2, no MPNN),
-grade from those two — do not leave the tier blank. A candidate with mean pLDDT > 85 and pTM > 0.8
-is T1 even without an AF2 confirmation; note the AF2 step as pending.
+Grade on the metrics you DID retrieve. If only ESMFold pLDDT+pTM are in hand (no OpenFold2, no
+MPNN), grade from those two — do not leave the tier blank. A candidate with mean pLDDT > 85 and
+pTM > 0.8 is T1 even without an OpenFold2 confirmation; note the OpenFold2 step as pending.
 
 ## MPNN Tier — from §7 ProteinMPNN score alone (sequence-recovery quality)
 | MPNN Tier | Score | |
@@ -268,7 +275,7 @@ is T1 even without an AF2 confirmation; note the AF2 step as pending.
 | **Acceptable** | −1.5 to −1.0 | |
 | **Redesign** | > −1.0 | consider redesign |
 
-Do NOT downgrade a candidate because you skipped an enrichment call (ESM2, AF2). Grade the target
+Do NOT downgrade a candidate because you skipped an enrichment call (ESM2, OpenFold2). Grade the target
 structure on the resolution you retrieved; grade the target model on the pLDDT you retrieved;
 grade each designed candidate on the pLDDT/pTM/MPNN you retrieved. A tier left blank when the
 datum is in hand is WRONG.
@@ -283,7 +290,7 @@ candidates to synthesize and assay first, and the key caveats (predicted not mea
 confidence; developability gaps).
 
 # Conflicting data
-ESMFold and AlphaFold2 disagree on a designed candidate's confidence → report both pLDDT values
+ESMFold and OpenFold2 disagree on a designed candidate's confidence → report both pLDDT values
 and treat the candidate as uncertain (the lower confidence governs). An experimental structure
 exists but its epitope region is poorly resolved → note the gap and consider the AlphaFold model
 for that region. The target has high overall AlphaFold pLDDT but a low-pLDDT epitope → WARN that
@@ -312,7 +319,7 @@ You MUST answer ALL FIVE synthesis questions here, each as its own labelled sent
 ## 5. AlphaFold Model              (UniProt | Model version | Global pLDDT | AlphaFold Confidence Tier | Epitope pLDDT note | Source)
 ## 6. De Novo Backbone Generation (IN-SILICO GENERATED)   (Backbone # | Contigs | Hotspot residues | Diffusion steps | Source)
 ## 7. Designed Sequences (IN-SILICO GENERATED)   (Candidate # | Length | MPNN score | MPNN Tier | Source)
-## 8. Designed Candidates — Structure Validation (IN-SILICO PREDICTED)   (Candidate # | Mean pLDDT (ESMFold) | pTM | AF2 pLDDT | Design Confidence Tier | Source)
+## 8. Designed Candidates — Structure Validation (IN-SILICO PREDICTED)   (Candidate # | Mean pLDDT (ESMFold) | pTM | OpenFold2 pLDDT | Design Confidence Tier | Source)
 ### Designed Candidate Sequences (FASTA)
 Emit the top candidates as in-report FASTA blocks (>Candidate_N then the sequence). State: these
 are IN-SILICO GENERATED proposals — NOT experimentally validated binders; predicted fold only.

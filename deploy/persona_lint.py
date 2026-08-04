@@ -178,18 +178,19 @@ def check_body(text: str, deploy_dir: str | Path) -> tuple[list[str], list[str]]
         if name not in served:
             errors.append(f'get_skill("{name}") names no served persona-{name}.md')
 
-    # A body that names an unserved tool sends the agent to
+    # A body that tells the agent to call an unserved tool sends it to
     # "Tool 'X' not found even after loading tools" -- which reads as a registry
     # bug and burns an iteration against a default cap of 10 (DSR-644).
     #
-    # WARNING, not error, ON PURPOSE: 33 of the 76 served bodies trip this today,
-    # so failing hard would land the rule red and get it switched off. Promote it
-    # to an error once the bodies are reconciled; the warning is what produces
-    # that work list.
+    # This shipped as a warning because 33 of the 76 bodies tripped it on arrival
+    # and a linter that is red on arrival gets switched off. All 76 are reconciled
+    # now (every dead call substituted or declared a gap), so it holds the line as
+    # an error. It counts live_unserved_tools, not unserved_tools: a body that
+    # names a tool in order to FORBID it is correct and must still pass.
     dockerfile = Path(deploy_dir) / "Dockerfile"
     if dockerfile.is_file():
         excluded = excluded_tool_names(dockerfile.read_text())
-        for name in unserved_tools(text, excluded):
-            warnings.append(f"names {name}, which the image does not serve")
+        for name in live_unserved_tools(text, excluded):
+            errors.append(f"instructs a call to {name}, which the image does not serve")
 
     return errors, warnings

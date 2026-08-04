@@ -9,22 +9,29 @@ DepMap GROUNDING (load-bearing, execute-probed): DepMap_* tools ARE deployed and
 but their Sanger Cell Model Passports backend has LIMITED coverage — many cell lines / genes
 return success with a "not found / limited coverage" body. So DepMap is BEST-EFFORT, NOT
 load-bearing: query it, but when it returns not-found, mark "No data available (DepMap/Sanger
-limited coverage)" and base the verdict on cellosaurus + PharmacoDB + COSMIC/cBioPortal +
-CellMarker instead. NEVER let the model-suitability verdict depend on a DepMap hit you did not
+limited coverage)" and base the verdict on cellosaurus + PharmacoDB + COSMIC/cBioPortal + HPA
+instead. NEVER let the model-suitability verdict depend on a DepMap hit you did not
 actually receive.
+
+CellMarker and the HPA per-cell-line comparative endpoint are NOT usable on this image
+(CellMarker_* is excluded; the comparative endpoint requests HPA columns that are silently
+dropped, so it supports ZERO cell lines — not the "10 supported lines" earlier versions of this
+body claimed). §3 and §4 now route through HPA_generic_search / ARCHS4 / the OpenTargets cancer
+disease-target scores instead. Curated marker provenance (per-marker PMIDs) has no substitute.
 
 Re-maps the skill's report-file / `tu run` / pandas-notebook workflow to a chat OUTPUT CONTRACT
 (emit one GFM report; no file writes, no Bash/pandas — the upstream "COMPUTE, DON'T DESCRIBE" /
 offline-DepMap-CSV scaffolding is dropped; there is no filesystem in a served SMCP chat body).
 
-AVAILABLE tools (call these via execute_tool DIRECTLY — 24 grounded on the live SMCP registry):
+AVAILABLE tools (call these via execute_tool DIRECTLY — grounded on the live SMCP registry):
   cellosaurus_search_cell_lines, cellosaurus_get_cell_line_info, cellosaurus_query_converter,
   DepMap_search_cell_lines, DepMap_get_cell_line, DepMap_get_cell_lines,
   DepMap_search_genes, DepMap_get_gene_dependencies,
   COSMIC_get_mutations_by_gene, COSMIC_search_mutations, cBioPortal_get_mutations,
-  CellMarker_search_cancer_markers, CellMarker_search_by_gene, MyGene_query_genes,
-  HPA_get_comparative_expression_by_gene_and_cellline   (deploys under shortened alias
-    HPA_get_comp_expr_by_gene_and_cell — but WRITE the full canonical name; execute_tool resolves it),
+  MyGene_query_genes,
+  HPA_generic_search, ARCHS4_get_gene_expression, HPA_get_cancer_prognostics_by_gene,
+  OpenTargets_get_disease_id_description_by_name,
+  cancer_gene_census_disease_target_score, cancer_biomarkers_disease_target_score,
   PharmacoDB_search, PharmacoDB_get_cell_line, PharmacoDB_get_experiments, PharmacoDB_get_biomarker_assoc,
   SYNERGxDB_search_combos, SYNERGxDB_list_cell_lines,
   DGIdb_get_drug_gene_interactions,
@@ -52,7 +59,7 @@ dump data.
 # Guiding principles (from the upstream skill — keep these in the synthesis)
 1. **Decision-first** — answer "which cell line should I use?", not "here is all the data".
 2. **Multi-source validation** — cross-reference Cellosaurus, COSMIC/cBioPortal, PharmacoDB,
-   CellMarker, and (best-effort) DepMap; never nominate a line on one signal.
+   HPA, and (best-effort) DepMap; never nominate a line on one signal.
 3. **Gene-aware** — when a target gene is given, prioritise lines with the relevant mutation /
    expression / dependency.
 4. **Practical focus** — surface availability, growth characteristics, and known PITFALLS
@@ -83,10 +90,19 @@ have (mark the rest "No data available"). Never fabricate tool names, scores, or
   `q="ca:PANC-1"` (derivatives of a parent), `q="ox:9606 AND char:cancer"`. `size` optional.
 - `cellosaurus_get_cell_line_info` uses **`accession`** in CVCL_ form (e.g. `accession="CVCL_0030"`).
 - `MyGene_query_genes` uses **`query`** (the OPPOSITE of cellosaurus — do not swap them).
-- All `PharmacoDB_*` and `CellMarker_*` tools require an **`operation`** arg
-  (e.g. `operation="search"`, `operation="get_cell_line"`, `operation="get_experiments"`,
-  `operation="get_biomarker_associations"`, `operation="search_cancer_markers"`,
-  `operation="search_by_gene"`).
+- All `PharmacoDB_*` tools require an **`operation`** arg (e.g. `operation="search"`,
+  `operation="get_cell_line"`, `operation="get_experiments"`,
+  `operation="get_biomarker_associations"`).
+- `HPA_generic_search` takes the gene **SYMBOL** as free text in **`search_query`**, plus a
+  comma-separated **`columns`** string. HPA silently DROPS unknown column codes — use only the
+  codes named in §3/§4 below, and never invent a search field (`cancer_category_rna:` does NOT
+  exist in HPA and returns an empty list).
+- `ARCHS4_get_gene_expression` uses **`gene`** (NOT `gene_symbol`) plus `type="cellline"`.
+- `cancer_gene_census_disease_target_score` / `cancer_biomarkers_disease_target_score` need an
+  **UNDERSCORE** disease id (`MONDO_0005061`, `EFO_0000339`) plus `pageSize` — the colon form
+  silently returns nothing. Resolve it with `OpenTargets_get_disease_id_description_by_name`
+  and PREFER a `MONDO_` id: several EFO disease ids are obsolete and come back as `disease: null`
+  with no error.
 - `cBioPortal_get_mutations` uses `study_id="ccle_broad_2019"` (the default CCLE study) and
   `gene_list` as a **comma-separated STRING** ("KRAS,TP53,SMAD4"), NOT a Python list.
 - `OpenTargets_get_associated_drugs_by_target_ensemblID` needs an **Ensembl ID** — resolve the
@@ -134,16 +150,35 @@ mutation landscape / hotspot frequency for context. For SELECTION mode this is h
 candidates: extract the lines carrying the relevant driver mutation (e.g. KRAS G12D).
 
 ## §3  Cancer Markers & Cell-Type Context
-PRIMARY: `CellMarker_search_cancer_markers`(operation="search_cancer_markers", cancer_type="<type>")
-→ canonical cancer markers for the indication. If a target gene is given, also
-`CellMarker_search_by_gene`(operation="search_by_gene", gene_symbol="<symbol>", species="Human")
-→ cell types expressing it. Use to confirm the line/indication is biologically appropriate.
+PRIMARY (indication → marker genes): resolve the disease id with
+`OpenTargets_get_disease_id_description_by_name`(diseaseName="<cancer type>") → prefer the
+`MONDO_…` UNDERSCORE id, then `cancer_gene_census_disease_target_score`(efoId="MONDO_…",
+pageSize=100) → Cancer Gene Census genes scored for the indication, and
+`cancer_biomarkers_disease_target_score`(efoId="MONDO_…", pageSize=100) → curated clinical
+biomarkers for it. Per-gene prognostic value: `HPA_get_cancer_prognostics_by_gene`(ensembl_id="ENSG…")
+→ TCGA prognostic association for the target (use the Ensembl ID resolved by `MyGene_query_genes`).
+GENE → CELL TYPE (do this FIRST if a target gene is given):
+`HPA_generic_search`(search_query="<symbol>", columns="g,eg,rnascs,rnascsm") → single-cell type
+specificity + the cell types with the highest nTPM. This is also how you learn HPA's EXACT
+cell-type vocabulary.
+CELL TYPE → ITS MARKER GENES (reverse direction, only after the call above):
+`HPA_generic_search`(search_query="cell_type_category_rna:T-cells;Cell type enriched",
+columns="g,rnascs,rnascsm") → the genes enriched in that cell type. The cell-type string must
+match HPA's vocabulary EXACTLY — an invented name returns an empty list with no error.
+Use these to confirm the line/indication is biologically appropriate.
+NO SUBSTITUTE — curated marker provenance (the per-marker PMID / experiment column a marker
+database gives) is not retrievable here. Do NOT attribute a marker to a publication you did not
+actually retrieve; mark that column "No data available".
 
-## §4  Expression — target abundance in the model (best-effort, 10 supported lines)
-`HPA_get_comparative_expression_by_gene_and_cellline`(gene_name="<symbol>", cell_line="<line>") —
-ONLY 10 lines are supported: hela, mcf7, a549, hepg2, jurkat, pc3, rh30, siha, u251, ishikawa. If
-the line of interest is not one of these, mark §4 "No data available (HPA supports only 10 lines)"
-— do NOT fabricate expression values.
+## §4  Expression — target abundance in the model
+CANCER-LINEAGE RNA (keyed by cancer LINEAGE, not by a named line):
+`HPA_generic_search`(search_query="<symbol>", columns="g,rnacls,rnaclsm,rnacld") → cancer
+cell-line specificity, per-lineage nTPM, and distribution.
+PER-NAMED-LINE values: `ARCHS4_get_gene_expression`(gene="<symbol>", type="cellline") → mean
+expression across named cell lines; match your candidate on its canonical §1 NAME.
+There is NO per-gene-and-cell-line comparative HPA endpoint on this image — do not claim a
+"supported lines" list. If neither call covers the line, mark §4 "No data available (no per-line
+expression for this line)". Do NOT fabricate expression values.
 
 ## §5  Drug Sensitivity & Biomarkers
 PRIMARY: `PharmacoDB_get_experiments`(operation="get_experiments", cell_line_name="<line>",
@@ -215,8 +250,8 @@ DID retrieve; the dependency criterion simply scores 1 ("no data") and the verdi
     (Cellosaurus), or disqualified;
 (3) Genotype — does the line carry the relevant mutation / clean genetic background for the target;
 (4) Pharmacology — drug-sensitivity coverage and druggable-target context for the line;
-(5) Pitfalls — known limitations, missing data (DepMap/Sanger coverage, unsupported HPA lines), and
-    the recommended runner-up model.
+(5) Pitfalls — known limitations, missing data (DepMap/Sanger coverage, lines with no per-line
+    expression, absent marker provenance), and the recommended runner-up model.
 
 # Conflicting data
 Cell-line name differs across databases ("HCT 116" vs "HCT116") → resolve via Cellosaurus synonyms /
@@ -245,14 +280,15 @@ skip any:
 (5) Pitfalls — known limitations, missing data, and the recommended runner-up model.
 ## 1. Identity Verification   (cell line | CVCL accession | species | derived-from disease | misID/contamination flag | Source)
 ## 2. Mutation Landscape   (cell line | gene | aa change | Mutation Relevance Grade (T1-T4) | Source)
-## 3. Cancer Markers & Cell-Type Context   (marker / cell type | gene | indication | Source)
-## 4. Expression   (gene | cell line | expression (HPA) | Source)  — or "No data available (HPA supports only 10 lines)"
+## 3. Cancer Markers & Cell-Type Context   (marker gene / cell type | evidence (census score, biomarker, HPA cell-type enrichment) | indication | Source)  — marker provenance/PMID column is "No data available"
+## 4. Expression   (gene | lineage or named cell line | nTPM / mean expression | Source)  — or "No data available (no per-line expression for this line)"
 ## 5. Drug Sensitivity & Biomarkers   (drug | cell line | IC50 / AAC | dataset | biomarker | Source)
 ## 6. Druggable Targets   (gene | existing drugs (DGIdb) | OpenTargets drugs | STRING neighbours | Source)
 ## 7. Gene Dependency   (gene | cell line | DepMap dependency (or "No data — limited coverage") | Source)  — best-effort; verdict does not depend on it
 ## 8. Model-Suitability Ranking   (cell line | mutation-match | co-mutation | dependency | drug-data | practical | weighted total | Grade (T1-T4) | rationale | Source)  — ranked best→worst; the recommendation
 ## 9. Data Limitations
 List the DepMap/Sanger coverage limitation (which lines/genes fell back to §1–§6), the CLUE/L1000
-unavailability, any HPA-unsupported lines, any Cellosaurus misID flags, and every "No data
-available" dimension with its reason. Never fabricate to fill a gap.
+unavailability, any line with no per-line expression datum, the absence of curated marker
+provenance (per-marker PMIDs), any Cellosaurus misID flags, and every "No data available"
+dimension with its reason. Never fabricate to fill a gap.
 ## 10. References   — | # | Tool | Parameters | Section | Items Retrieved |

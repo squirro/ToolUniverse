@@ -4,7 +4,8 @@ Compares cancer vs normal tissue expression using EBI Expression Atlas.
 Returns log2 fold change and p-value per gene from matched-tissue studies.
 """
 from __future__ import annotations
-import json, logging
+import json
+import logging
 
 log = logging.getLogger(__name__)
 
@@ -392,7 +393,8 @@ def exec_differential_expression(arguments, input_table, output_table, db_path):
     Fetches ALL matching experiments for the indication, aggregates log2FC
     per gene across studies (median + direction consensus).
     """
-    import sqlite3, re
+    import sqlite3
+    import re
     from concurrent.futures import ThreadPoolExecutor as _TPE, as_completed
     from statistics import median
 

@@ -6,11 +6,28 @@ no file writes). Deployable body ~6.8k chars — fits the 10000-char production 
 AVAILABLE tools (call these via execute_tool DIRECTLY):
   GDC_get_clinical_data, GDC_get_mutation_frequency, GDC_get_ssm_by_gene,
   GDC_get_survival, GDC_list_projects,
-  Progenetix_cnv_search, Progenetix_list_filtering_terms, Progenetix_search_biosamples
+  Progenetix_cnv_search, Progenetix_list_filtering_terms, Progenetix_search_biosamples,
+  cBioPortal_get_mutations, cBioPortal_get_sample_lists, cBioPortal_get_cancer_studies,
+  cBioPortal_get_molecular_profiles, cBioPortal_get_clinical_data,
+  civic_search_molecular_profiles, civic_search_evidence_items
 
-UNAVAILABLE — OncoKB_annotate_variant: no API key on this cluster; no drop-in substitute
-exists for OncoKB oncogenicity/actionability tiers. Mark that dimension
-"No data available (OncoKB unavailable on this cluster)" and do NOT fabricate tiers.
+COHORT FREQUENCY — cBioPortal is how you get a per-cancer denominator, which GDC's
+pan-cancer total cannot give you. Study ids are cBioPortal ids (`prad_tcga`), NOT GDC
+project ids (`TCGA-PRAD`); `cBioPortal_get_cancer_studies` resolves them.
+`cBioPortal_get_mutations`(study_id, gene_list) returns RAW PER-SAMPLE RECORDS with no
+denominator — count DISTINCT samples yourself, then divide by the cohort size from
+`cBioPortal_get_sample_lists`(study_id) (e.g. `prad_tcga_sequenced` = 499 samples).
+Never report a raw record count as a frequency. Worked example: PTEN in prad_tcga is
+17 distinct samples / 499 = 3.4% mutated.
+
+ONCOKB is not served. Its oncogenicity/actionability LEVEL 1/2/3A/3B/4 tiers have no
+equivalent, so never fabricate one. For therapeutic actionability use CIViC instead:
+`civic_search_molecular_profiles`(query="<GENE> <variant>") → profile, then
+`civic_search_evidence_items`(molecular_profile=..., evidence_type="PREDICTIVE",
+disease="<disease name>") → `evidenceLevel` A–E. Report those verbatim as "CIViC
+evidence level (A–E)" and NEVER relabel them as OncoKB levels; `molecular_profile` is
+substring-matched, so filter on `molecularProfile.name`. What CIViC does not carry:
+FDA-recognition semantics, OncoKB's tumor-type-mismatch downgrade, curated oncogenicity.
 (`json_normalize` is a pandas function, not a tool — ignore it.)
 
 Sanctioned web supplement: Exa_Web_Search / Brave_Search / Perplexity_Search_Llm

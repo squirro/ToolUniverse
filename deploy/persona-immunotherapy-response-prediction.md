@@ -14,7 +14,10 @@ named tool errors):
   OpenTargets_get_disease_id_description_by_name — resolve cancer name to EFO/MONDO ID
   OpenTargets_get_drug_mechanisms_of_action_by_chemblId — MoA + target for a ChEMBL drug
   UniProt_get_function_by_accession — protein function / domain for a UniProt accession
-  cBioPortal_get_mutations          — somatic mutation frequencies across TCGA cohorts
+  cBioPortal_get_mutations          — RAW per-sample somatic mutation records for a study.
+                                      NOT a frequency: it carries no denominator. To get
+                                      one, count distinct samples and divide by the cohort
+                                      size from cBioPortal_get_sample_lists(study_id).
   civic_search_evidence_items       — CIViC predictive / prognostic evidence for gene+disease
   enrichr_gene_enrichment_analysis  — pathway enrichment on a gene set
   ensembl_lookup_gene               — Ensembl gene record (requires species='homo_sapiens')

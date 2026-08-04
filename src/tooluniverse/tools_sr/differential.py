@@ -102,16 +102,84 @@ _CANCER_SYNONYMS = {
 }
 
 
-def gxa_find_experiments(indication, timeout=60):
-    """Search EBI Expression Atlas for cancer vs normal experiments.
+# Row shape the downstream table pipeline reads. Kept in one place so the empty
+# and populated paths cannot drift apart.
+_EMPTY_ROW = {
+    "median_log2fc": "", "best_p_value": "", "direction": "",
+    "consensus": "0/0", "n_studies": 0, "overexpressed": "", "experiments": "",
+}
 
-    Returns all matching (accession, description, score) sorted by relevance.
+# Why a zero came back. These were previously indistinguishable: both empty paths
+# returned byte-identical rows, so a dead network read as a biological negative.
+_STATUS_DETAIL = {
+    "no_matching_studies": (
+        "No GxA study survived the filter. This is NOT evidence the gene is "
+        "unchanged — it means no human differential study matching these terms "
+        "also named a normal/control/adjacent comparison."
+    ),
+    "studies_found_fetch_failed": (
+        "Studies DID match, but every analytics fetch failed. This is a transport "
+        "failure, NOT a biological result, and is not evidence of anything. Retry "
+        "before drawing any conclusion."
+    ),
+    "gene_not_measured": (
+        "Studies matched and parsed, but this gene was not measured in them. This "
+        "is NOT evidence the gene is unchanged."
+    ),
+    "catalog_unavailable": (
+        "The GxA experiment catalogue could not be fetched, so no filtering "
+        "happened at all. This is a transport failure, not a result."
+    ),
+}
+
+_WIDEN_WITH = (
+    "Pass experiment=<GxA accession> to bypass the description filter entirely "
+    "(it is applied only when no experiment is named), or retry with a broader "
+    "indication term. See `rejected` in diagnostics for accessions that matched "
+    "the search term but were dropped by a later filter."
+)
+
+
+def empty_rows(genes, status, funnel):
+    """Zero-result rows that say WHICH zero this is, and how to widen.
+
+    The pipeline's original columns are preserved verbatim so downstream table
+    consumers keep working; the diagnostic fields are additive.
     """
-    experiments = _get_experiments_catalog(timeout=timeout)
-    if not experiments:
-        log.warning("gxa_find_experiments: empty experiment catalog")
-        return []
+    diagnostics = json.dumps(
+        {
+            "search_terms": funnel.get("search_terms", []),
+            "stages": funnel.get("stages", {}),
+            # Capped: a rejection list is for reading, not for reprocessing.
+            "rejected": funnel.get("rejected", [])[:10],
+            "rejected_total": len(funnel.get("rejected", [])),
+        },
+        default=str,
+    )
+    return [
+        {
+            "_input_gene_name": g,
+            **_EMPTY_ROW,
+            "status": status,
+            "status_detail": _STATUS_DETAIL.get(status, ""),
+            "widen_with": _WIDEN_WITH,
+            "diagnostics": diagnostics,
+        }
+        for g in genes
+    ]
 
+
+def filter_experiments(experiments, indication):
+    """Apply the description filter, returning ``(candidates, funnel)``.
+
+    Split out of ``gxa_find_experiments`` so the funnel is observable. The filter
+    rules and their ORDER are unchanged -- this is strictly about reporting what
+    was dropped and by which rule, never about loosening anything.
+
+    Only candidates that matched the search term are recorded in ``rejected``:
+    everything before that stage is the other 4,000-odd experiments in the
+    catalogue, which is noise rather than a near miss.
+    """
     ind_l = indication.lower()
     is_cancer = _is_cancer_indication(ind_l)
 
@@ -144,27 +212,59 @@ def gxa_find_experiments(indication, timeout=60):
                    "inhibitor", "agonist", "antagonist", "stromal",
                    "epithelial cells", "lymphocyte", "chemopreventive",
                    "phytochemical", "xenograft", "organoid", "spheroid"]
+    funnel = {
+        "indication_as_searched": ind_l,
+        "search_terms": [st for st in search_terms if st],
+        "stages": {
+            "catalog": len(experiments), "differential": 0, "human": 0,
+            "term_match": 0, "normal_comparison": 0, "not_excluded": 0,
+            "cancer_word": 0, "final": 0,
+        },
+        "rejected": [],
+    }
+    stages = funnel["stages"]
+
     candidates = []
     for exp in experiments:
         etype = exp.get("experimentType", "")
         if "differential" not in etype.lower():
             continue
+        stages["differential"] += 1
         # Only human experiments
         species = exp.get("species", "")
         if isinstance(species, str) and "homo sapiens" not in species.lower():
             continue
-        desc = exp.get("experimentDescription", "").lower()
+        stages["human"] += 1
+        desc_raw = exp.get("experimentDescription", "")
+        desc = desc_raw.lower()
         # Must match at least one search term
         if not any(st in desc for st in search_terms if st):
             continue
+        stages["term_match"] += 1
+
+        # Past this point a candidate is a NEAR MISS -- it is about the right
+        # subject -- so every drop is recorded with the rule that caused it.
+        def _reject(rule):
+            funnel["rejected"].append({
+                "accession": exp.get("experimentAccession", ""),
+                "description": desc_raw,
+                "dropped_by": rule,
+            })
+
         if not any(nk in desc for nk in normal_kws):
+            _reject("no_normal_comparison")
             continue
+        stages["normal_comparison"] += 1
         if any(ek in desc for ek in exclude_kws):
+            _reject("excluded_keyword")
             continue
+        stages["not_excluded"] += 1
         # For cancer indications, require a cancer-related word in description
         # to avoid matching psychiatric/neurological studies
         if is_cancer and not any(ck in desc for ck in cancer_desc_kws):
+            _reject("no_cancer_word")
             continue
+        stages["cancer_word"] += 1
         score = 1
         if "rnaseq" in etype.lower() or "rna-seq" in desc:
             score += 5
@@ -182,6 +282,31 @@ def gxa_find_experiments(indication, timeout=60):
                     break
         candidates.append((exp["experimentAccession"], exp.get("experimentDescription", ""), score))
     candidates.sort(key=lambda x: -x[2])
+    stages["final"] = len(candidates)
+    return candidates, funnel
+
+
+def gxa_find_experiments_with_funnel(indication, timeout=60):
+    """``filter_experiments`` over the live catalogue, keeping the funnel."""
+    experiments = _get_experiments_catalog(timeout=timeout)
+    if not experiments:
+        log.warning("gxa_find_experiments: empty experiment catalog")
+        return [], {
+            "indication_as_searched": indication.lower(),
+            "search_terms": [],
+            "stages": {"catalog": 0, "final": 0},
+            "rejected": [],
+            "catalog_unavailable": True,
+        }
+    return filter_experiments(experiments, indication)
+
+
+def gxa_find_experiments(indication, timeout=60):
+    """Search EBI Expression Atlas for cancer vs normal experiments.
+
+    Returns all matching (accession, description, score) sorted by relevance.
+    """
+    candidates, _ = gxa_find_experiments_with_funnel(indication, timeout=timeout)
     return candidates
 
 
@@ -284,10 +409,11 @@ def exec_differential_expression(arguments, input_table, output_table, db_path):
         clean_indication = indication
 
     accession = arguments.get("experiment", "")
+    _funnel = {}
     if accession:
         experiments = [(accession, "", 0)]
     else:
-        experiments = gxa_find_experiments(clean_indication)
+        experiments, _funnel = gxa_find_experiments_with_funnel(clean_indication)
         if not experiments:
             log.warning("exec_de: no GxA experiments found for '%s' — returning empty rows", clean_indication)
             # Extract query genes for empty-row output rather than crashing
@@ -313,11 +439,15 @@ def exec_differential_expression(arguments, input_table, output_table, db_path):
                     pass
             if not _empty_genes:
                 _empty_genes = [clean_indication]
-            return [{
-                "_input_gene_name": g, "median_log2fc": "", "best_p_value": "",
-                "direction": "", "consensus": "0/0", "n_studies": 0,
-                "overexpressed": "", "experiments": "",
-            } for g in _empty_genes]
+            return empty_rows(
+                _empty_genes,
+                status=(
+                    "catalog_unavailable"
+                    if _funnel.get("catalog_unavailable")
+                    else "no_matching_studies"
+                ),
+                funnel=_funnel,
+            )
     log.info("exec_de: indication='%s', %d experiments found", indication, len(experiments))
 
     # Fetch analytics from all experiments in parallel
@@ -340,11 +470,12 @@ def exec_differential_expression(arguments, input_table, output_table, db_path):
         log.warning("exec_de: all analytics fetches failed for '%s' — returning empty rows", indication)
         gene_arg = arguments.get("gene", arguments.get("gene_name", ""))
         _fallback = [g.strip() for g in gene_arg.split(",") if g.strip()] if gene_arg else [clean_indication]
-        return [{
-            "_input_gene_name": g, "median_log2fc": "", "best_p_value": "",
-            "direction": "", "consensus": "0/0", "n_studies": 0,
-            "overexpressed": "", "experiments": "",
-        } for g in _fallback]
+        # NOT the same zero as "no study matched": these studies DID match and we
+        # failed to fetch them. Reporting that as a biological negative was the
+        # defect (DSR-629).
+        _failed = dict(_funnel)
+        _failed["experiments_matched"] = [e[0] for e in experiments]
+        return empty_rows(_fallback, status="studies_found_fetch_failed", funnel=_failed)
 
     # Build per-gene aggregation
     gene_data = {}
@@ -429,12 +560,21 @@ def exec_differential_expression(arguments, input_table, output_table, db_path):
                 "n_studies": n_studies,
                 "overexpressed": "yes" if median_fc > 0 else "no",
                 "experiments": exp_names,
+                "status": "ok",
+                "status_detail": "",
+                "widen_with": "",
             }
+        # Studies matched AND parsed; this gene was simply not among them. Before
+        # DSR-629 this was distinguishable from "no study matched" only by whether
+        # `experiments` happened to be non-empty, which nothing documented.
         return {
             "_input_gene_name": display_name,
             "median_log2fc": "", "best_p_value": "", "direction": "",
             "consensus": "0/0", "n_studies": 0, "overexpressed": "",
             "experiments": exp_names,
+            "status": "gene_not_measured",
+            "status_detail": _STATUS_DETAIL["gene_not_measured"],
+            "widen_with": _WIDEN_WITH,
         }
 
     results = []

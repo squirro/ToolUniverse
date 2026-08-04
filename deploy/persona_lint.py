@@ -105,6 +105,56 @@ def unserved_tools(text: str, excluded: set[str]) -> list[str]:
     )
 
 
+# Wording that marks a tool as unreachable rather than instructing a call. Kept
+# narrow and literal: "not optional" and "not recommended" are ordinary emphasis in
+# these bodies, so a general "not ..." rule would suppress real instructions.
+_UNAVAILABLE = (
+    "do not call",
+    "never call",
+    "not available",
+    "not deployed",
+    "not served",
+    "not functional",
+    "non-functional",
+    "unavailable",
+    "no data available",
+)
+
+
+def _marks_unavailable(line: str) -> bool:
+    low = line.lower()
+    return any(marker in low for marker in _UNAVAILABLE)
+
+
+def live_unserved_tools(text: str, excluded: set[str]) -> list[str]:
+    """Excluded tools the body actively tells the agent to CALL, in sorted order.
+
+    ``unserved_tools`` counts every mention, which over-reports: a body that already
+    warns "DO NOT CALL ``X`` — it errors" is doing the right thing and must not be
+    punished for naming X in order to forbid it. This keeps only mentions that would
+    actually send the agent at a tool the image does not serve, so the rule can be an
+    error rather than a warning.
+
+    A mention is discounted when the line carrying it says the tool is unreachable, or
+    when it sits under a block whose opening line is such a directive. Suppression is
+    per-mention, never per-body: one caveat about one tool must not clear a whole
+    phase, so a tool named positively anywhere still counts.
+    """
+    live: set[str] = set()
+    for block in re.split(r"\n\s*\n", body_text(text)):
+        lines = block.splitlines()
+        if not lines or _marks_unavailable(lines[0]):
+            continue
+        for line in lines:
+            if _marks_unavailable(line):
+                continue
+            live.update(
+                name for name in excluded
+                if re.search(rf"\b{re.escape(name)}\b", line)
+            )
+    return sorted(live)
+
+
 def check_body(text: str, deploy_dir: str | Path) -> tuple[list[str], list[str]]:
     """Return ``(errors, warnings)`` for one persona body.
 

@@ -51,7 +51,8 @@ Before executing any tools, evaluate the user's query complexity:
         - **Prevalence / incidence / primary literature?** → `get_skill("literature-deep-research")`
         - **Normal-tissue expression?** → `get_skill("expression-data-retrieval")`
         - **Structures / druggable pocket?** → `get_skill("structural-proteomics")`
-    - **Multiple sub-questions → chain skills automatically:** run each skill's tools in turn, carry resolved IDs forward, synthesize once — only the few genuinely needed.
+        - **Cohort mutation/CNV frequency?** → `get_skill("cancer-genomics-tcga")`
+    - **Multiple sub-questions → chain skills automatically:** run each skill's tools in turn, carry resolved IDs forward, synthesize once — only the few needed.
     - **No row matches → `find_skill("<request>")`** first (never guess a name); pick the top fit → `get_skill(<that name>)`. Only if nothing relevant, ask one clarifying question.
     - **Ad-hoc fact, no fitting skill → `find_tools("<5–10 words>")`** (omit `categories`) → `execute_tool(name, args)`. Resolve names to IDs first; never fabricate one.
     - **Relationship / traversal → OptimusKG.** How entities *connect* (a drug's targets, a gene's diseases, what two share/bridge), ranked with per-edge provenance — `OptimusKG_Search` alongside the matched skill. Aggregate/landscape trial questions are **NOT** `clinical-trial-matching` (per-patient) → use `disease-research` or the web path.

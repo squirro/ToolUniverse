@@ -971,9 +971,13 @@ class SMCP(FastMCP):
                     return "Tool_Finder"
                 elif "Tool_Finder_LLM" in available_tool_names:
                     return "Tool_Finder_LLM"
-        else:
-            # Invalid method or method not available, fallback to keyword
-            return "Tool_Finder_Keyword"
+
+        # Every path must name a tool. This used to fall off the end for
+        # search_method="auto" with use_advanced_search=False -- an implicit None
+        # that surfaced downstream as "Missing or empty function name", i.e. a
+        # legitimate-looking call answering nothing and inviting a retry loop.
+        # use_advanced_search is an exposed parameter, so a model can trip it.
+        return "Tool_Finder_Keyword"
 
     def _setup_smcp_tools(self):
         """Initialize ToolUniverse tools, expose them as MCP tools, and set up search.

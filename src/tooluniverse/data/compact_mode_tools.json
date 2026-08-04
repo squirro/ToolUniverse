@@ -336,25 +336,13 @@
       "type": "object",
       "properties": {
         "tool_name": {
-          "type": "string",
-          "description": "Name of the tool to execute (e.g., 'example_tool_name')"
+          "description": "REQUIRED. Name of the tool to execute (e.g., 'example_tool_name'). Enforced by the tool itself, which answers with a readable error rather than failing schema validation."
         },
         "arguments": {
-          "oneOf": [
-            {
-              "type": "object",
-              "additionalProperties": true
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "Tool arguments as either (1) a JSON object dictionary or (2) a JSON string that decodes to an object. Object example: {\"param1\": \"value1\", \"param2\": 5}. JSON string example: \"{\\\"param1\\\": \\\"value1\\\", \\\"param2\\\": 5}\"."
+          "description": "Tool arguments as either (1) a JSON object dictionary or (2) a JSON string that decodes to an object. Object example: {\"param1\": \"value1\", \"param2\": 5}. JSON string example: \"{\\\"param1\\\": \\\"value1\\\", \\\"param2\\\": 5}\". Anything else is rejected by the tool with an explanation you can act on."
         }
       },
-      "required": [
-        "tool_name"
-      ]
+      "required": []
     },
     "return_schema": {
       "type": "object",

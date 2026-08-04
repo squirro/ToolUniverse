@@ -1,5 +1,6 @@
 # faers_analytics_tool.py
 
+import os
 import requests
 import math
 from typing import Dict, Any, List, Tuple
@@ -7,6 +8,11 @@ from .base_tool import BaseTool
 from .tool_registry import register_tool
 
 FDA_BASE_URL = "https://api.fda.gov/drug/event.json"
+
+# openFDA caps a count request at 1000 terms and rejects more with HTTP 400. It
+# also refuses limit>100 outright (403 API_KEY_MISSING) unless the caller is
+# authenticated, so the limit and the key have to travel together.
+COUNT_PAGE_MAX = 1000
 
 
 @register_tool("FAERSAnalyticsTool")
@@ -259,13 +265,14 @@ class FAERSAnalyticsTool(BaseTool):
             else:
                 base_query = f'patient.drug.openfda.generic_name:"{drug_name}"'
 
-            url = f"{FDA_BASE_URL}?search={base_query}&count={count_field}"
+            url = self._count_url(base_query, count_field)
 
             response = requests.get(url, timeout=30)
             response.raise_for_status()
 
             data = response.json()
             results = data.get("results", [])
+            truncated = self._truncation_note(results)
 
             # Format stratified data
             stratified_data = []
@@ -297,7 +304,7 @@ class FAERSAnalyticsTool(BaseTool):
                     {"group": term, "count": count, "percentage": round(percentage, 2)}
                 )
 
-            return {
+            payload: Dict[str, Any] = {
                 "status": "success",
                 "drug_name": drug_name,
                 "adverse_event": adverse_event,
@@ -307,6 +314,9 @@ class FAERSAnalyticsTool(BaseTool):
                     stratified_data, key=lambda x: x["count"], reverse=True
                 ),
             }
+            if truncated:
+                payload["truncation_warning"] = truncated
+            return payload
 
         except requests.exceptions.RequestException as e:
             return {"status": "error", "error": f"API request failed: {str(e)}"}
@@ -352,13 +362,16 @@ class FAERSAnalyticsTool(BaseTool):
             search_query = base_query + seriousness_map[seriousness_type]
 
             # Get top reactions for serious events
-            url = f"{FDA_BASE_URL}?search={search_query}&count=patient.reaction.reactionmeddrapt.exact"
+            url = self._count_url(
+                search_query, "patient.reaction.reactionmeddrapt.exact"
+            )
 
             response = requests.get(url, timeout=30)
             response.raise_for_status()
 
             data = response.json()
             results = data.get("results", [])
+            truncated = self._truncation_note(results)
 
             # Get total serious event count
             total_url = f"{FDA_BASE_URL}?search={search_query}&limit=1"
@@ -384,6 +397,8 @@ class FAERSAnalyticsTool(BaseTool):
             }
             if adverse_event:
                 result["adverse_event_filter"] = adverse_event.upper()
+            if truncated:
+                result["truncation_warning"] = truncated
             return {"status": "success", "data": result}
 
         except requests.exceptions.RequestException as e:
@@ -482,13 +497,14 @@ class FAERSAnalyticsTool(BaseTool):
                 search_query = f'patient.drug.openfda.generic_name:"{drug_name}"'
 
             # Get counts by receive date (year)
-            url = f"{FDA_BASE_URL}?search={search_query}&count=receivedate"
+            url = self._count_url(search_query, "receivedate")
 
             response = requests.get(url, timeout=30)
             response.raise_for_status()
 
             data = response.json()
             results = data.get("results", [])
+            truncated = self._truncation_note(results)
 
             # Parse and aggregate by year
             yearly_counts = {}
@@ -534,6 +550,7 @@ class FAERSAnalyticsTool(BaseTool):
                     "percent_change": round(percent_change, 1),
                     "years_analyzed": len(temporal_data),
                 },
+                **({"truncation_warning": truncated} if truncated else {}),
                 "note": "Temporal trends may reflect increased awareness, reporting, or actual incidence changes",
             }
 
@@ -552,13 +569,16 @@ class FAERSAnalyticsTool(BaseTool):
 
             # Get preferred term (PT) level reactions
             search_query = f'patient.drug.openfda.generic_name:"{drug_name}"'
-            url = f"{FDA_BASE_URL}?search={search_query}&count=patient.reaction.reactionmeddrapt.exact"
+            url = self._count_url(
+                search_query, "patient.reaction.reactionmeddrapt.exact"
+            )
 
             response = requests.get(url, timeout=30)
             response.raise_for_status()
 
             data = response.json()
             pt_results = data.get("results", [])
+            truncated = self._truncation_note(pt_results)
 
             # Format PT level
             pt_level = [
@@ -575,10 +595,17 @@ class FAERSAnalyticsTool(BaseTool):
                     "drug_name": drug_name,
                     "meddra_hierarchy": {
                         "PT_level": pt_level,
-                        "total_unique_PTs": len(pt_level),
+                        # len(pt_level) here counted the 50-item display slice, so
+                        # this always read 50 for any drug with 50+ PTs.
+                        "total_unique_PTs": len(pt_results),
                     },
                     "note": "Full MedDRA hierarchy (HLT, SOC) requires MedDRA license. Showing Preferred Term (PT) level only.",
                     "recommendation": "Use MedDRA dictionary to map PTs to higher-level terms for system organ class analysis",
+                    "pt_display_cap": (
+                        f"showing top {len(pt_level)} of {len(pt_results)} "
+                        "preferred terms returned"
+                    ),
+                    **({"truncation_warning": truncated} if truncated else {}),
                 },
             }
 
@@ -601,6 +628,37 @@ class FAERSAnalyticsTool(BaseTool):
         "patient.drug.openfda.substance_name",
         "patient.drug.medicinalproduct.exact",
     )
+
+    def _count_url(self, search_query: str, count_field: str) -> str:
+        """A count URL asking for as many terms as this caller is allowed.
+
+        Without ``FDA_API_KEY`` openFDA answers 403 to any ``limit`` above 100, so
+        an unauthenticated caller must not send one at all: it would turn a
+        working-but-truncated call into a failed one. Authenticated, the ceiling
+        is 1000, which on a busy drug is ~29% more of the reaction distribution
+        than the unasked-for default of 100.
+        """
+        url = f"{FDA_BASE_URL}?search={search_query}&count={count_field}"
+        api_key = os.getenv("FDA_API_KEY")
+        if api_key:
+            url += f"&limit={COUNT_PAGE_MAX}&api_key={api_key}"
+        return url
+
+    def _truncation_note(self, results: List[Dict[str, Any]]):
+        """Say so when the distribution was cut off, else None.
+
+        A full page is evidence of truncation, not of completeness -- measured on
+        LUTATHERA, the 1000th term still has count == 1, so terms remain beyond the
+        cap. Reporting a capped distribution as the whole one is the same defect
+        class as reporting a transport failure as a zero.
+        """
+        if len(results) < COUNT_PAGE_MAX:
+            return None
+        return (
+            f"TRUNCATED: openFDA returned the maximum {COUNT_PAGE_MAX} terms, so "
+            "rarer events beyond the cap are missing. Counts shown are a lower "
+            "bound and the distribution is incomplete."
+        )
 
     def _field_total(self, field: str, term: str):
         """Report total for one field, or None when that field does not match.

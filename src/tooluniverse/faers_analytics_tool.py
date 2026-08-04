@@ -148,6 +148,14 @@ class FAERSAnalyticsTool(BaseTool):
 
             # Calculate ROR (Reporting Odds Ratio)
             ror = (a / b) / (c / d) if b > 0 and d > 0 else None
+
+            # Same analysis over the UNION of every spelling openFDA knows. This
+            # is a different cohort, not a better one -- reporting both is what
+            # stops a quoted ROR being ambiguous about which population it
+            # describes. Costs two extra calls: c and d derive from a.
+            sensitivity = self._population_sensitivity(
+                drug_name, adverse_event, resolved_field, ror, a, total
+            )
             ror_ci = self._calculate_ror_ci(a, b, c, d) if ror else None
 
             # Calculate PRR (Proportional Reporting Ratio)
@@ -185,12 +193,12 @@ class FAERSAnalyticsTool(BaseTool):
                     "resolved_field": resolved_field,
                     "drug_report_total": drug_total,
                     "note": (
-                        "Reports were matched on this single openFDA field. Other "
-                        "spellings of the same product may exist under other fields "
-                        "and are NOT included; widening the definition can change "
-                        "the estimate materially for some signals."
+                        "PRIMARY analysis: reports matched on this single openFDA "
+                        "field (the narrow population). See population_sensitivity "
+                        "for the same analysis over the union of every spelling."
                     ),
                 },
+                "population_sensitivity": sensitivity,
                 "contingency_table": {
                     "a_drug_and_event": a,
                     "b_drug_no_event": b,
@@ -629,6 +637,68 @@ class FAERSAnalyticsTool(BaseTool):
         "patient.drug.medicinalproduct.exact",
     )
 
+    @staticmethod
+    def candidate_terms(field: str, drug_name: str) -> List[str]:
+        """Spellings worth probing for one field.
+
+        ``.exact`` fields are case-STRICT and FAERS stores product names
+        uppercase, so `medicinalproduct.exact:"Lutathera"` is a 404 while
+        `"LUTATHERA"` returns 5,682 reports. Every other field matches either
+        casing, where a second probe would only cost a call.
+        """
+        terms = [drug_name]
+        if field.endswith(".exact") and drug_name.upper() != drug_name:
+            terms.append(drug_name.upper())
+        return terms
+
+    @staticmethod
+    def population_queries(matches: List[Tuple[str, str]]) -> Dict[str, str]:
+        """The two defensible cohorts, from ``(field, matched_term)`` pairs.
+
+        The term travels with the field because they disagree: `brand_name`
+        matches "Lutathera" while `medicinalproduct.exact` needs "LUTATHERA".
+
+        NARROW is the first field that knew the drug -- historically the only one
+        counted, and kept as the primary so published numbers do not move. UNION
+        is every spelling openFDA recognises, OR'd together. They are different
+        populations, and on LUTATHERA/myelodysplastic syndrome they disagree by
+        29 vs 50 cases (ROR 7.2 vs 12.0), so the choice cannot be silent.
+
+        With one matching field the two are identical, and callers must not imply
+        a comparison that does not exist.
+        """
+        narrow = f'{matches[0][0]}:"{matches[0][1]}"'
+        union = "+OR+".join(f'{f}:"{t}"' for f, t in matches)
+        return {"narrow": narrow, "union": union}
+
+    @staticmethod
+    def divergence_note(primary: Dict[str, Any], sensitivity: Dict[str, Any]):
+        """Flag a population choice that changes the conclusion, else None.
+
+        Two things are material: the signal crossing ROR 1.0 (present under one
+        cohort, absent under the other), and a ratio shift large enough to change
+        how the number reads. A stable estimate is NOT flagged -- noise here would
+        train the reader to ignore the field.
+        """
+        p, s = primary.get("ROR"), sensitivity.get("ROR")
+        if p is None or s is None or p <= 0 or s <= 0:
+            return None
+        crosses = (p >= 1.0) != (s >= 1.0)
+        ratio = max(p, s) / min(p, s)
+        if not crosses and ratio < 1.5:
+            return None
+        lead = (
+            "The signal changes DIRECTION across the two populations"
+            if crosses
+            else "The two populations disagree materially"
+        )
+        return (
+            f"{lead}: ROR {p} ({primary.get('cases')} cases) under the narrow "
+            f"definition vs {s} ({sensitivity.get('cases')} cases) under the union. "
+            "Report which population any quoted number describes; the ROR 1.0 line "
+            "is the no-signal boundary."
+        )
+
     def _count_url(self, search_query: str, count_field: str) -> str:
         """A count URL asking for as many terms as this caller is allowed.
 
@@ -673,6 +743,105 @@ class FAERSAnalyticsTool(BaseTool):
         response.raise_for_status()
         total = response.json().get("meta", {}).get("results", {}).get("total", 0)
         return total or None
+
+    def _population_sensitivity(
+        self, drug_name, adverse_event, resolved_field, primary_ror, primary_a, total
+    ):
+        """Re-run the estimate over the union cohort, and say if it disagrees.
+
+        Never raises into the primary result: a failure here degrades to a stated
+        "not computed", because a sensitivity arm that breaks the main answer is
+        worse than no sensitivity arm.
+        """
+        try:
+            fields = self._resolve_all_drug_fields(drug_name)
+            if len(fields) <= 1:
+                return {
+                    "computed": False,
+                    "reason": (
+                        "Only one openFDA field knows this drug, so the narrow and "
+                        "union populations are identical. No sensitivity to report."
+                    ),
+                }
+            queries = self.population_queries(fields)
+            ua = self._count_for_population(queries["union"], adverse_event)
+            u_drug_total = self._count_for_population(queries["union"], None)
+            ub = u_drug_total - ua
+            uc = self._count_for_population(None, adverse_event) - ua
+            ud = total - ua - ub - uc
+            if min(ua, ub, uc, ud) <= 0:
+                return {
+                    "computed": False,
+                    "reason": f"Insufficient counts in the union cohort (a={ua}, b={ub}).",
+                    "fields_unioned": [f"{f}:\"{t}\"" for f, t in fields],
+                }
+            union_ror = (ua / ub) / (uc / ud)
+            note = self.divergence_note(
+                {"ROR": round(primary_ror, 3) if primary_ror else None, "cases": primary_a},
+                {"ROR": round(union_ror, 3), "cases": ua},
+            )
+            return {
+                "computed": True,
+                "definition": (
+                    "union of every openFDA FIELD that matches this drug NAME "
+                    "(brand/substance/medicinalproduct). It does NOT include other "
+                    "SPELLINGS of the same product: LUTATHERA's reports also appear "
+                    "under the generic name LUTETIUM LU 177 DOTATATE, and widening "
+                    "to those is a separate, larger cohort not computed here."
+                ),
+                "fields_unioned": [f"{f}:\"{t}\"" for f, t in fields],
+                "narrow_field": resolved_field,
+                "cases": ua,
+                "drug_report_total": u_drug_total,
+                "ROR": round(union_ror, 3),
+                "ci_95": {
+                    k: round(v, 3)
+                    for k, v in self._calculate_ror_ci(ua, ub, uc, ud).items()
+                },
+                "agrees_with_primary": note is None,
+                "divergence": note,
+            }
+        except Exception as exc:  # noqa: BLE001 - must not break the primary result
+            log_msg = f"sensitivity arm failed: {exc}"
+            return {"computed": False, "reason": log_msg}
+
+    def _resolve_all_drug_fields(self, drug_name: str) -> List[Tuple[str, str]]:
+        """Every ``(field, term)`` that knows this drug, not just the first.
+
+        The first is the narrow population; all of them together are the union.
+        Reporting both is what lets a reader see that the population choice moved
+        the estimate (LUTATHERA/MDS: ROR 7.2 vs 12.0). The matched TERM is kept
+        because `.exact` fields need a different casing than the rest.
+        """
+        matches = []
+        for field in self.DRUG_NAME_FIELDS:
+            for term in self.candidate_terms(field, drug_name):
+                if self._field_total(field, term):
+                    matches.append((field, term))
+                    break
+        return matches
+
+    def _count_for_population(self, population_query: str, adverse_event: str = None) -> int:
+        """Report count for an explicit population query, 404 meaning a true zero."""
+        parts = []
+        if population_query:
+            parts.append(f"({population_query})")
+        if adverse_event:
+            parts.append(f'patient.reaction.reactionmeddrapt:"{adverse_event}"')
+        url = FDA_BASE_URL + ("?search=" + "+AND+".join(parts) + "&limit=1" if parts else "?limit=1")
+        api_key = os.getenv("FDA_API_KEY")
+        if api_key:
+            url += f"&api_key={api_key}"
+        response = requests.get(url, timeout=30)
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as exc:
+            # 404 is openFDA's answer to a search matching nothing -- a real zero.
+            # Anything else is us failing to ask, and must not look like absence.
+            if exc.response is not None and exc.response.status_code == 404:
+                return 0
+            raise
+        return response.json().get("meta", {}).get("results", {}).get("total", 0)
 
     def _resolve_drug_field(self, drug_name: str):
         """Find the first field that knows this drug. Returns (field, total).

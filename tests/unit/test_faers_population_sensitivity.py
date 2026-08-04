@@ -87,6 +87,47 @@ def test_an_already_uppercase_term_is_not_probed_twice():
     assert FAERSAnalyticsTool.candidate_terms(PRODUCT, "LUTATHERA") == ["LUTATHERA"]
 
 
+# --- synonyms come from openFDA itself, not from co-occurrence ---
+# Counting names across a whole REPORT conflates synonyms with co-medications:
+# LUTATHERA's reports name LUTETIUM LU 177 DOTATATE 5,683 times (the same product)
+# and OCTREOTIDE 314 times (a different drug the patient also took). Telling those
+# apart by a co-occurrence threshold is a clinical judgement call.
+#
+# The openfda block on the matched DRUG ENTRY sidesteps it: it is the NDC-derived
+# name set for that one product, so a co-medication cannot appear in it at all.
+
+LUTATHERA_OPENFDA = {
+    "brand_name": ["LUTATHERA"],
+    "generic_name": ["LUTETIUM LU 177 DOTATATE"],
+    "substance_name": ["LUTETIUM OXODOTREOTIDE LU-177"],
+}
+
+
+@pytest.mark.unit
+def test_synonyms_are_read_from_the_drug_entrys_own_name_set():
+    names = FAERSAnalyticsTool.synonyms_from_openfda(LUTATHERA_OPENFDA)
+
+    assert names == [
+        "LUTATHERA", "LUTETIUM LU 177 DOTATATE", "LUTETIUM OXODOTREOTIDE LU-177",
+    ]
+
+
+@pytest.mark.unit
+def test_a_missing_openfda_block_yields_no_synonyms():
+    """Many FAERS entries carry no openfda block at all -- that is not an error."""
+    assert FAERSAnalyticsTool.synonyms_from_openfda({}) == []
+    assert FAERSAnalyticsTool.synonyms_from_openfda(None) == []
+
+
+@pytest.mark.unit
+def test_synonyms_are_deduplicated_case_insensitively():
+    names = FAERSAnalyticsTool.synonyms_from_openfda(
+        {"brand_name": ["Lutathera", "LUTATHERA"], "generic_name": ["lutathera"]}
+    )
+
+    assert names == ["LUTATHERA"]
+
+
 @pytest.mark.unit
 def test_a_material_divergence_is_called_out():
     """LUTATHERA/MDS: 7.2 vs 12.0 is the case a reader must not miss."""

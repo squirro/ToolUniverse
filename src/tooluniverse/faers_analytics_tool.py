@@ -637,6 +637,33 @@ class FAERSAnalyticsTool(BaseTool):
         "patient.drug.medicinalproduct.exact",
     )
 
+    # openFDA's own name set for one drug entry, NDC-derived.
+    _OPENFDA_NAME_KEYS = ("brand_name", "generic_name", "substance_name")
+
+    @staticmethod
+    def synonyms_from_openfda(openfda_block) -> List[str]:
+        """Other names for the SAME product, taken from openFDA itself.
+
+        Counting names across a whole report conflates synonyms with
+        co-medications -- LUTATHERA's reports name LUTETIUM LU 177 DOTATATE 5,683
+        times (the same product) and OCTREOTIDE 314 times (a drug the patient also
+        took). Separating those by a co-occurrence threshold is a clinical
+        judgement. The ``openfda`` block on the matched DRUG ENTRY avoids the
+        question: it is the NDC-derived name set for that one product, so a
+        co-medication cannot appear in it at all.
+
+        Caveat worth knowing: only NDC-matched reports carry this block, so
+        as-reported spellings that never mapped are NOT reachable this way.
+        """
+        if not openfda_block:
+            return []
+        seen = {}
+        for key in FAERSAnalyticsTool._OPENFDA_NAME_KEYS:
+            for name in openfda_block.get(key) or []:
+                if name and name.upper() not in seen:
+                    seen[name.upper()] = name.upper()
+        return sorted(seen.values())
+
     @staticmethod
     def candidate_terms(field: str, drug_name: str) -> List[str]:
         """Spellings worth probing for one field.

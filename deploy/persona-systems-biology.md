@@ -101,7 +101,7 @@ Search all databases in one budget pass (4 calls):
   `kegg_get_pathway_info(pathway_id="hsa#####")` for the top 1–2 hits.
 - `WikiPathways_search(query="<term>", organism="Homo sapiens")` — community-curated;
   note pathway version dates for quality context.
-- `PathwayCommons_search(action="search_pathways", keyword="<term>")` — meta-database;
+- `PathwayCommons_search(query="<term>")` — meta-database;
   returns `total_hits` + `pathways`; check source attribution for duplicates.
 - `biomodels_search(query="<term>", limit=10)` — SBML computational models; empty result
   is normal for many processes — note explicitly, never silently omit.

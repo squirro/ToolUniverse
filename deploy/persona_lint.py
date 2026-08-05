@@ -26,6 +26,8 @@ from pathlib import Path
 MAX_TOOL_NAME_LENGTH = 45
 
 _SRC = Path(__file__).resolve().parents[1] / "src"
+# The tool definitions, for the checks that need to know what a tool actually declares.
+REGISTRY_DATA = _SRC / "tooluniverse" / "data"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
@@ -317,6 +319,10 @@ _CALL_SITE = re.compile(
 # A keyword: `name=` not preceded by a comparison operator, and outside any quoted value.
 _KEYWORD = re.compile(r"(?<![=!<>])\b([A-Za-z_][A-Za-z0-9_]*)\s*=(?!=)")
 _QUOTED = re.compile(r"'[^']*'|\"[^\"]*\"")
+# Bodies annotate multi-line JSON argument blocks with `//` comments, and one of them
+# reads "RSA below this = buried/core" -- prose that a naive scan turns into a keyword
+# named `this`. Comments are commentary, never arguments.
+_LINE_COMMENT = re.compile(r"//[^\n]*")
 
 
 class BadKeyword:
@@ -369,11 +375,13 @@ def registry_properties(data_dir: str | Path) -> dict[str, set[str]]:
 def _keywords_in(arguments: str) -> list[str]:
     """Keyword names in an argument list, ignoring anything inside quotes.
 
-    Quoted values are blanked first so a query string like "score >= 0.5" cannot
-    contribute a keyword.
+    Quoted values and ``//`` comments are blanked first, so neither a query string like
+    "score >= 0.5" nor an annotation like "// RSA below this = buried/core" can contribute
+    a keyword. Blanking preserves length so reported line numbers stay correct.
     """
     unquoted = _QUOTED.sub(lambda m: " " * len(m.group()), arguments)
-    return _KEYWORD.findall(unquoted)
+    uncommented = _LINE_COMMENT.sub(lambda m: " " * len(m.group()), unquoted)
+    return _KEYWORD.findall(uncommented)
 
 
 def _with_shortened_aliases(properties: dict[str, set[str]]) -> dict[str, set[str]]:
@@ -447,5 +455,14 @@ def check_body(text: str, deploy_dir: str | Path) -> tuple[list[str], list[str]]
         excluded = excluded_tool_names(dockerfile.read_text())
         for name in live_unserved_tools(text, excluded):
             errors.append(f"instructs a call to {name}, which the image does not serve")
+
+    # An undeclared keyword is worse than a rejected one: for the REST family the query is
+    # built from the DECLARED properties, so the argument is silently dropped and the call
+    # succeeds with the wrong scope. This shipped report-only while 18 call-sites tripped
+    # it -- a linter that is red on arrival gets switched off -- and holds the line as an
+    # error now they are corrected (DSR-673).
+    if REGISTRY_DATA.is_dir():
+        for problem in undeclared_keywords(text, registry_properties(REGISTRY_DATA)):
+            errors.append(problem.message)
 
     return errors, warnings

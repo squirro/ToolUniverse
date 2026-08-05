@@ -434,6 +434,74 @@ def test_a_comparison_inside_an_argument_is_not_read_as_a_keyword():
     assert persona_lint.undeclared_keywords(text, PROPS) == []
 
 
+def test_a_comment_inside_an_argument_block_contributes_no_keyword():
+    """persona-protein-structural-annotation-pdb's shape: a JSON block with // comments.
+
+    The body passes a multi-line JSON object to execute_tool and annotates the fields with
+    `//` comments. One reads "RSA below this = buried/core", which a naive scan turns into
+    a keyword named `this`. It was the single false positive in the first corpus run.
+    """
+    text = (
+        'execute_tool("Structure_annotate", {\n'
+        '  "core_rsa_cutoff": 0.25,   // RSA below this = buried/core\n'
+        '  "tool_name": "x"\n'
+        "})"
+    )
+
+    problems = persona_lint.undeclared_keywords(
+        text, {"execute_tool": {"arguments", "tool_name"}}
+    )
+
+    assert problems == [], problems
+
+
+# --- the rule holds the line now the corpus is clean (DSR-673) ---
+# It shipped as a report-only helper because 18 call-sites tripped it on arrival, and a
+# linter that is red on arrival gets switched off. All 18 are corrected, so it is an error.
+
+
+def test_no_served_skill_body_passes_an_undeclared_keyword():
+    """The DSR-673 line in the sand, swept over the real bodies.
+
+    Applied directly rather than through check_body, for the same reason the dead-call
+    sweep is: check_body raises the 10,000-char Studio cap as a hard error and 44 served
+    bodies are legitimately over it, because they go out through get_skill rather than a
+    Studio persona field.
+    """
+    properties = persona_lint.registry_properties(persona_lint.REGISTRY_DATA)
+    assert properties, "read no tool properties from the registry"
+
+    offenders = {}
+    for name in sorted(persona_lint.served_skill_names(DEPLOY)):
+        body = DEPLOY / f"persona-{name}.md"
+        if not body.is_file():
+            continue
+        problems = persona_lint.undeclared_keywords(body.read_text(), properties)
+        if problems:
+            offenders[name] = [p.message for p in problems]
+
+    assert offenders == {}, f"bodies passing undeclared keywords: {offenders}"
+
+
+def test_an_undeclared_keyword_fails_the_body(tmp_path):
+    """Injecting one into a body must fail the guard."""
+    (tmp_path / "Dockerfile").write_text('CMD ["tooluniverse-smcp"]\n')
+    text = '# Phase 1\nCall `NCBIGene_search(query="TP53")` for the symbol.\n'
+
+    errors, _ = persona_lint.check_body(text, tmp_path)
+
+    assert any("NCBIGene_search" in e and "query" in e for e in errors), errors
+
+
+def test_a_declared_keyword_passes_check_body(tmp_path):
+    (tmp_path / "Dockerfile").write_text('CMD ["tooluniverse-smcp"]\n')
+    text = '# Phase 1\nCall `NCBIGene_search(term="TP53")` for the symbol.\n'
+
+    errors, _ = persona_lint.check_body(text, tmp_path)
+
+    assert not any("NCBIGene_search" in e for e in errors), errors
+
+
 def test_registry_properties_are_read_from_the_data_files(tmp_path):
     (tmp_path / "a.json").write_text(
         '[{"name": "T_get", "parameter": {"properties": {"a": {}, "b": {}}}}]'

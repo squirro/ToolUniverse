@@ -72,7 +72,7 @@ structure below. Cite every data point to its tool. Mark any dimension with no d
 - `OpenTargets_get_variant_credible_sets(variantId="<rsID>")` for top 3–5 SNPs → L2G scores.
   Note: OpenTargets may key variants as `chr_pos_ref_alt` rather than rsIDs; if the call returns
   empty, recover the causal gene from `gwas_get_associations_for_snp` instead (it reliably takes rsIDs).
-- `gwas_get_associations_for_snp(snp_id="<rsID>")` — cross-disease associations, direction-of-effect;
+- `gwas_get_associations_for_snp(rs_id="<rsID>")` — cross-disease associations, direction-of-effect;
   also the fallback causal-gene source when credible sets return empty for an rsID.
 
 DUAL-CAPTURE: per causal gene record BOTH Ensembl ID (for Phase 3 calls) AND HGNC symbol

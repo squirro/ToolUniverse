@@ -88,7 +88,7 @@ For each gene in the SV region (provided by the user or inferred from coordinate
   biotype. Classify each gene as: **fully contained** (entire gene within SV bounds),
   **partially disrupted** (SV breakpoint falls within the gene body), or **flanking**
   (within 1 Mb of a breakpoint).
-- `NCBIGene_search(query="<gene_symbol>")` → official symbol, aliases, gene description.
+- `NCBIGene_search(term="<gene_symbol>")` → official symbol, aliases, gene description.
   Use this in place of OMIM_search (not available) and Gene_Ontology (not available) for
   gene function annotation. Note: OMIM disease associations and Gene Ontology terms are
   not available from the deployed registry; flag as "No data available (OMIM/GO not
@@ -100,13 +100,13 @@ associations from Phase 3.
 
 **Phase 3 — Dosage Sensitivity Assessment**
 For each fully contained or disrupted gene:
-- `ClinGen_search_dosage_sensitivity(gene_symbol="<GENE>")` → HI score (0–3) and TS
+- `ClinGen_search_dosage_sensitivity(gene="<GENE>")` → HI score (0–3) and TS
   score (0–3). This is the gold standard; retrieve for every gene in the SV before
   drawing conclusions.
-- `ClinGen_search_gene_validity(gene_symbol="<GENE>")` → gene-disease validity level
+- `ClinGen_search_gene_validity(gene="<GENE>")` → gene-disease validity level
   (Definitive / Strong / Moderate / Limited / No Known Disease Relationship). This
   substitutes for OMIM gene-disease associations (OMIM not available).
-- `gnomad_search_variants(gene="<GENE>", variant_type="lof")` → pLI constraint score for
+- `gnomad_get_gene_constraints(gene_symbol="<GENE>")` → pLI constraint score for
   LoF intolerance. pLI ≥ 0.9 supports haploinsufficiency when ClinGen HI data is absent
   or score = 1.
 
@@ -117,11 +117,11 @@ duplications); TS score 0–2 = scale accordingly. Do NOT call OMIM_get_entry (n
 available) — gene-disease validity from ClinGen_search_gene_validity is the substitute.
 
 **Phase 4 — Population Frequency Context**
-- `gnomad_search_variants(gene="<primary_gene>", variant_type="sv")` → gnomAD SV
+- `gnomad_get_sv_by_gene(gene_symbol="<primary_gene>")` → gnomAD SV
   population frequency. A frequency ≥ 1% at ≥ 70% reciprocal overlap triggers BA1
   criterion (likely benign absent extreme phenotype override). A frequency < 0.01%
   supports PM2 (rarity).
-- `ClinVar_search_variants(gene="<primary_gene>", variant_type="structural")` → known
+- `ClinVar_search_variants(gene="<primary_gene>")` → known
   pathogenic and benign SVs in ClinVar. An identical SV (≥ 70% reciprocal overlap) with
   Pathogenic/Likely Pathogenic classification is strong evidence (PS1). An identical SV
   classified Benign/Likely Benign is strong evidence against pathogenicity (BS1).

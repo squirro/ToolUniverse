@@ -111,7 +111,7 @@ The best human evidence comes from longevity GWAS and centenarian studies.
 - PRIMARY (trait-centric): `gwas_search_associations(query="telomere length")` — note "longevity"
   is NOT a standard EFO trait; try "lifespan", "telomere length", "parental longevity", or a
   specific age-related disease.
-- AGGREGATED human evidence: `OpenTargets_get_associated_targets_by_disease_efoId(efoId="EFO_0004847", limit=20)`
+- AGGREGATED human evidence: `OpenTargets_get_associated_targets_by_disease_efoId(efoId="EFO_0004847")`
   → ranked gene list with association scores for longevity. (UNDERSCORE efoId — see ID FORMAT above.)
 - ESSENTIAL supplement: `PubMed_search_articles(query="FOXO3 GWAS longevity centenarian meta-analysis", limit=20)`
   — many FOXO3 longevity studies (Willcox 2008, Flachsbart 2009) used targeted genotyping, NOT GWAS

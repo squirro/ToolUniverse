@@ -55,7 +55,7 @@ first, then depth.
    - `OpenTargets_multi_entity_search_by_query_string(queryString=<disease>)` → EFO/MONDO id
    - Accept the closest term if an exact match is absent; note the caveat.
 2. Collect genome-wide significant signals (p < 5e-8):
-   - `gwas_get_variants_for_trait(trait=<trait>, p_value_threshold=5e-8)` ← PRIMARY
+   - `gwas_get_variants_for_trait(trait=<trait>)` ← PRIMARY
    - `gwas_search_associations(query=<disease>)` ← supplement for breadth
    - `gwas_get_snps_for_gene(gene_symbol=<gene>)` ← gene-centric entry point when user
      provides a gene instead of a trait (param is `gene_symbol`, not `mapped_gene`)
@@ -68,7 +68,7 @@ first, then depth.
      `{data,metadata}`, or `{error}`); handle all three. Param is `variant_id`, not `rsid`.
 4. Query eQTL evidence in the tissue most relevant to the disease:
    - `GTEx_query_eqtl(gene_input=<gene>, tissue=<tissue>)` — `gene_input` must never be empty
-   - `GTEx_get_expression_summary(gene_input=<gene>)` — expression profile across all tissues
+   - `GTEx_get_expression_summary(gene_symbol=<gene>)` — expression profile across all tissues
    - `GTEx_get_median_gene_expression(gencode_id=[<versioned_id>], tissue_site_detail_id=[<tissue>])`
      — use versioned Ensembl IDs (e.g. `ENSG00000148737.11`) and dataset `gtex_v8`
 5. Confirm genetic evidence for prioritized genes:
@@ -82,13 +82,13 @@ first, then depth.
    - `STRING_functional_enrichment(protein_ids=[<genes>], species=9606)` — array OK here
    - `PANTHER_enrichment(gene_list="GENE1,GENE2,...", organism=9606, annotation_dataset="GO:0008150")`
      — comma-separated STRING (not array)
-   - `KEGG_get_gene_pathways(gene_id=<kegg_id>)` per gene; `kegg_search_pathway(query=<term>)` for
-     keyword; `kegg_find_genes(query=<gene>, organism="hsa")` to resolve KEGG gene IDs (include
+   - `KEGG_get_gene_pathways(gene_id=<kegg_id>)` per gene; `kegg_search_pathway(keyword=<term>)` for
+     keyword; `kegg_find_genes(keyword=<gene>, organism="hsa")` to resolve KEGG gene IDs (include
      `organism="hsa"` for human)
    - For metabolic diseases, add tissue-specific PPI context via `humanbase_ppi_analysis` — all 5
      params required: `gene_list`, `tissue`, `max_node`, `interaction`, `string_mode`
    - `Reactome_map_uniprot_to_pathways(uniprot_id=<id>)` for per-gene pathway membership;
-     `Reactome_get_participants(pathway_id=<R-HSA-XXXXX>)` to enumerate all genes in a pathway
+     `Reactome_get_participants(stId=<R-HSA-XXXXX>)` to enumerate all genes in a pathway
    - `KEGG_get_pathway_genes(pathway_id=<hsaXXXXX>)` to enumerate KEGG pathway members (parallel
      to Reactome_get_participants; use when drilling from enriched KEGG hit to full member list)
    - WikiPathways and MetaCyc are NOT available — use Reactome/KEGG/PANTHER/STRING only

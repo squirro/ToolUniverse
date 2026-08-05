@@ -31,9 +31,10 @@ def install_interception() -> None:
     """
     from tooluniverse import ToolUniverse
 
-    from . import id_cue, transport_status
+    from . import id_cue, source_url, transport_status
 
     transport_status.install(ToolUniverse)  # DSR-666: an empty result says which empty
+    source_url.install(ToolUniverse)  # DSR-667: cite the call, minus its credentials
     id_cue.install(ToolUniverse)  # DSR-662: the description names the ID namespace
 
 

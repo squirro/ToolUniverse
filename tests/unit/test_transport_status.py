@@ -291,6 +291,19 @@ def test_a_compose_tool_inherits_the_verdict_of_the_tool_it_delegates_to():
     assert result["transport_status"] == transport_status.SOURCE_UNREACHABLE
 
 
+def test_an_annotation_from_another_layer_does_not_make_a_result_look_full():
+    """DSR-667 stamps source_url. Emptiness must be judged on the payload, not on ours.
+
+    Order of installation would otherwise decide the verdict: a result reduced to
+    ``{"source_url": ...}`` has no container values, so the scalar fallback would read the
+    stamped link as data and suppress the status entirely.
+    """
+    assert transport_status.is_empty({"source_url": "https://x.org/q?a=1"})
+    assert transport_status.decide([FAILED], {"source_url": "https://x.org/q?a=1"}) == (
+        transport_status.SOURCE_UNREACHABLE
+    )
+
+
 def test_a_non_http_tool_that_errors_is_still_distinguishable_from_one_with_no_data():
     """Its own status survives; the central layer does not flatten the distinction."""
     errored = transport_status.annotate({"status": "error", "rows": []}, [])

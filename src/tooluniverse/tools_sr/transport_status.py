@@ -58,6 +58,12 @@ _NOTE = {
 # domain answer with a vaguer central one.
 _OWN_STATUS_KEYS = ("status", "transport_status")
 
+# Keys the central layers attach themselves. Emptiness is a property of the payload, so
+# these must not count towards it -- otherwise DSR-667's stamped source_url would make an
+# otherwise-empty result look like data, and the order the two were installed in would
+# silently decide whether a status appeared.
+_ANNOTATION_KEYS = frozenset({"transport_status", "transport_note", "source_url"})
+
 
 def _is_container(value: Any) -> bool:
     return isinstance(value, Mapping) or (
@@ -84,10 +90,15 @@ def is_empty(result: Any) -> bool:
     if isinstance(result, str):
         return not result.strip()
     if isinstance(result, Mapping):
-        containers = [value for value in result.values() if _is_container(value)]
+        payload = {
+            key: value
+            for key, value in result.items()
+            if key not in _ANNOTATION_KEYS
+        }
+        containers = [value for value in payload.values() if _is_container(value)]
         if containers:
             return all(is_empty(value) for value in containers)
-        return all(is_empty(value) for value in result.values())
+        return all(is_empty(value) for value in payload.values())
     if isinstance(result, Sequence):
         return len(result) == 0
     return False

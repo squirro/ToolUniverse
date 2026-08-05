@@ -37,6 +37,19 @@ def test_the_id_namespace_cue_is_installed_too():
     assert getattr(ToolUniverse.load_tools, "_sr_id_cue", False)
 
 
+def test_source_url_stamping_is_installed_too():
+    """DSR-667. Both result annotators must be present, in either order."""
+    smcp_entry.install_interception()
+
+    run = ToolUniverse.run_one_function
+    marks = []
+    while run is not None:
+        marks += [m for m in ("_sr_transport_status", "_sr_source_url") if getattr(run, m, False)]
+        run = getattr(run, "__wrapped__", None)
+
+    assert "_sr_transport_status" in marks and "_sr_source_url" in marks, marks
+
+
 def test_installing_twice_does_not_double_wrap():
     smcp_entry.install_interception()
     once = ToolUniverse.run_one_function

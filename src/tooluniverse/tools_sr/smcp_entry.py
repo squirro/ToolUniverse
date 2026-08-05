@@ -23,16 +23,18 @@ def _run_upstream_server() -> None:
 
 
 def install_interception() -> None:
-    """Switch on transport-status annotation for every tool invocation.
+    """Switch on the central repairs for every tool invocation.
 
-    Idempotent. Must happen before the server starts accepting calls, or results go out
-    unannotated for as long as the gap lasts.
+    Idempotent. Must happen before the server starts accepting calls: transport status
+    would otherwise miss results already served, and the ID-namespace cue is applied when
+    the registry loads, which happens on the first call if not before.
     """
     from tooluniverse import ToolUniverse
 
-    from . import transport_status
+    from . import id_cue, transport_status
 
-    transport_status.install(ToolUniverse)
+    transport_status.install(ToolUniverse)  # DSR-666: an empty result says which empty
+    id_cue.install(ToolUniverse)  # DSR-662: the description names the ID namespace
 
 
 def main() -> None:

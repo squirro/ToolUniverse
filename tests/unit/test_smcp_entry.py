@@ -17,15 +17,24 @@ from tooluniverse.tools_sr import smcp_entry
 
 @pytest.fixture(autouse=True)
 def unwrapped():
-    original = ToolUniverse.run_one_function
+    original_run = ToolUniverse.run_one_function
+    original_load = ToolUniverse.load_tools
     yield
-    ToolUniverse.run_one_function = original
+    ToolUniverse.run_one_function = original_run
+    ToolUniverse.load_tools = original_load
 
 
 def test_installing_wraps_the_real_tooluniverse():
     smcp_entry.install_interception()
 
     assert getattr(ToolUniverse.run_one_function, "_sr_transport_status", False)
+
+
+def test_the_id_namespace_cue_is_installed_too():
+    """DSR-662 rewrites descriptions at load, so it must be on before tools load."""
+    smcp_entry.install_interception()
+
+    assert getattr(ToolUniverse.load_tools, "_sr_id_cue", False)
 
 
 def test_installing_twice_does_not_double_wrap():

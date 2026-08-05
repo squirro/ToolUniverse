@@ -349,6 +349,112 @@ def test_find_tools_is_allowlisted_because_it_is_registered_in_code():
     assert absent == []
 
 
+# --- does the call pass arguments the tool declares? (DSR-668) ---
+# For the 241-tool REST family, query params are built from *declared* properties, so an
+# undeclared keyword is silently DROPPED rather than rejected: organism="human" vanishes
+# and the agent reports mouse+human data as human. A wrong answer, not a failed call.
+#
+# This is anchored on tools that exist, which is what makes it precise where the
+# phantom-name rule is not: prose like "tally (Supporting=1)" has no callee in the
+# registry and is discarded before any judgement is needed.
+
+PROPS = {
+    "OpenTargets_get_associated_targets_by_disease_efoId": {"efoId", "size"},
+    "PubMed_search_articles": {"query", "limit"},
+}
+
+
+def test_a_call_passing_only_declared_keywords_is_clean():
+    text = 'Call `PubMed_search_articles(query="FOXO3", limit=10)`.'
+
+    assert persona_lint.undeclared_keywords(text, PROPS) == []
+
+
+def test_an_undeclared_keyword_is_reported():
+    text = 'Call `PubMed_search_articles(query="FOXO3", organism="human")`.'
+
+    problems = persona_lint.undeclared_keywords(text, PROPS)
+
+    assert len(problems) == 1
+    assert problems[0].tool == "PubMed_search_articles"
+    assert problems[0].keyword == "organism"
+
+
+def test_the_report_names_the_declared_alternatives():
+    """Fixing a body must not require opening the registry by hand."""
+    text = 'Call `PubMed_search_articles(terms="FOXO3")`.'
+
+    message = persona_lint.undeclared_keywords(text, PROPS)[0].message
+
+    assert "terms" in message
+    assert "query" in message and "limit" in message
+
+
+def test_prose_that_looks_like_a_call_is_ignored():
+    """'tally (Supporting=1, Moderate=2)' appears verbatim in a body and is not a call."""
+    text = "Sum the tally (Supporting=1, Moderate=2, Strong=4)."
+
+    assert persona_lint.undeclared_keywords(text, PROPS) == []
+
+
+def test_a_call_to_a_tool_outside_the_registry_is_not_judged_here():
+    """That is the phantom-name rule's job; this one only checks known tools."""
+    text = 'Call `Some_unknown_tool(whatever="x")`.'
+
+    assert persona_lint.undeclared_keywords(text, PROPS) == []
+
+
+def test_a_call_site_is_reported_with_its_line_number():
+    text = "intro\n\nCall `PubMed_search_articles(bogus=1)` here.\n"
+
+    assert persona_lint.undeclared_keywords(text, PROPS)[0].line == 3
+
+
+def test_a_shortened_call_name_resolves_to_the_registry_tool():
+    """Bodies name tools in shortened form; the arguments still belong to the long one."""
+    long_name = "OpenTargets_get_associated_targets_by_disease_efoId"
+    short = persona_lint.shorten(long_name)
+    text = f'Call `{short}(efoId="EFO_0004847", nope=1)`.'
+
+    problems = persona_lint.undeclared_keywords(text, PROPS)
+
+    assert [p.keyword for p in problems] == ["nope"], problems
+
+
+def test_a_positional_argument_is_not_read_as_a_keyword():
+    text = 'Call `PubMed_search_articles(query="x", 10)`.'
+
+    assert persona_lint.undeclared_keywords(text, PROPS) == []
+
+
+def test_a_comparison_inside_an_argument_is_not_read_as_a_keyword():
+    """`limit=10` is a keyword; `score >= 0.5` inside a value is not."""
+    text = 'Call `PubMed_search_articles(query="score >= 0.5", limit=5)`.'
+
+    assert persona_lint.undeclared_keywords(text, PROPS) == []
+
+
+def test_registry_properties_are_read_from_the_data_files(tmp_path):
+    (tmp_path / "a.json").write_text(
+        '[{"name": "T_get", "parameter": {"properties": {"a": {}, "b": {}}}}]'
+    )
+
+    props = persona_lint.registry_properties(tmp_path)
+
+    assert props["T_get"] == {"a", "b"}
+
+
+def test_a_shortened_name_is_an_alias_for_the_same_properties(tmp_path):
+    long_name = "OpenTargets_get_associated_targets_by_disease_efoId"
+    (tmp_path / "a.json").write_text(
+        '[{"name": "%s", "parameter": {"properties": {"efoId": {}}}}]' % long_name
+    )
+
+    props = persona_lint.registry_properties(tmp_path)
+
+    assert props[persona_lint.shorten(long_name)] == {"efoId"}
+
+
 def test_a_shortened_name_resolves_against_a_long_registry_name():
     """The exemplar body names the shortened form; flagging it would be wrong."""
     long_name = "OpenTargets_get_associated_targets_by_disease_efoId"

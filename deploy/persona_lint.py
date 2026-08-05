@@ -297,6 +297,119 @@ def absent_tools(
     )
 
 
+# --- does the call pass arguments the tool declares? (DSR-668) ---
+# For the 241-tool REST family, query parameters are built from the *declared* properties,
+# so an undeclared keyword is silently DROPPED rather than rejected. organism="human"
+# vanishes and the agent reports mouse+human data as human -- a wrong answer, not a failed
+# call, which is why this is worth an error rather than a warning.
+#
+# Precision comes from anchoring on tools that exist. A body contains prose like
+# "tally (Supporting=1, Moderate=2)" that is shaped exactly like a call; because "tally"
+# resolves to no registry tool, it is discarded before any judgement is required. That is
+# the difference between this rule and the phantom-name rule.
+
+# A call: an identifier followed by a parenthesised argument list. One level of nesting is
+# allowed because argument values contain parentheses -- filter="(a OR b)", size=len(x) --
+# and a flat pattern stops at the inner ")" and silently drops the rest of the call.
+_CALL_SITE = re.compile(
+    r"\b([A-Za-z][A-Za-z0-9_]{2,})\s*\(((?:[^()]|\([^()]*\)){0,600}?)\)(?!\s*\()"
+)
+# A keyword: `name=` not preceded by a comparison operator, and outside any quoted value.
+_KEYWORD = re.compile(r"(?<![=!<>])\b([A-Za-z_][A-Za-z0-9_]*)\s*=(?!=)")
+_QUOTED = re.compile(r"'[^']*'|\"[^\"]*\"")
+
+
+class BadKeyword:
+    """One call site passing an argument its tool does not declare."""
+
+    def __init__(self, tool: str, keyword: str, line: int, declared: set[str]):
+        self.tool = tool
+        self.keyword = keyword
+        self.line = line
+        self.declared = declared
+
+    @property
+    def message(self) -> str:
+        alternatives = ", ".join(sorted(self.declared)) or "(none declared)"
+        return (
+            f"line {self.line}: {self.tool}({self.keyword}=...) is not a declared "
+            f"parameter; declared: {alternatives}"
+        )
+
+    def __repr__(self) -> str:
+        return f"<BadKeyword {self.tool}.{self.keyword} line {self.line}>"
+
+
+def registry_properties(data_dir: str | Path) -> dict[str, set[str]]:
+    """Tool name -> declared parameter names, keyed by original *and* shortened name.
+
+    Both keys, because a body may legitimately call either form and the arguments belong
+    to the same tool regardless.
+    """
+    properties: dict[str, set[str]] = {}
+    for path in Path(data_dir).rglob("*.json"):
+        try:
+            defs = json.loads(path.read_text())
+        except Exception:
+            continue
+        if not isinstance(defs, list):
+            continue
+        for tool in defs:
+            if not isinstance(tool, dict) or not tool.get("name"):
+                continue
+            declared = (tool.get("parameter") or {}).get("properties") or {}
+            if not isinstance(declared, dict):
+                continue
+            names = {str(key) for key in declared}
+            properties[tool["name"]] = names
+            properties.setdefault(shorten(tool["name"]), names)
+    return properties
+
+
+def _keywords_in(arguments: str) -> list[str]:
+    """Keyword names in an argument list, ignoring anything inside quotes.
+
+    Quoted values are blanked first so a query string like "score >= 0.5" cannot
+    contribute a keyword.
+    """
+    unquoted = _QUOTED.sub(lambda m: " " * len(m.group()), arguments)
+    return _KEYWORD.findall(unquoted)
+
+
+def _with_shortened_aliases(properties: dict[str, set[str]]) -> dict[str, set[str]]:
+    """Ensure every tool is reachable by its shortened name too.
+
+    Resolved here rather than trusting the caller, for the same reason ``absent_tools``
+    expands its own name set: bodies name tools in shortened form, so a caller who forgets
+    would silently stop checking most of the corpus rather than fail loudly. Idempotent.
+    """
+    resolved = dict(properties)
+    for name, declared in properties.items():
+        resolved.setdefault(shorten(name), declared)
+    return resolved
+
+
+def undeclared_keywords(
+    text: str, properties: dict[str, set[str]]
+) -> list[BadKeyword]:
+    """Call sites passing arguments their tool does not declare, in document order."""
+    body = body_text(text)
+    properties = _with_shortened_aliases(properties)
+    problems: list[BadKeyword] = []
+
+    for match in _CALL_SITE.finditer(body):
+        tool = match.group(1)
+        declared = properties.get(tool)
+        if declared is None:
+            continue  # not a known tool: prose, or a phantom for the other rule
+        line = body.count("\n", 0, match.start()) + 1
+        for keyword in _keywords_in(match.group(2)):
+            if keyword not in declared:
+                problems.append(BadKeyword(tool, keyword, line, declared))
+
+    return problems
+
+
 def check_body(text: str, deploy_dir: str | Path) -> tuple[list[str], list[str]]:
     """Return ``(errors, warnings)`` for one persona body.
 

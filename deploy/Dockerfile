@@ -323,7 +323,12 @@ USER 10001
 #
 # --exclude-tools takes nargs='+', and being the last flag it consumes
 # every trailing name.
-CMD ["tooluniverse-smcp", \
+# Entered via tools_sr.smcp_entry rather than the tooluniverse-smcp console script, so
+# transport-status interception (DSR-666) is installed before the server accepts a call.
+# It delegates straight to run_smcp_server, which parses sys.argv itself -- every flag
+# below still reaches the same place. Editing smcp_server.py instead would put a permanent
+# edit on a file that re-syncs from upstream.
+CMD ["python", "-m", "tooluniverse.tools_sr.smcp_entry", \
      "--transport", "http", \
      "--host", "0.0.0.0", \
      "--port", "8000", \

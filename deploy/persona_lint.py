@@ -13,8 +13,23 @@ leading ``<!-- ... -->`` HTML comment before measuring.
 
 from __future__ import annotations
 
+import json
 import re
+import sys
 from pathlib import Path
+
+# The server resolves names with shortening on (smcp.py passes
+# enable_name_shortening=True; ToolUniverse.MAX_TOOL_NAME_LENGTH is 45), so a body may
+# legitimately name either the registry's original or its shortened form. Validating
+# against only one of the two is wrong in both directions -- every shortened reference
+# would read as absent, or every long one would.
+MAX_TOOL_NAME_LENGTH = 45
+
+_SRC = Path(__file__).resolve().parents[1] / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+
+from tooluniverse.tool_name_utils import shorten_tool_name  # noqa: E402
 
 # Production Studio persona cap on swiss-rockets.squirro.com.
 PROD_CHAR_CAP = 10_000
@@ -153,6 +168,133 @@ def live_unserved_tools(text: str, excluded: set[str]) -> list[str]:
                 if re.search(rf"\b{re.escape(name)}\b", line)
             )
     return sorted(live)
+
+
+# --- does the referenced name exist at all? (DSR-661) ---
+
+# A backticked token. Bodies quote tool names, ontology ids and field names alike, so the
+# shape alone decides nothing -- see _is_tool_shaped.
+_BACKTICKED = re.compile(r"`([A-Za-z][A-Za-z0-9_]*)`")
+# `MONDO_0008315`, `EFO_0001663`: a prefix followed by digits is an identifier, never a tool.
+_ONTOLOGY_ID = re.compile(r"^[A-Za-z]+_\d+$")
+
+
+# Real, served, and absent from data/**/*.json, so the registry check must be told about
+# them explicitly. `find_tools` is registered programmatically in smcp.py rather than
+# declared in compact_mode_tools.json (which lists only list_tools, grep_tools,
+# get_tool_info and execute_tool), which is why the startup banner's tool count undercounts
+# and why a naive registry lookup calls it a phantom.
+PLATFORM_TOOLS = frozenset({"find_tools"})
+
+
+def shorten(name: str) -> str:
+    """The name the server would serve this tool under."""
+    return shorten_tool_name(name, max_length=MAX_TOOL_NAME_LENGTH)
+
+
+def registry_tool_names(data_dir: str | Path) -> set[str]:
+    """Every tool name declared in the registry's JSON, read without loading ToolUniverse.
+
+    A full load takes minutes and pulls in every dependency; the linter only needs the
+    names, and they are all sitting in ``data/**/*.json``. Unparseable files are skipped
+    rather than fatal -- a malformed file is a different guard's problem
+    (``test_no_duplicate_json_keys``), and this one must not fail for it.
+    """
+    names: set[str] = set()
+    for path in Path(data_dir).rglob("*.json"):
+        try:
+            defs = json.loads(path.read_text())
+        except Exception:
+            continue
+        if isinstance(defs, list):
+            names.update(
+                tool["name"]
+                for tool in defs
+                if isinstance(tool, dict) and tool.get("name")
+            )
+    return names
+
+
+def registry_parameter_names(data_dir: str | Path) -> set[str]:
+    """Every parameter name any tool declares.
+
+    This is what makes the absent-tool check usable. Tool names and field names are
+    shape-identical here -- ``BiGG_search`` is a tool, ``chembl_id`` is a field, and 117
+    real tools have only two segments -- so no pattern can tell them apart. Asking the
+    registry which tokens are parameters replaces that guess with a lookup.
+    """
+    names: set[str] = set()
+    for path in Path(data_dir).rglob("*.json"):
+        try:
+            defs = json.loads(path.read_text())
+        except Exception:
+            continue
+        if not isinstance(defs, list):
+            continue
+        for tool in defs:
+            if not isinstance(tool, dict):
+                continue
+            params = (tool.get("parameter") or {}).get("properties") or {}
+            if isinstance(params, dict):
+                names.update(str(key) for key in params)
+    return names
+
+
+def servable_names(registry_names: set[str]) -> set[str]:
+    """Names the server answers to: each registry name plus its shortened form.
+
+    Idempotent -- shortening an already-short name returns it unchanged -- so it is safe
+    to apply to a set that has already been expanded.
+    """
+    servable = set(registry_names)
+    servable.update(shorten(name) for name in registry_names)
+    return servable
+
+
+def _is_tool_shaped(token: str) -> bool:
+    if _ONTOLOGY_ID.match(token):
+        return False
+    # Underscore-free CamelCase agentic tools (CallAgent) are real, but so is most prose
+    # in backticks, so requiring an underscore keeps this check conservative. It
+    # under-reports rather than crying wolf, which is what keeps a linter switched on.
+    return "_" in token
+
+
+def referenced_tool_names(text: str, exclude: set[str] | None = None) -> list[str]:
+    """Backticked tokens in the body that could be a call to a tool, in order."""
+    exclude = exclude or set()
+    seen: list[str] = []
+    for token in _BACKTICKED.findall(body_text(text)):
+        if _is_tool_shaped(token) and token not in exclude and token not in seen:
+            seen.append(token)
+    return seen
+
+
+def absent_tools(
+    text: str,
+    servable: set[str],
+    allowlist: set[str] | None = None,
+    field_names: set[str] | None = None,
+) -> list[str]:
+    """Referenced names that resolve to no served tool, in sorted order.
+
+    Distinct from ``live_unserved_tools``, which reports names that exist but are excluded
+    from the image. A name reported here exists nowhere, so the agent gets "Tool 'X' not
+    found even after loading tools" -- which reads as a registry bug rather than a mistake
+    in the body, and burns an iteration.
+
+    ``servable`` is expanded through the resolver here rather than by the caller. Passing
+    raw registry names would otherwise flag every shortened reference in the corpus, and
+    the exemplar body names its tools in shortened form -- so leaving that step to the
+    caller makes the common mistake the silent one. Expansion is idempotent.
+    """
+    allowed = (allowlist or set()) | (field_names or set())
+    resolved = servable_names(servable)
+    return sorted(
+        name
+        for name in referenced_tool_names(text, exclude=allowed)
+        if name not in resolved
+    )
 
 
 def check_body(text: str, deploy_dir: str | Path) -> tuple[list[str], list[str]]:

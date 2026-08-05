@@ -260,3 +260,99 @@ def test_a_body_that_forbids_the_dead_tool_passes(tmp_path):
     errors, warnings = persona_lint.check_body(text, deploy)
 
     assert not any("CTD_get_gene_diseases" in m for m in errors + warnings)
+
+
+# --- does the name exist at all? (DSR-661) ---
+# The linter only ever asked "is this name excluded?", never "does this name exist?" -- it
+# performs no registry load. A name that exists nowhere answers "Tool 'X' not found even
+# after loading tools", which reads to the agent as a registry bug and burns an iteration.
+#
+# Validation must go through the same resolver the server uses. SMCP runs with name
+# shortening on (smcp.py sets enable_name_shortening=True, MAX_TOOL_NAME_LENGTH=45), so a
+# body may legitimately name either the registry's original or the shortened form. Checking
+# only originals would flag every shortened name; only shortened would flag every original.
+
+
+def test_registry_names_are_read_from_the_data_files(tmp_path):
+    (tmp_path / "a.json").write_text(
+        '[{"name": "ChEMBL_search_targets"}, {"name": "UniProt_get_entry"}]'
+    )
+
+    names = persona_lint.registry_tool_names(tmp_path)
+
+    assert names == {"ChEMBL_search_targets", "UniProt_get_entry"}
+
+
+def test_a_file_that_is_not_valid_json_does_not_break_the_load(tmp_path):
+    (tmp_path / "good.json").write_text('[{"name": "ChEMBL_search_targets"}]')
+    (tmp_path / "broken.json").write_text("{ not json")
+
+    assert persona_lint.registry_tool_names(tmp_path) == {"ChEMBL_search_targets"}
+
+
+def test_servable_names_include_both_the_original_and_its_shortened_form():
+    """A body may name either; the server resolves both to the same tool."""
+    long_name = "OpenTargets_get_associated_targets_by_disease_efoId"
+
+    servable = persona_lint.servable_names({long_name})
+
+    assert long_name in servable
+    assert any(len(n) <= 45 for n in servable), servable
+
+
+def test_a_referenced_name_absent_from_the_registry_is_reported():
+    text = "Call `ChEMBL_search_targets`, then `OpenTargets_get_invented_thing`."
+
+    absent = persona_lint.absent_tools(text, {"ChEMBL_search_targets"})
+
+    assert absent == ["OpenTargets_get_invented_thing"]
+
+
+def test_an_identifier_in_backticks_is_not_read_as_a_tool_name():
+    """Bodies quote ontology ids constantly; a digits-after-prefix shape is never a tool."""
+    text = "Map to `MONDO_0008315`, or `EFO_0001663` if MONDO has no term."
+
+    assert persona_lint.absent_tools(text, set()) == []
+
+
+def test_a_plain_field_name_is_not_read_as_a_tool_name():
+    text = "Report the `score` and the `id` from each row, sorted by `Grade`."
+
+    assert persona_lint.absent_tools(text, set()) == []
+
+
+def test_an_allowlisted_platform_tool_is_not_reported():
+    """Squirro-side tools are real but will never appear in the ToolUniverse registry."""
+    text = "Hand the table to `Code_Interpreter` for the arithmetic."
+
+    absent = persona_lint.absent_tools(
+        text, set(), allowlist={"Code_Interpreter"}
+    )
+
+    assert absent == []
+
+
+def test_find_tools_is_allowlisted_because_it_is_registered_in_code():
+    """Real and served, but declared nowhere in data/**/*.json.
+
+    compact_mode_tools.json lists only list_tools, grep_tools, get_tool_info and
+    execute_tool; smcp.py registers find_tools programmatically. Without the allowlist the
+    registry check calls a working meta-tool a phantom -- which is how a linter earns its
+    reputation for crying wolf.
+    """
+    text = "Scout with `find_tools` before assuming no tool exists."
+
+    absent = persona_lint.absent_tools(
+        text, set(), allowlist=set(persona_lint.PLATFORM_TOOLS)
+    )
+
+    assert absent == []
+
+
+def test_a_shortened_name_resolves_against_a_long_registry_name():
+    """The exemplar body names the shortened form; flagging it would be wrong."""
+    long_name = "OpenTargets_get_associated_targets_by_disease_efoId"
+    shortened = persona_lint.shorten(long_name)
+    text = f"Call `{shortened}` for the associations."
+
+    assert persona_lint.absent_tools(text, {long_name}) == []

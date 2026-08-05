@@ -9,7 +9,8 @@ Score 0-1 where lower = more competition (worse for new entrants).
 Modality whitespace score indicates opportunity in specific drug classes.
 """
 from __future__ import annotations
-import json, logging
+import json
+import logging
 
 log = logging.getLogger(__name__)
 
@@ -246,7 +247,8 @@ def assess_competition(gene_symbol, drugs):
 def exec_competition_landscape(arguments, input_table, output_table, db_path):
     """Analyze competitive landscape for target genes. Reads gene symbols from
     input table, fetches OpenTargets knownDrugs, scores competition."""
-    import sqlite3, time
+    import sqlite3
+    import time
     from concurrent.futures import ThreadPoolExecutor as _TPE, as_completed
 
     genes = []

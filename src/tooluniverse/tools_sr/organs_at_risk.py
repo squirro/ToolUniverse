@@ -8,7 +8,9 @@ Uses EBI Expression Atlas baseline experiment E-MTAB-2836 (HPA RNA-seq,
 Score 0-1 where lower = fewer organs at risk (better safety profile).
 """
 from __future__ import annotations
-import json, logging, re
+import json
+import logging
+import re
 
 log = logging.getLogger(__name__)
 
@@ -122,7 +124,7 @@ def gxa_fetch_baseline(accession=_DEFAULT_EXPERIMENT, timeout=120):
 
     lines = data.strip().split("\n")
     # Skip comment lines (start with #)
-    data_lines = [l for l in lines if not l.startswith("#")]
+    data_lines = [line for line in lines if not line.startswith("#")]
     if len(data_lines) < 2:
         log.warning("gxa_fetch_baseline: no data rows in %s", accession)
         return [], {}

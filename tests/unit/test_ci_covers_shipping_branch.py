@@ -54,3 +54,32 @@ def test_pull_requests_into_the_shipping_branch_run_the_tests():
         f"the main -> {SHIPPING_BRANCH} PR does not trigger the test suite; "
         f"declared branches are {branches}"
     )
+
+
+# --- the gate must also be reproducible ---
+# The lint step runs before pytest, so if it fails nothing else in the job executes and
+# every guard here is skipped. It installed `version: "latest"`, which means an upstream
+# ruff release could switch the gate off without a single commit to this repo: 0.15.18
+# reports the tree clean, while 0.16.1 -- with its expanded default rule set -- reports
+# 22,270 errors. A gate whose verdict depends on the day it ran is not a gate.
+
+
+def _lint_step() -> dict:
+    jobs = yaml.safe_load(WORKFLOW.read_text())["jobs"]
+    for job in jobs.values():
+        for step in job.get("steps", []):
+            if str(step.get("uses", "")).startswith("astral-sh/ruff-action"):
+                return step
+    raise AssertionError("no astral-sh/ruff-action step found in the test workflow")
+
+
+def test_the_lint_step_pins_an_exact_ruff_version():
+    version = str(_lint_step().get("with", {}).get("version", ""))
+
+    assert version and version != "latest", (
+        "the lint step must pin an exact ruff version: a floating 'latest' lets an "
+        f"upstream release fail the job and skip every guard (got {version!r})"
+    )
+    assert all(part.isdigit() for part in version.split(".")), (
+        f"expected an exact version like '0.15.18', got {version!r}"
+    )

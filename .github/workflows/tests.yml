@@ -2,9 +2,9 @@ name: Test Suite
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, swiss-rockets ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, swiss-rockets ]
 
 jobs:
   test:

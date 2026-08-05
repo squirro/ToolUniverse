@@ -60,16 +60,28 @@ def redact(url: str) -> str:
     return urlunparse(parsed._replace(query=urlencode(cleaned)))
 
 
+# Methods whose URL identifies the query. A GET puts its parameters in the URL; a POST
+# puts them in the body, so every call to a GraphQL endpoint shares one URL and citing it
+# says nothing about the question asked.
+_CITABLE_METHODS = frozenset({"GET", "HEAD"})
+
+
 def pick(records) -> str | None:
-    """The URL to cite: the **last** call that actually reached its source.
+    """The URL to cite: the **last** call that reached its source with a citable method.
 
     Last, not first, because tools routinely resolve an identifier before querying with it
     (symbol -> Ensembl ID -> associations). Citing the first hands the researcher the
     lookup rather than the query their answer came from. Failed calls are never cited --
     there is nothing at the other end to open.
+
+    POSTs are skipped even when they succeed. All 63 OpenTargets tools POST to a single
+    GraphQL endpoint, so a stamped URL would be identical for every question and would
+    render as a footnote that looks checked and lands nowhere useful -- which DSR-631
+    rates as worse than no citation at all. Those families need a declarative
+    ``source_url`` template instead (DSR-671).
     """
     for record in reversed(list(records)):
-        if record.reached:
+        if record.reached and getattr(record, "method", "GET").upper() in _CITABLE_METHODS:
             return record.url
     return None
 

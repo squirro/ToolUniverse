@@ -19,13 +19,47 @@ import pytest
 from tooluniverse.tools_sr import http_record, source_url
 
 
-def _record(url, reached=True, status=200):
+def _record(url, reached=True, status=200, method="GET"):
     return http_record.CallRecord(
         url=url,
         status_code=status if reached else None,
         reached=reached,
         error=None if reached else "ConnectionError('refused')",
+        method=method,
     )
+
+
+# --- a citation must identify the query (DSR-631) ---
+# All 63 OpenTargets tools POST to one GraphQL endpoint, so the captured URL is identical
+# for every question asked. Stamping it would produce a footnote that looks checked and
+# lands somewhere useless -- which DSR-631 calls worse than no citation at all.
+
+
+def test_a_post_is_not_cited_because_its_url_does_not_identify_the_query():
+    records = [_record("https://api.platform.opentargets.org/api/v4/graphql", method="POST")]
+
+    assert source_url.pick(records) is None
+
+
+def test_a_get_beside_a_post_is_still_cited():
+    """A tool that resolves over REST then queries GraphQL can still cite the REST call."""
+    records = [
+        _record("https://rest.ensembl.org/lookup/symbol/human/SSTR2?content-type=json"),
+        _record("https://api.platform.opentargets.org/api/v4/graphql", method="POST"),
+    ]
+
+    assert source_url.pick(records).startswith("https://rest.ensembl.org/")
+
+
+def test_a_graphql_only_tool_returns_a_well_formed_result_with_no_source_url():
+    result = {"associations": [{"id": 1}]}
+
+    stamped = source_url.stamp(
+        result, [_record("https://api.platform.opentargets.org/api/v4/graphql", method="POST")]
+    )
+
+    assert stamped == result
+    assert "source_url" not in stamped
 
 
 # --- redaction ---

@@ -58,6 +58,11 @@ class CallRecord:
     status_code: int | None
     reached: bool
     error: str | None
+    # Needed to judge whether the URL identifies the query. A GET carries its parameters
+    # in the URL; a POST carries them in the body, so every call shares one URL -- which is
+    # why all 63 OpenTargets GraphQL tools would otherwise cite the same endpoint
+    # (DSR-631). Defaulted so existing records keep working.
+    method: str = "GET"
 
 
 _local = threading.local()
@@ -113,7 +118,11 @@ def _patched_send(self, request, **kwargs):
         # case the swallowing handlers erase.
         _append(
             CallRecord(
-                url=request.url, status_code=None, reached=False, error=repr(exc)
+                url=request.url,
+                status_code=None,
+                reached=False,
+                error=repr(exc),
+                method=(request.method or "GET").upper(),
             )
         )
         raise
@@ -124,6 +133,7 @@ def _patched_send(self, request, **kwargs):
             status_code=response.status_code,
             reached=True,
             error=None,
+            method=(request.method or "GET").upper(),
         )
     )
     return response

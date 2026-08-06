@@ -90,6 +90,19 @@ def _installed_pythons() -> set[str]:
     return set(re.findall(r"\bpython3\.\d+\b", text)) | {"python3"}
 
 
+COMPOSE = Path(__file__).resolve().parents[2] / "deploy" / "docker-compose.yml"
+
+
+def _healthcheck_interpreter() -> str | None:
+    """The binary the compose healthcheck execs, for a ``CMD``-form test."""
+    services = (yaml.safe_load(COMPOSE.read_text()) or {}).get("services") or {}
+    for service in services.values():
+        test = (service.get("healthcheck") or {}).get("test")
+        if isinstance(test, list) and test and test[0] == "CMD" and len(test) > 1:
+            return test[1]
+    return None
+
+
 def test_the_entrypoint_interpreter_is_one_the_image_installs():
     interpreter = _cmd_interpreter()
     if not interpreter.startswith("python"):
@@ -99,6 +112,25 @@ def test_the_entrypoint_interpreter_is_one_the_image_installs():
         f"CMD runs {interpreter!r}, which this image does not provide. AL2023 installs "
         f"{sorted(_installed_pythons())} and has no unversioned 'python', so the container "
         f"would fail at start with 'exec: {interpreter}: not found'."
+    )
+
+
+def test_the_healthcheck_interpreter_is_one_the_image_installs():
+    """Same rule, and it bites more quietly.
+
+    A CMD that cannot exec kills the container, which is loud. A healthcheck that cannot
+    exec leaves the server running and serving while it reports unhealthy for ever --
+    observed on sempart, where the process answered requests for eight hours with
+    ``exec: "python": executable file not found in $PATH`` on every probe.
+    """
+    interpreter = _healthcheck_interpreter()
+    if interpreter is None or not interpreter.startswith("python"):
+        return
+
+    assert interpreter in _installed_pythons(), (
+        f"the healthcheck runs {interpreter!r}, which this image does not provide. The "
+        f"container will serve normally and still report unhealthy for ever. Installed: "
+        f"{sorted(_installed_pythons())}."
     )
 
 

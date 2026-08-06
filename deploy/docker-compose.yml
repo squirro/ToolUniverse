@@ -23,7 +23,7 @@ services:
       # TCP port check via stdlib — robust against MCP protocol changes.
       test:
         - CMD
-        - python
+        - python3.11
         - -c
         - "import socket,sys; s=socket.socket(); s.settimeout(2); s.connect(('localhost',8000)); sys.exit(0)"
       interval: 30s

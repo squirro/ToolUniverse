@@ -102,14 +102,87 @@ def test_the_annotation_says_unreachable_is_not_evidence_of_absence():
     assert "not evidence" in note, annotated["transport_note"]
 
 
-def test_a_tool_with_its_own_status_vocabulary_keeps_it():
-    """tools_sr/differential.py's four-member enum is the reference for domain status."""
+# --- the real REST envelope, captured live from sempart ---
+# Every BaseREST-family tool answers {status, data, metadata, source_url}. Two things about
+# that shape defeated the first cut of this module, and between them they made DSR-666
+# inert on precisely the family where DSR-629 lives:
+#
+#   1. `status` is the envelope's own success flag, not a domain vocabulary. Skipping
+#      annotation whenever a `status` key exists suppressed every one of these tools --
+#      and it was never needed, because the annotation writes a DIFFERENT key and
+#      overwrites nothing.
+#   2. `metadata` holds non-empty strings beside an empty `data`, so an emptiness rule that
+#      looks at every container reads the envelope as carrying data when it carries none.
+
+CT_EMPTY = {
+    "status": "success",
+    "data": {"studies": [], "total_count": 0, "next_page_token": None},
+    "metadata": {"source": "ClinicalTrials.gov API v2", "operation": "search"},
+    "source_url": "https://clinicaltrials.gov/api/v2/studies?format=json",
+}
+PMC_EMPTY = {
+    "status": "success",
+    "data": [],
+    "metadata": {"count": 0, "query": "zzz", "source": "Europe PMC"},
+    "source_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=zzz",
+}
+UNIPROT_FULL = {
+    "status": "success",
+    "data": {"primaryAccession": "P30874", "gene_names": ["SSTR2"]},
+    "metadata": {"source": "UniProt"},
+    "source_url": "https://rest.uniprot.org/uniprotkb/P30874.json",
+}
+
+
+@pytest.mark.parametrize("envelope", [CT_EMPTY, PMC_EMPTY], ids=["clintrials", "europepmc"])
+def test_a_rest_envelope_carrying_no_records_is_empty(envelope):
+    assert transport_status.is_empty(envelope)
+
+
+def test_a_rest_envelope_carrying_records_is_not_empty():
+    assert not transport_status.is_empty(UNIPROT_FULL)
+
+
+@pytest.mark.parametrize("envelope", [CT_EMPTY, PMC_EMPTY], ids=["clintrials", "europepmc"])
+def test_a_rest_envelope_still_gets_a_transport_status(envelope):
+    """The envelope's own success flag must not suppress the transport verdict."""
+    annotated = transport_status.annotate(envelope, [REACHED])
+
+    assert annotated["transport_status"] == transport_status.NO_DATA
+    assert annotated["status"] == "success", "the envelope's own status must survive"
+
+
+def test_a_rest_envelope_after_a_dead_source_says_unreachable():
+    annotated = transport_status.annotate(CT_EMPTY, [FAILED])
+
+    assert annotated["transport_status"] == transport_status.SOURCE_UNREACHABLE
+
+
+def test_a_tool_with_its_own_status_vocabulary_keeps_it_untouched():
+    """tools_sr/differential.py's four-member enum is the reference for domain status.
+
+    "Keeps it rather than being overwritten" means exactly that: the domain answer is left
+    alone. It does NOT mean suppressing the transport verdict, which goes to its own key
+    and contradicts nothing. The first cut suppressed ours whenever any `status` existed,
+    and measuring live showed what that cost -- every BaseREST tool answers
+    {status: "success", ...}, so the annotation never appeared on the family where the
+    defect actually lives.
+
+    The two together read coherently: the source answered, and the domain reason the answer
+    is empty is gene_not_measured.
+    """
     result = {"status": "gene_not_measured", "rows": []}
 
     annotated = transport_status.annotate(result, [REACHED])
 
     assert annotated["status"] == "gene_not_measured"
-    assert "transport_status" not in annotated
+    assert annotated["transport_status"] == transport_status.NO_DATA
+
+
+def test_an_existing_transport_verdict_is_not_written_twice():
+    already = {"rows": [], "transport_status": "source_unreachable"}
+
+    assert transport_status.annotate(already, [REACHED]) == already
 
 
 def test_a_non_http_tool_is_never_stamped_unreachable():

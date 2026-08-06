@@ -54,15 +54,22 @@ _NOTE = {
     ),
 }
 
-# A result may already speak for itself. Overwriting any of these would replace a specific
-# domain answer with a vaguer central one.
-_OWN_STATUS_KEYS = ("status", "transport_status")
+# Only a verdict we already wrote stops us writing another. `status` deliberately does NOT
+# appear here: the BaseREST family answers {status, data, metadata, source_url} where
+# `status` is the envelope's own success flag, and treating it as a domain vocabulary
+# suppressed the annotation on the entire family -- measured live on sempart, which is
+# exactly where DSR-629 lives. Nothing is overwritten either way, because the verdict goes
+# to its own key and a tool's `status` is never touched.
+_OWN_STATUS_KEYS = ("transport_status",)
 
-# Keys the central layers attach themselves. Emptiness is a property of the payload, so
-# these must not count towards it -- otherwise DSR-667's stamped source_url would make an
-# otherwise-empty result look like data, and the order the two were installed in would
-# silently decide whether a status appeared.
-_ANNOTATION_KEYS = frozenset({"transport_status", "transport_note", "source_url"})
+# Envelope scaffolding: present on a result whether or not it carries records, so it must
+# not count towards emptiness. `metadata` is the load-bearing one -- it holds non-empty
+# strings ("source": "Europe PMC") beside an empty `data`, so counting it reads a result
+# with no records as though it had some. `source_url` and the transport keys are our own,
+# and would otherwise let install order decide whether a verdict appeared.
+_ENVELOPE_KEYS = frozenset(
+    {"transport_status", "transport_note", "source_url", "url", "metadata", "status"}
+)
 
 
 def _is_container(value: Any) -> bool:
@@ -93,7 +100,7 @@ def is_empty(result: Any) -> bool:
         payload = {
             key: value
             for key, value in result.items()
-            if key not in _ANNOTATION_KEYS
+            if key not in _ENVELOPE_KEYS
         }
         containers = [value for value in payload.values() if _is_container(value)]
         if containers:

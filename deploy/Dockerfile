@@ -328,7 +328,7 @@ USER 10001
 # It delegates straight to run_smcp_server, which parses sys.argv itself -- every flag
 # below still reaches the same place. Editing smcp_server.py instead would put a permanent
 # edit on a file that re-syncs from upstream.
-CMD ["python", "-m", "tooluniverse.tools_sr.smcp_entry", \
+CMD ["python3.11", "-m", "tooluniverse.tools_sr.smcp_entry", \
      "--transport", "http", \
      "--host", "0.0.0.0", \
      "--port", "8000", \

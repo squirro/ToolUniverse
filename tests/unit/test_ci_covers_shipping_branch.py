@@ -11,6 +11,7 @@ silently switch the gate off again — silently, because a workflow that does no
 reports no failure. Asserting the trigger here turns that into a red test.
 """
 
+import re
 from pathlib import Path
 
 import pytest
@@ -62,6 +63,43 @@ def test_pull_requests_into_the_shipping_branch_run_the_tests():
 # ruff release could switch the gate off without a single commit to this repo: 0.15.18
 # reports the tree clean, while 0.16.1 -- with its expanded default rule set -- reports
 # 22,270 errors. A gate whose verdict depends on the day it ran is not a gate.
+
+
+# --- the image must be able to exec its own entrypoint ---
+# The CMD interpreter has to be a binary the image actually installs. AL2023 (ADR-0011)
+# installs python3.11 through dnf, which provides /usr/bin/python3.11 and /usr/bin/python3
+# but NO unversioned `python`. A CMD of ["python", ...] therefore dies at container start
+# with "exec: python: not found" -- and it passes every local check, because developer
+# machines do have a bare `python`. Only a real container run catches it, which is exactly
+# why it belongs in a static guard instead.
+
+DOCKERFILE = Path(__file__).resolve().parents[2] / "deploy" / "Dockerfile"
+
+
+def _cmd_interpreter() -> str:
+    """The first element of the Dockerfile's exec-form CMD."""
+    text = DOCKERFILE.read_text()
+    match = re.search(r'^CMD\s*\[\s*"([^"]+)"', text, re.MULTILINE)
+    assert match, "no exec-form CMD found in the Dockerfile"
+    return match.group(1)
+
+
+def _installed_pythons() -> set[str]:
+    """Python interpreters the Dockerfile installs or invokes by name."""
+    text = DOCKERFILE.read_text()
+    return set(re.findall(r"\bpython3\.\d+\b", text)) | {"python3"}
+
+
+def test_the_entrypoint_interpreter_is_one_the_image_installs():
+    interpreter = _cmd_interpreter()
+    if not interpreter.startswith("python"):
+        return  # a console script, resolved from PATH by pip -- not this rule's business
+
+    assert interpreter in _installed_pythons(), (
+        f"CMD runs {interpreter!r}, which this image does not provide. AL2023 installs "
+        f"{sorted(_installed_pythons())} and has no unversioned 'python', so the container "
+        f"would fail at start with 'exec: {interpreter}: not found'."
+    )
 
 
 def _lint_step() -> dict:

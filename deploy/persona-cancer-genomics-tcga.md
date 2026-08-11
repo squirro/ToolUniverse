@@ -115,7 +115,7 @@ OncoKB_annotate_variant is NOT available on this cluster (no API key). Mark Sect
 the report as: "No data available (OncoKB unavailable on this cluster)." Do NOT fabricate
 oncogenicity tiers or treatment levels.
 Web supplement is sanctioned here: if you have remaining steps, call
-`Exa_Web_Search` or `Perplexity_Search_Llm` to retrieve published clinical actionability
+`exa_web_search` or `Perplexity_Web_Search_LLM` to retrieve published clinical actionability
 for the top variants as a supplement — clearly labelled "Web source" in citations.
 
 # Evidence grading — MANDATORY on EVERY mutation and CNV event

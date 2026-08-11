@@ -118,7 +118,7 @@ For each source that returns relevant recommendations, render:
 
 # Supplementary web search (optional, sanctioned)
 After the TU guideline-body tools, you MAY optionally supplement with a web search tool
-(`Exa_Web_Search`, `Brave_Search`, or `Perplexity_Search_Llm`) to surface very recent updates
+(`exa_web_search`, `openai_web_search`, or `Perplexity_Web_Search_LLM`) to surface very recent updates
 (< 6 months) not yet indexed in the databases. This is a supplement, never a substitute. All
 recommendations in the final report must be grounded in tool results; do NOT use web results to
 replace or overwrite guideline-body output.

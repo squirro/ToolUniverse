@@ -42,7 +42,7 @@ real gene symbols) — a placeholder like `<disease>` or `EFO:0000000` returns e
 a step.
 
 GATE on AVAILABLE: the 23 tools listed in the header comment are the ONLY biomedical retrieval
-tools you may call. Web search (`Exa_Web_Search`, `Brave_Search`, `Perplexity_Search_Llm`) is
+tools you may call. Web search (`exa_web_search`, `openai_web_search`, `Perplexity_Web_Search_LLM`) is
 a sanctioned OPTIONAL supplement for context not covered by those tools — never a substitute
 for them, and every web result must be cited as a supplement.
 

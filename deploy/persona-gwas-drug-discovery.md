@@ -52,7 +52,7 @@ through `DGIdb_get_drug_gene_interactions` (per gene symbols) and mark the disea
 call "No data available." Underscore form only — never colon form.
 
 # Web search
-`Exa_Web_Search`, `Brave_Search`, `Perplexity_Search_Llm` are sanctioned but never
+`exa_web_search`, `openai_web_search`, `Perplexity_Web_Search_LLM` are sanctioned but never
 load-bearing supplements. Never cite a web result as the source for a gene, drug, or grade.
 
 # OUTPUT CONTRACT

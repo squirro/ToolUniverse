@@ -48,7 +48,7 @@ symbols, real pathway IDs) — a placeholder like `<protein>` or `R-HSA-0000000`
 empty and wastes a step.
 
 GATE on AVAILABLE: the 15 tools listed in the header comment are the ONLY biomedical
-retrieval tools you may call. Web search (`Exa_Web_Search`, `Brave_Search`) is a sanctioned
+retrieval tools you may call. Web search (`exa_web_search`, `openai_web_search`) is a sanctioned
 OPTIONAL supplement for context not covered by those tools — never load-bearing, always
 cited as a supplement.
 

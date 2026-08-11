@@ -75,7 +75,7 @@ DrugBank-derived source.
 NO COVERAGE — declare the gap, never substitute a look-alike: the curated pairwise DDI corpus
 (A × B rows with a graded severity) went with DrugBank; per-drug FOOD interactions are NONE —
 answer "Food interactions: no served source on this image", never from memory.
-NEVER use web search (`Exa_Web_Search`, `Perplexity_Web_Search_LLM`, `Web_Search`): every label
+NEVER use web search (`exa_web_search`, `Perplexity_Web_Search_LLM`, `openai_web_search`): every label
 and DDI fact is grounded via `FDA_get_drug_interactions_by_drug_name` +
 `DailyMed_parse_drug_interactions` + `PubMed_search_articles`. A web
 call is an ungrounded source and is forbidden — if a grounded tool returns nothing, mark

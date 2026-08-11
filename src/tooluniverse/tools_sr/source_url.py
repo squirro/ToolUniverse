@@ -21,7 +21,7 @@ import functools
 from collections.abc import Mapping
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from . import http_record
+from . import http_record, source_url_templates
 
 __all__ = ["install", "pick", "redact", "stamp"]
 
@@ -86,23 +86,43 @@ def pick(records) -> str | None:
     return None
 
 
-def stamp(result, records):
+def stamp(result, records, tool_name=None, arguments=None, config=None):
     """Return ``result`` with a redacted ``source_url``, if one can be cited.
 
     Additive and non-mutating, like the transport-status annotation. A tool that already
     cites its own source keeps it: a domain-aware link to a human-readable record is
     better than the raw API call, and overwriting it would be a downgrade.
+
+    A declared template outranks the intercepted URL for the same reason (DSR-671). The
+    interception can only report the endpoint that was called; the template names the
+    record a reader can actually open, and for the tools that share one GraphQL endpoint
+    it is the only thing that distinguishes one question from another.
     """
     if not isinstance(result, Mapping) or "source_url" in result:
         return result
 
-    url = pick(records)
+    url = source_url_templates.declared_url(tool_name, arguments, config) or pick(records)
     if url is None:
         return result
 
     stamped = dict(result)
     stamped["source_url"] = redact(url)
     return stamped
+
+
+def _call_parts(call):
+    """``(tool name, arguments)`` from a function-call payload, defensively.
+
+    Callers pass a mapping, but the wrapper sits on the hot path for every tool result and
+    a citation must never be the thing that raises. Anything unexpected yields
+    ``(None, None)``, which downgrades to the intercepted URL.
+    """
+    if not isinstance(call, Mapping):
+        return None, None
+    name = call.get("name")
+    arguments = call.get("arguments")
+    return (name if isinstance(name, str) else None,
+            arguments if isinstance(arguments, Mapping) else None)
 
 
 def install(cls) -> None:
@@ -119,9 +139,18 @@ def install(cls) -> None:
 
     @functools.wraps(original)
     def wrapper(self, *args, **kwargs):
+        call = kwargs.get("function_call_json")
+        if call is None and args:
+            call = args[0]
+        name, arguments = _call_parts(call)
+        # Missing registry, unknown tool: both give None, and the template lookup falls
+        # back to the intercepted URL. Never let citation raise into a tool result.
+        config = (getattr(self, "all_tool_dict", None) or {}).get(name)
+
         with http_record.recording() as records:
             result = original(self, *args, **kwargs)
-            return stamp(result, records)
+            return stamp(result, records, tool_name=name, arguments=arguments,
+                         config=config)
 
     wrapper._sr_source_url = True
     cls.run_one_function = wrapper

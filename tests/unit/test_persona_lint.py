@@ -530,3 +530,170 @@ def test_a_shortened_name_resolves_against_a_long_registry_name():
     text = f"Call `{shortened}` for the associations."
 
     assert persona_lint.absent_tools(text, {long_name}) == []
+
+
+# --- does the referenced name exist ANYWHERE the agent can reach? (DSR-661) ---
+# "Exists" spans three sources. Checking only the ToolUniverse registry is what let five
+# wrong web-tool names sit unnoticed in nine bodies: the agent also reaches meta-tools that
+# smcp.py registers in code, and the Squirro agent's own tools, neither of which is
+# declared in data/**/*.json.
+
+
+def test_the_skill_serving_meta_tools_are_not_phantoms():
+    """get_skill and find_skill are registered in smcp.py, like find_tools before them.
+
+    They were served from the DSR-505 work onward while the allowlist still named only
+    find_tools, so every body routing through them read as naming two invented tools.
+    """
+    text = "Call `find_skill` to discover the name, then `get_skill` to load it."
+
+    absent = persona_lint.absent_tools(
+        text, set(), allowlist=set(persona_lint.PLATFORM_TOOLS)
+    )
+
+    assert absent == []
+
+
+def test_external_tool_names_reads_the_generated_manifest(tmp_path):
+    manifest = tmp_path / "served_external_tools.json"
+    manifest.write_text('{"tools": ["exa_web_search", "Clinical_Trials_Search"]}')
+
+    assert persona_lint.external_tool_names(manifest) == {
+        "exa_web_search", "Clinical_Trials_Search",
+    }
+
+
+def test_a_missing_manifest_over_reports_rather_than_under_reports(tmp_path):
+    """The linter must still run inside the standalone fork, where there is no manifest.
+
+    Returning the empty set makes external tools look absent, which is noisy and visible.
+    Raising would stop the linter; silently allowing everything would hide real mistakes.
+    """
+    assert persona_lint.external_tool_names(tmp_path / "nope.json") == set()
+
+
+def test_a_studio_display_label_is_reported_but_the_callable_name_is_not():
+    """The exact defect found in nine bodies on 2026-08-11.
+
+    Squirro shows the model `custom_name` with spaces turned into underscores; the Studio
+    UI shows `display_name`. "Perplexity Search Llm" is the label, so a body that writes
+    `Perplexity_Search_Llm` names nothing and its web step fails silently.
+    """
+    served = {"Perplexity_Web_Search_LLM"}
+    label = "Use `Perplexity_Search_Llm` for recency."
+    callable_name = "Use `Perplexity_Web_Search_LLM` for recency."
+
+    assert persona_lint.absent_tools(label, set(), allowlist=served) == [
+        "Perplexity_Search_Llm"
+    ]
+    assert persona_lint.absent_tools(callable_name, set(), allowlist=served) == []
+
+
+def test_a_declared_return_field_is_not_read_as_a_tool_name(tmp_path):
+    """2,373 of 2,428 definitions declare return_schema; without it every documented
+    output field reads as an invented tool. This was the largest single noise source."""
+    (tmp_path / "a.json").write_text(
+        '[{"name": "ESMFold_predict_structure", "return_schema": '
+        '{"properties": {"mean_plddt": {}, "pdb_text": {}}}}]'
+    )
+
+    fields = persona_lint.registry_return_field_names(tmp_path)
+
+    assert {"mean_plddt", "pdb_text"} <= fields
+
+
+def test_return_fields_are_found_at_any_depth(tmp_path):
+    """Return schemas nest: an array of rows, each an object with its own properties."""
+    (tmp_path / "a.json").write_text(
+        '[{"name": "T", "return_schema": {"properties": {"rows": '
+        '{"type": "array", "items": {"properties": {"total_count": {}}}}}}}]'
+    )
+
+    assert "total_count" in persona_lint.registry_return_field_names(tmp_path)
+
+
+def test_a_name_after_a_result_arrow_is_not_a_call():
+    text = "1. `ESMFold_predict_structure`(sequence=\"<F>\") → `mean_plddt`, `pdb_text`."
+
+    assert persona_lint.referenced_tool_names(text) == ["ESMFold_predict_structure"]
+
+
+def test_only_the_first_cell_of_a_table_row_can_name_a_tool():
+    """Bodies tabulate `tool | arguments | operation-value`. The later columns hold
+    argument names and enum values shaped exactly like tool names."""
+    text = "| `IMGT_get_gene_info` | `gene_name` | `get_gene_info` |"
+
+    assert persona_lint.referenced_tool_names(text) == ["IMGT_get_gene_info"]
+
+
+def test_a_value_list_wrapped_across_lines_is_still_a_value_list():
+    """The wording that makes them values sits before the bracket, on the previous line."""
+    text = (
+        "Use the Ensembl species slugs (`homo_sapiens`, `mus_musculus`,\n"
+        "`rattus_norvegicus`, `danio_rerio`) in tool calls."
+    )
+
+    assert persona_lint.referenced_tool_names(text) == []
+
+
+def test_uppercase_not_marks_a_contrast_rather_than_an_instruction():
+    text = "Use `ChEMBL_search_targets`, NOT `ClinicalTrials_search`."
+
+    assert persona_lint.referenced_tool_names(text) == ["ChEMBL_search_targets"]
+
+
+def test_lowercase_not_is_ordinary_prose_and_does_not_suppress():
+    """A general "not ..." rule would silence real instructions; the bodies reserve
+    uppercase NOT for contrast."""
+    text = "This is not optional: call `ChEMBL_search_targets` first."
+
+    assert persona_lint.referenced_tool_names(text) == ["ChEMBL_search_targets"]
+
+
+def test_an_accession_prefix_is_not_a_tool_name():
+    """`NM_`, `XM_`: a bare prefix naming a family. No registry name ends in an underscore."""
+    text = "Default to the RefSeq mRNA (`NM_`); predicted records use `XM_`/`XP_`."
+
+    assert persona_lint.referenced_tool_names(text) == []
+
+
+def test_screaming_case_is_a_placeholder_not_a_tool_name():
+    text = "Never pass `TAX_ID_HERE` or `ENSEMBL_ID` — a placeholder call returns empty."
+
+    assert persona_lint.referenced_tool_names(text) == []
+
+
+def test_a_body_naming_a_tool_in_order_to_forbid_it_is_not_reported():
+    """Same per-mention suppression live_unserved_tools applies. A body that warns the
+    agent off an unreachable tool is doing the right thing and must still pass."""
+    text = "NOTE: there is NO `WormBase_search` tool deployed — use `Monarch_search_gene`."
+
+    assert "WormBase_search" not in persona_lint.referenced_tool_names(text)
+
+
+def test_check_body_raises_an_unresolvable_tool_name_as_an_error(tmp_path):
+    """The rule ships as an error, not a warning.
+
+    It can, because the corpus is already clean: it reported 145 mentions at the start of
+    the 2026-08-11 session, the nine bodies naming unreachable web tools were corrected,
+    and what the structural rules cannot classify is named in PHANTOM_ALLOWLIST.
+    """
+    text = "# Role\n" + "x" * 6100 + "\nCall `OpenTargets_get_invented_thing` for this."
+
+    errors, _ = persona_lint.check_body(text, tmp_path)
+
+    assert any("OpenTargets_get_invented_thing" in e and "resolves to no served tool" in e
+               for e in errors), errors
+
+
+def test_every_served_body_names_only_reachable_tools():
+    """The ratchet. This is zero on arrival because the session that added the rule fixed
+    the corpus first; it is here so the next wrong name fails a test rather than a demo."""
+    unresolvable = {}
+    for body in sorted(DEPLOY.glob("persona-*.md")):
+        errors, _ = persona_lint.check_body(body.read_text(), DEPLOY)
+        hits = [e for e in errors if "resolves to no served tool" in e]
+        if hits:
+            unresolvable[body.name] = hits
+
+    assert unresolvable == {}, unresolvable

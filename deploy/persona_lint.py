@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 # The server resolves names with shortening on (smcp.py passes
@@ -135,6 +136,9 @@ _UNAVAILABLE = (
     "non-functional",
     "unavailable",
     "no data available",
+    # "there is NO `ZFIN_search` or `WormBase_search` tool deployed" -- same statement as
+    # "not deployed", phrased around the noun instead of the verb.
+    "tool deployed",
 )
 
 
@@ -182,11 +186,59 @@ _ONTOLOGY_ID = re.compile(r"^[A-Za-z]+_\d+$")
 
 
 # Real, served, and absent from data/**/*.json, so the registry check must be told about
-# them explicitly. `find_tools` is registered programmatically in smcp.py rather than
+# them explicitly. All three are registered programmatically in smcp.py rather than
 # declared in compact_mode_tools.json (which lists only list_tools, grep_tools,
 # get_tool_info and execute_tool), which is why the startup banner's tool count undercounts
-# and why a naive registry lookup calls it a phantom.
-PLATFORM_TOOLS = frozenset({"find_tools"})
+# and why a naive registry lookup calls them phantoms. `find_tools` comes from
+# register_tool_finder; `get_skill` and `find_skill` from the skill-serving block (DSR-505).
+PLATFORM_TOOLS = frozenset({"find_tools", "get_skill", "find_skill"})
+
+# The Squirro agent carries tools that are not ToolUniverse's at all -- web search, the
+# dedicated connectors, the internal-data retriever. Their names live in the delivery
+# repo's config/agents.json, which this submodule cannot read when checked out standalone
+# as the squirro/ToolUniverse fork, so they are generated into a committed file beside this
+# one. Regenerate with gen_external_tools.py; see that file for why custom_name and never
+# display_name.
+EXTERNAL_TOOLS_FILE = Path(__file__).resolve().parent / "served_external_tools.json"
+
+
+def external_tool_names(path: str | Path | None = None) -> set[str]:
+    """Non-ToolUniverse tools the agent can call, from the generated manifest.
+
+    Absent or unreadable, this returns the empty set rather than raising: the linter must
+    still run inside the fork, where the delivery repo is not present. The cost of the
+    empty case is over-reporting, which is visible, rather than under-reporting, which is
+    not.
+    """
+    manifest = Path(path) if path else EXTERNAL_TOOLS_FILE
+    try:
+        return set(json.loads(manifest.read_text())["tools"])
+    except Exception:
+        return set()
+
+
+# Tokens that survive every structural rule and are still not tool names. Each is listed
+# with the reason, because an unexplained allowlist is how a rule quietly stops checking.
+# Keep it small: an entry here is a confession that the rules could not tell, so a growing
+# list is a signal to improve a rule rather than to add another line.
+PHANTOM_ALLOWLIST = frozenset({
+    # Response fields of tools whose definition carries no return_schema, so
+    # registry_return_field_names cannot see them. Named in prose with no wording that
+    # marks them as results -- "Key decode: `age_at_diagnosis` is in DAYS".
+    "aa_change", "age_at_diagnosis", "mutation_type",      # GDC / TCGA case records
+    "active_site", "binding_site",                         # UniProt sequence features
+    "best_structures",                                     # PDBe best-structures endpoint
+    "cellular_component",                                  # GO aspect name
+    "chr_pos_ref_alt", "chr_pos_ref_alt_example",          # OpenTargets variant key
+    "combined_score",                                      # STRING edge score
+    "highest_clinical_trial_phase",                        # OpenTargets indication edge
+    "source_antigen_name",                                 # IEDB epitope key
+    "splice_region_variant",                               # Sequence Ontology term
+    # Family shorthand rather than a callable name: the bodies write "the per-organism
+    # `get_gene` / `get_phenotypes` tools" to mean Xenbase_get_gene, ZFIN_get_gene and the
+    # rest. No single tool is called either name.
+    "get_gene", "get_phenotypes",
+})
 
 
 def shorten(name: str) -> str:
@@ -194,6 +246,9 @@ def shorten(name: str) -> str:
     return shorten_tool_name(name, max_length=MAX_TOOL_NAME_LENGTH)
 
 
+# Cached: check_body needs all four, and a corpus run would otherwise walk the
+# 2,428 definition files four times per body. Callers treat the result as read-only.
+@lru_cache(maxsize=None)
 def registry_tool_names(data_dir: str | Path) -> set[str]:
     """Every tool name declared in the registry's JSON, read without loading ToolUniverse.
 
@@ -217,6 +272,9 @@ def registry_tool_names(data_dir: str | Path) -> set[str]:
     return names
 
 
+# Cached: check_body needs all four, and a corpus run would otherwise walk the
+# 2,428 definition files four times per body. Callers treat the result as read-only.
+@lru_cache(maxsize=None)
 def registry_parameter_names(data_dir: str | Path) -> set[str]:
     """Every parameter name any tool declares.
 
@@ -242,6 +300,55 @@ def registry_parameter_names(data_dir: str | Path) -> set[str]:
     return names
 
 
+def _schema_property_names(node, out: set[str]) -> None:
+    """Collect every ``properties`` key anywhere in a schema, at any depth."""
+    if isinstance(node, dict):
+        props = node.get("properties")
+        if isinstance(props, dict):
+            out.update(str(key) for key in props)
+        for key, value in node.items():
+            if key != "properties":
+                _schema_property_names(value, out)
+            elif isinstance(value, dict):
+                for sub in value.values():
+                    _schema_property_names(sub, out)
+    elif isinstance(node, list):
+        for item in node:
+            _schema_property_names(item, out)
+
+
+# Cached: check_body needs all four, and a corpus run would otherwise walk the
+# 2,428 definition files four times per body. Callers treat the result as read-only.
+@lru_cache(maxsize=None)
+def registry_return_field_names(data_dir: str | Path) -> set[str]:
+    """Every field name any tool declares it RETURNS, plus its ``fields`` list.
+
+    This is the other half of ``registry_parameter_names``, and it is the larger half:
+    2,373 of the 2,428 definitions carry a ``return_schema``, yielding some 20,000 names
+    against 1,687 input parameters. Without it a body that documents what comes back --
+    ``→ `mean_plddt`, `pdb_text``` -- reads as a body inventing two tools, which was the
+    single biggest source of false reports.
+    """
+    names: set[str] = set()
+    for path in Path(data_dir).rglob("*.json"):
+        try:
+            defs = json.loads(path.read_text())
+        except Exception:
+            continue
+        if not isinstance(defs, list):
+            continue
+        for tool in defs:
+            if not isinstance(tool, dict):
+                continue
+            _schema_property_names(tool.get("return_schema"), names)
+            declared = tool.get("fields")
+            if isinstance(declared, dict):
+                names.update(str(key) for key in declared)
+            elif isinstance(declared, list):
+                names.update(str(x) for x in declared if isinstance(x, str))
+    return names
+
+
 def servable_names(registry_names: set[str]) -> set[str]:
     """Names the server answers to: each registry name plus its shortened form.
 
@@ -256,18 +363,94 @@ def servable_names(registry_names: set[str]) -> set[str]:
 def _is_tool_shaped(token: str) -> bool:
     if _ONTOLOGY_ID.match(token):
         return False
+    # `MONDO_`, `NM_`, `XM_`: a bare prefix naming an accession family, not a call. No name
+    # in the registry ends in an underscore.
+    if token.endswith("_"):
+        return False
+    # `TAX_ID_HERE`, `ENSEMBL_ID`, `ANNOT_TYPE_ID_PANTHER_PATHWAY`: SCREAMING_CASE marks a
+    # placeholder, a constant or an enum value. No registry tool is named in upper case --
+    # the 39 all-caps entries the name scan picks up are API-key records, not tools.
+    if token.isupper():
+        return False
     # Underscore-free CamelCase agentic tools (CallAgent) are real, but so is most prose
     # in backticks, so requiring an underscore keeps this check conservative. It
     # under-reports rather than crying wolf, which is what keeps a linter switched on.
     return "_" in token
 
 
+# Wording that puts a backticked token in a RESULT position rather than a call position.
+# Shape cannot separate the two -- 117 real tools have only two segments -- but position
+# can: a tool being called heads its clause, while a field being read follows a result
+# arrow, an enumeration verb, or wording that introduces an example. Every term here was
+# taken from the corpus, not invented; between them they account for the field names
+# (`total_count`, `mean_plddt`), the Ensembl species slugs and the placeholder text that
+# a shape-only extractor reports as invented tools.
+_RESULT_POSITION = re.compile(
+    r"(?:→|->|\breturns?\b|\bincludes?\b|\bread\b|\bcarries\b|\breport\b|\bcheck\b"
+    r"|\bfields?\b|\bflag\b|\bvalues?\b|\bslugs?\b|\bplaceholder\b|\be\.g\."
+    r"|\bpass(?:es|ed|ing)?\b)",
+    re.IGNORECASE,
+)
+# Uppercase NOT, which these bodies use for emphasis, always introduces a contrast rather
+# than an instruction: "NOT `ClinicalTrials_search` (errors)", "NOT `epitope_name` (which
+# matches epitope names)". Case-sensitive on purpose -- lower-case "not" is ordinary prose
+# and would suppress real instructions.
+_CONTRAST = re.compile(r"\bNOT\b")
+# Two pipes before the token means at least the second cell of a markdown table row. The
+# bodies tabulate `tool | arguments | operation-value`, so only the first backticked cell
+# can name a tool; the later columns hold argument names and enum values that are shaped
+# identically.
+_TABLE_TAIL_PIPES = 2
+# How far back to read when a value list wraps across lines. Bounded so that a marker in
+# an unrelated earlier sentence cannot reach forward and silence a real instruction.
+_PAREN_LOOKBACK = 80
+
+
+def _context_before(block: str, start: int) -> str:
+    """The text a token's position should be judged against.
+
+    Normally the current line up to the token. When the token sits inside a parenthesis
+    opened earlier, the window extends back through that parenthesis: the bodies wrap long
+    value lists -- the Ensembl species slugs run over two lines -- and the wording that
+    makes them values sits before the opening bracket, not on the continuation line.
+    """
+    line_start = block.rfind("\n", 0, start) + 1
+    prefix = block[:start]
+    if prefix.count("(") > prefix.count(")"):
+        opened = prefix.rfind("(")
+        return block[max(0, opened - _PAREN_LOOKBACK):start]
+    return block[line_start:start]
+
+
 def referenced_tool_names(text: str, exclude: set[str] | None = None) -> list[str]:
-    """Backticked tokens in the body that could be a call to a tool, in order."""
+    """Backticked tokens the body tells the agent to CALL, in order.
+
+    Three things disqualify a token. It sits in a result position (see ``_RESULT_POSITION``).
+    It sits in a table row's second or later cell. Or its line -- or the line opening its
+    block -- says the tool is unreachable, which is the same per-mention suppression
+    ``live_unserved_tools`` applies: a body that names a tool in order to FORBID it is
+    doing the right thing and must not be reported for it.
+    """
     exclude = exclude or set()
     seen: list[str] = []
-    for token in _BACKTICKED.findall(body_text(text)):
-        if _is_tool_shaped(token) and token not in exclude and token not in seen:
+    for block in re.split(r"\n\s*\n", body_text(text)):
+        lines = block.splitlines()
+        if not lines or _marks_unavailable(lines[0]):
+            continue
+        for match in _BACKTICKED.finditer(block):
+            token = match.group(1)
+            if not _is_tool_shaped(token) or token in exclude or token in seen:
+                continue
+            line_start = block.rfind("\n", 0, match.start()) + 1
+            line_end = block.find("\n", match.start())
+            line = block[line_start:line_end if line_end != -1 else len(block)]
+            if _marks_unavailable(line):
+                continue
+            if block[line_start:match.start()].count("|") >= _TABLE_TAIL_PIPES:
+                continue
+            before = _context_before(block, match.start())
+            if _RESULT_POSITION.search(before) or _CONTRAST.search(before):
+                continue
             seen.append(token)
     return seen
 
@@ -346,6 +529,9 @@ class BadKeyword:
         return f"<BadKeyword {self.tool}.{self.keyword} line {self.line}>"
 
 
+# Cached: check_body needs all four, and a corpus run would otherwise walk the
+# 2,428 definition files four times per body. Callers treat the result as read-only.
+@lru_cache(maxsize=None)
 def registry_properties(data_dir: str | Path) -> dict[str, set[str]]:
     """Tool name -> declared parameter names, keyed by original *and* shortened name.
 
@@ -464,5 +650,30 @@ def check_body(text: str, deploy_dir: str | Path) -> tuple[list[str], list[str]]
     if REGISTRY_DATA.is_dir():
         for problem in undeclared_keywords(text, registry_properties(REGISTRY_DATA)):
             errors.append(problem.message)
+
+        # A name that resolves nowhere is worse than one that is merely excluded: the agent
+        # gets "Tool 'X' not found even after loading tools", which reads as a registry bug
+        # rather than a mistake in the body, and burns an iteration.
+        #
+        # "Exists" spans three sources, and using only the first is what let five wrong
+        # web-tool names sit in nine bodies unnoticed: the ToolUniverse registry, the
+        # meta-tools smcp.py registers in code, and the Squirro agent's own tools from
+        # served_external_tools.json.
+        #
+        # This ships as an error on arrival, which the dead-call and keyword rules could not
+        # -- they had 33 and 18 live violations respectively and a red linter gets switched
+        # off. Here the corpus is already clean: the rule reported 145 mentions when the
+        # session began, the nine bodies naming unreachable web tools were corrected, and
+        # what the structural rules could not classify is named in PHANTOM_ALLOWLIST.
+        known_fields = (registry_parameter_names(REGISTRY_DATA)
+                        | registry_return_field_names(REGISTRY_DATA))
+        allowed = set(PLATFORM_TOOLS) | external_tool_names() | PHANTOM_ALLOWLIST
+        for name in absent_tools(
+            text,
+            registry_tool_names(REGISTRY_DATA),
+            allowlist=allowed,
+            field_names=known_fields,
+        ):
+            errors.append(f"instructs a call to {name}, which resolves to no served tool")
 
     return errors, warnings

@@ -1,0 +1,68 @@
+{
+  "_source": "config/agents.json (delivery repo, dev branch)",
+  "_field": "custom_name, plus its spaces-to-underscores form; never display_name",
+  "_agents": [
+    "General Research",
+    "[DEV/TEST] General Research and TU emphasis"
+  ],
+  "_regenerate": "python3 deploy/gen_external_tools.py [path/to/agents.json]",
+  "per_agent": {
+    "General Research": [
+      "Clinical_Trials_Search",
+      "Perplexity_Web_Search_LLM",
+      "Perplexity_web_Agent_API",
+      "Perplexity_web_Search_API",
+      "epo_patent_search",
+      "exa_web_answer",
+      "exa_web_content_fetch",
+      "exa_web_find_similar",
+      "exa_web_search",
+      "internal_data_search",
+      "openai_code_interpreter",
+      "openai_web_search",
+      "squirro_file_upload"
+    ],
+    "[DEV/TEST] General Research and TU emphasis": [
+      "Clinical_Trials_Search",
+      "EPO_Patent_Search",
+      "MCP Server Tools",
+      "MCP_Server_Tools",
+      "OpenAI Code Interpreter",
+      "OpenAI_Code_Interpreter",
+      "OptimusKG_Search",
+      "Perplexity_Web_Search_LLM",
+      "Perplexity_web_Agent_API",
+      "Perplexity_web_Search_API",
+      "Target_Competition_Landscape",
+      "exa_web_answer",
+      "exa_web_content_fetch",
+      "exa_web_find_similar",
+      "exa_web_search",
+      "internal_data_search",
+      "openai_web_search",
+      "squirro_file_upload"
+    ]
+  },
+  "tools": [
+    "Clinical_Trials_Search",
+    "EPO_Patent_Search",
+    "MCP Server Tools",
+    "MCP_Server_Tools",
+    "OpenAI Code Interpreter",
+    "OpenAI_Code_Interpreter",
+    "OptimusKG_Search",
+    "Perplexity_Web_Search_LLM",
+    "Perplexity_web_Agent_API",
+    "Perplexity_web_Search_API",
+    "Target_Competition_Landscape",
+    "epo_patent_search",
+    "exa_web_answer",
+    "exa_web_content_fetch",
+    "exa_web_find_similar",
+    "exa_web_search",
+    "internal_data_search",
+    "openai_code_interpreter",
+    "openai_web_search",
+    "squirro_file_upload"
+  ]
+}

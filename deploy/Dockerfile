@@ -357,6 +357,9 @@ CMD ["python3.11", "-m", "tooluniverse.tools_sr.smcp_entry", \
      "PharmVar_get_alleles", "PharmVar_list_genes", \
      "OpenGWAS_get_mr_instruments", "USCensus_get_population", \
      "IUCN_get_conservation_status", "LDlink_get_proxies", \
+     "get_abstract_from_patent_app_number", \
+     "get_claims_from_patent_app_number", \
+     "get_full_text_from_patent_app_number", \
      "drugbank_filter_drugs_by_name", \
      "drugbank_get_drug_basic_info_by_drug_name_or_id", \
      "drugbank_get_drug_chemistry_by_drug_name_or_drugbank_id", \

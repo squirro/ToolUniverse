@@ -163,3 +163,47 @@ class _SearchStub:
             return [{"name": "Tool_Finder_Keyword"}]
 
     tooluniverse = _TU()
+
+
+# --- an unconstrained property must actually be unconstrained (DSR-627 follow-up) ---
+# Removing the oneOf was meant to stop the schema layer rejecting a malformed call. It did
+# the opposite: _resolve_param_type read a missing `type` as "string", so `arguments`
+# accepted only a string and rejected the dict form its own description documents. Every
+# tool is reached through execute_tool, so a local sweep had 2,186 of 2,194 tools failing
+# with one identical pydantic error.
+
+
+@pytest.mark.unit
+def test_a_property_with_no_declared_type_accepts_any_type():
+    """JSON Schema: an absent `type` permits any type. The resolver must agree."""
+    from typing import Any
+
+    from tooluniverse.smcp import SMCP
+
+    python_type, _ = SMCP._resolve_param_type({"description": "anything at all"})
+
+    assert python_type is Any, python_type
+
+
+@pytest.mark.unit
+def test_the_execute_tool_arguments_property_is_not_narrowed_to_a_string():
+    """The regression itself, pinned against the shipped schema rather than a fixture."""
+    from tooluniverse.smcp import SMCP
+
+    arguments = _execute_tool_schema()["parameter"]["properties"]["arguments"]
+
+    python_type, _ = SMCP._resolve_param_type(arguments)
+
+    assert python_type is not str, (
+        "arguments resolved to str, so a dict is rejected before the handler sees it; "
+        f"schema was {arguments}"
+    )
+
+
+@pytest.mark.unit
+def test_a_declared_type_is_still_honoured():
+    """The relaxation must not leak into properties that do declare a type."""
+    from tooluniverse.smcp import SMCP
+
+    assert SMCP._resolve_param_type({"type": "string"})[0] is str
+    assert SMCP._resolve_param_type({"type": "object"})[0] is dict

@@ -1728,6 +1728,20 @@ class SMCP(FastMCP):
         if "oneOf" in param_info:
             return cls._resolve_oneof_type(param_info)
 
+        # No `type` and no `oneOf` means unconstrained, and JSON Schema says so: an absent
+        # `type` permits any type. Defaulting to `str` did the opposite -- it produced the
+        # tightest constraint available.
+        #
+        # That is not academic. DSR-627 removed execute_tool's `oneOf` deliberately, so a
+        # malformed call would reach the handler and be explained instead of being rejected
+        # at the schema layer, because a schema rejection surfaces as isError:true and kills
+        # the whole turn. The relaxation silently became "string only", which rejected the
+        # dict form of `arguments` that the tool's own description tells callers to send --
+        # and every one of the ~2,278 tools is reached through execute_tool. Measured on a
+        # local sweep: 2,186 of 2,194 tools failed with one identical validation error.
+        if "type" not in param_info:
+            return Any, extra
+
         param_type = param_info.get("type", "string")
 
         # Handle nullable types like ["string", "null"]

@@ -189,3 +189,149 @@ def test_no_description_names_a_filter_its_schema_does_not_declare():
         "descriptions naming a filter the schema does not declare: "
         + "; ".join(f"{n} -> {f}" for n, f in offenders.items())
     )
+
+
+# --- the same rule, widened past filter tokens (DSR-665) ---
+# The narrow rule above holds the line on Django-style `field__operator` names and is kept
+# as a regression gate. This widens it to parameter names generally, so the class stays
+# closed as new tools arrive rather than only for the one shape already seen.
+#
+# Widening naively is unusable: 62 hits, and reading them shows most name something real
+# that simply is not an input to this tool. Four subtractions, each earned by inspecting
+# the hits -- return-schema fields, registry tool names, the base of a declared filter, and
+# a token whose sentence names another tool -- take that to 4. All four were read by hand
+# and are enumerated values of a declared parameter, so they are waived by name.
+#
+# The finding is that this corpus has no true positive of this class today. The rule ships
+# blocking at zero, and its whole value is in what it stops arriving.
+
+from tooluniverse.tools_sr import description_contract  # noqa: E402
+
+
+@pytest.mark.unit
+def test_no_description_names_a_parameter_its_schema_does_not_declare():
+    findings = description_contract.undeclared_parameters(TOOLS)
+
+    assert not findings, "; ".join(f.message for f in findings)
+
+
+@pytest.mark.unit
+def test_a_new_tool_describing_an_undeclared_parameter_is_reported():
+    """Proof the widened rule can fail. Green over a corpus it was tuned on means little
+    on its own."""
+    tools = {"Thing_search": {
+        "name": "Thing_search",
+        "description": "Search things. Pass `organism_name` to restrict the species.",
+        "parameter": {"properties": {"query": {}}},
+    }}
+
+    findings = description_contract.undeclared_parameters(tools)
+
+    assert [f.token for f in findings] == ["organism_name"]
+
+
+@pytest.mark.unit
+def test_a_one_word_parameter_is_caught_when_the_registry_declares_it_somewhere():
+    """A single backticked word is usually prose -- allowing them all adds `only`, `null`
+    and `df`. The registry decides instead of a stopword list: a one-word token counts only
+    if some tool declares a parameter by that name."""
+    tools = {
+        "Other_search": {"name": "Other_search",
+                         "parameter": {"properties": {"organism": {}}}},
+        "Thing_search": {
+            "name": "Thing_search",
+            "description": "Search things. Pass `organism` to restrict it.",
+            "parameter": {"properties": {"query": {}}},
+        },
+    }
+
+    findings = description_contract.undeclared_parameters(tools)
+
+    assert [(f.tool, f.token) for f in findings] == [("Thing_search", "organism")]
+
+
+@pytest.mark.unit
+def test_a_backticked_english_word_is_not_read_as_a_parameter():
+    tools = {"Thing_search": {
+        "name": "Thing_search",
+        "description": "Returns `null` when nothing matches; use `only` one filter.",
+        "parameter": {"properties": {"query": {}}},
+    }}
+
+    assert description_contract.undeclared_parameters(tools) == []
+
+
+@pytest.mark.unit
+def test_a_return_schema_field_is_not_read_as_an_input():
+    """Describing what comes back is not an instruction to pass it."""
+    tools = {"Thing_search": {
+        "name": "Thing_search",
+        "description": "Search things. The response carries `total_count`.",
+        "parameter": {"properties": {"query": {}}},
+        "return_schema": {"properties": {"total_count": {}}},
+    }}
+
+    assert description_contract.undeclared_parameters(tools) == []
+
+
+@pytest.mark.unit
+def test_the_base_of_a_declared_filter_is_not_a_second_parameter():
+    """`pref_name` beside a declared `pref_name__contains` is the field being explained."""
+    tools = {"Thing_search": {
+        "name": "Thing_search",
+        "description": "Note that `pref_name` coverage is incomplete.",
+        "parameter": {"properties": {"pref_name__contains": {}}},
+    }}
+
+    assert description_contract.undeclared_parameters(tools) == []
+
+
+@pytest.mark.unit
+def test_naming_another_tools_field_is_a_hand_off_when_the_tool_is_named():
+    tools = {
+        "Other_get_gene": {"name": "Other_get_gene", "parameter": {"properties": {"x": {}}}},
+        "Thing_search": {
+            "name": "Thing_search",
+            "description": "Use `Other_get_gene` to find a gene's `canonical_id`.",
+            "parameter": {"properties": {"query": {}}},
+        },
+    }
+
+    assert description_contract.undeclared_parameters(tools) == []
+
+
+@pytest.mark.unit
+def test_naming_another_tools_parameter_without_saying_which_tool_is_reported():
+    """The distinction the acceptance criteria turn on. A hand-off names its destination;
+    a description that just borrows a name leaves the model with nowhere to send it."""
+    tools = {
+        "Other_get_gene": {"name": "Other_get_gene", "parameter": {"properties": {"x": {}}}},
+        "Thing_search": {
+            "name": "Thing_search",
+            "description": "Resolve the gene first, then pass its `canonical_id`.",
+            "parameter": {"properties": {"query": {}}},
+        },
+    }
+
+    findings = description_contract.undeclared_parameters(tools)
+
+    assert [f.token for f in findings] == ["canonical_id"]
+
+
+@pytest.mark.unit
+def test_every_waiver_states_a_reason():
+    for tool, tokens in description_contract.WAIVED.items():
+        for token, reason in tokens.items():
+            assert reason.strip() and len(reason) > 20, (tool, token, reason)
+
+
+@pytest.mark.unit
+def test_no_waiver_has_gone_stale():
+    """A waiver for a token the prose no longer mentions is dead weight that would quietly
+    cover a real finding if that token ever came back."""
+    for tool_name, tokens in description_contract.WAIVED.items():
+        tool = TOOLS.get(tool_name)
+        assert tool is not None, tool_name
+        prose = description_contract._prose(tool)
+        for token in tokens:
+            assert f"`{token}`" in prose, (tool_name, token)

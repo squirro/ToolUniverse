@@ -349,6 +349,28 @@ def registry_return_field_names(data_dir: str | Path) -> set[str]:
     return names
 
 
+@lru_cache(maxsize=None)
+def loader_reachable_names() -> frozenset[str]:
+    """Tool names the loader can actually reach, not merely names present on disk.
+
+    ``registry_tool_names`` reads every JSON under ``data/``, which accepts 44 names the
+    server never serves: the archived ``broken_apis`` definitions and the API-key
+    catalogue, whose records carry a ``name`` and so look like tools to a file scan. A body
+    naming one of those passes a disk-based check and still fails at run time with "Tool
+    'X' not found", which is the blind spot DSR-663 exists to close.
+
+    Falls back to the disk scan if the wiring module cannot be imported, so the linter
+    still runs where the package is not importable. The fallback over-accepts, which is the
+    behaviour it has always had.
+    """
+    try:
+        from tooluniverse.tools_sr.wiring import servable_definition_names
+
+        return frozenset(servable_definition_names())
+    except Exception:
+        return frozenset(registry_tool_names(REGISTRY_DATA))
+
+
 def servable_names(registry_names: set[str]) -> set[str]:
     """Names the server answers to: each registry name plus its shortened form.
 
@@ -670,7 +692,7 @@ def check_body(text: str, deploy_dir: str | Path) -> tuple[list[str], list[str]]
         allowed = set(PLATFORM_TOOLS) | external_tool_names() | PHANTOM_ALLOWLIST
         for name in absent_tools(
             text,
-            registry_tool_names(REGISTRY_DATA),
+            set(loader_reachable_names()),
             allowlist=allowed,
             field_names=known_fields,
         ):

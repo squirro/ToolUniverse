@@ -314,6 +314,37 @@ USER 10001
 #     once it hits zero the endpoint answers **HTTP 402 Payment Required**. It
 #     will work for a couple of calls and then never again, which is worse than
 #     not shipping it. Needs a paid subscription, not a fix.
+#   ten of the eleven ComposeTools -- DrugSafetyAnalyzer is kept
+#     A ComposeTool auto-loads a missing dependency, and before ea01ffad that
+#     load emptied the shared registry -- every tool gone, for every client, until
+#     the container restarted. That specific bug is fixed, and a sweep of the
+#     fixed build calls BiomarkerDiscoveryWorkflow without harm. They are excluded
+#     anyway, as a product decision: SR does not use them, and the registry is
+#     process-wide shared state that one call should not be able to empty. The
+#     hazard lives in load_tools, not in ComposeTool -- three callers in
+#     output_hook.py still take the clearing branch, dormant only because
+#     hooks_enabled defaults to False and this CMD never turns hooks on. Removing
+#     the reachable callers shrinks what can reach it while that stays true.
+#     ToolDescriptionOptimizer and ToolDiscover were already excluded above, for
+#     their own reasons.
+#
+#     What is excluded here is chosen on measured output, not on the type. A
+#     sweep of the fixed build probed all eleven. DrugSafetyAnalyzer returned a
+#     complete ranked adverse-event table from openFDA with no embedded failure,
+#     so it stays served. The other ten answer with nothing:
+#       LiteratureSearchTool, MultiAgentLiteratureSearch and
+#       BiomarkerDiscoveryWorkflow report "Invalid function call: Function name
+#         <X> not found in loaded tools" -- they need agentic helpers that want an
+#         LLM key this deployment does not set, the same cause as Tool_Finder_LLM
+#         (DSR-639). A key would not fix the three below.
+#       ComprehensiveDrugDiscoveryPipeline returns only
+#         "string indices must be integers, not 'str'".
+#       ToolMetadataGenerationPipeline returns one record whose every field is an
+#         empty string; ToolGraphGenerationPipeline a graph of one node named
+#         "ExampleTool"; ToolGraphComposer 2,050 nodes and ZERO edges. All three
+#         report success, so only reading the payload catches them.
+#       OutputSummarizationComposer is an internal hook helper, and its "summary"
+#         was 134 characters from a 134-character input over 0 chunks.
 #
 # --max-workers 15: SMCP's default is 5 (smcp.py:402), so a skill that fires a
 # dozen tool calls queues them five at a time — pure added latency on exactly the
@@ -428,4 +459,8 @@ CMD ["python3.11", "-m", "tooluniverse.tools_sr.smcp_entry", \
      "SGD_get_interactions", "NvidiaNIM_openfold3", "SwissDock_dock_ligand", \
      "SwissTargetPrediction_predict", "UniChem_search_compound", \
      "get_webpage_text_from_url", \
-     "Tool_Finder_LLM", "ESM_describe_sae_feature", "BGPT_search_paper_evidence"]
+     "Tool_Finder_LLM", "ESM_describe_sae_feature", "BGPT_search_paper_evidence", \
+     "BiomarkerDiscoveryWorkflow", "ComprehensiveDrugDiscoveryPipeline", \
+     "LiteratureSearchTool", "MultiAgentLiteratureSearch", \
+     "OutputSummarizationComposer", "ToolGraphComposer", \
+     "ToolGraphGenerationPipeline", "ToolMetadataGenerationPipeline"]

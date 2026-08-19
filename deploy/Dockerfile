@@ -56,6 +56,13 @@ RUN python3.11 -m pip install --no-cache-dir -e .
 #                visualize_molecule_2d/_3d          [8 tools]
 #   biopython -> BLAST_* (2), Structure_annotate_per_residue
 #   freesasa  -> Structure_annotate_per_residue's relative-SASA calculation
+#   scipy     -> Survival_cox_regression, Survival_log_rank_test (2 tools). Both
+#                answered only "scipy is required for <X>" in the audit sweep, and
+#                they were the ONLY two of 2,194 whose failure a dependency here
+#                could fix -- everything else still failing wants a licensed data
+#                file, a credential, or an upstream service that is down. scipy
+#                ships a manylinux wheel, so it adds no build-time cost and does
+#                not need gcc.
 #
 # rdkit + biopython cost ~170 MB and were previously declined on that basis.
 # They are now wanted: cheminformatics is core to the SR use case, and the
@@ -72,7 +79,7 @@ RUN python3.11 -m pip install --no-cache-dir -e .
 # inference. There is no ML-capable instance to run them on, so the packages
 # would add weight for tools that could never answer -- the same reason
 # Tool_RAG is excluded above.
-RUN python3.11 -m pip install --no-cache-dir zeep py3Dmol rdkit biopython freesasa
+RUN python3.11 -m pip install --no-cache-dir zeep py3Dmol rdkit biopython scipy freesasa
 
 # Trim build-only toolchain; runtime libs stay. Shrinks the trivy-visible
 # package set (gcc / -devel carry their own advisories) now that wheels are in.

@@ -1006,9 +1006,28 @@ class ToolUniverse:
                 categories = tool_type
         self.logger.debug(f"Number of tools before load tools: {len(self.all_tools)}")
 
-        # Full reload (no include_tools): clear existing tools so repeated calls
-        # don't accumulate duplicates before deduplication runs.
-        if include_tools is None and tools_file is None:
+        # Clear only on a genuine full reload -- no selection of any kind -- so
+        # that repeated bare calls don't accumulate duplicates.
+        #
+        # Naming a subset used to clear too, which made a partial load destructive:
+        # the registry was emptied and refilled from that subset alone, so every
+        # other tool was evicted. ToolUniverse keeps ONE registry per process and
+        # SMCP serves every MCP client from it, so this removed all ~2,261 tools
+        # for every client until the container restarted, while the server kept
+        # answering 200 and its healthcheck stayed green (DSR-634).
+        #
+        # ea01ffad fixed the ComposeTool that reached this, but the hazard was
+        # never in ComposeTool -- it is here, and output_hook.py still calls
+        # load_tools with a bare category list. Requiring the absence of a
+        # selection removes the whole class, rather than one caller at a time.
+        # Duplicates remain impossible either way: _filter_and_deduplicate_tools
+        # runs on every path.
+        selection_given = (
+            include_tools is not None
+            or tools_file is not None
+            or categories is not None
+        )
+        if not selection_given:
             self.all_tools = []
             self.all_tool_dict = {}
             self.tool_category_dicts = {}

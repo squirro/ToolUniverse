@@ -66,6 +66,28 @@ FAMILY_TEMPLATES: dict[str, tuple[str, ...]] = {
         f"{_OT}/drug/{{chemblId}}",
     ),
     "OpentargetToolDrugNameMatch": (f"{_OT}/search?q={{drugName}}",),
+    # DSR-631 step 2, the record-bearing GET families: their API URL reproduces the
+    # query, but the human record page is what reads as credible in a footnote. Argument
+    # names are the measured majority spelling per family; a call that carries none of
+    # them simply keeps its intercepted API URL.
+    "RCSBTool": ("https://www.rcsb.org/structure/{pdb_id}",),
+    "RCSBDataTool": ("https://www.rcsb.org/structure/{pdb_id}",),
+    # POSTs GraphQL, so — like OpenTargets — a template is this family's ONLY route to a
+    # citation: the interceptor never cites a POST. Single-id tools first, then the
+    # multi-id form (a list renders as its first entry), then the ligand page.
+    "RCSBGraphQLTool": (
+        "https://www.rcsb.org/structure/{pdb_id}",
+        "https://www.rcsb.org/structure/{pdb_ids}",
+        "https://www.rcsb.org/ligand/{comp_id}",
+    ),
+    "UniProtRESTTool": ("https://www.uniprot.org/uniprotkb/{accession}",),
+    "PubChemRESTTool": (
+        "https://pubchem.ncbi.nlm.nih.gov/compound/{cid}",
+        "https://pubchem.ncbi.nlm.nih.gov/bioassay/{aid}",
+    ),
+    "PubChemToxTool": ("https://pubchem.ncbi.nlm.nih.gov/compound/{cid}",),
+    "PubChemBioAssayTool": ("https://pubchem.ncbi.nlm.nih.gov/bioassay/{aid}",),
+    "ReactomeRESTTool": ("https://reactome.org/content/detail/{stId}",),
 }
 
 _PLACEHOLDER = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")

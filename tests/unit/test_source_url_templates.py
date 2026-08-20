@@ -93,6 +93,44 @@ def test_a_less_specific_template_is_used_when_the_specific_one_cannot_render():
     assert url.endswith("/target/ENSG00000157764")
 
 
+def test_record_bearing_get_families_cite_the_human_page_not_the_api():
+    """DSR-631 step 2: the API URL reproduces the query, but the record page is what
+    reads as credible in a footnote. One representative call per family."""
+    cases = [
+        ({"type": "RCSBTool"}, {"pdb_id": "1TUP"},
+         "https://www.rcsb.org/structure/1TUP"),
+        ({"type": "RCSBDataTool"}, {"pdb_id": "1TUP"},
+         "https://www.rcsb.org/structure/1TUP"),
+        ({"type": "UniProtRESTTool"}, {"accession": "P30874"},
+         "https://www.uniprot.org/uniprotkb/P30874"),
+        ({"type": "PubChemRESTTool"}, {"cid": "2244"},
+         "https://pubchem.ncbi.nlm.nih.gov/compound/2244"),
+        ({"type": "PubChemRESTTool"}, {"aid": "1000"},
+         "https://pubchem.ncbi.nlm.nih.gov/bioassay/1000"),
+        ({"type": "PubChemToxTool"}, {"cid": "2244", "compound_name": "aspirin"},
+         "https://pubchem.ncbi.nlm.nih.gov/compound/2244"),
+        ({"type": "PubChemBioAssayTool"}, {"aid": "1000"},
+         "https://pubchem.ncbi.nlm.nih.gov/bioassay/1000"),
+        ({"type": "ReactomeRESTTool"}, {"stId": "R-HSA-1640170"},
+         "https://reactome.org/content/detail/R-HSA-1640170"),
+    ]
+    for config, arguments, expected in cases:
+        url = source_url_templates.declared_url("tool", arguments, config)
+        assert url == expected, (config, arguments, url)
+
+
+def test_the_rcsb_graphql_family_cites_a_structure_page_from_its_id_list():
+    """RCSBGraphQLTool POSTs, so — like OpenTargets — a template is its ONLY route to a
+    citation: the interceptor never cites a POST. A multi-id call cites its first entry."""
+    url = source_url_templates.declared_url(
+        "RCSBGraphQL_get_structure_summary",
+        {"pdb_ids": ["1TUP", "4HHB"]},
+        {"type": "RCSBGraphQLTool"},
+    )
+
+    assert url == "https://www.rcsb.org/structure/1TUP"
+
+
 def test_a_tool_declaring_its_own_template_overrides_this_module():
     """The tool is the authority on where its answer can be read."""
     url = source_url_templates.declared_url(

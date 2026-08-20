@@ -111,3 +111,14 @@ def test_the_original_body_text_is_preserved_ahead_of_the_contract(skills_dir):
 def test_an_unknown_name_still_raises_not_found(skills_dir):
     with pytest.raises(SkillNotFound):
         load_skill_body(skills_dir, "no-such-skill")
+
+
+def test_the_contract_teaches_the_execute_tool_call_form(skills_dir):
+    """A live turn died passing another tool's parameters straight into execute_tool
+    (9 pydantic 'unexpected keyword argument' errors, no retry). The trailer is read
+    exactly when a loaded skill starts calling tools, so the two-parameter form and
+    the recovery hint ride there."""
+    from tooluniverse.skill_serving import CITATION_CONTRACT
+
+    assert "execute_tool(tool_name=" in CITATION_CONTRACT
+    assert "unexpected keyword argument" in CITATION_CONTRACT

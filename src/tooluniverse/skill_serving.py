@@ -40,6 +40,12 @@ envelope, (2) a link built from a returned ID (record page or API query URL). A 
 with neither is attributed INLINE as `(via tool_name)` — never as a footnote and never
 a "tool + parameters" log entry. The report's References section is ONLY the numbered
 footnote definitions, each `[^n^]: [description](url)`.
+
+# Tool-call form (how EVERY database tool above is reached)
+Call `execute_tool(tool_name="<exact tool name>", arguments={...})` — exactly those two
+parameters. NEVER pass a tool's own parameters at the top level of the call. If a call
+is rejected with "unexpected keyword argument", that is what happened — retry with the
+two-parameter form, the stray parameters wrapped inside `arguments`.
 """
 
 

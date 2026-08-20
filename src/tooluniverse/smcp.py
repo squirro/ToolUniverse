@@ -1073,8 +1073,10 @@ class SMCP(FastMCP):
             playbook using the other tools (execute_tool, web search, code interpreter).
 
             WHEN TO USE — any question that turns on a gene, protein, variant, drug, compound,
-            SMILES, pathway, target-disease link, clinical trial, or toxicity. Choose the skill
-            by the INTENT (the question being asked), not by keywords:
+            SMILES, pathway, target-disease link, clinical trial, or toxicity. If the user
+            explicitly names a skill ("use the clinical-guidelines skill"), call get_skill
+            with EXACTLY that name — never substitute a different skill. Otherwise choose the
+            skill by the INTENT (the question being asked), not by keywords:
               - disease overview (biology, targets, drugs, trials) -> "disease-research"
               - rare disease from a gene/phenotype -> "rare-disease-diagnosis"
               - drug profile -> "drug-research"; mechanism of action -> "drug-mechanism-research";

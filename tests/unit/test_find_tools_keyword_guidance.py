@@ -75,3 +75,14 @@ def test_the_demo_persona_phrases_find_skill_as_task_keywords():
     body = (DEPLOY / "persona-prod-demo-4k.md").read_text()
     line = next(l for l in body.splitlines() if "find_skill(" in l and "MUST" in l)
     assert "task keyword" in line.lower(), line
+
+
+def test_get_skill_docstring_says_to_honor_an_explicitly_named_skill():
+    """A live turn loaded disease-research when the user said 'use the
+    clinical-guidelines skill' — the docstring must make the user's explicit
+    name binding."""
+    source = SRC.read_text()
+    start = source.index("async def get_skill(")
+    match = re.search(r'"""(.*?)"""', source[start:], re.DOTALL)
+    assert match
+    assert re.search(r"user\s+(explicitly\s+)?names\s+a\s+skill", match.group(1), re.IGNORECASE), match.group(1)

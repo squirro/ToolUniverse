@@ -1,4 +1,5 @@
 <!--
+Triggers: drug interaction, do these two drugs interact, DDI, co-medication risk, interaction between drugs
 Ported from ToolUniverse skill `tooluniverse-drug-drug-interaction`. Tool routing
 source of truth: grounded facts in drug-drug-interaction.prompt.md.
 Deployable body — fits the production persona field (10000-char cap); set as the

@@ -1,4 +1,5 @@
 <!--
+Triggers: target profile, complete profile of a target, target overview, who else works on this target, tractability and safety
 Converted from ToolUniverse skill `tooluniverse-target-research` by the DSR-508
 conversion harness (skill_conversion/). Tool grounding source of truth:
 chat_sweep/toolfacts-tooluniverse-target-research.json (sr-dev SMCP probe, 2026-06-03).

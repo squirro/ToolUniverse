@@ -1,4 +1,5 @@
 <!--
+Triggers: sequence analysis, protein sequence composition, domains in a sequence, analyse this sequence
 Ported from ToolUniverse skill `tooluniverse-sequence-analysis`. Grounded on sempart SMCP
 (compact mode) — all 14 tools below confirmed deployed + execute-probed live. This is a
 COMPUTE-leaning skill: several dimensions return measured numbers (GC%, residue counts,

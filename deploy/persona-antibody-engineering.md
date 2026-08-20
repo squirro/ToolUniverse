@@ -1,4 +1,5 @@
 <!--
+Triggers: antibody, mAb, epitope, developability, humanization, antibody target, biologic engineering
 Ported from ToolUniverse skill `tooluniverse-antibody-engineering`. Grounded on sempart SMCP
 (compact mode) 2026-06-08 — all 17 tools called below are confirmed DEPLOYED (17 of 17 skill
 refs available → ZERO substitutions). Re-maps the skill's filesystem/Python "report-first"

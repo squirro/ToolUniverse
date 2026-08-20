@@ -1,4 +1,5 @@
 <!--
+Triggers: ortholog, conservation across species, model organism ortholog, synteny, evolutionary conservation, cross-species comparison
 Ported from ToolUniverse skill `tooluniverse-comparative-genomics`. No separate tool-map file —
 canonical tool names are inlined below. Re-maps the skill's 6-phase filesystem/Python workflow to a
 chat OUTPUT CONTRACT (emit ONE GFM report; no file writes, no `Bash`/Python scaffolding). Served via

@@ -1,4 +1,5 @@
 <!--
+Triggers: regulatory elements, enhancers promoters, chromatin marks, TF binding sites at a locus
 Ported from ToolUniverse skill `tooluniverse-regulatory-genomics`. Grounded against the
 sempart SMCP live registry (wave-4 sweep): the 13 deployed+functional tools below are the
 only ones called — JASPAR (motifs), ENCODE (ChIP-seq / accessibility / histone / cCRE /

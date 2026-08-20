@@ -1,4 +1,5 @@
 <!--
+Triggers: fine-mapping, credible set, posterior inclusion probability, causal variant at a locus, GWAS locus resolution
 Ported from ToolUniverse skill `tooluniverse-gwas-finemapping`. Deployable body ~9.2k chars —
 FITS the production persona field directly (10000-char cap); set it as the agent's persona.
 Only fall back to inject-per-turn if targeting an older 4000-char-capped Studio config.

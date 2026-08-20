@@ -1,4 +1,5 @@
 <!--
+Triggers: GPCR, receptor binding pocket, ligand binding site of a receptor, G protein coupled receptor pharmacology
 Ported from ToolUniverse skill `tooluniverse-gpcr-structural-pharmacology`. Grounded on
 sempart SMCP (compact mode) — only tools from the AVAILABLE list below are called. Requires
 the agent to have the MCP server (SMCP/ToolUniverse) tools enabled — NOT the default Squirro

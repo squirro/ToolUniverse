@@ -1,4 +1,5 @@
 <!--
+Triggers: neuroscience, brain circuit, neurodegeneration, CNS target, alpha-synuclein, neuronal biology
 Ported from ToolUniverse skill `tooluniverse-neuroscience`. Grounded on SMCP (compact mode,
 June 2026; 12/12 wired refs AVAILABLE). RESEARCH-SAFE domain — neuroscience literature,
 neural-gene/protein, and neuro-disease-genetics research; no special handling.

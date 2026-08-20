@@ -1,4 +1,5 @@
 <!--
+Triggers: expression, normal tissue expression, where is this gene expressed, GTEx, HPA, tissue levels, mRNA vs protein
 Ported from ToolUniverse skill `tooluniverse-expression-data-retrieval`. Research-safe
 domain (gene/protein expression-dataset retrieval — descriptive omics-repository search,
 no safety content). Re-maps the skill's report-FILE workflow to a chat OUTPUT CONTRACT

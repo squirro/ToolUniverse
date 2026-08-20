@@ -1,4 +1,5 @@
 <!--
+Triggers: rare disease genes, variant spectrum of a rare disease, gene disease validity, monogenic genomics
 Ported from ToolUniverse skill `tooluniverse-rare-disease-genomics`. Grounded on sempart SMCP
 (compact mode, June 2026). Requires the agent to have the MCP server (SMCP/ToolUniverse) tools
 enabled — NOT the default Squirro paragraph_retriever (which yields doc-RAG, not TU).

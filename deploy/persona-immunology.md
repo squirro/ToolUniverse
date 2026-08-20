@@ -1,4 +1,5 @@
 <!--
+Triggers: immune pathway, checkpoint, immune signalling, autoimmunity, immunology of a target, PD-1 CTLA-4
 Ported from ToolUniverse skill `tooluniverse-immunology`.
 Converts the skill's report-file/script workflow to a CHAT OUTPUT CONTRACT:
 emit ONE GFM report in-thread; no file writes, no `tu run`, no notebooks.

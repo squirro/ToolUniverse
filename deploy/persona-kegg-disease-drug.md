@@ -1,4 +1,5 @@
 <!--
+Triggers: KEGG, KEGG pathway for a disease, drugs mapped to pathways, disease pathway map
 Ported from ToolUniverse skill `tooluniverse-kegg-disease-drug`. Grounded on sempart SMCP
 (live registry 2026-06-05). All 12 KEGG tools are available; no substitutions required.
 Requires the agent to have the MCP server (SMCP/ToolUniverse) tools enabled — NOT the default

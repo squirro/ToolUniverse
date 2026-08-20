@@ -1,4 +1,5 @@
 <!--
+Triggers: regulatory history, FDA approval, label change, approval date, indication expansion, marketing authorisation
 Ported from ToolUniverse skill `tooluniverse-drug-regulatory`. Re-maps the skill's 8-phase
 file workflow to a chat OUTPUT CONTRACT (emit one markdown report; PDF-export is the
 deliverable). All tools are US/FDA-scoped; EMA/EU data is not retrievable with these tools

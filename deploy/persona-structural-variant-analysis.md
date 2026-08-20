@@ -1,4 +1,5 @@
 <!--
+Triggers: structural variant, CNV, deletion duplication, copy number, SV pathogenicity
 Ported from ToolUniverse skill `tooluniverse-structural-variant-analysis`. Grounded on
 sempart SMCP live registry (wave-3 grounding sweep). Requires the agent to have the MCP
 server (SMCP/ToolUniverse) tools enabled — NOT the default Squirro paragraph_retriever

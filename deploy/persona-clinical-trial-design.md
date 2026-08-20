@@ -1,4 +1,5 @@
 <!--
+Triggers: design a trial, trial design, endpoint selection, sample size, protocol design, feasibility of a study
 Ported from ToolUniverse skill `tooluniverse-clinical-trial-design`. Tool routing source of
 truth: grounded tool facts block in converter-prompts/clinical-trial-design.prompt.md.
 Deployable body — fits the production persona field (10000-char cap). Re-maps the skill's

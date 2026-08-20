@@ -1,4 +1,5 @@
 <!--
+Triggers: pathway enrichment, gene set enrichment, over-representation, enriched pathways for these genes, GO enrichment
 Ported from ToolUniverse skill `tooluniverse-gene-enrichment`. Re-maps the skill's
 report-file / local-compute (gseapy/clusterProfiler) workflow to a chat OUTPUT CONTRACT
 (emit one GFM report; no file writes, no `tu run`, no notebook scaffolding). Served via

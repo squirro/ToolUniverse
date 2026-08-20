@@ -1,4 +1,5 @@
 <!--
+Triggers: toxicity, organ toxicity, nephrotoxicity, hepatotoxicity, tox profile, does the label carry toxicity, safety toxicology
 Ported from ToolUniverse skill `tooluniverse-toxicology`. Tool routing source of
 truth: grounded tool facts in the converter prompt. Deployable body — fits the
 production persona field (10000-char cap); set it as the agent's persona. Re-maps

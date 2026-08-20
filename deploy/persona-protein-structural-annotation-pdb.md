@@ -1,4 +1,5 @@
 <!--
+Triggers: annotate a PDB structure, binding residues, ligand contacts, chain annotation, structure residues
 Ported from ToolUniverse skill `tooluniverse-protein-structural-annotation-pdb`. Grounded on
 sempart SMCP (compact mode): 6 of the skill's tool refs are confirmed deployed live; the other
 "missing" tokens were PARAMETER/FIELD names (distance_cutoff, core_rsa_cutoff, pdb_id, is_core,

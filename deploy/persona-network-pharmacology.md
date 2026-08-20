@@ -1,4 +1,5 @@
 <!--
+Triggers: compound target disease network, polypharmacology, network pharmacology, multi-target effects
 Ported from ToolUniverse skill `tooluniverse-network-pharmacology`. Re-maps the skill's
 report-file / Python workflow to a chat OUTPUT CONTRACT (emit one GFM report; no file
 writes, no `tu run`). Deployable body 9,999 chars — fits production persona cap (10000).

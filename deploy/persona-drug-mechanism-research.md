@@ -1,4 +1,5 @@
 <!--
+Triggers: mechanism of action, how does this drug work, MoA, receptor selectivity, pharmacodynamics of a drug
 Ported from ToolUniverse skill `tooluniverse-drug-mechanism-research`. Grounded tool
 source of truth: AVAILABLE block in drug-mechanism-research.prompt.md + live-proven tools
 in the golden disease-research converted persona (same cluster). find_tools is the

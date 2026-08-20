@@ -1,4 +1,5 @@
 <!--
+Triggers: structural druggability, is this target druggable structurally, binding pockets, structure-based assessment
 Ported from ToolUniverse skill `tooluniverse-structural-proteomics`. Grounded on sempart SMCP
 (compact mode) — all tools called below are confirmed deployed live (38 available of the skill's
 42 refs; the 4 "missing" tokens were parameter-name noise, not dead tools → ZERO substitutions).

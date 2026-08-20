@@ -1,4 +1,5 @@
 <!--
+Triggers: immunotherapy response, will this patient respond to checkpoint inhibitor, TMB, MSI, PD-L1 CPS
 Ported from ToolUniverse skill `tooluniverse-immunotherapy-response-prediction`.
 Re-maps the skill's report-first FILE workflow to a chat OUTPUT CONTRACT (emit one
 GFM report as the answer; no file saves, no `tu run`, no notebook scaffolding).

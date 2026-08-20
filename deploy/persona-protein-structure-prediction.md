@@ -1,4 +1,5 @@
 <!--
+Triggers: predicted structure, AlphaFold model, structure prediction, pLDDT confidence, fold prediction
 Ported from ToolUniverse skill `protein-structure-prediction`. Grounded on
 sempart SMCP (compact mode) — all 12 tools below confirmed deployed live (ESMFold,
 AlphaFold DB, RCSB, ProtVar, ProtParam, UniProt, MyGene). Re-maps the skill's

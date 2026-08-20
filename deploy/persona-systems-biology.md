@@ -1,4 +1,5 @@
 <!--
+Triggers: systems biology, kinetic model, computational model of a pathway, enzyme kinetics, BioModels
 Ported from ToolUniverse skill `tooluniverse-systems-biology`. Deployable body ~9.8k chars
 — FITS the production persona field directly (10000-char cap); set it as the agent's
 persona. Re-maps the skill's report-file/Bash-compute workflow to a chat OUTPUT CONTRACT

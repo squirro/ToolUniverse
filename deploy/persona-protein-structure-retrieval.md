@@ -1,4 +1,5 @@
 <!--
+Triggers: structures for this protein, PDB entries, experimental structures, get me the structure
 Ported from ToolUniverse skill `tooluniverse-protein-structure-retrieval`. Grounded on
 sempart SMCP (compact mode) — all 10 tools below confirmed deployed live. Re-maps the
 skill's filesystem/Python workflow to a chat OUTPUT CONTRACT (emit ONE markdown report;

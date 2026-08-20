@@ -1,4 +1,5 @@
 <!--
+Triggers: small molecule discovery, potency data, measured activity, IC50 Ki, chemical starting points with numbers
 Ported from ToolUniverse skill `tooluniverse-small-molecule-discovery`. Tool routing source of
 truth: deploy/small-molecule-discovery-tool-map.md (to be created). Deployable body — FITS the
 production persona field directly (10000-char cap); set it as the agent's persona. Only fall back

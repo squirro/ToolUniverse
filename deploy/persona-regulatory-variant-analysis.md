@@ -1,4 +1,5 @@
 <!--
+Triggers: non-coding variant, regulatory variant function, variant in an enhancer, functional evidence for a non-coding SNP
 Ported from ToolUniverse skill `tooluniverse-regulatory-variant-analysis`. Grounded against
 the sempart SMCP live registry (wave-4 sweep): 12 of 19 referenced tools are deployed and
 called; the rest were parameter names, not tools. Re-maps the skill's filesystem/Python-based

@@ -1,4 +1,5 @@
 <!--
+Triggers: CRISPR screen, knockout screen hit, synthetic lethal, screen hit interpretation, sgRNA dropout
 Ported from ToolUniverse skill `tooluniverse-crispr-screen-analysis`. RESEARCH-SAFE
 functional-genomics target-discovery skill (essentiality, synthetic-lethality, dropout/
 positive-selection screen interpretation) — descriptive target-ID research, no operational

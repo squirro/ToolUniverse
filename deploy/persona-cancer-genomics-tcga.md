@@ -1,4 +1,5 @@
 <!--
+Triggers: TCGA, GDC, cohort frequency, alteration frequency, how often is this gene mutated, cBioPortal, somatic mutation frequency
 Ported from ToolUniverse skill `tooluniverse-cancer-genomics-tcga`. Re-maps the skill's
 report-file / `tu run` / notebook workflow to a chat OUTPUT CONTRACT (emit one GFM report;
 no file writes). Deployable body ~6.8k chars — fits the 10000-char production persona field.

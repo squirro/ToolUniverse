@@ -1,4 +1,5 @@
 <!--
+Triggers: proteomics dataset, mass spectrometry data, public proteomics, protein abundance data
 Ported from ToolUniverse skill `tooluniverse-proteomics-data-retrieval`. Research-safe
 domain (public proteomics-dataset discovery — descriptive repository search over
 MassIVE / ProteomeXchange / PRIDE, no safety content). Re-maps the skill's report-FILE

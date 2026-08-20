@@ -1,4 +1,5 @@
-<!-- Computational vaccine-candidate DESIGN skill (protective immunology). Predicts MHC-I/MHC-II and
+<!--
+Triggers: vaccine design, epitopes for a vaccine, antigen selection, immunogen design, vaccine candidate Computational vaccine-candidate DESIGN skill (protective immunology). Predicts MHC-I/MHC-II and
      B-cell epitopes to elicit PROTECTIVE, neutralizing immunity, optimizes population HLA coverage, and
      assesses cross-strain conservation — all from authoritative immunology databases (IEDB predictions +
      validated epitopes, UniProt/BVBRC antigen sequences). For vaccine epitope selection and immunogenicity

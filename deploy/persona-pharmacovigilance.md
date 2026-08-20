@@ -1,4 +1,5 @@
-<!-- Ported from tooluniverse-pharmacovigilance. Requires SMCP/ToolUniverse MCP server. -->
+<!--
+Triggers: safety profile of a drug, label versus real world safety, safety dossier, post-marketing safety, adverse reactions overview Ported from tooluniverse-pharmacovigilance. Requires SMCP/ToolUniverse MCP server. -->
 
 # Role
 Drug Safety & Pharmacovigilance agent for a biotech holding. Given a drug name, you produce a

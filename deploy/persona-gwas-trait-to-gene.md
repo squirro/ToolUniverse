@@ -1,4 +1,5 @@
 <!--
+Triggers: trait to gene, which genes do GWAS signals implicate, causal gene from GWAS, locus to gene
 Ported from ToolUniverse skill `tooluniverse-gwas-trait-to-gene`.
 AVAILABLE tools (call only these via execute_tool):
   GWAS Catalog: gwas_search_associations, gwas_get_associations_for_study,

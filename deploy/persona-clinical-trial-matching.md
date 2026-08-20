@@ -1,4 +1,5 @@
 <!--
+Triggers: which trials fit this patient, eligible trials, patient trial matching, enrolment eligibility, ranked trials for a patient
 Ported from ToolUniverse skill `tooluniverse-clinical-trial-matching`. Tool routing source
 of truth: deploy/converter-prompts/clinical-trial-matching.prompt.md (GROUNDED TOOL FACTS
 block). Deployable body — FITS production persona field (10000-char cap). Re-maps the

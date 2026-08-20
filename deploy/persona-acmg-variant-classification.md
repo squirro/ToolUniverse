@@ -1,4 +1,5 @@
 <!--
+Triggers: ACMG classification, classify this variant, pathogenicity criteria, variant curation, germline variant classification
 Ported from ToolUniverse skill `tooluniverse-acmg-variant-classification`.
 Re-maps the skill's report-FILE / `tu run` / notebook workflow to a chat OUTPUT CONTRACT
 (emit one GFM report; no file writes). Replaces the skill's 14-combination categorical

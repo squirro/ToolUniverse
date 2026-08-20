@@ -1,4 +1,5 @@
 <!--
+Triggers: outbreak, epidemic, pandemic, pathogen, virus, viral clade, strain surveillance, avian influenza, H5N1, bird flu, transmission, countermeasures, antivirals, situation brief on an infection
 Ported from ToolUniverse skill `tooluniverse-infectious-disease`. Deployable body ~9.5k chars —
 FITS the production persona field directly (10000-char cap); set it as the agent's persona.
 Re-maps the skill's report-first FILE workflow to a chat OUTPUT CONTRACT (emit one GFM report;

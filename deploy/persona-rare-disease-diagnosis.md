@@ -1,4 +1,5 @@
 <!--
+Triggers: rare disease, differential diagnosis, undiagnosed patient, dysmorphic features, syndrome from symptoms, phenotype to diagnosis, which rare diseases should we consider
 Ported from ToolUniverse skill `tooluniverse-rare-disease-diagnosis`. Tool routing grounded in
 rare-disease-diagnosis.prompt.md. Re-maps the skill's report-first FILE workflow to a chat
 OUTPUT CONTRACT. Requires SMCP/ToolUniverse MCP server. OMIM/DisGeNET genuinely NOT available

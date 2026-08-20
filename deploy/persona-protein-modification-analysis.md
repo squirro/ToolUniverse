@@ -1,4 +1,5 @@
 <!--
+Triggers: post-translational modification, PTM, phosphorylation site, ubiquitination, modification of a protein
 Ported from ToolUniverse skill `tooluniverse-protein-modification-analysis`. Research-safe
 structural / molecular protein-biology skill — characterizes a protein's post-translational
 modifications (PTM sites, types, enzymes, proteoforms, PTM-dependent interactions), its linear

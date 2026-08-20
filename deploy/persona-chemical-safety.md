@@ -1,4 +1,5 @@
 <!--
+Triggers: chemical hazard, GHS classification, exposure limit, lab safety, handling a chemical, carcinogenicity classification
 Clinical / occupational chemical-safety and regulatory-toxicology reference skill. All hazard
 data (GHS categories, IARC/NTP carcinogenicity, experimental LD50/LC50/NOAEL reference values,
 FDA label warnings) is DESCRIPTIVE and sourced from authoritative public databases (PubChem /

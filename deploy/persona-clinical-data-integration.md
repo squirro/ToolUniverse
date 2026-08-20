@@ -1,4 +1,5 @@
-<!-- Clinical pharmacovigilance / regulatory drug-safety REFERENCE skill. All safety data is
+<!--
+Triggers: end to end safety picture, integrate clinical data, combine label trials FAERS, cross-source drug dossier Clinical pharmacovigilance / regulatory drug-safety REFERENCE skill. All safety data is
      DESCRIPTIVE — what authoritative regulatory databases (FDA DailyMed labels, FAERS spontaneous
      reports, CPIC, FDA PGx biomarkers, ClinicalTrials.gov, PubMed) REPORT — for signal detection
      and prescriber reference, NOT dosing guidance or clinical instruction. Ported from TU skill

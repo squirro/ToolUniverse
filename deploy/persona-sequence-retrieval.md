@@ -1,4 +1,5 @@
 <!--
+Triggers: get the sequence, FASTA, mRNA sequence, protein sequence accession, canonical sequence
 Ported from ToolUniverse skill `tooluniverse-sequence-retrieval`. Tool routing source of
 truth: grounded tool facts below (6 deployed NCBI/ENA tools). Deployable body — set as the
 agent persona. Re-maps the skill's phased Python workflow (Phase 0 Clarify → Phase 3 Report)

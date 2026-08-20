@@ -1,4 +1,5 @@
 <!--
+Triggers: shRNA screen, dropout screen, essentiality screen, screen hit nomination, functional genomics hits
 Ported from ToolUniverse skill `tooluniverse-functional-genomics-screens`. RESEARCH-SAFE
 functional-genomics target-discovery skill (CRISPR-KO / CRISPRi / shRNA screen-hit
 interpretation, essentiality ranking, hit prioritization) — descriptive target-ID research,

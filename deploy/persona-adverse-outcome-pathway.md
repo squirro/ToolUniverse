@@ -1,4 +1,5 @@
-<!-- Regulatory & environmental toxicology HAZARD-REFERENCE skill. All hazard data (AOP
+<!--
+Triggers: adverse outcome pathway, AOP, molecular initiating event, regulatory hazard, mechanistic toxicology Regulatory & environmental toxicology HAZARD-REFERENCE skill. All hazard data (AOP
 stressor→adverse-outcome mappings, GHS classification, IARC/NTP/EPA carcinogenicity, LD50/LC50
 acute-effect reference values, target-organ toxicity, chemical-gene/disease links) is DESCRIPTIVE,
 sourced from authoritative public regulatory databases (AOPWiki, PubChem/PubChemTox, OpenTargets) — for

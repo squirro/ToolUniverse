@@ -1,4 +1,5 @@
 <!--
+Triggers: mouse knockout, model organism phenotype, zebrafish, worm, fly genetics, animal model of a gene
 Ported from ToolUniverse skill `tooluniverse-model-organism-genetics`. Grounded on SMCP
 (compact mode, June 2026; 39/41 refs AVAILABLE). RESEARCH-SAFE domain — model-organism
 comparative genetics for preclinical target validation; no special handling.

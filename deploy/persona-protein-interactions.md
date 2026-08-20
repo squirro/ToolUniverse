@@ -1,4 +1,5 @@
 <!--
+Triggers: protein interactions, interaction partners, interactome, binding partners of a protein, STRING network
 Ported from ToolUniverse skill `tooluniverse-protein-interactions`. No separate tool-map file —
 canonical tool names are inlined below. Deployable body ~10k chars — FITS the production persona
 field directly (10000-char cap). Re-maps the skill's 4-phase Python workflow to a chat OUTPUT

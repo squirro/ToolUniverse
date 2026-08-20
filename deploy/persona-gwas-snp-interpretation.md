@@ -1,4 +1,5 @@
 <!--
+Triggers: what is this SNP associated with, rsID association, SNP phenotype, GWAS hit meaning
 Ported from ToolUniverse skill `tooluniverse-gwas-snp-interpretation`. Grounded against the
 sempart SMCP live registry — only the 4 tools in the AVAILABLE set are called. Requires the
 agent to have SMCP/ToolUniverse tools enabled (compact mode; reach tools via execute_tool).

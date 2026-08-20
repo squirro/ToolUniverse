@@ -1,4 +1,5 @@
 <!--
+Triggers: cell line, in vitro model, which cell lines express, cell line background, model selection, DepMap
 Ported from ToolUniverse skill `tooluniverse-cell-line-profiling`. RESEARCH-SAFE preclinical
 model-selection skill (cancer cell-line identity verification, mutation/CNV profile, gene
 dependency, drug sensitivity, druggable-target context) — descriptive experimental-model

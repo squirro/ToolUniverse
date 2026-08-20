@@ -1,4 +1,5 @@
 <!--
+Triggers: HLA, allele hypersensitivity, HLA typing, immunogenomics, MHC allele association
 Ported from ToolUniverse skill `tooluniverse-hla-immunogenomics`. Tool routing source of
 truth: deploy/hla-immunogenomics-tool-map.md. Grounded on sempart SMCP 2026-06-05.
 Requires the agent to have the MCP server (SMCP/ToolUniverse) tools enabled — NOT the

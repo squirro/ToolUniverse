@@ -1,4 +1,5 @@
 <!--
+Triggers: variants to pathways, from GWAS to pathway, eQTL to pathway, disease pathway genetics
 Ported from ToolUniverse skill `tooluniverse-pathway-disease-genetics`. Deployable body
 ~9.0k chars — FITS the production persona field directly (10000-char cap); set it as the
 agent's persona. Re-maps the skill's Bash/Python-compute workflow to a chat OUTPUT CONTRACT

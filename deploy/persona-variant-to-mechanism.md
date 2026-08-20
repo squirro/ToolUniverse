@@ -1,4 +1,5 @@
 <!--
+Triggers: from variant to mechanism, how does this variant cause disease, regulatory element to target gene to phenotype
 Ported from ToolUniverse skill `tooluniverse-variant-to-mechanism`. No separate tool-map
 file — AVAILABLE tool list is canonical here. Deployable body ~9.8k chars — FITS the
 production persona field (10000-char cap). Re-maps the skill's report-FILE / `tu run`

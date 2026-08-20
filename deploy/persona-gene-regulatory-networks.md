@@ -1,4 +1,5 @@
 <!--
+Triggers: transcription factor, regulatory network, what controls expression of, TF binding, enhancer regulation
 Ported from ToolUniverse skill `tooluniverse-gene-regulatory-networks`. Grounded against
 sempart SMCP deployed tool set (wave-3 sweep). Re-maps the skill's filesystem/Python-based
 workflow to a chat OUTPUT CONTRACT (emit one GFM markdown report; PDF-export is the

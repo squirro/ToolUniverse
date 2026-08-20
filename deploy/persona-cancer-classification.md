@@ -1,4 +1,5 @@
 <!--
+Triggers: cancer type, tumour classification, OncoTree, histology code, pathology report classification, tumour subtype
 Ported from ToolUniverse skill `tooluniverse-cancer-classification`. Grounded on sempart SMCP
 (2026-06-05; actionability re-grounded 2026-08-04). Available tools: OncoTree_search,
 OncoTree_get_type, OncoTree_list_tissues, GDC_get_mutation_frequency,

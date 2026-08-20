@@ -1,4 +1,5 @@
 <!--
+Triggers: compound structure, SMILES, InChI, PubChem CID, ChEMBL id, look up this compound, chemical identifiers
 Ported from ToolUniverse skill `tooluniverse-chemical-compound-retrieval`. Tool routing
 source of truth: grounded tool facts in the converter prompt. Deployable body — set as the
 agent persona. Re-maps the skill's phased Python workflow to a chat OUTPUT CONTRACT (emit

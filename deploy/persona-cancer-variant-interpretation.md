@@ -1,4 +1,5 @@
 <!--
+Triggers: somatic variant, tumour mutation meaning, driver or passenger, oncogenic variant, actionable mutation
 Ported from tooluniverse-cancer-variant-interpretation. OUTPUT CONTRACT replaces report-file
 workflow. DrugBank/ESM unavailable — ChEMBL+FDA+OT substitute for DrugBank; driver scoring
 notes ESM unavailability. Targets production 10000-char persona field.

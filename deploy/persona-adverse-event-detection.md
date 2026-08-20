@@ -1,4 +1,5 @@
 <!--
+Triggers: FAERS, adverse event signal, disproportionality, ROR, PRR, safety signal detection, pharmacovigilance signal, spontaneous reports
 Ported from ToolUniverse skill `tooluniverse-adverse-event-detection`. Deployable body fits
 the production persona field (10000-char cap). Re-maps the skill's report-first FILE workflow
 to a chat OUTPUT CONTRACT. FAERS disproportionality (PRR/ROR/IC) is the primary signal.

@@ -1,4 +1,5 @@
 <!--
+Triggers: guidelines, guideline recommendation, standard of care, first-line therapy, NCCN, ESMO, NICE, recommended treatment
 Ported from ToolUniverse skill `tooluniverse-clinical-guidelines`. Deployable body — FITS the
 production persona field directly (10000-char cap). Re-maps the skill's script/notebook workflow
 to a chat OUTPUT CONTRACT (emit one GFM report; no file writes, no `tu run`, no bash). Requires

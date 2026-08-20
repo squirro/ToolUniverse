@@ -1,4 +1,5 @@
 <!--
+Triggers: primary literature, incidence from papers, published rates, systematic literature, what do papers report, PMIDs
 Ported from ToolUniverse skill `literature-deep-research`. Tool routing
 source of truth: deploy/converter-prompts/literature-deep-research.prompt.md.
 Re-maps the skill's report-file workflow to a chat OUTPUT CONTRACT (emit one GFM

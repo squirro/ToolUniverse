@@ -1,4 +1,5 @@
 <!--
+Triggers: loss of function mechanism, misfolding versus active site, why is this variant LoF, protein destabilisation
 Ported from ToolUniverse skill `tooluniverse-protein-lof-mechanism`. Computational
 structural-biology research skill — proposes the molecular loss-of-function (LoF) mechanism
 for a single coding missense variant by integrating independent in-silico + curated signals.

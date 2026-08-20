@@ -1,4 +1,5 @@
 <!--
+Triggers: small molecule binder, chemical starting points, hit finding, known actives, chemotype, ligand discovery
 Ported from ToolUniverse skill `tooluniverse-binder-discovery`. Research-safe: small-molecule
 hit-finding / target-profiling for drug discovery — all data is DESCRIPTIVE, retrieved from
 authoritative cheminformatics & structural databases (ChEMBL, BindingDB, GtoPdb, PubChem BioAssay,

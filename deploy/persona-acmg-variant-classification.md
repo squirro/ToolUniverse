@@ -160,5 +160,5 @@ Key functional studies or segregation data (PMIDs, years)
 Applied rule: e.g., "PVS1(+8) + PM2_Supporting(+1) + PP5(+1) = 10 → Pathogenic"
 
 ## References
-| # | Tool | Key Parameters | Phase | Items Retrieved |
+numbered footnote definitions only, each `[^n^]: [description](url)`
 ```

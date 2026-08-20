@@ -174,4 +174,4 @@ Answer all four questions, each as its own labelled sentence:
 ## 6. Interpretive Caveats & Limitations
 (include the six standard caveats above, plus any trait-specific ones)
 
-## 7. References — | # | Tool | Parameters | Items Retrieved |
+## 7. References — numbered footnote definitions only, each `[^n^]: [description](url)`

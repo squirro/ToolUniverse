@@ -162,4 +162,4 @@ State the confounding caveat here.
 ## 6. Pharmacogenomics & Drug Interactions
 ## 7. Literature Evidence                 (title | PMID/DOI | year | key finding | Source)
 ## 8. Safety Signal Score                 (component | score | max | basis)
-## References  — | # | Tool | Parameters | Phase | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

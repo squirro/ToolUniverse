@@ -228,8 +228,7 @@ override functional/clinical evidence. De novo status claimed without parental g
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`.
-Prose: `(Source: tool_name)`. End with a References section logging every tool used +
-key parameters.
+Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {SV} with the variant descriptor (e.g., "del(7)(q11.23q11.23) 1.5 Mb"). The
@@ -263,4 +262,4 @@ Overall score (0–10): ___ → ACMG 5-tier classification: ___
 ## 7. ACMG-Adapted Classification & Clinical Recommendation
 State final classification, all applicable evidence codes with evidence, and clinical
 recommendation tier (Pathogenic → report; VUS → re-evaluate; Benign → note).
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

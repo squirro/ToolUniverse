@@ -136,7 +136,7 @@ the disease consequence. Use this chain to justify the §13 recommendation.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a §14 References section logging every tool used + key params,
+`(Source: tool_name)`. End with a §14 References section of numbered link-bearing footnote definitions,
 and a §15 Data Gaps section naming any dimension left "No data available" and why.
 
 # Report structure (emit exactly this skeleton)
@@ -163,5 +163,5 @@ then state an overall GO / PROMISING / SPECULATIVE / DEPRIORITIZE verdict:
 ## 11. Literature & Research
 ## 12. Competitive Landscape
 ## 13. Summary & Recommendations
-## 14. Data Sources & Methodology  — | # | Tool | Parameters | Section | Items Retrieved |
+## 14. Data Sources & Methodology  — numbered footnote definitions only, each `[^n^]: [description](url)`
 ## 15. Data Gaps & Limitations

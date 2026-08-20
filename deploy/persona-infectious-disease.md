@@ -182,4 +182,4 @@ Answer ALL SIX synthesis questions, each as its own labelled sentence:
 (title | PMID | year | key finding | Source)
 ## 7. Resistance & Safety Considerations
 ## 8. Recommended Actions & Research Priorities
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

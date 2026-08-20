@@ -262,7 +262,7 @@ caveats in the synthesis rather than asserting a clean phenotype transfer.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Gene} with the actual resolved human gene symbol. The parenthesized column lists after a
@@ -307,4 +307,4 @@ identified core function, and the recommended organism(s) for further study with
 ## 10. Negative Results & Evidence Gaps
 List species with no ortholog, unresolvable native ids, and any dimension not reached. Note OMIM is
 unavailable (no API key); its role is covered by ClinGen + ClinVar.
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

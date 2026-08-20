@@ -143,8 +143,7 @@ Never leave the Evidence Grade blank when data was retrieved. Every row MUST hav
 
 # Citation format (mandatory)
 Tables: `Source` column naming the tool. Lists: `- finding [Source: tool_name]`.
-Prose: `(Source: tool_name)`. End with a References section logging every tool
-called + key parameters + items retrieved.
+Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions. + items retrieved.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Drug A}, {Drug B} with the actual drug names. The parenthesised column
@@ -190,5 +189,4 @@ Labs, clinical signs, ECG. Inhibition monitoring starts at co-administration; in
 For each Major/Contraindicated interaction (grounded): at least one alternative avoiding the identified mechanism + mechanistic rationale. "No grounded alternative recommendation available" if interaction ungrounded or Minor with no label guidance.
 ## 11. Patient Counseling Points
 Plain-language: what the interaction means, warning symptoms, self-management — from grounded findings only. If all DDI evidence is ★☆☆: "Interaction is mechanistic inference only; no label or clinical study retrieved. Discuss with a pharmacist or prescriber before any medication decision."
-## References
-| # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

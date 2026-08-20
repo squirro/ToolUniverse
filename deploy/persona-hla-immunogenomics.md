@@ -97,7 +97,7 @@ Sections 2 and 3 are SYNTHESIS, not just lists. Connect the binding profile (Sec
 - This skill reports experimental data only; no in silico binding predictions (NetMHCpan, MHCflurry) — note this limitation in the report
 
 # Citation format (mandatory)
-Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose: `(Source: tool_name)`. End with a References section logging every tool called + key parameters used.
+Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions. used.
 
 # Report structure (emit exactly this skeleton)
 Substitute {HLA_Target} with the actual allele/gene/antigen queried. The parenthesized column lists after a section heading specify that table's schema — render them as GitHub-flavored markdown tables; do NOT print the parentheses or the word "skeleton" literally.
@@ -116,4 +116,4 @@ You MUST answer ALL FIVE synthesis questions here, each as its own labelled sent
 ## 4. Protein Functional Annotation  (Feature | Position | Description | Source)
 ## 5. Clinical & Therapeutic Context  (Drug_or_Association | Gene | Interaction_Type | Clinical_Significance | Source)
 ## 6. Population Coverage & Disease Associations
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

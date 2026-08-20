@@ -272,7 +272,7 @@ name returns nothing but an alias does → report which name worked.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Antigen} with the actual target antigen name. The parenthesized column lists after a
@@ -294,4 +294,4 @@ You MUST answer ALL FIVE synthesis points here, each as its own labelled sentenc
 ## 5. Immunogenicity Context   (Epitope | type (B-cell binding / MHC-II risk) | source organism | Confidence Grade (E1–E4) | assay | Source)
 ## 6. Literature & Engineering Precedent   (Title | PMID | Year | relevance | Source)
 ## 7. Bispecific / Second-Arm Context (if applicable)   (Partner gene | interaction score | pathway context | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

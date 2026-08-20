@@ -137,7 +137,7 @@ incomplete)". TU has no per-study prevalence/effect-size tool — never invent q
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Subject} with the actual gene / disease / tissue / accession searched. The parenthesized
@@ -169,4 +169,4 @@ Best dataset for the stated purpose; alternatives; integration / batch-correctio
 (Title | PMID | Year | Linked dataset | Source) — REAL papers from PubMed, not dataset listings.
 ## 8. Data Access
 Download links and repository URLs for the recommended datasets; note any access restrictions.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

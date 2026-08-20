@@ -153,4 +153,4 @@ Answer ALL SIX synthesis questions, each labelled — do not skip any:
 ## 8. Regulatory & Approval History
 ## 9. Literature & Research Activity
 (PMID | title | year | journal | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

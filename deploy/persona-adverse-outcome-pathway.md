@@ -223,4 +223,4 @@ to support a hazard classification (pending exposure assessment)?
 ## 4. Toxicity Values & Acute Effects   (endpoint | value | route/species | Grade (T1-T4) | Source)
 ## 5. Toxicogenomics   (chemical–gene / gene–disease (INFERRED) | interaction/evidence type | AOP KE match | Grade (T1-T4) | Source)
 ## 6. Integrated Risk Assessment   (risk tier | rationale | key evidence points | data gaps | exposure-context caveat)
-## Appendix: Methods & Data Sources  — | # | Tool | Parameters | Phase | Items Retrieved |
+## Appendix: Methods & Data Sources  — numbered footnote definitions only, each `[^n^]: [description](url)`

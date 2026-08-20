@@ -254,7 +254,7 @@ oligomeric-state data (SEC-MALS / native MS) where available — note this cavea
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Target} with the actual protein / target name. The parenthesized column lists after a
@@ -277,4 +277,4 @@ You MUST answer ALL FIVE synthesis points here, each as its own labelled sentenc
 ## 6. Domain Architecture & Unresolved Regions   (domain | InterPro/Pfam ID | residue range | resolved experimentally? | Source)
 ## 7. GPCR Profile (if applicable)   (entry name | class/family | structures (state) | ligand pharmacology | key mutation (BW) | Source)
 ## 8. Antibody / Biologic Tractability (if applicable)   (PDB ID / therapeutic | antigen/target | CDR-H3 | development stage | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

@@ -156,8 +156,7 @@ PDB assembly → report both; solution state is often the physiological one.
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
 `(Source: tool_name)`. Cite real IDs: STRING interaction IDs, evidence PMIDs, PDB
-entry IDs (4-char codes), SASBDB accessions. End with a References section logging every
-tool used and key parameters.
+entry IDs (4-char codes), SASBDB accessions. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Protein} with the query protein name / gene symbol. Parenthesised column lists
@@ -192,4 +191,4 @@ Answer ALL FOUR synthesis questions here, each as its own labelled sentence:
 ### Solution structures (SASBDB)  (Accession | Method | MW_solution | Source)
 ## 7. Binding Affinity & Kinetics
 No data available (no kinetics tool; requires experimental SPR/ITC/AUC data).
-## References  — | # | Tool | Parameters | Section | Items retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

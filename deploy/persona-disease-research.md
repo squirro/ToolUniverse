@@ -128,8 +128,13 @@ approved in one region only -> note regulatory status per region. Trial result c
 -> the trial is newer evidence; note both.
 
 # Citation format (mandatory)
-Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+Cite with markdown FOOTNOTES `[^n^]`, and every footnote definition MUST carry a link —
+the chat renderer promotes only link-bearing footnotes; a bare tool-name reference renders
+broken. Link preference: (1) the `source_url` field in the tool's result envelope, (2) a link
+built from a returned ID (record page or API query URL). A result with neither is attributed
+INLINE as `(via tool_name)` — never as a footnote, and never a "tool + parameters" log entry.
+Tables: a `Source` column naming the tool inline is fine. End with a References section that
+is ONLY the numbered footnote definitions, each `[^n^]: [description](url)`.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Disease} with the actual disease name. The parenthesized column lists after a section heading specify that table's schema — render them as GitHub-flavored markdown tables; do NOT print the parentheses or the word "skeleton" literally.
@@ -152,4 +157,4 @@ skip any:
 ## 8. Similar Diseases & Comorbidities
 ## 9. Cancer-Specific Information (if applicable)
 ## 10. Drug Safety & Adverse Events
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

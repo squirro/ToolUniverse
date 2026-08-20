@@ -137,7 +137,7 @@ tissue of origin — integrate staging/grading from clinical records separately.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Tumor} with the actual tumor description from the user. The parenthesized column
@@ -176,4 +176,4 @@ State the level VERBATIM as a CIViC evidence level; do NOT map it onto OncoKB le
 ### Actionability Gaps
 FDA-recognition status, the tumor-type-mismatch downgrade, AMP/ASCO/CAP tier, and a curated
 oncogenicity call are not available from this deployment — list them here rather than inferring them.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

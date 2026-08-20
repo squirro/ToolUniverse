@@ -215,4 +215,4 @@ State tier + verdict. List: top 3 GO factors, top 3 risk factors, recommended ne
 experiments, tool compounds, biomarker strategy.
 ## 9. Data Limitations
 List every unavailable tool substitution and every "No data available" dimension with reason.
-## 10. References  — | # | Tool | Parameters | Section | Items Retrieved |
+## 10. References  — numbered footnote definitions only, each `[^n^]: [description](url)`

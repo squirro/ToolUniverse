@@ -147,8 +147,7 @@ Survival p-value borderline (0.04–0.06) → flag as "marginal, requires indepe
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`.
-Prose: `(Source: tool_name)`. End with a References section logging every tool used +
-key parameters.
+Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Cancer} and {Gene} with the actual values.
@@ -167,4 +166,4 @@ Answer ALL FOUR synthesis questions, each as its own labelled sentence:
 ## 5. Survival Analysis   (Gene | Cohort | n mutated | n WT | p-value | Interpretation | Source)
 ## 6. Variant Actionability
 No data available (OncoKB unavailable on this cluster). [Add any web-sourced evidence here, labelled "Web source".]
-## References   — | # | Tool | Key parameters | Section | Items retrieved |
+## References   — numbered footnote definitions only, each `[^n^]: [description](url)`

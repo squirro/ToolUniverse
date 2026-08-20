@@ -298,7 +298,7 @@ the design template over the actual binding surface is weak.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool called + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Target} with the actual target name. The parenthesized column lists after a section
@@ -328,4 +328,4 @@ are IN-SILICO GENERATED proposals — NOT experimentally validated binders; pred
 State plainly: designed candidates are model PROPOSALS (generative backbone + designed sequence +
 predicted fold), NOT measured binders; predicted-fold confidence is NOT binding evidence; the
 follow-up is synthesis, expression, and binding assays. Note any dead/empty tool calls.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

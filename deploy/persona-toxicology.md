@@ -154,7 +154,7 @@ high false-positive rate; label them T3–T4 unless corroborated by AOP, ChEMBL 
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Compound} with the actual compound name. Parenthesized column lists specify table
@@ -182,4 +182,4 @@ upfront, then answer ALL FIVE synthesis questions as labelled sentences — do n
 ## 7. Risk Classification
 (Final tier | Rationale | Key evidence points | Confidence)
 ## Data Gaps & Limitations
-## References   — | # | Tool | Parameters | Section | Items Retrieved |
+## References   — numbered footnote definitions only, each `[^n^]: [description](url)`

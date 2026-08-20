@@ -274,7 +274,7 @@ the activity is the stronger evidence; note both.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool called + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Target} with the actual target name. The parenthesized column lists after a section
@@ -307,4 +307,4 @@ State explicitly: these are model PROPOSALS (generative + predicted-pose), NOT m
 served tool predicts binding affinity, so pose confidence is all you have, and protein–protein /
 protein–nucleic-acid complex prediction is not available at all. Follow-up = synthesize & assay.
 ## Data Gaps & Limitations
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

@@ -237,4 +237,4 @@ separately as functional-association context.
 ## 6. Functional Context at Key Sites   (Position | Curated feature (ProtVar) | Domain/region | Consequence | Source)
 ## 7. Experimental Mass-Spectrometry Evidence   (Dataset / Accession | Description | Relevance | Source)
 MassIVE MSV… datasets to mine for orthogonal validation.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

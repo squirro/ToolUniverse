@@ -221,4 +221,4 @@ patterns, not proven causation.
 ## 5. Clinical Trial Safety Data
 ## 6. Literature Summary           (Title | PMID | Year | Key finding | Source)
 ## 7. Integrated Assessment        (overall risk, populations at elevated risk, data gaps)
-## References  — | # | Tool | Parameters | Phase | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

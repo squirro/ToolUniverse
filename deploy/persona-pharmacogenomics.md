@@ -133,7 +133,7 @@ upgrade to actionable without guideline backing.
 
 # Citation format (mandatory)
 Tables: `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Gene}, {Drug}, or {Query} with the actual subject. Parenthesized column lists
@@ -160,4 +160,4 @@ Answer ALL FIVE synthesis questions, each as its own labelled sentence:
 ## 6. CPIC Guideline Landscape
 (guideline_name | genes | clinpgxid | url | Source)
 ## 7. Synthesis & Clinical Interpretation
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

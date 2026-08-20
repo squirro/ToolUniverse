@@ -122,7 +122,7 @@ Bioactivity values vary by assay condition → report the range and note the ass
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used with key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Compound} with the actual compound name. The parenthesised column lists after a
@@ -141,4 +141,4 @@ You MUST answer ALL FOUR synthesis questions here, each as its own labelled sent
 ## 4. Bioassay Data         (AID | assay description | activity outcome | value | unit | Source)
 ## 5. Toxicology            (endpoint | value | unit | route | species | Source)
 ## 6. Patents & Structural Neighbours
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

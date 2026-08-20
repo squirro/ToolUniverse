@@ -127,7 +127,7 @@ note both. Trial result contradicts label → the trial is newer; note both.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Indication}, {Intervention}, {Biomarker} with the actual values. Parenthesized
@@ -157,4 +157,4 @@ You MUST answer ALL FIVE design questions here, each as its own labelled sentenc
 ## 12. Success Criteria & Go/No-Go Decision
 ## 13. Feasibility Scorecard   (component | weight | sub-score 0-10 | weighted | rationale)
 ## 14. Recommendations & Next Steps
-## References   — | # | Tool | Key parameters | Section | Items retrieved |
+## References   — numbered footnote definitions only, each `[^n^]: [description](url)`

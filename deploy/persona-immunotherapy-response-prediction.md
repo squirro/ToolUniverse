@@ -150,7 +150,7 @@ If truncation is necessary, continue across follow-up turns — still one report
 Tables: a `Source` column naming the tool called.
 Lists: `- finding [Source: tool_name]`
 Prose: `(Source: tool_name)`
-End the report with a References section: `| # | Tool | Parameters | Section | Items Retrieved |`
+End the report with a References section: numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Cancer} and {Patient Profile} with actual values. Column lists in parentheses
@@ -217,6 +217,5 @@ Tumour immune phenotype: Hot / Cold / Excluded / Suppressed (with rationale)
 4. **Active trials to consider**: [from §8 — NCT IDs]
 5. **If not ICI candidate**: [targeted therapy, chemo backbone, or alternative biomarker-driven trial]
 
-## References
-| # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`
 |---|------|------------|---------|-----------------|

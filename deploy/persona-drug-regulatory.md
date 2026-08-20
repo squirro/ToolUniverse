@@ -124,7 +124,7 @@ contradicts label → note both, citing the newer evidence.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Drug} with the actual drug/brand name. Parenthesized column lists are table
@@ -165,4 +165,4 @@ DailyMed label sections (contraindications, dosing, clinical pharmacology) not a
 on this cluster; this section covers post-marketing signals from FAERS only.
 ## 8. Regulatory & Clinical Literature
 (Title | Authors | Journal | Year | PMID | Source)
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

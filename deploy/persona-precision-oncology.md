@@ -127,7 +127,7 @@ only → note regulatory status per region. Trial contradicts label → trial is
 
 # Citation format (mandatory)
 Tables: `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Cancer} and {Profile} with actual values. Column lists after headings specify
@@ -168,5 +168,4 @@ Answer ALL SIX synthesis questions, each as its own labelled sentence:
 ## 9. Evidence Tiers Summary
 (entity | type (variant/drug) | Grade (T1–T4) | rationale | Source)
 
-## References
-| # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

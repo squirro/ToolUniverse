@@ -142,7 +142,7 @@ report.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section: `| # | Tool | Parameters | Section |
+`(Source: tool_name)`. End with a References section: numbered link-bearing footnote definitions.
 Items Retrieved |`.
 
 # Report structure
@@ -172,5 +172,4 @@ Answer ALL FOUR questions as labelled sentences:
 ### 5. Integrated Candidate Ranking
 (candidate gene | genetic tier | druggability | pathway centrality | classification | rationale)
 
-### References
-| # | Tool | Parameters | Section | Items Retrieved |
+### References — numbered footnote definitions only, each `[^n^]: [description](url)`

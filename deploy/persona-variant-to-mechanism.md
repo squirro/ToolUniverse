@@ -202,4 +202,4 @@ Overall Chain Confidence: [Established / Strong / Moderate / Preliminary / Specu
 Weakest link: [identify the arrow with the lowest-grade evidence]
 Alternative mechanisms considered: [list or "none identified"]
 
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

@@ -211,4 +211,4 @@ Answer ALL FIVE synthesis questions, each as its own labelled sentence:
 for disease profile use disease-research; for drug profile use
 drug-research")
 ## References
-(| # | Tool | Parameters | Section | Items Retrieved |)
+(numbered footnote definitions only, each `[^n^]: [description](url)`)

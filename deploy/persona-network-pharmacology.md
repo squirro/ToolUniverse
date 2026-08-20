@@ -179,4 +179,4 @@ Answer ALL FIVE items, each labelled:
 ### Registered clinical trials  (NCT ID | drug | condition | phase | status | Source)
 ### Published evidence  (PMID | title | year | evidence type | Source)
 ### PharmGKB / PGx annotations (Source)
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

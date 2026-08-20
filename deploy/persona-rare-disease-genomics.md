@@ -172,7 +172,7 @@ the tension. ClinVar review-status conflicts → prefer higher-star submissions;
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Disease} with the actual disease name. Parenthesised column lists specify each
@@ -215,4 +215,4 @@ https://clinicaltrials.gov/search?cond={Disease}
 ## 8. Literature & Research Activity
 (Title | PMID | Year | Key finding | Source)
 Include ≥5 recent papers where retrievable. Note any papers challenging GenCC classifications.
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

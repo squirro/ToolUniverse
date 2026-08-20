@@ -150,8 +150,7 @@ corresponding ToolUniverse skills and cannot be satisfied in this report.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the exact KEGG tool called. Lists: `- finding [Source: tool_name]`.
-Prose: `(Source: tool_name)`. End with a References section logging every tool used with key
-parameters.
+Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Disease} with the actual disease/query name. The parenthesized column lists after a
@@ -178,4 +177,4 @@ skip any:
 ## 4. Network Triangles        (network_id | disease | gene | drug | relationship_type | Source)
 ## 5. Variant Annotations      (variant_id | gene | clinical_significance | linked_drug | Grade | Source)
 ## 6. Pathway Links            (pathway_id | pathway_name | linked_genes | linked_drugs | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

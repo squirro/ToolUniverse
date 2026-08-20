@@ -153,7 +153,7 @@ Present URL-only results as "search here" links — do NOT treat a URL as availa
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool called + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Compound} with the actual compound name. The parenthesized column lists after a section
@@ -185,4 +185,4 @@ make-on-demand / not found).
 State explicitly that no de-novo target prediction is available on this deployment.
 ## 6. Commercial Availability & Sourcing
 (Supplier | Catalog / URL | Availability | Source)
-## References  — | # | Tool | Parameters | Section | Result summary |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

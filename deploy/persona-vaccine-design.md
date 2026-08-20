@@ -171,7 +171,7 @@ validation.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose: `(Source:
-tool_name)`. End with a References section logging every tool called + key parameters.
+tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Antigen} with the actual pathogen/antigen queried. The parenthesized column lists after a section
@@ -195,4 +195,4 @@ You MUST answer ALL FIVE synthesis questions here, each as its own labelled sent
 ## 8. Conservation & Escape Risk   (Region/Epitope | Conservation | Escape_Risk | Source)
 ## 9. Clinical Precedent & Literature   (Trial/Study | Antigen | Phase/Finding | Source)
 ## 10. Limitations   (predicted-only T4 caveat, immunogenicity ≠ binding, coverage capability gap, validation requirement)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

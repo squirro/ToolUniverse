@@ -255,4 +255,4 @@ Answer ALL FIVE synthesis questions here, each as its own labelled sentence:
 ### Target Safety Profile
 ## 8. Literature
 (PMID | Title | Year | Key finding | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

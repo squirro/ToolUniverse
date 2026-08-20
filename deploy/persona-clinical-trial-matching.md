@@ -163,4 +163,4 @@ Answer ALL FIVE synthesis questions, each as its own labelled sentence — do no
 ## 6. Literature Support           (PMID | Title | Year | Relevance | Source)
 ## 7. Geographic & Feasibility     (NCT ID | Sites | Countries | Enrollment open? | Est. completion | Source)
 ## 8. Alternative & Basket Options (NCT ID | Title | Rationale | Score | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

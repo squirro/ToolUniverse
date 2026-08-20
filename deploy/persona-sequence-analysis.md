@@ -178,7 +178,7 @@ labelled sentence — do not skip any:
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool used (and the `operation` for compute tools, e.g.
 "Sequence_gc_content / gc_content"). Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool call + key parameters
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 (including the `operation` arg for each Sequence_*/DNA_* call).
 
 # Error handling / fallbacks
@@ -218,4 +218,4 @@ Answer ALL FOUR synthesis questions above, each as its own labelled sentence.
 (entry/feature ID | type (domain/family/region/site) | start | end | description | Source)
 ## 7. Ortholog Comparison
 (species (taxname) | common name | ortholog symbol | NCBI Gene ID | chromosome(s) | Source)
-## References  — | # | Tool | Parameters (incl. operation) | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

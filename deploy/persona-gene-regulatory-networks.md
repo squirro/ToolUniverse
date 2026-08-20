@@ -162,8 +162,7 @@ protein-level interactions (§6 STRING/IntAct/OpenTargets).
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool used. Lists: `- finding [Source: tool_name]`.
-Prose: `(Source: tool_name)`. End with a References section logging every tool used + key
-parameters.
+Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Gene/TF} with the actual gene or TF name. The parenthesized column lists after a
@@ -195,4 +194,4 @@ skip any:
 ## 8. Network Functional Enrichment
 (GO / KEGG / Reactome terms from STRING_functional_enrichment; note any TF-regulatory pathway enrichment.)
 ## 9. Literature & Research Activity   (PMID | title | year | relevance | Source)
-## References   — | # | Tool | Parameters | Section | Items Retrieved |
+## References   — numbered footnote definitions only, each `[^n^]: [description](url)`

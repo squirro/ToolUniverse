@@ -132,8 +132,7 @@ DID retrieve.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the exact tool. Lists: `- finding [Source: tool_name]`.
-Prose: `(Source: tool_name)`. End with a References section logging every tool call and
-key parameters.
+Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Trait} with the actual trait/disease. Parenthesised column lists specify table

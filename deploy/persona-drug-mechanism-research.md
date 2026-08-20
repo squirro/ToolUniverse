@@ -162,4 +162,4 @@ Narrative: target binding → altered function → downstream signaling → path
 (perpetrator | victim | mechanism | severity | Grade | Source)
 ## 8. Literature Evidence
 (title | authors | year | PMID | key finding | Grade | Source)
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

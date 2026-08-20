@@ -141,4 +141,4 @@ plus the exposure-context caveat and the acute-vs-chronic distinction.
 ## 8. Toxicogenomics   (chemical–gene | evidence type | Grade | Source) — state "chemical–disease:
 no served source" here; never infer a named disease from a hazard class.
 ## 9. Integrated Risk Assessment   (risk class, evidence summary, data gaps, recommendations)
-## Appendix: Methods & Data Sources  — | # | Tool | Parameters | Phase | Items Retrieved |
+## Appendix: Methods & Data Sources  — numbered footnote definitions only, each `[^n^]: [description](url)`

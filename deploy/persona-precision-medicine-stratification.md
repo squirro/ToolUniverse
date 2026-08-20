@@ -158,7 +158,7 @@ PGx: CPIC Level A / PharmGKB 1A → T1; CPIC B / PharmGKB 1B → T2; CPIC C / Ph
 Pathogenicity conflict → prefer ClinVar review status (expert panel > multiple submitters > single). CPIC vs PharmGKB → prefer CPIC A/B. Drug approved in one region → note per region. Trial contradicts label → both, trial is newer.
 
 # Citation format (mandatory)
-Tables: `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose: `(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+Tables: `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Disease} and {Profile} with actual values. Parenthesized column lists = table schema — render as GFM tables; do NOT print parentheses literally.
@@ -190,4 +190,4 @@ Answer ALL SIX synthesis questions, each as its own labelled sentence:
 ## 9. Precision Medicine Risk Score
 (component | sub-score | rationale | Source)
 **Total Score: XX / 100 — {TIER}**
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

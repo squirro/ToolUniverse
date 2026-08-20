@@ -153,7 +153,7 @@ circRNA sponge claimed without CLIP/reporter evidence → record as unproven, do
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {ncRNA} with the actual ncRNA name. The parenthesized column lists after a section heading
@@ -175,4 +175,4 @@ its function (genetic locus, host gene, conserved family), and whether its mecha
 ## 4. Disease Associations               (disease | Grade (T1-T4) | evidence | PMID | Source)
 ## 5. Pathway Analysis                   (pathway | FDR/p | overlapping targets | Source)
 ## 6. Mechanistic Model & Clinical Potential
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

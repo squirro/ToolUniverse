@@ -247,7 +247,7 @@ the range, note the largest/most recent study.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Subject} with the actual gene / disease / trait / drug queried. The parenthesized column
@@ -289,5 +289,4 @@ Answer ALL of these as labelled sentences — do not skip any:
 ## 8. Research Gaps
 (prose: what interventional data would resolve the causal question + honest data-limits)
 
-## References
-| # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

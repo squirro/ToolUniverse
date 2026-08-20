@@ -157,4 +157,4 @@ Answer ALL FIVE questions, each as its own labelled sentence:
 ## 6. Expression Context
 ## 7. Literature
 ## 8. Recommended Next Steps
-## References   — | # | Tool | Parameters | Phase | Items Retrieved |
+## References   — numbered footnote definitions only, each `[^n^]: [description](url)`

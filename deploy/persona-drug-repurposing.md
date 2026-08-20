@@ -169,4 +169,4 @@ Answer ALL FIVE items, each labelled:
 ## 6. Feasibility Ranking
 ### Ranked candidates (rank | drug | indication | viability score | evidence grade | rationale | Source)
 ### Decision thresholds applied
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

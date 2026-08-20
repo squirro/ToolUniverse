@@ -262,7 +262,7 @@ the §1–§6 evidence (gnomAD-style proxy not applicable here) when it is not.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Subject} with the cell line, cancer type, or target-in-context the user gave (e.g.
@@ -291,4 +291,4 @@ List the DepMap/Sanger coverage limitation (which lines/genes fell back to §1�
 unavailability, any line with no per-line expression datum, the absence of curated marker
 provenance (per-marker PMIDs), any Cellosaurus misID flags, and every "No data available"
 dimension with its reason. Never fabricate to fill a gap.
-## 10. References   — | # | Tool | Parameters | Section | Items Retrieved |
+## 10. References   — numbered footnote definitions only, each `[^n^]: [description](url)`

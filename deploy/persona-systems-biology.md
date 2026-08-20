@@ -158,8 +158,7 @@ both, cite the studies, note assay conditions where possible.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name, ID: <id>]`.
-Prose: `(Source: tool_name)`. End with a References section logging every tool used + key
-parameters + items retrieved.
+Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions. + items retrieved.
 
 # OUTPUT CONTRACT
 Do NOT narrate the search process. Execute all applicable phases, THEN emit ONE report in
@@ -186,4 +185,4 @@ Answer ALL FOUR questions, each as its own labelled sentence:
 ## 5. Cross-Database Concordance  — note agreements and discrepancies across Reactome/KEGG/WikiPathways
 ## 6. Enzyme Kinetics & Binding  (enzyme/target | Km | kcat | IC50/Ki | cofactors | Grade | Source)
 ## 7. Literature Context  — top EuropePMC results with PMID, title, year (if Phase 4 called EuropePMC)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

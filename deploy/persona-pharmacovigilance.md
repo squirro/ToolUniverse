@@ -118,7 +118,7 @@ contradicts label → the trial is more recent evidence; note both.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Drug} with the actual drug name (generic INN). The parenthesized column lists after a
@@ -143,4 +143,4 @@ skip any:
 ## 5. Label Warnings          (Warning | Grade (T1-T4) | Severity Tier | Source)
 ## 6. Pharmacogenomics         (Gene | Variant | Evidence Level | CPIC/DPWG Guideline | Clinical Impact | Source)
 ## 7. Clinical Trial Safety
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

@@ -196,7 +196,7 @@ indeterminate (insufficient signals)" and recommend an experimental functional a
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {VARIANT_ID} with the actual variant (e.g. `P04637_R175H = TP53 R175H`). The parenthesized
@@ -223,4 +223,4 @@ High / Medium / Low, with the signal-agreement count that justified it.
 ## Limitations
 List every signal that conflicted or was "No data available", plus the relevant honest-limitation
 caveats (low pLDDT, sparse curated annotation, no covering PDB, missense-only, etc.).
-## References   — | # | Tool | Parameters | Layer | Result |
+## References   — numbered footnote definitions only, each `[^n^]: [description](url)`

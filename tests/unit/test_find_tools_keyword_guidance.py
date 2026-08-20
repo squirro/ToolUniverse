@@ -86,3 +86,23 @@ def test_get_skill_docstring_says_to_honor_an_explicitly_named_skill():
     match = re.search(r'"""(.*?)"""', source[start:], re.DOTALL)
     assert match
     assert re.search(r"user\s+(explicitly\s+)?names\s+a\s+skill", match.group(1), re.IGNORECASE), match.group(1)
+
+
+# --- the fast-path list must cover pathogens, and scope disease-research (2026-08-20) ---
+# Live trace: an H5N1 clade 2.3.4.4b brief matched the list's first row ("disease
+# overview") and loaded disease-research, whose OpenTargets id resolution returns
+# nothing for a virus clade -- the skill then stalled and the turn fell back to web.
+
+def test_the_fast_path_routes_a_pathogen_question_to_infectious_disease():
+    source = SRC.read_text()
+    start = source.index("async def get_skill(")
+    doc = re.search(r'"""(.*?)"""', source[start:], re.DOTALL).group(1)
+    assert re.search(r'(outbreak|pathogen)[\s\S]{0,200}infectious-disease', doc, re.IGNORECASE), doc
+
+
+def test_the_fast_path_scopes_disease_research_to_human_diseases():
+    source = SRC.read_text()
+    start = source.index("async def get_skill(")
+    doc = re.search(r'"""(.*?)"""', source[start:], re.DOTALL).group(1)
+    line = next(l for l in doc.splitlines() if "disease-research" in l)
+    assert "human" in line.lower(), line

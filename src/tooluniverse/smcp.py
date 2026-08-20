@@ -1077,7 +1077,10 @@ class SMCP(FastMCP):
             explicitly names a skill ("use the clinical-guidelines skill"), call get_skill
             with EXACTLY that name — never substitute a different skill. Otherwise choose the
             skill by the INTENT (the question being asked), not by keywords:
-              - disease overview (biology, targets, drugs, trials) -> "disease-research"
+              - HUMAN disease overview (biology, targets, drugs, trials) -> "disease-research"
+              - pathogen / outbreak / emerging virus or strain situation (H5N1, a clade,
+                an epidemic) -> "infectious-disease" -- NOT "disease-research", whose id
+                resolution is ontology-based and returns nothing for a virus clade
               - rare disease from a gene/phenotype -> "rare-disease-diagnosis"
               - drug profile -> "drug-research"; mechanism of action -> "drug-mechanism-research";
                 new uses/repurposing -> "drug-repurposing"; label/approval status -> "drug-regulatory"

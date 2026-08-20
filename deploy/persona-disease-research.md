@@ -54,7 +54,13 @@ still one report. Mark any dimension with no data as "No data available".
    The mapper matches EXACT surface forms only — fed a plural name ("…tumours") it returns an
    empty mappings object with no hits; NEVER pass it a free-text name. NEVER use an
    abbreviation anywhere in §1 ("pNET" resolves to primitive neuroectodermal tumor — the
-   WRONG disease). State a caveat if only a broader/closest term exists.
+   WRONG disease).
+   WRONG-INSTRUMENT STOP: if (a) returns no hit, the subject is probably not an ontology
+   disease — a pathogen, a viral strain or clade ("H5N1 clade 2.3.4.4b"), a procedure, a
+   chemical. Do NOT run the dimensions on an unresolved id and do NOT quietly fall back to
+   web. Name the subject that failed to resolve, then call `find_skill("<task keywords>")`
+   and run the skill it returns (a pathogen brief belongs to infectious-disease).
+   State a caveat if only a broader/closest term exists.
    CRITICAL ID FORMAT: OpenTargets efoId args use the UNDERSCORE id — `MONDO_0008315`, `EFO_0001663`
    (this tool's `id` field is already underscore). NEVER pass the colon form `MONDO:0008315` to an
    OpenTargets tool — it silently returns success with empty `{}`. Only §2's Mondo tool uses the

@@ -11,6 +11,7 @@ branch and does not register this checkout as a submodule, so a clean parent clo
 surface — the ``swiss-rockets`` test workflow — and removes the cross-repo path hop.
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -767,3 +768,12 @@ def test_every_served_body_names_only_reachable_tools():
             unresolvable[body.name] = hits
 
     assert unresolvable == {}, unresolvable
+
+
+def test_disease_research_stops_when_the_subject_is_not_an_ontology_disease():
+    """A pathogen/strain subject resolves to nothing in OpenTargets; the body must say
+    so and hand off, not spend its remaining dimensions on empty ids (2026-08-20)."""
+    body = (DEPLOY / "persona-disease-research.md").read_text()
+
+    assert "find_skill" in body, "no hand-off route named"
+    assert re.search(r"no hit|no match|resolves to nothing", body, re.IGNORECASE), body[:0] or "no wrong-instrument guard"

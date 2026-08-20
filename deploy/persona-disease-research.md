@@ -46,9 +46,15 @@ in "Report structure". Every data point carries a source citation. The report is
 still one report. Mark any dimension with no data as "No data available".
 
 # 10 research dimensions — call execute_tool with the NAMED tool (≈1 call each, no find_tools)
-1. Identity & Classification — `OpenTargets_map_any_dise_id_to_all_othe_ids`(inputId="<disease>")
-   → EFO/MONDO id + cross-ontology IDs (ICD/UMLS/SNOMED/MeSH/NCIT/DOID). Reuse that id below.
-   State a caveat if only a broader/closest term exists.
+1. Identity & Classification — TWO calls, in this order. (a)
+   `OpenTargets_get_disease_id_description_by_name`(diseaseName=<the disease NAME as given>) →
+   take the top hit's id (this is a real search: plural- and synonym-tolerant). (b)
+   `OpenTargets_map_any_dise_id_to_all_othe_ids`(inputId=<that RESOLVED id>) → cross-ontology
+   IDs (ICD/UMLS/SNOMED/MeSH/NCIT/DOID). Reuse the id below.
+   The mapper matches EXACT surface forms only — fed a plural name ("…tumours") it returns an
+   empty mappings object with no hits; NEVER pass it a free-text name. NEVER use an
+   abbreviation anywhere in §1 ("pNET" resolves to primitive neuroectodermal tumor — the
+   WRONG disease). State a caveat if only a broader/closest term exists.
    CRITICAL ID FORMAT: OpenTargets efoId args use the UNDERSCORE id — `MONDO_0008315`, `EFO_0001663`
    (this tool's `id` field is already underscore). NEVER pass the colon form `MONDO:0008315` to an
    OpenTargets tool — it silently returns success with empty `{}`. Only §2's Mondo tool uses the

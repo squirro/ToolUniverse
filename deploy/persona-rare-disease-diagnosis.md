@@ -65,12 +65,20 @@ term: core vs variable, age of onset, inheritance. If a symptom resolves to no H
 proceed to Phase 2 using that symptom as an Orphanet keyword.
 
 ## Phase 2 — Disease Matching
-**HPO-driven (primary):**
-`get_joint_associated_diseases_by_HPO_ID_list`(HPO_ID_list=[real HP:… IDs from Phase 1], limit=20)
-→ ranked candidates by joint phenotype overlap.
+**HPO-driven (primary) — TWO joint calls, both required:**
+(a) `get_joint_associated_diseases_by_HPO_ID_list`(HPO_ID_list=[ALL real HP:… IDs from
+Phase 1], limit=20) → the strict-intersection candidates. This list is often SHORT (2–3
+diseases) because common terms (developmental delay, seizure) are annotated on thousands
+of diseases — a short list here is normal, not a failure.
+(b) `get_joint_associated_diseases_by_HPO_ID_list`(HPO_ID_list=[ONLY the 2–3 MOST
+DISCRIMINATING HP: IDs — the rarest features you flagged in Phase 1, e.g. coarse facial
+features + hepatosplenomegaly, NOT delay/seizures], limit=30) → the clinically decisive
+differential (this is what surfaces the storage-disorder class for a coarse-facies +
+organomegaly picture). Merge (a) and (b); score every candidate against the FULL Phase-1
+term set.
 **Keyword search (always run):**
 `Orphanet_search_diseases`(query="<primary syndrome keyword>", limit=20)
-→ captures diseases the HPO lookup may miss.
+→ captures diseases the HPO lookup may miss. SKIP any hit whose name starts "OBSOLETE:".
 Score: Excellent >80%, Good 60–80%, Possible 40–60%, Low <40%.
 
 ## Phase 3 — Gene Panel Characterization

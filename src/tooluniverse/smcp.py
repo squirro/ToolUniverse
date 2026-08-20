@@ -1283,9 +1283,17 @@ class SMCP(FastMCP):
             fits. find_tools locates the right tool; you then run it with
             execute_tool(name, arguments) over the schema it returns.
 
-            WORKFLOW: find_tools("<5-10 word description of what you need>") -> read the returned
-            tool schemas -> execute_tool(tool_name, arguments). Resolve entity names to IDs first
+            WORKFLOW: find_tools("<3-8 KEYWORDS>") -> read the returned tool schemas ->
+            execute_tool(tool_name, arguments). Resolve entity names to IDs first
             (disease -> EFO, drug -> ChEMBL, gene -> Ensembl/UniProt); never fabricate an ID.
+
+            PHRASE THE QUERY AS KEYWORDS that appear in tool names and descriptions
+            ("PDB structure", "drug interactions FDA", "tissue expression") — NEVER as a
+            natural-language question. Matching is lexical on this deployment: an
+            intent-shaped query ("is SSTR2 structurally tractable for a small molecule")
+            returns mostly irrelevant tools, while its keywords ("protein structure")
+            return exactly the right ones. Put entity names in execute_tool arguments,
+            not in the find_tools query.
 
             IMPORTANT — pass ONLY `query`. Do NOT pass `categories` unless you can name a valid
             database category exactly: speculative or topical names (e.g. "biology", "genetics",

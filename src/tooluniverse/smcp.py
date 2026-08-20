@@ -1130,8 +1130,15 @@ class SMCP(FastMCP):
             get_skill fast-path list does not enumerate. If it returns nothing relevant, ask the
             user one clarifying question rather than guessing.
 
+            PHRASE THE QUERY AS TASK KEYWORDS — what kind of analysis is wanted — and LEAVE
+            OUT gene/drug/disease names. Matching is lexical, and several skill descriptions
+            name portfolio entities as domain examples, so an entity name hijacks the ranking:
+            "Where is SSTR2 expressed in normal tissues?" ranks two SSTR2-mentioning design
+            skills, while "normal tissue expression" ranks expression-data-retrieval first.
+            The entity belongs in the loaded skill's tool calls, not in this query.
+
             Args:
-                query: the user's research request in natural language.
+                query: TASK keywords describing the analysis (no entity names).
                 limit: max skills to return (default 5).
 
             Returns:

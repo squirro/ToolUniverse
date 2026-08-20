@@ -43,3 +43,35 @@ def test_the_prod_persona_phrases_the_find_tools_fallback_as_keywords():
     body = (DEPLOY / "persona-prod-base.md").read_text()
     line = next(l for l in body.splitlines() if "find_tools(" in l)
     assert "keyword" in line.lower(), line
+
+
+# --- find_skill has the same lexical matcher, one level up (DSR-630 round 2) ---
+# Measured on sr-dev 2026-08-20: find_skill("Where is SSTR2 expressed in normal
+# tissues?") returns binder-discovery + protein-therapeutic-design — entity-token hits
+# on role paragraphs that NAME SSTR2 as a domain example — while find_skill("normal
+# tissue expression") ranks expression-data-retrieval first. So the query guidance must
+# say TASK keywords with entity names left out, on both surfaces.
+
+
+def _find_skill_docstring() -> str:
+    source = SRC.read_text()
+    start = source.index("async def find_skill(")
+    match = re.search(r'"""(.*?)"""', source[start:], re.DOTALL)
+    assert match, "find_skill has no docstring"
+    return match.group(1)
+
+
+def test_find_skill_docstring_tells_the_agent_to_query_by_task_keywords():
+    doc = _find_skill_docstring()
+    assert "task keyword" in doc.lower(), doc
+
+
+def test_find_skill_docstring_warns_against_entity_names_in_the_query():
+    doc = _find_skill_docstring()
+    assert re.search(r"gene[^.]*name|entity name", doc, re.IGNORECASE), doc
+
+
+def test_the_demo_persona_phrases_find_skill_as_task_keywords():
+    body = (DEPLOY / "persona-prod-demo-4k.md").read_text()
+    line = next(l for l in body.splitlines() if "find_skill(" in l and "MUST" in l)
+    assert "task keyword" in line.lower(), line

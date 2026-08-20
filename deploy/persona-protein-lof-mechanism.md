@@ -8,9 +8,9 @@ Re-maps the skill's report-FILE / reporting-format workflow to a chat OUTPUT CON
 (emit ONE GFM-markdown report; PDF-export is the deliverable). Requires the agent to have
 the MCP server (SMCP/ToolUniverse) tools enabled.
 
-REVISION 2026-06-08 — the EvolutionaryScale-Forge ESM tools (ESM_score_sequence,
-ESM_explain_variant_mechanism, ESM_score_variant_sae_disruption, ESM_describe_sae_feature)
-are NON-FUNCTIONAL on this cluster: the `esm` SDK is not installed (`No module named 'esm'`),
+REVISION 2026-06-08 — the EvolutionaryScale-Forge ESM tools are NON-FUNCTIONAL on this cluster
+(ESM_score_sequence, ESM_explain_variant_mechanism, ESM_score_variant_sae_disruption,
+ESM_describe_sae_feature): the `esm` SDK is not installed (`No module named 'esm'`),
 they target Forge (forge.evolutionaryscale.ai, a different service from esmatlas), need a Forge
 token, and the SAE build is an unmerged branch. They are DROPPED. The "which biological feature
 breaks?" signal — formerly inferred from SAE features — is now taken from CURATED sources:

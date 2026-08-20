@@ -174,13 +174,60 @@ def test_a_tool_marked_not_available_on_its_own_line_is_not_a_live_instruction()
 
 
 def test_a_tool_named_only_in_the_documentation_header_is_not_a_live_instruction():
-    """The agent is served the body; a leading HTML comment is for humans."""
+    """Studio surface: the human pastes the body below the comment, so the header
+    is never applied to the agent. (The get_skill surface is different — see the
+    include_header tests below.)"""
     text = (
         "<!--\nconverted 2026-06-04; dropped CTD_get_gene_diseases from phase 2\n-->\n"
         "# Role\nCall ChEMBL_search_targets for the ligands.\n"
     )
 
     assert persona_lint.live_unserved_tools(text, DEAD) == []
+
+
+# --- the get_skill surface serves the RAW file, header included (DSR-687) ---
+# load_skill_body() returns path.read_text() and the Dockerfile stages bodies with a
+# plain `cp`, so an agent asking get_skill("name") READS the leading HTML comment.
+# A header that claims a dead tool "IS available" mis-instructs the agent exactly like
+# body text would — which is how two bodies went stale against the DrugBank exclusion
+# (DSR-638) under a green corpus sweep.
+
+
+def test_a_header_claim_is_live_on_the_get_skill_surface():
+    """persona-precision-medicine-stratification.md's shape: an available-tools
+    inventory inside the header, naming a tool the image has since excluded."""
+    text = (
+        "<!--\nAVAILABLE (verified):\n"
+        "civic_search_evidence_items, CTD_get_gene_diseases,\n"
+        "gnomad_get_variant\n-->\n"
+        "# Role\nCall civic_search_evidence_items for the evidence.\n"
+    )
+
+    assert persona_lint.live_unserved_tools(text, DEAD, include_header=True) == [
+        "CTD_get_gene_diseases"
+    ]
+
+
+def test_excluded_is_an_unavailability_marker():
+    """persona-literature-deep-research.md's shape: 'X is likewise excluded'.
+
+    "Excluded" is this deploy's canonical word for a removed tool (the Dockerfile's
+    own --exclude-tools vocabulary), so a line using it is a warning, not a call."""
+    text = "advanced_literature_search_agent is likewise excluded from the image."
+
+    assert persona_lint.live_unserved_tools(
+        text, {"advanced_literature_search_agent"}
+    ) == []
+
+
+def test_a_header_do_not_call_note_stays_suppressed_on_the_get_skill_surface():
+    """The 17 bodies whose headers correctly FORBID an excluded tool must still pass."""
+    text = (
+        "<!--\nUNAVAILABLE on this cluster (do not call): CTD_get_gene_diseases\n-->\n"
+        "# Role\nCall ChEMBL_search_targets for the ligands.\n"
+    )
+
+    assert persona_lint.live_unserved_tools(text, DEAD, include_header=True) == []
 
 
 def test_a_positive_instruction_beside_a_prohibition_is_still_live():
@@ -242,7 +289,11 @@ def test_no_served_skill_body_instructs_a_dead_call():
         body = DEPLOY / f"persona-{name}.md"
         if not body.is_file():
             continue
-        dead = persona_lint.live_unserved_tools(body.read_text(), excluded)
+        # include_header: these bodies go out through get_skill, which serves the
+        # raw file — the agent reads the leading comment too (DSR-687).
+        dead = persona_lint.live_unserved_tools(
+            body.read_text(), excluded, include_header=True
+        )
         if dead:
             offenders[name] = dead
 

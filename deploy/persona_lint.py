@@ -139,6 +139,9 @@ _UNAVAILABLE = (
     # "there is NO `ZFIN_search` or `WormBase_search` tool deployed" -- same statement as
     # "not deployed", phrased around the noun instead of the verb.
     "tool deployed",
+    # The Dockerfile's own vocabulary: a body saying a tool "is excluded" is relaying
+    # the --exclude-tools decision, not instructing a call (DSR-687).
+    "excluded",
 )
 
 
@@ -147,7 +150,9 @@ def _marks_unavailable(line: str) -> bool:
     return any(marker in low for marker in _UNAVAILABLE)
 
 
-def live_unserved_tools(text: str, excluded: set[str]) -> list[str]:
+def live_unserved_tools(
+    text: str, excluded: set[str], *, include_header: bool = False
+) -> list[str]:
     """Excluded tools the body actively tells the agent to CALL, in sorted order.
 
     ``unserved_tools`` counts every mention, which over-reports: a body that already
@@ -160,9 +165,16 @@ def live_unserved_tools(text: str, excluded: set[str]) -> list[str]:
     when it sits under a block whose opening line is such a directive. Suppression is
     per-mention, never per-body: one caveat about one tool must not clear a whole
     phase, so a tool named positively anywhere still counts.
+
+    ``include_header`` selects the surface (DSR-687). Default False models the Studio
+    paste, where the human copies the body below the leading HTML comment. True models
+    the get_skill surface: ``load_skill_body`` returns the RAW file and the Dockerfile
+    stages it with a plain ``cp``, so the agent reads the header too — a header
+    claiming a dead tool "IS available" mis-instructs it exactly like body text would.
     """
     live: set[str] = set()
-    for block in re.split(r"\n\s*\n", body_text(text)):
+    scanned = text if include_header else body_text(text)
+    for block in re.split(r"\n\s*\n", scanned):
         lines = block.splitlines()
         if not lines or _marks_unavailable(lines[0]):
             continue

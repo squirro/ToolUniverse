@@ -8,13 +8,16 @@ Deployable body ~9.7k chars — fits the 10000-char production persona field dir
 UNAVAILABLE on this cluster (do not call): ADMETAI_predict_solubility_lipophilicity_hydration
 (registered but ERRORS at execution — missing admet-ai package; registry-existence != functional).
 
-CORRECTION [2026-06-04, claims-only]: the OpenTargets *_by_ensemblID / *_by_chemblId family,
-HPA_get_comprehensive_gene_details_by_ensembl_id and drugbank_get_targets_by_drug_name_or_drugbank_id
-were previously listed unavailable here — that was a NAME-SHORTENING grounding artifact, not real
-absence. Their >45-char names deploy under shortened aliases (e.g.
-OpenTargets_get_target_safety_profile_by_ensemblID -> OpenTargets_get_targ_safe_prof_by_ense) which
-execute_tool alias-resolves; verified deployed against the live registry. See
-docs/reports/dsr-509-tool-name-shortening-finding.md + dsr-509-grounding-sweep.md. They ARE available.
+CORRECTION [2026-06-04, claims-only]: the OpenTargets *_by_ensemblID / *_by_chemblId family and
+HPA_get_comprehensive_gene_details_by_ensembl_id were previously listed unavailable here — that
+was a NAME-SHORTENING grounding artifact, not real absence. Their >45-char names deploy under
+shortened aliases (e.g. OpenTargets_get_target_safety_profile_by_ensemblID ->
+OpenTargets_get_targ_safe_prof_by_ense) which execute_tool alias-resolves; verified deployed
+against the live registry. See docs/reports/dsr-509-tool-name-shortening-finding.md +
+dsr-509-grounding-sweep.md. They ARE available.
+UPDATE [2026-08-20, DSR-687]: drugbank_get_targets_by_drug_name_or_drugbank_id is EXCLUDED from
+the image — the DrugBank dataset is not licensed for commercial use (DSR-638), a LEGAL exclusion,
+so no DrugBank-derived source may replace it. The 2026-06-04 correction no longer covers it.
 NOTE: claims-only correction — they are intentionally NOT wired into the workflow below, so this body's
 active tool routing (and its gate PASS) is unchanged. Enabling + re-gating is a separate task.
 -->

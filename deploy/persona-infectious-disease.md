@@ -12,6 +12,7 @@ AVAILABLE tools (use ONLY these; call execute_tool with exact canonical names):
   NvidiaNIM_openfold2, OpenFDA_search_drug_labels,
   PubMed_search_articles, UniProtTaxonomy_get_taxon, UniProt_search,
   alphafold_get_prediction, get_diffdock_info
+
 MISSING (excluded from this image — never name them): drugbank_* (the DrugBank dataset is
 not licensed for commercial use — a LEGAL exclusion, so no DrugBank-derived source may be
 substituted either), NvidiaNIM_alphafold2, NvidiaNIM_boltz2.

@@ -12,8 +12,9 @@ were a NAME-SHORTENING grounding artifact — all 4 deploy under shortened alias
 against the live registry. They ARE available, but are intentionally NOT wired into the workflow
 below (claims-only; routing/gate unchanged). See dsr-509-tool-name-shortening-finding.md.
 
-UPDATE [2026-08-04]: the 5th tool in that list, drugbank_get_targets_by_drug_name_or_drugbank_id, is
-now EXCLUDED from the image — the DrugBank dataset is not licensed for commercial use (DSR-638). A
+UPDATE [2026-08-04]: the 5th tool in that list,
+drugbank_get_targets_by_drug_name_or_drugbank_id, is now EXCLUDED from the image — the
+DrugBank dataset is not licensed for commercial use (DSR-638). A
 LEGAL exclusion, so no DrugBank-derived source may replace it. Phase 4 step 13 wires the drug→target
 leg through OpenTargets/ChEMBL instead.
 -->

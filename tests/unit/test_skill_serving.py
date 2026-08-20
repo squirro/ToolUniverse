@@ -85,3 +85,29 @@ def test_available_skills_sorted_stems(skills_dir):
 def test_available_skills_missing_dir_is_empty(tmp_path):
     """A missing skills_dir yields an empty list, not an error."""
     assert available_skills(tmp_path / "nope") == []
+
+
+# --- the serving-surface citation contract (DSR-631) ----------------------
+# The renderer promotes only LINK-bearing footnotes, and a loaded body is BINDING —
+# so the citation contract must ride on the serving surface itself, appended by the
+# loader to EVERY body, superseding whatever an individual body says.
+
+def test_every_served_body_carries_the_citation_contract(skills_dir):
+    from tooluniverse.skill_serving import CITATION_CONTRACT
+
+    body = load_skill_body(skills_dir, "disease-research")
+
+    assert body.endswith(CITATION_CONTRACT)
+    assert "source_url" in CITATION_CONTRACT
+    assert "supersede" in CITATION_CONTRACT.lower()
+
+
+def test_the_original_body_text_is_preserved_ahead_of_the_contract(skills_dir):
+    body = load_skill_body(skills_dir, "drug-research")
+
+    assert body.startswith("# Role\nDrug SOP body")
+
+
+def test_an_unknown_name_still_raises_not_found(skills_dir):
+    with pytest.raises(SkillNotFound):
+        load_skill_body(skills_dir, "no-such-skill")

@@ -300,6 +300,25 @@ def test_no_served_skill_body_instructs_a_dead_call():
     assert offenders == {}, f"bodies instructing dead calls: {offenders}"
 
 
+def test_no_served_body_prescribes_a_linkless_references_log():
+    """DSR-631: the chat renderer promotes only LINK-bearing footnotes, so a body that
+    orders 'a References section logging every tool + parameters' (the old file-report
+    convention) makes the agent emit references that render broken. The citation
+    contract is enforced centrally by get_skill (skill_serving.CITATION_CONTRACT);
+    bodies must not carry text that argues with it."""
+    offenders = {}
+    for name in sorted(persona_lint.served_skill_names(DEPLOY)):
+        body = DEPLOY / f"persona-{name}.md"
+        if not body.is_file():
+            continue
+        text = body.read_text()
+        hits = [marker for marker in ("| # | Tool | Parameters", "References section logging")
+                if marker in text]
+        if hits:
+            offenders[name] = hits
+    assert offenders == {}, f"bodies prescribing link-less references: {offenders}"
+
+
 def test_a_body_that_forbids_the_dead_tool_passes(tmp_path):
     """Naming a tool in order to forbid it is the correct behaviour, not a failure."""
     deploy = _deploy_dir_excluding(tmp_path, "CTD_get_gene_diseases")

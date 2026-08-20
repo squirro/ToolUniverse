@@ -24,6 +24,25 @@ class SkillNotFound(ValueError):
     """Raised when ``get_skill`` is asked for a name with no served body."""
 
 
+# Appended to EVERY served body (DSR-631). The citation contract is a property of the
+# serving surface — the Squirro chat renderer promotes only LINK-bearing footnotes —
+# not of any one skill, so it rides here rather than being copied into 76 bodies where
+# it drifts. A loaded body is BINDING for the turn, which is exactly why this trailer
+# must supersede any older References convention a body still carries.
+CITATION_CONTRACT = """
+
+---
+# Citation contract (serving surface — SUPERSEDES any References format stated above)
+Cite with markdown footnotes `[^n^]`, and every footnote definition MUST carry a link —
+the chat renderer promotes only link-bearing footnotes; a bare tool-name reference
+renders broken. Link preference: (1) the `source_url` field in the tool's result
+envelope, (2) a link built from a returned ID (record page or API query URL). A result
+with neither is attributed INLINE as `(via tool_name)` — never as a footnote and never
+a "tool + parameters" log entry. The report's References section is ONLY the numbered
+footnote definitions, each `[^n^]: [description](url)`.
+"""
+
+
 def normalize_skill_name(name: str) -> str:
     """Normalize a requested skill name to its file stem.
 
@@ -69,4 +88,4 @@ def load_skill_body(skills_dir: str | Path, name: str) -> str:
         raise SkillNotFound(
             f"no served skill {stem!r}; available: {available_skills(directory)}"
         )
-    return path.read_text(encoding="utf-8")
+    return path.read_text(encoding="utf-8") + CITATION_CONTRACT

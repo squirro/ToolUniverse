@@ -22,12 +22,14 @@ steps:
   - id: hypothesis
     label: "Phase 0 — clinical reasoning, before any tool call"
     calls: []
-    produces: [working_hypothesis, discriminating_features]
+    produces: [primary_keyword, working_hypothesis, discriminating_features]
     notes: >-
       State the top 3-5 candidates and the reasoning chain, and name the rarest,
       most discriminating features. Do this from the presentation alone — it is
       what decides which phenotypes drive the intersection below. Carry the case's
-      symptoms as a list in `symptoms`.
+      symptoms as a list in `symptoms`, and set `primary_keyword` to ONE short
+      search phrase for the leading syndrome class (a string, not a list — the
+      keyword search takes a single query).
 
   - id: phenotypes
     label: "Phase 1 — resolve each symptom to an HPO id"
@@ -73,7 +75,7 @@ steps:
     requires: [phenotypes]
     calls:
       - tool: Orphanet_search_diseases
-        arguments: {query: "{working_hypothesis}", limit: 20}
+        arguments: {query: "{primary_keyword}", limit: 20}
     produces: [top_candidate]
     notes: >-
       Catches diseases the phenotype lookup misses. SKIP any hit whose name begins

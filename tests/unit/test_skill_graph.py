@@ -233,6 +233,49 @@ def test_every_shipped_graph_calls_only_registered_tools(skill):
     assert not unknown, f"{skill} names tools the registry does not hold: {unknown}"
 
 
+def _registry_parameters() -> dict:
+    """tool name -> declared parameter properties, from the shipped registry."""
+    import glob
+    import json
+    out: dict[str, dict] = {}
+    root = Path(__file__).resolve().parents[2] / "src" / "tooluniverse" / "data"
+    for path in glob.glob(str(root / "*.json")):
+        try:
+            with open(path) as handle:
+                loaded = json.load(handle)
+        except (ValueError, OSError):
+            continue
+        if not isinstance(loaded, list):
+            continue
+        for tool in loaded:
+            if isinstance(tool, dict) and "name" in tool:
+                props = (tool.get("parameter") or {}).get("properties") or {}
+                out[tool["name"]] = props
+    return out
+
+
+@pytest.mark.parametrize("skill", [p.stem for p in
+                                   (Path(__file__).resolve().parents[2] / "src" / "tooluniverse"
+                                    / "data" / "skill_graphs").glob("*.yaml")])
+def test_a_graph_only_passes_arguments_the_tool_declares(skill):
+    """A graph composes the call, so a misspelled or invented parameter name is
+    baked in and repeats on every run — worse than an agent guessing once. Live
+    examples of this class: ChEMBL_get_drug_mechanisms without drug_chembl_id,
+    alphafold_get_summary given protein_name where it wants qualifier."""
+    declared = _registry_parameters()
+    graph = load_graph(skill)
+    wrong = []
+    for step in graph["steps"]:
+        for call in step.get("calls", []):
+            props = declared.get(call["tool"])
+            if not props:
+                continue
+            for name in (call.get("arguments") or {}):
+                if name not in props:
+                    wrong.append(f"{step['id']}: {call['tool']}({name})")
+    assert not wrong, wrong
+
+
 def test_every_step_of_a_shipped_graph_is_reachable():
     """A step whose dependency is never satisfiable is dead procedure — it would
     silently drop a phase, which is the defect this design exists to remove."""

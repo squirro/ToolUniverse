@@ -98,13 +98,15 @@ EXPOSE 8000
 # converted research body in deploy/, single source of truth (the served body
 # cannot drift from the persona-direct baseline it is benchmarked against).
 # EXCLUDED (not get_skill-served): router / router-spike (the dispatcher persona,
-# applied to the AGENT), doriano / smcp-only (non-skill personas). Placed after
+# applied to the AGENT), doriano / smcp-only (non-skill personas), and every
+# prod* body (the A/B agent personas of DSR-543/544 — serving one puts it in the
+# find_skill index, competing with real skills). Placed after
 # pip install so editing a body does not bust the install layer cache.
 COPY deploy/persona-*.md /tmp/served/
 RUN mkdir -p /app/served-skills \
  && for f in /tmp/served/persona-*.md; do \
       name="$(basename "$f" .md)"; name="${name#persona-}"; \
-      case "$name" in router|router-spike|doriano|smcp-only) continue ;; esac; \
+      case "$name" in router|router-spike|doriano|smcp-only|prod|prod-*) continue ;; esac; \
       cp "$f" "/app/served-skills/$name.md"; \
     done \
  && rm -rf /tmp/served \

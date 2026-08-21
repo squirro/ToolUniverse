@@ -1051,7 +1051,13 @@ class SMCP(FastMCP):
         from mcp.types import ToolAnnotations
 
         from .skill_index import build_index, search
-        from .skill_serving import SkillNotFound, available_skills, load_skill_body
+        from .skill_graph import graph_directive
+        from .skill_serving import (
+            SkillNotFound,
+            available_skills,
+            load_skill_body,
+            normalize_skill_name,
+        )
 
         skills_dir = self.skills_dir
         # Build the find_skill catalog index ONCE — the served set is fixed at container start.
@@ -1112,9 +1118,12 @@ class SMCP(FastMCP):
                 listing the available skills.
             """
             try:
-                return load_skill_body(skills_dir, name)
+                body = load_skill_body(skills_dir, name)
             except SkillNotFound as exc:
                 return f"ERROR: {exc}"
+            # A skill that ships a process graph is DRIVEN, not read: the header
+            # says so and demotes the phases below it to reference.
+            return graph_directive(normalize_skill_name(name)) + body
 
         @self.tool(
             annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
@@ -1161,7 +1170,7 @@ class SMCP(FastMCP):
                 ensure_ascii=False,
             )
 
-        from .skill_graph import GRAPHS_DIR, SkillGraphError, load_graph, next_step
+        from .skill_graph import GRAPHS_DIR, SkillGraphError, load_graph, next_step  # noqa: F811
 
         graphed = sorted(p.stem for p in GRAPHS_DIR.glob("*.yaml")) \
             if GRAPHS_DIR.is_dir() else []

@@ -154,6 +154,30 @@ def test_a_loop_over_an_empty_list_is_not_a_step_to_run():
     assert step is None
 
 
+# --- telling the agent a graph exists ----------------------------------------
+# A graph nobody is told about changes nothing: get_skill still serves the prose
+# phases, and the agent plans from them exactly as before.
+
+def test_a_graphed_skill_is_told_to_run_the_graph():
+    from tooluniverse.skill_graph import graph_directive
+    text = graph_directive("adverse-event-detection")
+    assert "next_skill_step" in text
+    assert "adverse-event-detection" in text
+
+
+def test_a_skill_without_a_graph_gets_no_directive():
+    from tooluniverse.skill_graph import graph_directive
+    assert graph_directive("disease-research") == ""
+
+
+def test_the_directive_demotes_the_prose_phases_to_reference():
+    """Two sets of instructions that disagree is worse than either alone — the
+    directive has to say which one governs."""
+    from tooluniverse.skill_graph import graph_directive
+    text = graph_directive("adverse-event-detection").lower()
+    assert "reference" in text or "do not plan" in text
+
+
 # --- loading -----------------------------------------------------------------
 
 def test_a_graph_loads_by_skill_name():

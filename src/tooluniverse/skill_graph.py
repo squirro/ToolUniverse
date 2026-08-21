@@ -59,6 +59,40 @@ def load_graph(skill: str, graphs_dir: str | Path | None = None) -> dict:
     return graph
 
 
+def has_graph(skill: str) -> bool:
+    return (GRAPHS_DIR / f"{skill}.yaml").is_file()
+
+
+def graph_directive(skill: str) -> str:
+    """The header prepended to a graphed skill's body, or "" when it has none.
+
+    A graph nobody is told about changes nothing. And two sets of instructions that
+    disagree are worse than either alone, so this states which one governs and
+    demotes the prose phases to reference.
+    """
+    if not has_graph(skill):
+        return ""
+    return f"""# RUN THE PROCESS GRAPH — do not plan from the phases below
+This skill ships its procedure as a graph. The phases further down are REFERENCE
+for what each step means; they are not your plan. Your plan comes one step at a
+time from `next_skill_step`, which hands you each call already composed — no tool
+names to recall, no arguments to build.
+
+1. `next_skill_step(skill="{skill}", done=[], facts={{...}})` — facts start with
+   the entities named in the question (for example the drug).
+2. Run EVERY call in `calls` through `execute_tool`, exactly as given.
+3. Extract what `produces` names from the results.
+4. Call again with that step's `id` appended to `done`, and everything you
+   extracted merged into `facts`.
+5. Stop when it answers `finished`, then write the report.
+
+Do not skip a step, reorder, or substitute a tool. If a call fails, record the
+failure and continue with the next step.
+
+---
+"""
+
+
 def _fill(value: Any, facts: dict) -> Any:
     """Substitute {placeholders} from facts, naming any that are missing."""
     if isinstance(value, dict):

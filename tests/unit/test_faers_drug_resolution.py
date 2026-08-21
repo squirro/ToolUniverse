@@ -132,8 +132,10 @@ def test_the_envelope_states_which_field_and_how_many_reports(monkeypatch):
         lambda self, field, term: 5551 if "brand_name" in field else None,
         raising=False,
     )
+    # `field` is now an explicit argument, not instance state (DSR-693).
     monkeypatch.setattr(FAERSAnalyticsTool, "_get_faers_count",
-                        lambda self, drug=None, event=None: 29 if (drug and event)
+                        lambda self, drug=None, event=None, field=None:
+                        29 if (drug and event)
                         else (5551 if drug else 14805), raising=False)
     monkeypatch.setattr(FAERSAnalyticsTool, "_get_faers_total_count",
                         lambda self: 20328575, raising=False)

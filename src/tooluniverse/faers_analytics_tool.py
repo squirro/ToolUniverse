@@ -122,21 +122,46 @@ class FAERSAnalyticsTool(BaseTool):
             # which one. Searching only generic_name reported a brand name as no
             # data at all.
             resolved_field, drug_total = self._resolve_drug_field(drug_name)
-            self._resolved_drug_field = resolved_field
 
-            # Get counts for 2x2 table
+            # Every drug query below carries the field EXPLICITLY. Passing it via
+            # self would share it with concurrent calls on the same cached tool
+            # instance, which is what made b come back as exactly -a (DSR-693).
             # a = drug + event
-            a = self._get_faers_count(drug_name, adverse_event)
+            a = self._get_faers_count(drug_name, adverse_event, field=resolved_field)
 
             # b = drug + no event (all drug reports - drug+event)
-            b = self._get_faers_count(drug_name, None) - a
+            drug_reports = self._get_faers_count(
+                drug_name, None, field=resolved_field
+            )
+            b = drug_reports - a
 
             # c = no drug + event (all event reports - drug+event)
-            c = self._get_faers_count(None, adverse_event) - a
+            event_reports = self._get_faers_count(None, adverse_event)
+            c = event_reports - a
 
             # d = no drug + no event (total - a - b - c)
             total = self._get_faers_total_count()
             d = total - a - b - c
+
+            # A drug cannot have fewer reports than one of its own reactions. If
+            # that happens the two queries disagreed — say so, rather than
+            # reporting a negative cell as "insufficient data".
+            if drug_reports < a or event_reports < a:
+                return {
+                    "status": "error",
+                    "error": (
+                        "Inconsistent counts from openFDA: the joint count "
+                        f"({a}) exceeds a marginal total (drug {drug_reports}, "
+                        f"event {event_reports}). The queries disagreed; no "
+                        "disproportionality was computed."
+                    ),
+                    "counts": {
+                        "drug_and_event": a,
+                        "drug_total": drug_reports,
+                        "event_total": event_reports,
+                        "field": resolved_field,
+                    },
+                }
 
             # Check for valid counts
             if a <= 0 or b <= 0 or c <= 0 or d <= 0:
@@ -934,14 +959,23 @@ class FAERSAnalyticsTool(BaseTool):
                 return field, total
         return None, None
 
-    def _get_faers_count(self, drug_name: str = None, adverse_event: str = None) -> int:
-        """Get count of FAERS reports matching criteria."""
+    def _get_faers_count(
+        self,
+        drug_name: str = None,
+        adverse_event: str = None,
+        field: str = None,
+    ) -> int:
+        """Get count of FAERS reports matching criteria.
+
+        ``field`` is an argument, never instance state: ToolUniverse caches ONE
+        instance per tool name, so a field stashed on ``self`` is shared with every
+        concurrent call. Reading it back mid-calculation counted one drug under
+        another drug's field and produced a negative contingency cell (DSR-693).
+        """
         try:
             query_parts = []
             if drug_name:
-                field = getattr(self, "_resolved_drug_field", None) or (
-                    "patient.drug.openfda.generic_name"
-                )
+                field = field or "patient.drug.openfda.generic_name"
                 query_parts.append(f'{field}:"{drug_name}"')
             if adverse_event:
                 query_parts.append(

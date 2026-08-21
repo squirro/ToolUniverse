@@ -128,7 +128,7 @@ def test_a_call_rejected_on_its_schema_fails():
     assert "schema_rejected" in _codes(findings)
 
 
-def test_a_tool_that_raised_fails():
+def test_a_tool_that_raised_is_recorded():
     actions = [
         _action("get_skill", parameters={"name": "infectious-disease"}),
         _exec("UniProt_search", output='{"error": "HTTPError 500"}'),
@@ -136,6 +136,76 @@ def test_a_tool_that_raised_fails():
     findings = score("infectious-disease", actions=actions,
                      answer="Some prose.", error=None, body=BODY)
     assert "tool_error" in _codes(findings)
+
+
+# --- whose defect is it? (measured 2026-08-21) --------------------------------
+# The graphed adverse-event-detection runs did strictly MORE correct work than the
+# prose runs -- nine steps instead of an improvised handful -- and scored WORSE,
+# because doing more of the job means touching more tools, and one of them
+# (fda_pharmacogenomic_biomarkers) is being bot-blocked by the FDA. A tool the
+# skill called correctly is not the skill misbehaving. If the verdict cannot tell
+# those apart, every change that makes skills more thorough reads as a regression.
+
+def test_a_broken_tool_does_not_fail_the_skill():
+    actions = [
+        _action("get_skill", parameters={"name": "infectious-disease"}),
+        _exec("BVBRC_search_taxonomy"),
+        _exec("UniProt_search", output='{"error": "HTTPError 500"}'),
+    ]
+    findings = score("infectious-disease", actions=actions,
+                     answer="Some prose.", error=None, body=BODY)
+    assert verdict(findings) != "fail", [f.code for f in findings]
+
+
+def test_a_broken_tool_is_still_reported_against_the_tool():
+    actions = [
+        _action("get_skill", parameters={"name": "infectious-disease"}),
+        _exec("BVBRC_search_taxonomy"),
+        _exec("UniProt_search", output='{"error": "HTTPError 500"}'),
+    ]
+    findings = score("infectious-disease", actions=actions,
+                     answer="Some prose.", error=None, body=BODY)
+    broken = next(f for f in findings if f.code == "tool_error")
+    assert broken.subject == "tool"
+    assert broken.evidence["tool"] == "UniProt_search"
+
+
+def test_calling_a_tool_wrongly_is_still_the_skill_s_fault():
+    """A schema rejection means the agent composed the call badly — that is the
+    skill's behaviour, not the tool breaking."""
+    actions = [
+        _action("get_skill", parameters={"name": "infectious-disease"}),
+        _exec("BVBRC_search_taxonomy",
+              output="execute_tool() got an unexpected keyword argument 'keyword'"),
+    ]
+    findings = score("infectious-disease", actions=actions,
+                     answer="Some prose.", error=None, body=BODY)
+    assert verdict(findings) == "fail"
+    assert next(f for f in findings if f.code == "schema_rejected").subject == "skill"
+
+
+def test_inventing_a_tool_name_is_still_the_skill_s_fault():
+    actions = [
+        _action("get_skill", parameters={"name": "infectious-disease"}),
+        _exec("PharmGKB_get_drug_label", output="Tool 'PharmGKB_get_drug_label' not found"),
+    ]
+    findings = score("infectious-disease", actions=actions,
+                     answer="Some prose.", error=None, body=BODY)
+    assert verdict(findings) == "fail"
+
+
+def test_the_tools_a_run_broke_can_be_listed_on_their_own():
+    """Broken tools are how DSR-693, 694 and 695 were found, so they must stay
+    visible — just not charged to the skill."""
+    from skill_audit.oracle import broken_tools
+    actions = [
+        _action("get_skill", parameters={"name": "infectious-disease"}),
+        _exec("BVBRC_search_taxonomy"),
+        _exec("UniProt_search", output='{"error": "HTTPError 500"}'),
+    ]
+    findings = score("infectious-disease", actions=actions,
+                     answer="Some prose.", error=None, body=BODY)
+    assert broken_tools(findings) == ["UniProt_search"]
 
 
 def test_a_successful_envelope_is_never_an_error_however_its_prose_reads():

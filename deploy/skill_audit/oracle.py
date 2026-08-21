@@ -45,6 +45,19 @@ SEVERITY: dict[str, str] = {
 
 _RANK = {"pass": 0, "warn": 1, "retry": 2, "fail": 3}
 
+# Whose defect is it? A tool that breaks when the skill called it correctly is not
+# the skill misbehaving. Measured 2026-08-21: the graphed adverse-event-detection
+# runs did strictly more correct work than the prose runs and scored WORSE, because
+# doing more of the job means touching more tools and one of them was being
+# bot-blocked. Charging that to the skill makes every thoroughness improvement look
+# like a regression, so the verdict is computed from SKILL findings only and tool
+# findings are reported beside it.
+SUBJECT = {
+    "tool_error": "tool",
+    "provider_refusal": "environment",   # still forces a retry, just not a fail
+    # everything else is the skill's own behaviour
+}
+
 # The seven meta-tools are plumbing, never a skill's subject-matter requirement.
 META_TOOLS = frozenset({
     "execute_tool", "get_skill", "find_skill", "find_tools",
@@ -105,8 +118,14 @@ class SkillFinding:
     message: str
     evidence: dict = field(default_factory=dict)
 
+    @property
+    def subject(self) -> str:
+        """"skill" or "tool" — who has to change for this to stop happening."""
+        return SUBJECT.get(self.code, "skill")
+
     def to_dict(self) -> dict:
         return {"code": self.code, "severity": self.severity,
+                "subject": self.subject,
                 "message": self.message, "evidence": self.evidence}
 
 
@@ -385,8 +404,17 @@ def _answer_findings(answer: str) -> list[SkillFinding]:
 
 
 def verdict(findings: list[SkillFinding]) -> str:
+    """How the SKILL behaved. Broken tools are reported, never charged here."""
     worst = "pass"
     for f in findings:
+        if f.subject == "tool":
+            continue
         if _RANK[f.severity] > _RANK[worst]:
             worst = f.severity
     return worst
+
+
+def broken_tools(findings: list[SkillFinding]) -> list[str]:
+    """The tools that failed while the skill was calling them correctly."""
+    return sorted({f.evidence.get("tool") for f in findings
+                   if f.subject == "tool" and f.evidence.get("tool")})

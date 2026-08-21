@@ -162,10 +162,17 @@ def test_the_contract_requires_a_url_scheme_on_every_footnote():
                      CITATION_CONTRACT, re.IGNORECASE), CITATION_CONTRACT
 
 
-def test_the_contract_says_list_parameters_are_arrays():
-    """UniProt_search was rejected with "'accession,gene_names,go_id' is not of type
-    'array'" — the agent comma-joined a list parameter into a string."""
+def test_the_contract_sends_a_type_mismatch_back_to_the_schema():
+    """Both directions occur and neither can be assumed. UniProt_search was rejected
+    with "'accession,gene_names,go_id' is not of type 'array'" (comma-joined a list),
+    while ReactomeAnalysis_pathway_enrichment was rejected with "['MEN1', 'DAXX', ...]
+    is not of type 'string'. Expected string, got list" — the second was CAUSED by an
+    earlier version of this contract telling the agent that list parameters are arrays.
+    So the rule must send it to the declared schema, never prescribe a shape."""
     from tooluniverse.skill_serving import CITATION_CONTRACT
 
-    assert re.search(r"array|list", CITATION_CONTRACT, re.IGNORECASE)
-    assert "comma" in CITATION_CONTRACT.lower(), CITATION_CONTRACT
+    assert "get_tool_info" in CITATION_CONTRACT, CITATION_CONTRACT
+    assert re.search(r"is not of type", CITATION_CONTRACT), CITATION_CONTRACT
+    # It must NOT tell the agent that a list parameter is always an array.
+    assert not re.search(r"as a JSON array|list-typed parameter as", CITATION_CONTRACT), \
+        CITATION_CONTRACT

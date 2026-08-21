@@ -53,8 +53,11 @@ parameters. NEVER pass a tool's own parameters at the top level of the call. If 
 is rejected with "unexpected keyword argument", that is what happened — retry with the
 two-parameter form, the stray parameters wrapped inside `arguments`.
 
-Pass a list-typed parameter as a JSON array, `["a","b"]` — NEVER as one comma-joined
-string. "is not of type 'array'" in an error means exactly this.
+Give every parameter the type its schema declares — some tools want a list of terms,
+others want those same terms in one string, and you cannot tell by looking at the
+value. "is not of type 'array'" and "is not of type 'string'" are both common. On
+either, call `get_tool_info(["<tool name>"])`, read the declared type, and send that
+shape. Do not swap the shape and retry blind.
 
 # Tool names: use, don't guess
 The tool names written in this skill are the tool names. NEVER guess or invent a tool

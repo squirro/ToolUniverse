@@ -165,7 +165,7 @@ tooluniverse-doctor = "tooluniverse.doctor:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-tooluniverse = ["data/*", "data/packages/*"]
+tooluniverse = ["data/*", "data/packages/*", "data/skill_graphs/*"]
 
 [dependency-groups]
 dev = [

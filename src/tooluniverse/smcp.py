@@ -1161,8 +1161,59 @@ class SMCP(FastMCP):
                 ensure_ascii=False,
             )
 
+        from .skill_graph import GRAPHS_DIR, SkillGraphError, load_graph, next_step
+
+        graphed = sorted(p.stem for p in GRAPHS_DIR.glob("*.yaml")) \
+            if GRAPHS_DIR.is_dir() else []
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
+        )
+        async def next_skill_step(
+            skill: str, done: list[str] | None = None, facts: dict | None = None
+        ) -> str:
+            """Ask the skill what to do NEXT, one step at a time.
+
+            For skills that ship a process graph, this REPLACES planning from the
+            body: the graph holds the procedure, and each call returns exactly one
+            step with its tool calls already composed — no tool names to recall, no
+            arguments to invent, no phase to forget.
+
+            Loop until it says finished:
+              1. call with done=[] to get the first step;
+              2. run every call in `calls` through `execute_tool`, exactly as given;
+              3. extract what `produces` names;
+              4. call again with that step id appended to `done`, and everything you
+                 extracted in `facts`.
+
+            `facts` is how the procedure branches: a step with a gateway only appears
+            once its condition is in `facts` (for example `strong_signal: true` turns
+            on demographic stratification). Facts also fill the call arguments, so a
+            missing one is reported by name rather than guessed.
+
+            Args:
+                skill: skill id, e.g. "adverse-event-detection".
+                done: step ids already completed, in any order.
+                facts: everything extracted so far, plus the question's own inputs
+                    (e.g. {"drug_name": "cisplatin"}).
+
+            Returns:
+                JSON: the next step {id, label, calls, produces, notes, remaining},
+                or {"finished": true} when the procedure is complete.
+            """
+            try:
+                graph = load_graph(skill)
+                step = next_step(graph, done=done or [], facts=facts or {})
+            except SkillGraphError as exc:
+                return json.dumps({"error": str(exc), "graphed_skills": graphed})
+            if step is None:
+                return json.dumps({"finished": True,
+                                   "note": "Every step is done — write the report."})
+            return json.dumps(step, ensure_ascii=False)
+
         self.logger.info(
-            f"Registered get_skill + find_skill tools (skills_dir={skills_dir}, "
+            f"Registered get_skill + find_skill + next_skill_step tools "
+            f"(skills_dir={skills_dir}, graphed={graphed}, "
             f"available={available_skills(skills_dir)})"
         )
 

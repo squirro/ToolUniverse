@@ -3,6 +3,8 @@
 Pure module — no fastmcp/squirro import required.
 """
 
+import re
+
 import pytest
 
 from tooluniverse.skill_serving import (
@@ -122,3 +124,48 @@ def test_the_contract_teaches_the_execute_tool_call_form(skills_dir):
 
     assert "execute_tool(tool_name=" in CITATION_CONTRACT
     assert "unexpected keyword argument" in CITATION_CONTRACT
+
+
+# --- rules added from the 2026-08-21 coverage baseline (DSR-690) -------------
+
+def test_the_contract_forbids_inventing_a_tool_name():
+    """Three calls in the sweep named tools that exist nowhere: PharmGKB_get_drug_label,
+    ensembl_lookup_region, ClinGen_search_dosage_sensitivity_region. None of those
+    strings appears in any served body — persona_lint is right that the corpus has no
+    dead calls, so the agent guessed plausible names instead of discovering real ones."""
+    from tooluniverse.skill_serving import CITATION_CONTRACT
+
+    assert re.search(r"never (guess|invent)[^.]*tool\s+name", CITATION_CONTRACT,
+                     re.IGNORECASE), CITATION_CONTRACT
+    assert "grep_tools" in CITATION_CONTRACT
+
+
+def test_the_contract_requires_identifiers_to_be_resolved_not_guessed():
+    """12 lookup misses were invented identifier formats: `sst2_human` where GPCRdb
+    wanted sstr2_human or a UniProt accession, PDB 7t11 for a question that named
+    7T10, protein_name where AlphaFold wants a qualifier."""
+    from tooluniverse.skill_serving import CITATION_CONTRACT
+
+    assert re.search(r"identifier", CITATION_CONTRACT, re.IGNORECASE)
+    assert re.search(r"resolve[^.]*(before|first)|do not (guess|invent)[^.]*identifier",
+                     CITATION_CONTRACT, re.IGNORECASE), CITATION_CONTRACT
+
+
+def test_the_contract_requires_a_url_scheme_on_every_footnote():
+    """29 of 76 answers emitted footnotes the renderer drops — `](clinicaltrials.gov)`
+    with no scheme, and `](squirro_source#...)`. Only http/https/mailto/xmpp render, so
+    the rule has to name the scheme rather than say 'a link'."""
+    from tooluniverse.skill_serving import CITATION_CONTRACT
+
+    assert "https://" in CITATION_CONTRACT
+    assert re.search(r"before you emit|check every footnote|output gate",
+                     CITATION_CONTRACT, re.IGNORECASE), CITATION_CONTRACT
+
+
+def test_the_contract_says_list_parameters_are_arrays():
+    """UniProt_search was rejected with "'accession,gene_names,go_id' is not of type
+    'array'" — the agent comma-joined a list parameter into a string."""
+    from tooluniverse.skill_serving import CITATION_CONTRACT
+
+    assert re.search(r"array|list", CITATION_CONTRACT, re.IGNORECASE)
+    assert "comma" in CITATION_CONTRACT.lower(), CITATION_CONTRACT

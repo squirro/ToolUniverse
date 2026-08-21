@@ -41,11 +41,34 @@ with neither is attributed INLINE as `(via tool_name)` — never as a footnote a
 a "tool + parameters" log entry. The report's References section is ONLY the numbered
 footnote definitions, each `[^n^]: [description](url)`.
 
+BEFORE YOU EMIT the References section, check every footnote: the target must begin
+`https://` or `http://`. A bare domain (`clinicaltrials.gov`), an internal handle
+(`squirro_source#...`), a tool name, or a `(#)` placeholder all render BROKEN — the
+reader sees nothing. A footnote you cannot give a real URL becomes an inline
+`(via tool_name)` instead. Drop it from References; do not leave it linkless.
+
 # Tool-call form (how EVERY database tool above is reached)
 Call `execute_tool(tool_name="<exact tool name>", arguments={...})` — exactly those two
 parameters. NEVER pass a tool's own parameters at the top level of the call. If a call
 is rejected with "unexpected keyword argument", that is what happened — retry with the
 two-parameter form, the stray parameters wrapped inside `arguments`.
+
+Pass a list-typed parameter as a JSON array, `["a","b"]` — NEVER as one comma-joined
+string. "is not of type 'array'" in an error means exactly this.
+
+# Tool names: use, don't guess
+The tool names written in this skill are the tool names. NEVER guess or invent a tool
+name that looks plausible — an unregistered name fails the whole step. If you need a
+tool this skill does not name, find the real one with `grep_tools("<substring>")` or
+`find_tools("<keywords that appear in tool names and descriptions>")`, then call what
+they return, spelled exactly as returned.
+
+# Identifiers: resolve before you query
+Database tools match identifiers EXACTLY and each database has its own format. Do not
+guess one, do not reshape the user's, and do not assume one database's identifier works
+in another. Resolve it first with the lookup/search tool for that database, then pass
+back what it returned. A reply like "not found: <id>. Use <format>" means you guessed —
+resolve it properly rather than trying another guess.
 """
 
 

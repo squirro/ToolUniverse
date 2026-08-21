@@ -1,0 +1,136 @@
+# rare-disease-diagnosis as a process graph.
+#
+# Chosen because it is the flakiest skill we measured: three identical probes on
+# 2026-08-21 returned fail, warn and pass. The prose body already carries the right
+# procedure — what varies is whether the agent performs it.
+#
+# Two things the graph fixes that prose could not. Phase 2 demands TWO joint calls,
+# one over every phenotype and one over only the discriminating ones, because the
+# strict intersection of common terms starves while the discriminating pair returns
+# the textbook differential; written as prose it is regularly reduced to one call.
+# And the body sources candidate genes FROM the literature, yet puts literature in
+# Phase 6 and gene work in Phase 3 — here literature runs first, so the dependency
+# is real rather than aspirational.
+#
+# Facts the agent feeds back: symptoms, hpo_ids, discriminating_hpo_ids,
+# top_candidate, genes, variant_id.
+
+skill: rare-disease-diagnosis
+inputs: [symptoms]
+
+steps:
+  - id: hypothesis
+    label: "Phase 0 — clinical reasoning, before any tool call"
+    calls: []
+    produces: [working_hypothesis, discriminating_features]
+    notes: >-
+      State the top 3-5 candidates and the reasoning chain, and name the rarest,
+      most discriminating features. Do this from the presentation alone — it is
+      what decides which phenotypes drive the intersection below. Carry the case's
+      symptoms as a list in `symptoms`.
+
+  - id: phenotypes
+    label: "Phase 1 — resolve each symptom to an HPO id"
+    requires: [hypothesis]
+    for_each: symptoms
+    as: symptom
+    calls:
+      - tool: get_HPO_ID_by_phenotype
+        arguments: {query: "{symptom}", limit: 5}
+    produces: [hpo_ids, discriminating_hpo_ids]
+    notes: >-
+      One call per symptom. Take the top HP:-prefixed hit — the tool also returns
+      MP: and other namespaces, which are not human phenotypes. A symptom that
+      resolves to nothing is not a failure: carry it as an Orphanet keyword instead.
+      Set hpo_ids to every HP: id, and discriminating_hpo_ids to the 2-3 rarest.
+
+  - id: differential_all
+    label: "Phase 2a — diseases annotated with ALL the phenotypes"
+    requires: [phenotypes]
+    calls:
+      - tool: get_joint_associated_diseases_by_HPO_ID_list
+        arguments: {HPO_ID_list: "{hpo_ids}", limit: 20}
+    produces: [strict_candidates]
+    notes: >-
+      A SHORT list here is normal, not a failure — common terms like developmental
+      delay are annotated on thousands of diseases, so the strict intersection
+      starves. Do not stop here.
+
+  - id: differential_discriminating
+    label: "Phase 2b — the same query on the DISCRIMINATING phenotypes only"
+    requires: [phenotypes]
+    calls:
+      - tool: get_joint_associated_diseases_by_HPO_ID_list
+        arguments: {HPO_ID_list: "{discriminating_hpo_ids}", limit: 30}
+    produces: [decisive_candidates]
+    notes: >-
+      This is the call that surfaces the clinically decisive differential — coarse
+      facies plus hepatosplenomegaly returns the storage disorders, where the full
+      term set returns almost nothing. Both 2a and 2b are required.
+
+  - id: keyword_search
+    label: "Phase 2c — Orphanet keyword search"
+    requires: [phenotypes]
+    calls:
+      - tool: Orphanet_search_diseases
+        arguments: {query: "{working_hypothesis}", limit: 20}
+    produces: [top_candidate]
+    notes: >-
+      Catches diseases the phenotype lookup misses. SKIP any hit whose name begins
+      "OBSOLETE:". Merge with 2a and 2b, then score every candidate against the FULL
+      Phase-1 term set: excellent >80%, good 60-80%, possible 40-60%, low <40%.
+
+  - id: literature
+    label: "Phase 3 — literature on the leading candidates"
+    requires: [keyword_search]
+    calls:
+      - tool: EuropePMC_search_articles
+        arguments: {query: "{top_candidate}", limit: 10}
+    produces: [genes]
+    notes: >-
+      Runs BEFORE gene characterisation on purpose: this cluster has no
+      disease-to-gene tool, so causal gene names come from the retrieved titles and
+      abstracts, from the patient data, or from the clinician. Never invent one. If
+      none can be sourced, leave genes empty and say so in the report.
+
+  - id: gene_panel
+    label: "Phase 4 — characterise the candidate genes"
+    requires: [literature]
+    when: genes
+    for_each: genes
+    as: gene
+    calls:
+      - tool: MyGene_query_genes
+        arguments:
+          query: "{gene}"
+          fields: "symbol,name,entrezgene,ensembl.gene,summary"
+
+  - id: expression
+    label: "Phase 5 — tissue expression context"
+    requires: [gene_panel]
+    when: genes
+    for_each: genes
+    as: gene
+    calls:
+      - tool: GTEx_get_expression_summary
+        arguments: {gene_symbol: "{gene}"}
+    notes: If GTEx has nothing, fall back to HPA_search_genes_by_query.
+
+  - id: variant
+    label: "Phase 6 — variant interpretation"
+    requires: [phenotypes]
+    when: variant_id
+    calls:
+      - tool: gnomad_get_variant
+        arguments: {variant_id: "{variant_id}", dataset: "gnomad_r4"}
+    notes: >-
+      Only when the case supplies variant data. Otherwise the report says
+      "No variant data provided" — that is an answer, not a gap.
+
+  - id: report
+    label: "Phase 7 — ranked differential with the evidence"
+    requires: [differential_all, differential_discriminating, keyword_search, literature]
+    calls: []
+    notes: >-
+      Rank every candidate with its score and the phenotypes that support it, and
+      say which features are unexplained. Every footnote needs a real https link.

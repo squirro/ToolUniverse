@@ -112,6 +112,37 @@ def test_a_skill_that_failed_before_and_passes_now_is_a_fix():
     assert delta["fixed"] == ["a"]
 
 
+def test_repeating_a_skill_keeps_its_worst_verdict(tmp_path):
+    """One run per skill cannot separate a real change from LLM variance — the
+    DSR-690 measurement came back 12 fixed / 10 regressed with total tool calls
+    flat, which is the signature of noise, and `pharmacovigilance` alone flipped
+    pass/fail on the identical question. With repeats, the recorded verdict is
+    the WORST seen: a skill that fails one run in three is not reliable."""
+    from skill_audit.sweep import fold_repeats
+    folded = fold_repeats([_result("a", "pass"), _result("a", "fail", codes=["x"]),
+                           _result("a", "pass")])
+    assert len(folded) == 1
+    assert folded[0]["verdict"] == "fail"
+    assert folded[0]["runs"] == 3
+    assert folded[0]["verdicts"] == ["pass", "fail", "pass"]
+
+
+def test_a_repeated_skill_that_never_fails_is_recorded_clean(tmp_path):
+    from skill_audit.sweep import fold_repeats
+    folded = fold_repeats([_result("a", "pass"), _result("a", "warn", warns=1)])
+    assert folded[0]["verdict"] == "warn"
+    assert folded[0]["runs"] == 2
+
+
+def test_a_provider_refusal_does_not_count_as_a_run(tmp_path):
+    """A refusal is an environment artefact, so it must not make a skill look
+    unreliable, nor mask a real failure from another repeat."""
+    from skill_audit.sweep import fold_repeats
+    folded = fold_repeats([_result("a", "retry"), _result("a", "pass")])
+    assert folded[0]["verdict"] == "pass"
+    assert folded[0]["runs"] == 1
+
+
 def test_a_run_loads_from_a_directory_or_from_a_bare_results_file(tmp_path):
     """The recorded baseline is committed as one .jsonl; a fresh run is a
     directory. diff has to compare the two, so it must read either."""
@@ -123,6 +154,31 @@ def test_a_run_loads_from_a_directory_or_from_a_bare_results_file(tmp_path):
     as_dir.mkdir()
     (as_dir / "results.jsonl").write_text(row + "\n")
     assert load_run(bare) == load_run(as_dir)
+
+
+def test_loading_a_repeated_run_folds_it_to_the_worst_verdict(tmp_path):
+    """A --repeat run records N rows per skill. The gate must compare the folded
+    worst, not whichever probe happened to finish last."""
+    from skill_audit.sweep import load_run
+    run = tmp_path / "run"
+    run.mkdir()
+    rows = [dict(_result("a", "fail", codes=["x"]), repeat=1),
+            dict(_result("a", "pass"), repeat=2)]
+    (run / "results.jsonl").write_text("\n".join(json.dumps(r) for r in rows))
+    loaded = load_run(run)
+    assert len(loaded) == 1
+    assert loaded[0]["verdict"] == "fail"
+
+
+def test_loading_a_resumed_run_keeps_the_later_probe(tmp_path):
+    """Without --repeat, a second row for a skill means it was re-run on purpose
+    (after a refusal, or to check a fix) — that result supersedes."""
+    from skill_audit.sweep import load_run
+    run = tmp_path / "run"
+    run.mkdir()
+    rows = [_result("a", "fail", codes=["x"]), _result("a", "pass")]
+    (run / "results.jsonl").write_text("\n".join(json.dumps(r) for r in rows))
+    assert load_run(run)[0]["verdict"] == "pass"
 
 
 def test_a_skill_missing_from_the_new_run_is_reported_not_ignored():

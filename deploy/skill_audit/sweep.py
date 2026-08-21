@@ -21,6 +21,7 @@ for reading the suspicious ones by hand, and `report.md` sorted worst-first.
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import os
 import sys
@@ -63,6 +64,43 @@ def rows_to_run(
     if tier is not None:
         rows = [r for r in rows if r.get("tier") == tier]
     return rows[:limit] if limit else rows
+
+
+def fold_repeats(results: list[dict]) -> list[dict]:
+    """Collapse repeated probes of one skill into a single row, worst verdict wins.
+
+    One probe per skill cannot separate a real change from LLM variance: the
+    DSR-690 measurement returned 12 skills fixed and 10 regressed with total tool
+    calls flat, and `pharmacovigilance` flips between `pass` and `tool_error` on the
+    identical question. Worst-wins because a skill that fails one run in three is not
+    a skill you can demo. Provider refusals are dropped rather than folded — they say
+    nothing about the skill — and `runs` counts only the probes that actually ran.
+    """
+    grouped: dict[str, list[dict]] = {}
+    for r in results:
+        grouped.setdefault(r["skill"], []).append(r)
+
+    folded = []
+    for runs in grouped.values():
+        real = [r for r in runs if r["verdict"] != "retry"]
+        if not real:                       # every attempt was refused
+            worst = runs[0]
+        else:
+            worst = max(real, key=lambda r: _ORDER_WORST[r["verdict"]])
+        row = dict(worst)
+        row["runs"] = len(real)
+        row["verdicts"] = [r["verdict"] for r in runs]
+        folded.append(row)
+    return folded
+
+
+_ORDER_WORST = {"pass": 0, "warn": 1, "retry": 2, "fail": 3}
+
+
+def _suffix(result: dict) -> str:
+    """Per-repeat filename tag, so repeats do not overwrite each other."""
+    n = result.get("repeat", 1)
+    return "" if n == 1 else f"-r{n}"
 
 
 def latest_per_skill(results: list[dict]) -> list[dict]:
@@ -196,6 +234,7 @@ def _probe(client_factory, agent_id: str, row: dict, timeout: int) -> dict:
             "skill": skill,
             "tier": row.get("tier"),
             "note": row.get("note"),
+            "repeat": row.get("repeat", 1),
             "attempt": attempt,
             "verdict": verdict(findings),
             "findings": [f.to_dict() for f in findings],
@@ -259,13 +298,19 @@ def run(args) -> int:
     if jsonl.exists():
         results = [json.loads(line) for line in jsonl.read_text().splitlines()
                    if line.strip()]
+    # Resume counts a skill done only once it has all the probes this run asks for.
+    seen = collections.Counter(r["skill"] for r in results)
+    done = {s for s, n in seen.items() if n >= args.repeat}
     latest = latest_per_skill(results)
-    done = {r["skill"] for r in latest}
     # A refusal is not an answer: resume owes those skills another turn.
     retryable = {r["skill"] for r in latest if r["verdict"] == "retry"}
 
     todo = rows_to_run(load_corpus(), done, retryable=retryable, only=args.only,
                        tier=args.tier, limit=args.limit)
+    if args.repeat > 1:
+        # Probe each skill N times. A single probe cannot separate a real change
+        # from LLM variance; fold_repeats keeps the worst verdict of the N.
+        todo = [dict(row, repeat=i + 1) for row in todo for i in range(args.repeat)]
     if not todo:
         print(f"nothing to run (resumed {len(done)} from {run_dir})")
     print(f"{len(todo)} skills -> {run_dir}", flush=True)
@@ -293,12 +338,12 @@ def run(args) -> int:
             result = future.result()
             answer = result.pop("answer", "")
             actions = result.pop("actions", [])
-            (answers / f"{result['skill']}.md").write_text(
+            (answers / f"{result['skill']}{_suffix(result)}.md").write_text(
                 f"# {result['skill']} — {result['verdict']}\n\n"
                 f"calls: {result.get('calls')}\n\n---\n\n{answer}\n")
             # The trace is the expensive artefact: keeping it means a scorer fix
             # costs a `rescore`, not another hour of cluster time.
-            (traces / f"{result['skill']}.json").write_text(json.dumps({
+            (traces / f"{result['skill']}{_suffix(result)}.json").write_text(json.dumps({
                 "skill": result["skill"], "tier": result.get("tier"),
                 "note": result.get("note"), "error": result.get("error"),
                 "calls": result.get("calls"), "answer": answer,
@@ -311,7 +356,7 @@ def run(args) -> int:
                 print(f"  {result['verdict']:5} {result['skill']}", flush=True)
     handle.close()
 
-    (run_dir / "report.md").write_text(render_report(results))
+    (run_dir / "report.md").write_text(render_report(fold_repeats(results)))
     print(f"\n{run_dir}/report.md")
     return 0
 
@@ -328,7 +373,7 @@ def rescore(args) -> int:
     with (run_dir / "results.jsonl").open("w") as handle:
         for result in results:
             handle.write(json.dumps(result) + "\n")
-    (run_dir / "report.md").write_text(render_report(results))
+    (run_dir / "report.md").write_text(render_report(fold_repeats(results)))
     print(f"rescored {len(results)} traces -> {run_dir}/report.md")
     return 0
 
@@ -342,8 +387,13 @@ def load_run(path: Path | str) -> list[dict]:
     path = Path(path)
     if path.is_dir():
         path = path / "results.jsonl"
-    return [json.loads(line) for line in path.read_text().splitlines()
+    rows = [json.loads(line) for line in path.read_text().splitlines()
             if line.strip()]
+    # A --repeat run stamps each probe; fold those to the worst verdict. Rows
+    # without the stamp are a resumed run, where the later probe supersedes.
+    if any(r.get("repeat", 1) > 1 for r in rows):
+        return fold_repeats(rows)
+    return latest_per_skill(rows)
 
 
 def diff(args) -> int:
@@ -367,6 +417,10 @@ def main(argv=None) -> int:
     r.add_argument("--limit", type=int, default=None)
     r.add_argument("--out", default=None,
                    help="run directory; an existing one is resumed")
+    r.add_argument("--repeat", type=int, default=1,
+                   help="probe each skill N times and keep the WORST verdict. "
+                        "One probe cannot separate a real change from LLM "
+                        "variance; 3 makes a class-level delta interpretable.")
     r.add_argument("--env-file", default=None,
                    help="dotenv holding SQUIRRO_CLUSTER/TOKEN/PROJECT for the "
                         "target (default: deploy/.env). Existing environment "

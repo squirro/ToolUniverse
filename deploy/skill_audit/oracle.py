@@ -127,6 +127,28 @@ def mentioned_tools(body: str) -> set[str]:
     return {n for n in _TOOL_CALL.findall(body) if n not in META_TOOLS}
 
 
+def body_tool_coverage(body: str | None, fired: list[str]) -> dict:
+    """How much of what the body names actually ran — data, not a verdict.
+
+    `required_tools` only sees bodies that mark their mandatory calls
+    ``**Primary**``, and just 3 of 86 do, so it says nothing about the corpus.
+    Every body does name its tools in backticks, though, and comparing that set
+    against what ran locates a skill that quietly went its own way. It is NOT a
+    finding: a body legitimately names gated alternatives ("pick the first
+    applicable, then STOP"), so a low ratio is a reason to read the trace, not
+    evidence of a defect.
+    """
+    if not body:
+        return {}
+    named = mentioned_tools(body)
+    ran = set(fired)
+    return {
+        "named": len(named),
+        "from_body": len(named & ran),
+        "off_body": sorted(ran - named),
+    }
+
+
 def _output_text(action: dict) -> str:
     content = action.get("content") or {}
     output = content.get("output")

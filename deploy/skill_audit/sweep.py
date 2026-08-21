@@ -31,7 +31,7 @@ from threading import Lock
 
 import yaml
 
-from skill_audit.oracle import score, verdict
+from skill_audit.oracle import body_tool_coverage, score, verdict
 from skill_audit.squirro_chat import SquirroChatClient
 
 DEPLOY = Path(__file__).resolve().parents[1]
@@ -136,9 +136,23 @@ def rescore_trace(path: Path, body: str | None) -> dict:
         "findings": [f.to_dict() for f in findings],
         "n_warn": sum(1 for f in findings if f.severity == "warn"),
         "calls": trace.get("calls") or [],
+        "coverage": body_tool_coverage(body, _dispatched(trace.get("actions") or [])),
         "answer_len": len(trace.get("answer") or ""),
         "error": trace.get("error"),
     }
+
+
+def _dispatched(actions: list[dict]) -> list[str]:
+    """The real TU tool behind every execute_tool call in a turn."""
+    out = []
+    for action in actions or []:
+        if action.get("tool_name") != "execute_tool":
+            continue
+        params = (action.get("content") or {}).get("parameters") or {}
+        name = params.get("tool_name") or params.get("name")
+        if isinstance(name, str):
+            out.append(name)
+    return out
 
 
 def diff_runs(old: list[dict], new: list[dict]) -> dict:
@@ -187,6 +201,7 @@ def _probe(client_factory, agent_id: str, row: dict, timeout: int) -> dict:
             "findings": [f.to_dict() for f in findings],
             "n_warn": sum(1 for f in findings if f.severity == "warn"),
             "calls": turn.calls,
+            "coverage": body_tool_coverage(body, _dispatched(turn.actions)),
             "answer_len": len(turn.answer),
             "answer": turn.answer,
             "error": turn.error,
@@ -318,12 +333,21 @@ def rescore(args) -> int:
     return 0
 
 
+def load_run(path: Path | str) -> list[dict]:
+    """Read a run from its directory, or from a bare results.jsonl.
+
+    The recorded baseline is committed as a single file; a fresh run is a
+    directory. Comparing the two is the whole point of the gate.
+    """
+    path = Path(path)
+    if path.is_dir():
+        path = path / "results.jsonl"
+    return [json.loads(line) for line in path.read_text().splitlines()
+            if line.strip()]
+
+
 def diff(args) -> int:
-    def load(path):
-        return [json.loads(line) for line in
-                (Path(path) / "results.jsonl").read_text().splitlines()
-                if line.strip()]
-    delta = diff_runs(load(args.old), load(args.new))
+    delta = diff_runs(load_run(args.old), load_run(args.new))
     print(json.dumps(delta, indent=2))
     return 1 if delta["regressed"] else 0
 

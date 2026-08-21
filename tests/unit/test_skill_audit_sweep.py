@@ -112,6 +112,19 @@ def test_a_skill_that_failed_before_and_passes_now_is_a_fix():
     assert delta["fixed"] == ["a"]
 
 
+def test_a_run_loads_from_a_directory_or_from_a_bare_results_file(tmp_path):
+    """The recorded baseline is committed as one .jsonl; a fresh run is a
+    directory. diff has to compare the two, so it must read either."""
+    from skill_audit.sweep import load_run
+    row = json.dumps(_result("a", "pass"))
+    bare = tmp_path / "baseline.jsonl"
+    bare.write_text(row + "\n")
+    as_dir = tmp_path / "run"
+    as_dir.mkdir()
+    (as_dir / "results.jsonl").write_text(row + "\n")
+    assert load_run(bare) == load_run(as_dir)
+
+
 def test_a_skill_missing_from_the_new_run_is_reported_not_ignored():
     delta = diff_runs([_result("a", "pass")], [])
     assert delta["absent"] == ["a"]

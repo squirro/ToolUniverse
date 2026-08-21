@@ -75,6 +75,23 @@ def test_mentioned_tools_also_takes_the_enrich_calls():
 
 # --- hard failures ----------------------------------------------------------
 
+def test_body_tool_coverage_reports_what_the_body_named_and_what_ran():
+    """Only 3 of 86 bodies use the **Primary** convention, so required_tools is
+    inert across the corpus. Coverage over EVERY tool the body names is the
+    signal that actually exists — reported as data, not as a verdict, because
+    a body legitimately names gated and alternative tools that should not fire."""
+    from skill_audit.oracle import body_tool_coverage
+    cov = body_tool_coverage(BODY, fired=["BVBRC_search_taxonomy", "PubMed_search"])
+    assert cov["named"] == 3            # BVBRC, NCBIDatasets, UniProt
+    assert cov["from_body"] == 1        # only BVBRC was one of them
+    assert cov["off_body"] == ["PubMed_search"]
+
+
+def test_body_tool_coverage_is_empty_when_there_is_no_body():
+    from skill_audit.oracle import body_tool_coverage
+    assert body_tool_coverage(None, fired=["X"]) == {}
+
+
 def test_a_turn_with_no_get_skill_call_fails():
     findings = score("infectious-disease",
                      actions=[_action("paragraph_retriever")],

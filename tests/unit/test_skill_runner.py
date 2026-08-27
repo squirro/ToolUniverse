@@ -410,3 +410,36 @@ def test_the_call_is_passed_in_the_shape_run_one_function_expects():
         return {}
     normalised_executor(dispatch)("counts", {"medicinalproduct": "X"})
     assert seen == {"name": "counts", "arguments": {"medicinalproduct": "X"}}
+
+
+# --- the evidence has to survive the run -------------------------------------
+# The runner extracted what the NEXT step needed and threw the rest away, which
+# is fine for control and useless for the report: the model still has to see the
+# label text, the trial list, the papers. The run keeps them, per step, and hands
+# them over once at the end — so raw payloads never pass through the transcript
+# on the way, which is what makes this cheaper than the model relaying calls.
+
+def test_a_run_keeps_each_step_s_results_for_the_report():
+    runner = SkillRunner(GRAPH, execute=lambda t, a: {"data": {"id": "CHEMBL88"}})
+    run = runner.start({"drug_name": "cisplatin"})
+    runner.advance(run["run_id"])
+    bundle = runner.bundle(run["run_id"])
+    assert bundle["results"]["resolve"] == [{"data": {"id": "CHEMBL88"}}]
+
+
+def test_the_bundle_carries_the_facts_and_what_went_wrong():
+    runner = SkillRunner(GRAPH, execute=lambda t, a: {"data": {"id": "CHEMBL88"}})
+    run = runner.start({"drug_name": "cisplatin"})
+    runner.advance(run["run_id"])
+    bundle = runner.bundle(run["run_id"])
+    assert bundle["facts"]["chembl_id"] == "CHEMBL88"
+    assert bundle["steps_done"] == ["resolve"]
+    assert bundle["failures"] == [] and bundle["blocked"] == []
+
+
+def test_a_huge_payload_is_capped_so_the_bundle_stays_sendable():
+    runner = SkillRunner(GRAPH, execute=lambda t, a: {"data": {"id": "x" * 200_000}})
+    run = runner.start({"drug_name": "cisplatin"})
+    runner.advance(run["run_id"])
+    import json as _json
+    assert len(_json.dumps(runner.bundle(run["run_id"])["results"])) < 120_000

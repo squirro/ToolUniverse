@@ -122,7 +122,7 @@ class SkillRunner:
     def start(self, inputs: dict) -> dict:
         run_id = uuid.uuid4().hex
         self._runs[run_id] = {"facts": dict(inputs), "done": [], "failures": [],
-                              "blocked": [], "skipped": []}
+                              "blocked": [], "skipped": [], "results": {}}
         return {"run_id": run_id, "step": self._peek(run_id)}
 
     def state(self, run_id: str) -> dict:
@@ -132,6 +132,36 @@ class SkillRunner:
         run = self._runs[run_id]
         return next_step(self.graph, done=run["done"] + run["skipped"],
                          facts=run["facts"])
+
+    MAX_PAYLOAD = 12_000
+
+    def bundle(self, run_id: str) -> dict:
+        """Everything the report needs, handed over ONCE at the end.
+
+        The runner extracts only what the next step requires; the rest — label
+        text, the trial list, the papers — is what the report is made of, so the
+        run keeps it. Capping each payload keeps the bundle sendable: the point of
+        running server-side is that raw results never travel through the
+        transcript on the way, so they arrive once, trimmed, at the end.
+        """
+        run = self._runs[run_id]
+        trimmed = {}
+        for step_id, results in run["results"].items():
+            kept = []
+            for payload in results:
+                text = json.dumps(payload, default=str)
+                kept.append(payload if len(text) <= self.MAX_PAYLOAD
+                            else {"truncated": True,
+                                  "preview": text[:self.MAX_PAYLOAD]})
+            trimmed[step_id] = kept
+        return {
+            "skill": self.graph["skill"],
+            "facts": run["facts"],
+            "results": trimmed,
+            "steps_done": run["done"],
+            "failures": run["failures"],
+            "blocked": run["blocked"],
+        }
 
     def _peek_safe(self, run_id: str):
         """Peek, and mark any step we cannot build as blocked rather than raising.
@@ -210,6 +240,7 @@ class SkillRunner:
             else:
                 run["facts"][name] = decided
 
+        run["results"][step["id"]] = results
         run["done"].append(step["id"])
         run["failures"].extend(failures)
         following = self._peek_safe(run_id)

@@ -54,7 +54,7 @@ steps:
       - tool: FAERS_count_reactions_by_drug_event
         arguments: {medicinalproduct: "{drug_name}"}
     extract:
-      top_aes: {path: "[].term", limit: 12}   # run_one_function returns a BARE list; the `result` wrapper is added by execute_tool
+      top_aes: {path: "result[].term", limit: 12}   # the execute_tool envelope, same as every saved trace
     produces: [top_aes]
     notes: >-
       FAERS drug names are case-strict; the term strings are carried forward

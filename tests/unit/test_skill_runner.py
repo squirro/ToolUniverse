@@ -366,3 +366,47 @@ def test_no_value_reaching_the_threshold_is_a_genuine_negative():
     runner.advance(run["run_id"])
     out = runner.advance(run["run_id"])
     assert out["extracted"]["strong"] is False
+
+
+# --- one door, not two -------------------------------------------------------
+# execute_tool is not a second implementation: its class calls run_one_function
+# and then NORMALISES — JSON-decoding a string return and wrapping any non-dict
+# as {"result": ...}. Calling run_one_function directly skipped that, so the
+# runner saw a bare list where the agent (and every saved trace) sees
+# {"result": [...]}, and an extraction path written from a trace missed. The
+# runner goes through the same normalisation the agent does.
+
+def test_a_bare_return_is_wrapped_the_way_execute_tool_wraps_it():
+    from tooluniverse.skill_runner import normalised_executor
+    execute = normalised_executor(lambda call: [{"term": "DEATH"}])
+    assert execute("counts", {}) == {"result": [{"term": "DEATH"}]}
+
+
+def test_a_dict_return_passes_through_untouched():
+    from tooluniverse.skill_runner import normalised_executor
+    payload = {"status": "success", "data": {"id": "CHEMBL88"}}
+    execute = normalised_executor(lambda call: payload)
+    assert execute("resolve", {}) == payload
+
+
+def test_a_json_string_return_is_decoded():
+    from tooluniverse.skill_runner import normalised_executor
+    execute = normalised_executor(lambda call: '{"data": {"id": "X"}}')
+    assert execute("resolve", {}) == {"data": {"id": "X"}}
+
+
+def test_a_non_json_string_return_is_wrapped_not_lost():
+    from tooluniverse.skill_runner import normalised_executor
+    execute = normalised_executor(lambda call: "no studies found")
+    assert execute("trials", {}) == {"result": "no studies found"}
+
+
+def test_the_call_is_passed_in_the_shape_run_one_function_expects():
+    from tooluniverse.skill_runner import normalised_executor
+    seen = {}
+
+    def dispatch(call):
+        seen.update(call)
+        return {}
+    normalised_executor(dispatch)("counts", {"medicinalproduct": "X"})
+    assert seen == {"name": "counts", "arguments": {"medicinalproduct": "X"}}

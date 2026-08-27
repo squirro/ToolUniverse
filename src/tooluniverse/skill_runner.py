@@ -25,6 +25,7 @@ and is deliberately not in this spike.
 """
 from __future__ import annotations
 
+import json
 import uuid
 from typing import Any, Callable
 
@@ -220,6 +221,29 @@ class SkillRunner:
             "next_step": following,
             "finished": following is None,
         }
+
+
+def normalised_executor(dispatch: Callable[[dict], Any]) -> Callable[[str, dict], Any]:
+    """Wrap ToolUniverse's dispatch so the runner sees what the AGENT sees.
+
+    `execute_tool` is not a second implementation — its class calls
+    `run_one_function` and then normalises: JSON-decode a string return, and wrap
+    any non-dict as {"result": ...}. Calling `run_one_function` directly skips
+    that, so the runner saw a bare list where every saved trace shows
+    {"result": [...]}, and an extraction path written from a trace missed.
+
+    One door. Extraction paths written against a trace work in the runner, and
+    vice versa.
+    """
+    def execute(tool: str, arguments: dict) -> Any:
+        result = dispatch({"name": tool, "arguments": arguments})
+        if isinstance(result, str):
+            try:
+                result = json.loads(result)
+            except (json.JSONDecodeError, ValueError):
+                return {"result": result}
+        return result if isinstance(result, dict) else {"result": result}
+    return execute
 
 
 def compose(graph: dict, facts: dict) -> dict:

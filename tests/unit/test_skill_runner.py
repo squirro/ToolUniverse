@@ -612,3 +612,51 @@ def test_without_an_ask_callback_the_runner_behaves_exactly_as_before():
     run = runner.start({"drug_name": "original"})
     runner.advance(run["run_id"])
     assert seen == ["original"]
+
+
+# --- a declared value that never arrives must be recorded --------------------
+# Live, without the repair callback: the identity step declares it produces
+# `setid`, DailyMed returned nothing for the agent's binding, and the run carried
+# on with setid=None and blocked=[] — no trace anywhere. Everything downstream
+# then answered on the wrong drug form. Repair is the recovery; this is the
+# honesty when there is no recovery.
+
+MISS_GRAPH = {
+    "skill": "m", "inputs": ["drug_name"],
+    "steps": [{"id": "identity",
+               "calls": [{"tool": "spls", "arguments": {}}],
+               "extract": {"setid": "data.0.setid"},
+               "produces": ["setid"]},
+              {"id": "report", "requires": ["identity"], "calls": []}],
+}
+
+
+def test_a_declared_value_that_never_arrives_is_recorded():
+    runner = SkillRunner(MISS_GRAPH, execute=lambda t, a: {"data": []})
+    run = runner.start({"drug_name": "lutetium Lu-177 dotatate"})
+    out = runner.advance(run["run_id"])
+    assert out["unresolved"] == [{"step": "identity", "fact": "setid"}]
+
+
+def test_an_unresolved_value_does_not_stop_the_run():
+    """The other steps may not need it — but the report must be able to say so."""
+    runner = SkillRunner(MISS_GRAPH, execute=lambda t, a: {"data": []})
+    run = runner.start({"drug_name": "x"})
+    runner.advance(run["run_id"])
+    out = runner.advance(run["run_id"])
+    assert out["finished"] is True
+
+
+def test_the_bundle_carries_what_never_resolved():
+    runner = SkillRunner(MISS_GRAPH, execute=lambda t, a: {"data": []})
+    run = runner.start({"drug_name": "x"})
+    runner.advance(run["run_id"])
+    assert runner.bundle(run["run_id"])["unresolved"] == [
+        {"step": "identity", "fact": "setid"}]
+
+
+def test_a_value_that_does_arrive_is_not_recorded_as_unresolved():
+    runner = SkillRunner(MISS_GRAPH,
+                         execute=lambda t, a: {"data": [{"setid": "72d1a024"}]})
+    run = runner.start({"drug_name": "x"})
+    assert runner.advance(run["run_id"])["unresolved"] == []

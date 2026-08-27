@@ -134,7 +134,8 @@ class SkillRunner:
     def start(self, inputs: dict) -> dict:
         run_id = uuid.uuid4().hex
         self._runs[run_id] = {"facts": dict(inputs), "done": [], "failures": [],
-                              "blocked": [], "skipped": [], "results": {}}
+                              "blocked": [], "skipped": [], "results": {},
+                              "unresolved": []}
         return {"run_id": run_id, "step": self._peek(run_id)}
 
     def state(self, run_id: str) -> dict:
@@ -214,6 +215,7 @@ class SkillRunner:
             "steps_done": run["done"],
             "failures": run["failures"],
             "blocked": run["blocked"],
+            "unresolved": run["unresolved"],
         }
 
     def _peek_safe(self, run_id: str):
@@ -245,7 +247,8 @@ class SkillRunner:
         step = self._peek_safe(run_id)
         if step is None:
             return {"finished": True, "next_step": None, "extracted": {},
-                    "failures": run["failures"], "blocked": run["blocked"]}
+                    "failures": run["failures"], "blocked": run["blocked"],
+                    "unresolved": run["unresolved"]}
 
         spec = next(s for s in self.graph["steps"] if s["id"] == step["id"])
         results, failures = [], []
@@ -327,6 +330,14 @@ class SkillRunner:
             else:
                 run["facts"][name] = decided
 
+        # A value the step SAYS it produces and did not is recorded, always.
+        # Live, without repair, setid simply came back None and nothing anywhere
+        # noted it — every later step then answered on the wrong drug form.
+        missed = [{"step": step["id"], "fact": name}
+                  for name in (spec.get("extract") or {})
+                  if name not in extracted]
+        run["unresolved"].extend(missed)
+
         run["results"][step["id"]] = results
         run["done"].append(step["id"])
         run["failures"].extend(failures)
@@ -334,6 +345,7 @@ class SkillRunner:
         return {
             "step_id": step["id"],
             "blocked": run["blocked"],
+            "unresolved": missed,
             "extracted": extracted,
             "failures": failures,
             "next_step": following,

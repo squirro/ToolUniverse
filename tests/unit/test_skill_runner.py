@@ -260,3 +260,109 @@ def test_the_run_continues_past_a_blocked_step():
             break
     assert "trials" in ran
     assert runner.state(run["run_id"])["blocked"]
+
+
+# --- a gateway must not decide on data it never got --------------------------
+# Live on enzalutamide: `signals` failed to extract, so `strong_signal` derived
+# from an empty list and came out False — and the stratify step was skipped as if
+# the data had said "no strong signal". A missing input and a genuine negative
+# are different answers, and only one of them is safe to branch on.
+
+DERIVE_GRAPH = {
+    "skill": "d", "inputs": ["drug"],
+    "steps": [
+        {"id": "signals", "calls": [{"tool": "dispro", "arguments": {}}],
+         "extract": {"rows": "data.results"},
+         "derive": {"strong": {"from": "rows", "field": "prr",
+                               "op": ">=", "value": 5, "mode": "any"}}},
+        {"id": "stratify", "requires": ["signals"], "when": "strong",
+         "calls": [{"tool": "strat", "arguments": {}}]},
+        {"id": "report", "requires": ["signals"], "calls": []},
+    ],
+}
+
+
+def test_a_gateway_over_a_missing_fact_is_unknown_not_false():
+    runner = SkillRunner(DERIVE_GRAPH, execute=lambda t, a: {"data": {}})
+    run = runner.start({"drug": "enzalutamide"})
+    out = runner.advance(run["run_id"])
+    assert out["extracted"]["strong"] is None, out["extracted"]
+
+
+def test_an_unknown_gateway_is_reported_so_the_skip_is_not_silent():
+    runner = SkillRunner(DERIVE_GRAPH, execute=lambda t, a: {"data": {}})
+    run = runner.start({"drug": "enzalutamide"})
+    out = runner.advance(run["run_id"])
+    assert any("strong" in b["reason"] for b in out["blocked"]), out["blocked"]
+
+
+def test_a_gateway_over_real_but_empty_rows_is_a_genuine_no():
+    """Rows came back and none reached the threshold — that IS a decision."""
+    runner = SkillRunner(DERIVE_GRAPH,
+                         execute=lambda t, a: {"data": {"results": []}})
+    run = runner.start({"drug": "enzalutamide"})
+    out = runner.advance(run["run_id"])
+    assert out["extracted"]["strong"] is False
+    assert out["next_step"]["id"] == "report"
+
+
+# --- gathering across a loop step's calls ------------------------------------
+# FAERS_calculate_disproportionality answers ONE metrics object per call —
+# data.metrics.PRR.value — and the step makes one call per reaction. `extract`
+# takes the first match, which is the wrong shape: the gateway needs every PRR.
+
+COLLECT_GRAPH = {
+    "skill": "c", "inputs": ["drug"],
+    "steps": [
+        {"id": "counts", "calls": [{"tool": "counts", "arguments": {}}],
+         "extract": {"terms": "[].term"}},
+        {"id": "signals", "requires": ["counts"], "for_each": "terms", "as": "t",
+         "calls": [{"tool": "dispro", "arguments": {"ae": "{t}"}}],
+         "collect": {"prrs": "data.metrics.PRR.value"},
+         "derive": {"strong": {"from": "prrs", "op": ">=", "value": 5,
+                               "mode": "any"}}},
+    ],
+}
+
+
+def _dispro(prr):
+    return {"data": {"metrics": {"PRR": {"value": prr}}}}
+
+
+def test_a_loop_step_gathers_the_value_from_every_call():
+    prrs = iter([7.5, 1.2])
+
+    def execute(tool, arguments):
+        return ({"result": None} if tool == "counts" else _dispro(next(prrs))) \
+            if tool != "counts" else [{"term": "A"}, {"term": "B"}]
+    runner = SkillRunner(COLLECT_GRAPH, execute=execute)
+    run = runner.start({"drug": "x"})
+    runner.advance(run["run_id"])
+    out = runner.advance(run["run_id"])
+    assert out["extracted"]["prrs"] == [7.5, 1.2]
+
+
+def test_the_gateway_decides_from_the_gathered_values():
+    prrs = iter([7.5, 1.2])
+
+    def execute(tool, arguments):
+        return [{"term": "A"}, {"term": "B"}] if tool == "counts" \
+            else _dispro(next(prrs))
+    runner = SkillRunner(COLLECT_GRAPH, execute=execute)
+    run = runner.start({"drug": "x"})
+    runner.advance(run["run_id"])
+    out = runner.advance(run["run_id"])
+    assert out["extracted"]["strong"] is True
+
+
+def test_no_value_reaching_the_threshold_is_a_genuine_negative():
+    prrs = iter([1.1, 1.2])
+
+    def execute(tool, arguments):
+        return [{"term": "A"}, {"term": "B"}] if tool == "counts" \
+            else _dispro(next(prrs))
+    runner = SkillRunner(COLLECT_GRAPH, execute=execute)
+    run = runner.start({"drug": "x"})
+    runner.advance(run["run_id"])
+    out = runner.advance(run["run_id"])
+    assert out["extracted"]["strong"] is False

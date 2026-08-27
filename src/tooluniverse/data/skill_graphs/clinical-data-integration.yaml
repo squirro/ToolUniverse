@@ -68,11 +68,11 @@ steps:
     calls:
       - tool: FAERS_calculate_disproportionality
         arguments: {drug_name: "{drug_name}", adverse_event: "{adverse_event}"}
-    extract:
-      signals: "data.results"
+    collect:
+      prrs: "data.metrics.PRR.value"   # one metrics object per call, so GATHER
     derive:
-      strong_signal: {from: signals, field: prr, op: ">=", value: 5, mode: any}
-    produces: [signals, strong_signal]
+      strong_signal: {from: prrs, op: ">=", value: 5, mode: any}
+    produces: [prrs, strong_signal]
 
   - id: seriousness
     label: "Phase 2c — how seriously the events were reported"

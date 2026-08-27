@@ -84,8 +84,17 @@ def _step_in(current: Any, key: str, mapping: bool) -> Any:
     return None
 
 
-def _derive(spec: dict, facts: dict) -> bool:
-    """A gateway condition computed from data, not asserted by the model."""
+def _derive(spec: dict, facts: dict) -> bool | None:
+    """A gateway condition computed from data, not asserted by the model.
+
+    None means UNKNOWN: the source fact never arrived, so there is nothing to
+    decide on. Live on enzalutamide the `signals` extraction missed, the rule
+    derived over an empty list, and the branch was skipped as though the data had
+    said "no strong signal" — a silent wrong answer. A genuine empty result is
+    still False; only an ABSENT fact is unknown.
+    """
+    if spec["from"] not in facts:
+        return None
     rows = facts.get(spec["from"]) or []
     field, op, value = spec.get("field"), spec.get("op", "=="), spec.get("value")
     compare = _OPS[op]
@@ -176,11 +185,29 @@ class SkillRunner:
                         found = found[:limit]
                     extracted[name] = found
                     break
+        # `collect` gathers a value from EVERY call, which is what a loop step
+        # needs: FAERS answers one metrics object per reaction, and the gateway
+        # has to see them all. `extract` takes the first match, `collect` the lot.
+        for name, path in (spec.get("collect") or {}).items():
+            gathered = [found for payload in results
+                        if (found := _dig(payload, path)) is not None]
+            if gathered:
+                extracted[name] = gathered
         run["facts"].update(extracted)
 
         for name, rule in (spec.get("derive") or {}).items():
-            extracted[name] = _derive(rule, run["facts"])
-            run["facts"][name] = extracted[name]
+            decided = _derive(rule, run["facts"])
+            extracted[name] = decided
+            if decided is None:
+                # Do NOT put an unknown in facts: `when` reads falsy and would
+                # skip the branch silently. Say so instead.
+                run["blocked"].append({
+                    "step": step["id"],
+                    "reason": (f"cannot decide {name}: {rule['from']} was never "
+                               "extracted, so the branch was not taken"),
+                })
+            else:
+                run["facts"][name] = decided
 
         run["done"].append(step["id"])
         run["failures"].extend(failures)

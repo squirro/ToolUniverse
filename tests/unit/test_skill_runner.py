@@ -443,3 +443,36 @@ def test_a_huge_payload_is_capped_so_the_bundle_stays_sendable():
     runner.advance(run["run_id"])
     import json as _json
     assert len(_json.dumps(runner.bundle(run["run_id"])["results"])) < 120_000
+
+
+# --- pulling a value out of a string, not just a path ------------------------
+# Measured: FAERS returns 3 reaction terms for "lutetium lu 177 dotatate" and 100
+# for "LUTATHERA" — case is irrelevant, the BRAND is what is indexed. The label
+# lookup already knows the brand: DailyMed's SPL title starts with it. So the
+# graph can chain brand -> FAERS instead of hoping the model remembers to retry,
+# which is what the prose body asks it to do.
+
+def test_a_regex_lifts_a_value_out_of_a_returned_string():
+    graph = {"skill": "b", "inputs": ["drug_name"],
+             "steps": [{"id": "spl",
+                        "calls": [{"tool": "spls", "arguments": {}}],
+                        "extract": {"brand": {"path": "data.0.title",
+                                              "regex": r"^([A-Za-z0-9-]+)"}}}]}
+    title = "LUTATHERA (LUTETIUM LU 177 DOTATATE) INJECTION [AAA USA, INC.]"
+    runner = SkillRunner(graph, execute=lambda t, a: {"data": [{"title": title}]})
+    run = runner.start({"drug_name": "lutetium lu 177 dotatate"})
+    assert runner.advance(run["run_id"])["extracted"]["brand"] == "LUTATHERA"
+
+
+def test_a_value_falls_back_to_another_fact_when_the_lift_fails():
+    """No brand in the title is not a reason to stall the FAERS phase — fall back
+    to the name the question gave us and carry on."""
+    graph = {"skill": "b", "inputs": ["drug_name"],
+             "steps": [{"id": "spl",
+                        "calls": [{"tool": "spls", "arguments": {}}],
+                        "extract": {"faers_name": {"path": "data.0.title",
+                                                   "regex": r"^([A-Z]{4,})",
+                                                   "default_from": "drug_name"}}}]}
+    runner = SkillRunner(graph, execute=lambda t, a: {"data": [{"title": "x"}]})
+    run = runner.start({"drug_name": "cisplatin"})
+    assert runner.advance(run["run_id"])["extracted"]["faers_name"] == "cisplatin"

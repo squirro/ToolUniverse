@@ -26,6 +26,7 @@ and is deliberately not in this spike.
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from typing import Any, Callable
 
@@ -207,15 +208,28 @@ class SkillRunner:
 
         extracted: dict[str, Any] = {}
         for name, rule in (spec.get("extract") or {}).items():
-            path = rule["path"] if isinstance(rule, dict) else rule
-            limit = rule.get("limit") if isinstance(rule, dict) else None
+            rule = rule if isinstance(rule, dict) else {"path": rule}
             for payload in results:
-                found = _dig(payload, path)
-                if found is not None:
-                    if limit and isinstance(found, list):
-                        found = found[:limit]
-                    extracted[name] = found
-                    break
+                found = _dig(payload, rule["path"])
+                if found is None:
+                    continue
+                if rule.get("regex") and isinstance(found, str):
+                    # Some values only exist inside a returned string: DailyMed
+                    # puts the BRAND at the head of its SPL title, and FAERS
+                    # indexes this drug family by brand (LUTATHERA returns 100
+                    # reaction terms where the generic name returns 3).
+                    match = re.search(rule["regex"], found)
+                    if not match:
+                        continue
+                    found = match.group(1) if match.groups() else match.group(0)
+                if rule.get("limit") and isinstance(found, list):
+                    found = found[: rule["limit"]]
+                extracted[name] = found
+                break
+            if name not in extracted and rule.get("default_from"):
+                fallback = run["facts"].get(rule["default_from"])
+                if fallback is not None:
+                    extracted[name] = fallback
         # `collect` gathers a value from EVERY call, which is what a loop step
         # needs: FAERS answers one metrics object per reaction, and the gateway
         # has to see them all. `extract` takes the first match, `collect` the lot.

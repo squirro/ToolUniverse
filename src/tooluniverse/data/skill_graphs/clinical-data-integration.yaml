@@ -29,7 +29,16 @@ steps:
         arguments: {operation: "get_approval_history", drug_name: "{drug_name}"}
     extract:
       setid: "data.0.setid"
-    produces: [setid, approval_history]
+      # FAERS indexes this drug family by BRAND, not by the generic INN the
+      # question uses: measured, "lutetium lu 177 dotatate" returns 3 reaction
+      # terms and "LUTATHERA" returns 100. Case is irrelevant, despite what the
+      # prose body says. DailyMed's SPL title starts with the brand, so lift it
+      # here and let every FAERS step use it.
+      faers_name:
+        path: "data.0.title"
+        regex: "^([A-Za-z0-9-]{3,})"
+        default_from: drug_name
+    produces: [setid, faers_name, approval_history]
 
   - id: label
     label: "Phase 1 — FDA label, the ground truth"
@@ -52,7 +61,7 @@ steps:
     requires: [identity]
     calls:
       - tool: FAERS_count_reactions_by_drug_event
-        arguments: {medicinalproduct: "{drug_name}"}
+        arguments: {medicinalproduct: "{faers_name}"}
     extract:
       top_aes: {path: "result[].term", limit: 12}   # the execute_tool envelope, same as every saved trace
     produces: [top_aes]
@@ -67,7 +76,7 @@ steps:
     as: adverse_event
     calls:
       - tool: FAERS_calculate_disproportionality
-        arguments: {drug_name: "{drug_name}", adverse_event: "{adverse_event}"}
+        arguments: {drug_name: "{faers_name}", adverse_event: "{adverse_event}"}
     collect:
       prrs: "data.metrics.PRR.value"   # one metrics object per call, so GATHER
     derive:
@@ -79,9 +88,9 @@ steps:
     requires: [faers_counts]
     calls:
       - tool: FAERS_filter_serious_events
-        arguments: {drug_name: "{drug_name}", seriousness_type: "hospitalization"}
+        arguments: {drug_name: "{faers_name}", seriousness_type: "hospitalization"}
       - tool: FAERS_filter_serious_events
-        arguments: {drug_name: "{drug_name}", seriousness_type: "death"}
+        arguments: {drug_name: "{faers_name}", seriousness_type: "death"}
 
   - id: stratify
     label: "Phase 2d — which reported subgroups a strong signal sits in"
@@ -89,7 +98,7 @@ steps:
     when: strong_signal
     calls:
       - tool: FAERS_stratify_by_demographics
-        arguments: {drug_name: "{drug_name}", stratify_by: "sex"}
+        arguments: {drug_name: "{faers_name}", stratify_by: "sex"}
     notes: Sex codes are 0 unknown, 1 male, 2 female. Skipped when no signal is strong.
 
   - id: pharmacogenomics

@@ -217,3 +217,46 @@ def test_a_dotted_path_into_the_first_record_still_works():
     run = runner.start({"drug_name": "enzalutamide"})
     out = runner.advance(run["run_id"])
     assert out["extracted"]["setid"] == "b129fdc9-1d8e-425c"
+
+
+# --- a step that cannot be built must not end the run ------------------------
+# Live: the FAERS extraction missed, so the next step's for_each list was absent
+# and SkillGraphError propagated out of advance(), killing a ten-step run at
+# step four. A navigator that dies because one value is missing is worse than the
+# model it replaced — Novartis's would have taken the other branch.
+
+BLOCKED_GRAPH = {
+    "skill": "blocked",
+    "inputs": ["drug_name"],
+    "steps": [
+        {"id": "counts", "calls": [{"tool": "counts", "arguments": {}}],
+         "extract": {"top_aes": "nowhere.at.all"}},
+        {"id": "signals", "requires": ["counts"], "for_each": "top_aes",
+         "as": "ae", "calls": [{"tool": "dispro", "arguments": {"ae": "{ae}"}}]},
+        {"id": "trials", "requires": ["counts"],
+         "calls": [{"tool": "trials", "arguments": {"q": "{drug_name}"}}]},
+    ],
+}
+
+
+def test_a_step_whose_inputs_are_missing_is_blocked_not_fatal():
+    runner = SkillRunner(BLOCKED_GRAPH, execute=lambda t, a: {"result": []})
+    run = runner.start({"drug_name": "enzalutamide"})
+    runner.advance(run["run_id"])            # counts — extraction misses
+    out = runner.advance(run["run_id"])      # signals — cannot be built
+    assert out["blocked"], out
+    assert "top_aes" in out["blocked"][0]["reason"]
+
+
+def test_the_run_continues_past_a_blocked_step():
+    """The other four sources do not depend on FAERS terms — they must still run."""
+    ran = []
+    runner = SkillRunner(BLOCKED_GRAPH,
+                         execute=lambda t, a: ran.append(t) or {"result": []})
+    run = runner.start({"drug_name": "enzalutamide"})
+    for _ in range(5):
+        out = runner.advance(run["run_id"])
+        if out.get("finished"):
+            break
+    assert "trials" in ran
+    assert runner.state(run["run_id"])["blocked"]

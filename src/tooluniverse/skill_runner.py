@@ -28,7 +28,7 @@ from __future__ import annotations
 import uuid
 from typing import Any, Callable
 
-from .skill_graph import _fill, next_step
+from .skill_graph import SkillGraphError, _fill, next_step
 
 _OPS: dict[str, Callable[[Any, Any], bool]] = {
     ">=": lambda a, b: a >= b,
@@ -111,7 +111,8 @@ class SkillRunner:
 
     def start(self, inputs: dict) -> dict:
         run_id = uuid.uuid4().hex
-        self._runs[run_id] = {"facts": dict(inputs), "done": [], "failures": []}
+        self._runs[run_id] = {"facts": dict(inputs), "done": [], "failures": [],
+                              "blocked": [], "skipped": []}
         return {"run_id": run_id, "step": self._peek(run_id)}
 
     def state(self, run_id: str) -> dict:
@@ -119,15 +120,39 @@ class SkillRunner:
 
     def _peek(self, run_id: str) -> dict | None:
         run = self._runs[run_id]
-        return next_step(self.graph, done=run["done"], facts=run["facts"])
+        return next_step(self.graph, done=run["done"] + run["skipped"],
+                         facts=run["facts"])
+
+    def _peek_safe(self, run_id: str):
+        """Peek, and mark any step we cannot build as blocked rather than raising.
+
+        Loops, because skipping one blocked step can reveal another.
+        """
+        run = self._runs[run_id]
+        while True:
+            try:
+                return self._peek(run_id)
+            except SkillGraphError as exc:
+                blocked = next(
+                    (s["id"] for s in self.graph["steps"]
+                     if s["id"] not in run["done"] and s["id"] not in run["skipped"]
+                     and all(d in run["done"] for d in s.get("requires", []))),
+                    None)
+                if blocked is None:
+                    return None
+                run["skipped"].append(blocked)
+                run["blocked"].append({"step": blocked, "reason": str(exc)})
 
     def advance(self, run_id: str) -> dict:
         """Run the current step's calls, extract what follows, and move on."""
         run = self._runs[run_id]
-        step = self._peek(run_id)
+        # A step we cannot build is BLOCKED, not fatal. Live, a missed FAERS
+        # extraction killed a ten-step run at step four — and the other four
+        # sources did not depend on it.
+        step = self._peek_safe(run_id)
         if step is None:
-            return {"finished": True, "next_step": None,
-                    "extracted": {}, "failures": run["failures"]}
+            return {"finished": True, "next_step": None, "extracted": {},
+                    "failures": run["failures"], "blocked": run["blocked"]}
 
         spec = next(s for s in self.graph["steps"] if s["id"] == step["id"])
         results, failures = [], []
@@ -159,9 +184,10 @@ class SkillRunner:
 
         run["done"].append(step["id"])
         run["failures"].extend(failures)
-        following = self._peek(run_id)
+        following = self._peek_safe(run_id)
         return {
             "step_id": step["id"],
+            "blocked": run["blocked"],
             "extracted": extracted,
             "failures": failures,
             "next_step": following,

@@ -238,6 +238,22 @@ class SkillRunner:
                         if (found := _dig(payload, path)) is not None]
             if gathered:
                 extracted[name] = gathered
+        # `combine` merges facts the question supplied with facts the data
+        # produced. The reactions a user names ("especially myelodysplastic
+        # syndrome and renal impairment") exist only in the question and are
+        # rarely frequent enough to survive a top-N cut — for Lutathera neither
+        # is in the top twelve — so requested terms lead and the cap trims the
+        # frequency-ranked tail, never the ask.
+        for name, rule in (spec.get("combine") or {}).items():
+            merged: list = []
+            for source in rule.get("union", []):
+                value = run["facts"].get(source) or extracted.get(source) or []
+                for item in (value if isinstance(value, list) else [value]):
+                    if item not in merged:
+                        merged.append(item)
+            if rule.get("limit"):
+                merged = merged[: rule["limit"]]
+            extracted[name] = merged
         run["facts"].update(extracted)
 
         for name, rule in (spec.get("derive") or {}).items():

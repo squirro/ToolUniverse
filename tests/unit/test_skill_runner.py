@@ -476,3 +476,57 @@ def test_a_value_falls_back_to_another_fact_when_the_lift_fails():
     runner = SkillRunner(graph, execute=lambda t, a: {"data": [{"title": "x"}]})
     run = runner.start({"drug_name": "cisplatin"})
     assert runner.advance(run["run_id"])["extracted"]["faers_name"] == "cisplatin"
+
+
+# --- what the QUESTION asks for is an input, not a derivable ------------------
+# "What does FAERS show for Lutathera — especially myelodysplastic syndrome and
+# renal impairment?" Neither term is in the twelve the graph picks by report
+# count, so the run came back full of correct numbers that did not answer the
+# question. Those terms exist only in the question; they must be bound as an
+# input and UNIONED with the frequency-ranked ones.
+
+UNION_GRAPH = {
+    "skill": "u", "inputs": ["drug_name", "requested_aes"],
+    "steps": [
+        {"id": "counts", "calls": [{"tool": "counts", "arguments": {}}],
+         "extract": {"top_aes": {"path": "result[].term", "limit": 3}},
+         "combine": {"signal_aes": {"union": ["requested_aes", "top_aes"],
+                                    "limit": 5}}},
+        {"id": "signals", "requires": ["counts"], "for_each": "signal_aes",
+         "as": "ae", "calls": [{"tool": "d", "arguments": {"ae": "{ae}"}}]},
+    ],
+}
+COUNTS = {"result": [{"term": "DEATH"}, {"term": "NAUSEA"}, {"term": "FATIGUE"}]}
+
+
+def test_the_terms_the_question_named_are_kept_even_when_they_are_not_frequent():
+    runner = SkillRunner(UNION_GRAPH, execute=lambda t, a: COUNTS)
+    run = runner.start({"drug_name": "LUTATHERA",
+                        "requested_aes": ["MYELODYSPLASTIC SYNDROME",
+                                          "RENAL IMPAIRMENT"]})
+    got = runner.advance(run["run_id"])["extracted"]["signal_aes"]
+    assert got[:2] == ["MYELODYSPLASTIC SYNDROME", "RENAL IMPAIRMENT"]
+    assert "DEATH" in got
+
+
+def test_the_requested_terms_come_first_so_a_cap_cannot_drop_them():
+    runner = SkillRunner(UNION_GRAPH, execute=lambda t, a: COUNTS)
+    run = runner.start({"drug_name": "LUTATHERA",
+                        "requested_aes": ["MYELODYSPLASTIC SYNDROME",
+                                          "RENAL IMPAIRMENT"]})
+    got = runner.advance(run["run_id"])["extracted"]["signal_aes"]
+    assert len(got) == 5 and got[0] == "MYELODYSPLASTIC SYNDROME"
+
+
+def test_a_question_that_names_nothing_still_runs_on_frequency():
+    runner = SkillRunner(UNION_GRAPH, execute=lambda t, a: COUNTS)
+    run = runner.start({"drug_name": "LUTATHERA"})
+    got = runner.advance(run["run_id"])["extracted"]["signal_aes"]
+    assert got == ["DEATH", "NAUSEA", "FATIGUE"]
+
+
+def test_a_duplicate_between_requested_and_frequent_is_not_run_twice():
+    runner = SkillRunner(UNION_GRAPH, execute=lambda t, a: COUNTS)
+    run = runner.start({"drug_name": "LUTATHERA", "requested_aes": ["DEATH"]})
+    got = runner.advance(run["run_id"])["extracted"]["signal_aes"]
+    assert got.count("DEATH") == 1

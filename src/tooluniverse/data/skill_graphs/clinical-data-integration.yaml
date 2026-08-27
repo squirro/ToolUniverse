@@ -18,6 +18,11 @@
 
 skill: clinical-data-integration
 inputs: [drug_name]
+# Optional, and bound by the AGENT from the question: the reactions the user
+# actually asked about. "especially myelodysplastic syndrome and renal
+# impairment" — neither is in Lutathera's top twelve by report count, so without
+# this the run returns correct numbers that do not answer the question.
+optional_inputs: [requested_aes]
 
 steps:
   - id: identity
@@ -64,7 +69,9 @@ steps:
         arguments: {medicinalproduct: "{faers_name}"}
     extract:
       top_aes: {path: "result[].term", limit: 12}   # the execute_tool envelope, same as every saved trace
-    produces: [top_aes]
+    combine:
+      signal_aes: {union: [requested_aes, top_aes], limit: 15}
+    produces: [top_aes, signal_aes]
     notes: >-
       FAERS drug names are case-strict; the term strings are carried forward
       exactly as returned.
@@ -72,7 +79,7 @@ steps:
   - id: disproportionality
     label: "Phase 2b — disproportionality per reported term"
     requires: [faers_counts]
-    for_each: top_aes
+    for_each: signal_aes
     as: adverse_event
     calls:
       - tool: FAERS_calculate_disproportionality

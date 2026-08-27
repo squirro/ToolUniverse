@@ -28,7 +28,8 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from .skill_graph import SkillGraphError, _fill, next_step
 
@@ -115,9 +116,19 @@ def _derive(spec: dict, facts: dict) -> bool | None:
 class SkillRunner:
     """Server-side execution of one skill graph, one run at a time."""
 
-    def __init__(self, graph: dict, execute: Callable[[str, dict], Any]):
+    MAX_REPAIRS = 2
+
+    def __init__(self, graph: dict, execute: Callable[[str, dict], Any],
+                 ask: Callable[[dict], list[str]] | None = None):
         self.graph = graph
         self.execute = execute
+        # `ask` puts the model back in the loop as an ORACLE, never as the
+        # scheduler: the server decides a lookup failed, frames the question,
+        # validates the answer by re-querying, and stops after MAX_REPAIRS.
+        # It exists because the agent knows things the data does not — that
+        # "Lu-177" and "lu 177" are one isotope — and DailyMed returns nothing
+        # for the form the agent correctly binds from the question.
+        self.ask = ask
         self._runs: dict[str, dict] = {}
 
     def start(self, inputs: dict) -> dict:
@@ -135,6 +146,47 @@ class SkillRunner:
                          facts=run["facts"])
 
     MAX_PAYLOAD = 12_000
+
+    def _resolved(self, spec: dict, repair: dict, results: list) -> bool:
+        """Did the value this step exists to produce actually arrive?"""
+        wanted = repair["when_missing"]
+        rule = (spec.get("extract") or {}).get(wanted)
+        path = rule["path"] if isinstance(rule, dict) else rule
+        return any(_dig(payload, path) is not None for payload in results)
+
+    def _repair(self, spec, step, repair, results, failures, run):
+        """Ask for a better argument value and retry, at most MAX_REPAIRS times."""
+        if self._resolved(spec, repair, results):
+            return results, failures
+        argument = repair["argument"]
+        original = step["calls"][0]["arguments"].get(argument)
+        suggestions = self.ask({
+            "tool": step["calls"][0]["tool"],
+            "argument": argument,
+            "value": original,
+            "problem": f"returned nothing for {original!r}",
+        }) or []
+        for candidate in suggestions[: self.MAX_REPAIRS]:
+            retried, retry_failures = [], []
+            for call in step["calls"]:
+                arguments = dict(call["arguments"])
+                if argument in arguments:
+                    arguments[argument] = candidate
+                try:
+                    retried.append(self.execute(call["tool"], arguments))
+                except Exception as exc:                   # noqa: BLE001
+                    retry_failures.append({"tool": call["tool"],
+                                           "error": f"{type(exc).__name__}: {exc}"})
+            if self._resolved(spec, repair, retried):
+                run["facts"][argument] = candidate
+                return retried, retry_failures
+            results, failures = retried, retry_failures
+        run["blocked"].append({
+            "step": step["id"],
+            "reason": (f"{argument}={original!r} could not be resolved after "
+                       f"{self.MAX_REPAIRS} suggested alternatives"),
+        })
+        return results, failures
 
     def bundle(self, run_id: str) -> dict:
         """Everything the report needs, handed over ONCE at the end.
@@ -205,6 +257,11 @@ class SkillRunner:
                 # endpoint ended a whole run under the model-driven loop.
                 failures.append({"tool": call["tool"],
                                  "error": f"{type(exc).__name__}: {exc}"})
+
+        repair = spec.get("repair")
+        if repair and self.ask:
+            results, failures = self._repair(
+                spec, step, repair, results, failures, run)
 
         extracted: dict[str, Any] = {}
         for name, rule in (spec.get("extract") or {}).items():

@@ -32,6 +32,14 @@ steps:
         arguments: {drug_name: "{drug_name}"}   # NOT `query` — the prose body says query, the schema says drug_name
       - tool: OpenFDA_get_approval_history
         arguments: {operation: "get_approval_history", drug_name: "{drug_name}"}
+    repair:
+      # The agent binds "lutetium Lu-177 dotatate" from the question — correctly,
+      # and identically on three runs — and DailyMed returns 0 SPLs for it while
+      # "lutetium lu 177 dotatate" returns 1. The isotope notation is world
+      # knowledge the agent has and the data does not, so ask and retry rather
+      # than fail the whole run at step one.
+      argument: drug_name
+      when_missing: setid
     extract:
       setid: "data.0.setid"
       # FAERS indexes this drug family by BRAND, not by the generic INN the

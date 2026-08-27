@@ -530,3 +530,85 @@ def test_a_duplicate_between_requested_and_frequent_is_not_run_twice():
     run = runner.start({"drug_name": "LUTATHERA", "requested_aes": ["DEATH"]})
     got = runner.advance(run["run_id"])["extracted"]["signal_aes"]
     assert got.count("DEATH") == 1
+
+
+# --- repair: ask the agent, then retry ---------------------------------------
+# Measured: the agent binds "lutetium Lu-177 dotatate" from the question, three
+# times identically — and DailyMed returns 0 SPLs for it, while "lutetium lu 177
+# dotatate" returns 1. A correct, repeatable binding would have produced a
+# confidently wrong report. The variant is world knowledge (Lu-177 is an isotope
+# notation), which the agent has and the server does not.
+#
+# So the server asks, but stays in charge: it decides the lookup failed, frames
+# the question, validates by re-querying, and gives up after two attempts. The
+# model is an oracle for one narrow thing, never the scheduler.
+
+REPAIR_GRAPH = {
+    "skill": "r", "inputs": ["drug_name"],
+    "steps": [{"id": "spl",
+               "calls": [{"tool": "spls", "arguments": {"drug_name": "{drug_name}"}}],
+               "extract": {"setid": "data.0.setid"},
+               "repair": {"argument": "drug_name", "when_missing": "setid"}}],
+}
+GOOD = {"data": [{"setid": "72d1a024"}]}
+
+
+def _executor(good_for):
+    seen = []
+
+    def execute(tool, arguments):
+        seen.append(arguments.get("drug_name"))
+        return GOOD if arguments.get("drug_name") == good_for else {"data": []}
+    return execute, seen
+
+
+def test_a_failed_lookup_is_retried_with_what_the_agent_suggests():
+    execute, seen = _executor("lutetium lu 177 dotatate")
+    runner = SkillRunner(REPAIR_GRAPH, execute=execute,
+                         ask=lambda q: ["lutetium lu 177 dotatate"])
+    run = runner.start({"drug_name": "lutetium Lu-177 dotatate"})
+    out = runner.advance(run["run_id"])
+    assert out["extracted"]["setid"] == "72d1a024"
+    assert seen == ["lutetium Lu-177 dotatate", "lutetium lu 177 dotatate"]
+
+
+def test_the_repair_question_names_the_tool_and_what_came_back():
+    execute, _ = _executor("never")
+    asked = {}
+    runner = SkillRunner(REPAIR_GRAPH, execute=execute,
+                         ask=lambda q: asked.update(q) or [])
+    run = runner.start({"drug_name": "lutetium Lu-177 dotatate"})
+    runner.advance(run["run_id"])
+    assert asked["tool"] == "spls"
+    assert asked["argument"] == "drug_name"
+    assert asked["value"] == "lutetium Lu-177 dotatate"
+
+
+def test_repair_gives_up_after_two_attempts():
+    """Two is enough for a spelling or a brand, and not enough to spend a minute
+    on a lookup that will never resolve."""
+    execute, seen = _executor("never")
+    runner = SkillRunner(REPAIR_GRAPH, execute=execute,
+                         ask=lambda q: ["variant one", "variant two", "variant three"])
+    run = runner.start({"drug_name": "original"})
+    out = runner.advance(run["run_id"])
+    assert seen == ["original", "variant one", "variant two"]
+    assert any("could not be resolved" in b["reason"] for b in out["blocked"])
+
+
+def test_a_lookup_that_works_first_time_never_asks():
+    execute, seen = _executor("lutetium lu 177 dotatate")
+    called = []
+    runner = SkillRunner(REPAIR_GRAPH, execute=execute,
+                         ask=lambda q: called.append(q) or [])
+    run = runner.start({"drug_name": "lutetium lu 177 dotatate"})
+    runner.advance(run["run_id"])
+    assert called == [] and len(seen) == 1
+
+
+def test_without_an_ask_callback_the_runner_behaves_exactly_as_before():
+    execute, seen = _executor("never")
+    runner = SkillRunner(REPAIR_GRAPH, execute=execute)
+    run = runner.start({"drug_name": "original"})
+    runner.advance(run["run_id"])
+    assert seen == ["original"]

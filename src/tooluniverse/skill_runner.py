@@ -43,21 +43,45 @@ _OPS: dict[str, Callable[[Any, Any], bool]] = {
 def _dig(payload: Any, path: str) -> Any:
     """Follow a dotted path into a result, returning None rather than raising.
 
-    Deliberately not JSONPath: a declarative, boring accessor is what makes the
-    extraction reviewable, and an extraction that silently misses is reported as a
-    missing fact by the next step rather than crashing the run.
+    Deliberately not JSONPath: a boring, declarative accessor is what keeps the
+    extraction reviewable, and a miss surfaces as a named missing fact at the next
+    step rather than a crash.
+
+    One form beyond dots: a segment ending ``[]`` maps over a list, so
+    ``result[].term`` turns FAERS's [{term, count}, ...] into the term strings the
+    next step must pass back VERBATIM — MedDRA is case- and spelling-strict, and
+    the prose body spends five lines asking the model not to retype them.
     """
-    current = payload
+    current: Any = payload
+    mapping = False
     for part in path.split("."):
-        if isinstance(current, dict):
-            current = current.get(part)
-        elif isinstance(current, list) and part.isdigit():
-            current = current[int(part)] if int(part) < len(current) else None
-        else:
-            return None
-        if current is None:
-            return None
+        mapped = part.endswith("[]")
+        key = part[:-2] if mapped else part
+        if key:
+            current = _step_in(current, key, mapping)
+            if current is None:
+                return None
+        if mapped:
+            if mapping:
+                return None                    # nested mapping is out of scope
+            if not isinstance(current, list):
+                return None
+            mapping = True
     return current
+
+
+def _step_in(current: Any, key: str, mapping: bool) -> Any:
+    """Take one path segment, over a single value or over every mapped item."""
+    if mapping:
+        if not isinstance(current, list):
+            return None
+        out = [_step_in(item, key, False) for item in current]
+        return [value for value in out if value is not None]
+    if isinstance(current, dict):
+        return current.get(key)
+    if isinstance(current, list) and key.isdigit():
+        return current[int(key)] if int(key) < len(current) else None
+    return None
 
 
 def _derive(spec: dict, facts: dict) -> bool:
@@ -117,10 +141,14 @@ class SkillRunner:
                                  "error": f"{type(exc).__name__}: {exc}"})
 
         extracted: dict[str, Any] = {}
-        for name, path in (spec.get("extract") or {}).items():
+        for name, rule in (spec.get("extract") or {}).items():
+            path = rule["path"] if isinstance(rule, dict) else rule
+            limit = rule.get("limit") if isinstance(rule, dict) else None
             for payload in results:
                 found = _dig(payload, path)
                 if found is not None:
+                    if limit and isinstance(found, list):
+                        found = found[:limit]
                     extracted[name] = found
                     break
         run["facts"].update(extracted)

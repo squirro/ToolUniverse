@@ -154,3 +154,66 @@ def test_the_run_finishes_when_every_runnable_step_is_done():
             break
     assert out["finished"] is True
     assert runner.state(run["run_id"])["done"] == ["resolve", "signals", "report"]
+
+
+# --- list mapping, from real payload shapes ---------------------------------
+# FAERS returns a bare list of {term, count}; the next step needs the term
+# STRINGS, in order, capped. The prose body spends five lines telling the model
+# not to retype them (MedDRA is case- and spelling-strict, "Haemorrhage" not
+# "hemorrhage") — carrying them mechanically is the whole point.
+
+FAERS_GRAPH = {
+    "skill": "faers",
+    "inputs": ["drug_name"],
+    "steps": [
+        {"id": "counts",
+         "calls": [{"tool": "counts", "arguments": {"medicinalproduct": "{drug_name}"}}],
+         "extract": {"top_aes": {"path": "result[].term", "limit": 2}}},
+        {"id": "signals", "requires": ["counts"],
+         "for_each": "top_aes", "as": "adverse_event",
+         "calls": [{"tool": "dispro",
+                    "arguments": {"adverse_event": "{adverse_event}"}}]},
+    ],
+}
+
+FAERS_OK = {
+    "counts": {"result": [{"term": "DEATH", "count": 1598},
+                          {"term": "HOT FLUSH", "count": 784},
+                          {"term": "FALL", "count": 475}]},
+    "dispro": {"data": {"prr": 2.0}},
+}
+
+
+def test_a_list_of_records_maps_to_the_field_the_next_step_needs():
+    def execute(tool, arguments):
+        return FAERS_OK[tool]
+    runner = SkillRunner(FAERS_GRAPH, execute=execute)
+    run = runner.start({"drug_name": "enzalutamide"})
+    out = runner.advance(run["run_id"])
+    assert out["extracted"]["top_aes"] == ["DEATH", "HOT FLUSH"]
+
+
+def test_the_mapped_terms_drive_one_call_each_verbatim():
+    calls = []
+
+    def execute(tool, arguments):
+        calls.append((tool, arguments))
+        return FAERS_OK[tool]
+    runner = SkillRunner(FAERS_GRAPH, execute=execute)
+    run = runner.start({"drug_name": "enzalutamide"})
+    runner.advance(run["run_id"])
+    runner.advance(run["run_id"])
+    assert [a["adverse_event"] for t, a in calls if t == "dispro"] == ["DEATH", "HOT FLUSH"]
+
+
+def test_a_dotted_path_into_the_first_record_still_works():
+    """DailyMed puts the setid the label phases need at data.0.setid."""
+    graph = {"skill": "dm", "inputs": ["drug_name"],
+             "steps": [{"id": "spl",
+                        "calls": [{"tool": "spls", "arguments": {"query": "{drug_name}"}}],
+                        "extract": {"setid": "data.0.setid"}}]}
+    runner = SkillRunner(graph, execute=lambda t, a: {
+        "data": [{"title": "XTANDI", "setid": "b129fdc9-1d8e-425c"}]})
+    run = runner.start({"drug_name": "enzalutamide"})
+    out = runner.advance(run["run_id"])
+    assert out["extracted"]["setid"] == "b129fdc9-1d8e-425c"

@@ -76,7 +76,7 @@ report. Mark any phase with no data as "No data available".
 # 6 integration phases — call execute_tool with the NAMED tool (≈1 primary call each, no find_tools)
 
 **Phase 0 — Drug Identity & Context**
-`DailyMed_search_spls`(query="<drug>") → Structured Product Labels: SPL list with **setid** (a UUID),
+`DailyMed_search_spls`(drug_name="<drug>") → Structured Product Labels: SPL list with **setid** (a UUID),
 titles, labeler names. CAPTURE the setid of the correct label — Phase 1 reuses it. Note the generic
 name, brand names, therapeutic class, and approved indications.
 `OpenFDA_get_approval_history`(operation="get_approval_history", drug_name="<drug>") → approval dates,

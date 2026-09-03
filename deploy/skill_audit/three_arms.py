@@ -68,14 +68,33 @@ def _rounded_forms(value: str) -> set[str]:
     return {value, f"{f:.0f}", f"{f:.1f}", f"{f:.2f}", f"{f:.3f}"}
 
 
+# Not a PRR: "95% CI", "COVID-19", the footnote marker [^3^], the isotope ^{177}Lu.
+_PRR = re.compile(r"PRR[^0-9\n]{0,24}?(?<![-{^\[])(\d{1,4}(?:\.\d{1,3})?)(?![\d.^])(?!\s*\\?%)")
+_CELL_NUMBER = re.compile(r"(\d{1,4}(?:\.\d{1,3})?)")
+
+
 def prr_values(answer: str) -> list[str]:
-    """Values the report presents as PRR: a decimal within a line that says PRR."""
-    found = []
+    """Values the report presents AS the PRR.
+
+    Two ways a report says it: the number right after "PRR" in prose ("PRR
+    95.953 (CI …)" states one value, not three; "95% CI" states none), and a
+    markdown table whose header names a PRR column, one value per row.
+    """
+    found = [m.group(1) for m in _PRR.finditer(answer or "")]
+    column = None
     for line in (answer or "").splitlines():
-        if "PRR" in line.upper():
-            for m in _NUMBER.finditer(line):
-                if "." in m.group(1):
-                    found.append(m.group(1))
+        if not line.strip().startswith("|"):
+            column = None
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if column is None:
+            hits = [i for i, c in enumerate(cells) if "PRR" in c.upper()]
+            column = hits[0] if hits else -1
+            continue
+        if column >= 0 and column < len(cells) and not set(cells[column]) <= set("-: "):
+            m = _CELL_NUMBER.search(cells[column])
+            if m:
+                found.append(m.group(1))
     return found
 
 
@@ -87,10 +106,18 @@ def score(turn_actions: list[dict], answer: str) -> dict:
             evidence |= _rounded_forms(value)
     stated = prr_values(answer)
     traceable = [v for v in stated if _rounded_forms(v) & evidence]
+    reached = set()
+    for a in turn_actions:
+        if a.get("tool_name") == "execute_tool":
+            reached.add(((a.get("content") or {}).get("parameters") or {}).get("tool_name"))
+        elif a.get("tool_name") in ("run_skill", "continue_skill"):
+            reached.add("(server-side)")
     return {
         "prr_values_stated": len(stated),
         "prr_values_traceable": len(traceable),
         "prr_values_untraceable": sorted(set(stated) - set(traceable)),
+        "prr_value_set": sorted({f"{float(v):.1f}" for v in stated}),
+        "distinct_tools_reached": sorted(x for x in reached if x),
         "tools_called": [a.get("tool_name") for a in turn_actions],
         "used_run_skill": any(a.get("tool_name") == "run_skill" for a in turn_actions),
         "used_get_skill": any(a.get("tool_name") == "get_skill" for a in turn_actions),
@@ -134,21 +161,53 @@ def run(args) -> int:
                   f"run_skill={row['used_run_skill']} get_skill={row['used_get_skill']} "
                   f"execute_tool={row['execute_tool_calls']} error={row['error']}")
 
-    lines = ["| arm | run | s | PRR stated | traceable | untraceable | run_skill | execute_tool | error |",
+    print(render(rows))
+    (out_dir / "table.md").write_text(render(rows))
+    return 0
+
+
+def render(rows: list[dict]) -> str:
+    """Per run, then per arm: the value set shared by every repeat over the union."""
+    lines = ["| arm | run | s | PRR stated | traceable | invented | model tool calls | distinct tools | error |",
              "|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
-        lines.append(f"| {r['arm']} | {r['run']} | {r['seconds']} | {r['prr_values_stated']} | "
+        model_calls = len(r["tools_called"])
+        lines.append(f"| {r['arm']} | {r['run']} | {r['seconds']:.0f} | {r['prr_values_stated']} | "
                      f"{r['prr_values_traceable']} | {len(r['prr_values_untraceable'])} | "
-                     f"{'yes' if r['used_run_skill'] else 'no'} | {r['execute_tool_calls']} | "
-                     f"{r['error'] or ''} |")
-    (out_dir / "table.md").write_text("\n".join(lines) + "\n")
-    print("\n".join(lines))
+                     f"{model_calls} | {len(r.get('distinct_tools_reached', []))} | {r['error'] or ''} |")
+    lines += ["", "| arm | runs | PRR values in every run | in any run | consistency | invented total |",
+              "|---|---|---|---|---|---|"]
+    by_arm: dict[str, list[dict]] = {}
+    for r in rows:
+        by_arm.setdefault(r["arm"], []).append(r)
+    for arm, rs in by_arm.items():
+        sets = [set(r.get("prr_value_set", [])) for r in rs]
+        every = set.intersection(*sets) if sets else set()
+        any_ = set.union(*sets) if sets else set()
+        ratio = f"{len(every)/len(any_):.0%}" if any_ else "-"
+        invented = sum(len(r["prr_values_untraceable"]) for r in rs)
+        lines.append(f"| {arm} | {len(rs)} | {len(every)} | {len(any_)} | {ratio} | {invented} |")
+    return "\n".join(lines) + "\n"
+
+
+def rescore(args) -> int:
+    """Re-grade saved runs after a scorer change; nothing is re-run."""
+    out_dir = Path(args.out)
+    rows = []
+    for path in sorted(out_dir.glob("*-r*.json")):
+        r = json.loads(path.read_text())
+        r.update(score(r["actions"], r["answer"]))
+        path.write_text(json.dumps(r, indent=1, ensure_ascii=False))
+        rows.append(r)
+    rows.sort(key=lambda r: (list(ARMS).index(r["arm"]), r["run"]))
+    print(render(rows))
+    (out_dir / "table.md").write_text(render(rows))
     return 0
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--agent-id", required=True)
+    ap.add_argument("--agent-id")
     ap.add_argument("--target", default="srdev", choices=["srdev", "srdev-com", "sempart"])
     ap.add_argument("--env-file")
     ap.add_argument("--runs", type=int, default=3)
@@ -156,7 +215,9 @@ def main(argv=None) -> int:
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--out")
     ap.add_argument("--redo", action="store_true")
-    return run(ap.parse_args(argv))
+    ap.add_argument("--rescore", action="store_true", help="re-grade the saved runs in --out")
+    args = ap.parse_args(argv)
+    return rescore(args) if args.rescore else run(args)
 
 
 if __name__ == "__main__":

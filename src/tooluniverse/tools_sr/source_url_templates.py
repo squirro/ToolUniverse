@@ -30,6 +30,7 @@ from urllib.parse import quote
 __all__ = ["FAMILY_TEMPLATES", "TOOL_TEMPLATES", "candidates", "declared_url", "render"]
 
 _OT = "https://platform.opentargets.org"
+_GNOMAD = "https://gnomad.broadinstitute.org"
 
 # Keyed by tool name, and checked before the family rules. These are the tools whose
 # parameters do not say what kind of thing an identifier is: `entityId` is an Ensembl,
@@ -52,6 +53,9 @@ TOOL_TEMPLATES: dict[str, str] = {
     "OpenTargets_get_gene_ontology_terms_by_goID": (
         "https://www.ebi.ac.uk/QuickGO/term/{goIds}"
     ),
+    # The SV tool queries gnomad_sv_r4 inside its GraphQL body, and the site cannot
+    # resolve an SV id under its default (short-variant) dataset.
+    "gnomad_get_sv_detail": f"{_GNOMAD}/variant/{{variant_id}}?dataset=gnomad_sv_r4",
 }
 
 # Keyed by the tool definition's ``type``, and tried in order: the first template whose
@@ -88,6 +92,17 @@ FAMILY_TEMPLATES: dict[str, tuple[str, ...]] = {
     "PubChemToxTool": ("https://pubchem.ncbi.nlm.nih.gov/compound/{cid}",),
     "PubChemBioAssayTool": ("https://pubchem.ncbi.nlm.nih.gov/bioassay/{aid}",),
     "ReactomeRESTTool": ("https://reactome.org/content/detail/{stId}",),
+    # gnomAD POSTs GraphQL (DSR-694): a template is its only route to a citation. The
+    # dataset sits in default_variables, not the call, so pages are cited without it and
+    # gnomAD applies its own default. The free-text search names no record and abstains.
+    "gnomADGraphQLQueryTool": (
+        f"{_GNOMAD}/variant/{{variant_id}}",
+        f"{_GNOMAD}/gene/{{gene_symbol}}",
+        f"{_GNOMAD}/gene/{{gene_id}}",
+        f"{_GNOMAD}/transcript/{{transcript_id}}",
+        f"{_GNOMAD}/region/{{chrom}}-{{start}}-{{stop}}",
+    ),
+    "gnomADGetGeneConstraints": (f"{_GNOMAD}/gene/{{gene_symbol}}",),
 }
 
 _PLACEHOLDER = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")

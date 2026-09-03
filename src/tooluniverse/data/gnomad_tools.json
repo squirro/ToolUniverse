@@ -506,7 +506,7 @@
         },
         "dataset": {
           "type": "string",
-          "default": "gnomad_r3",
+          "default": "gnomad_r4",
           "description": "gnomAD dataset ID. Allowed values: gnomad_r4, gnomad_r4_non_ukb, gnomad_r3, gnomad_r3_controls_and_biobanks, gnomad_r3_non_cancer, gnomad_r3_non_neuro, gnomad_r3_non_topmed, gnomad_r3_non_v2, gnomad_r2_1, gnomad_r2_1_controls, gnomad_r2_1_non_neuro, gnomad_r2_1_non_cancer, gnomad_r2_1_non_topmed, exac."
         }
       },
@@ -519,7 +519,7 @@
       "return_format": "JSON",
       "query_schema": "query($query: String!, $dataset: DatasetId!) { variant_search(query: $query, dataset: $dataset) { variant_id } }",
       "default_variables": {
-        "dataset": "gnomad_r3"
+        "dataset": "gnomad_r4"
       }
     },
     "return_schema": {
@@ -581,7 +581,7 @@
   {
     "type": "gnomADGraphQLQueryTool",
     "name": "gnomad_get_variant",
-    "description": "Get basic variant metadata from gnomAD by `variant_id` (format like '19-44908822-C-T'). Use `gnomad_search_variants` to discover valid `variant_id` values from an rsID query. `dataset` is required by gnomAD and defaults to `gnomad_r3`.",
+    "description": "Get basic variant metadata from gnomAD by `variant_id` (format like '19-44908822-C-T'). Use `gnomad_search_variants` to discover valid `variant_id` values from an rsID query. `dataset` is required by gnomAD and defaults to `gnomad_r4`.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -591,7 +591,7 @@
         },
         "dataset": {
           "type": "string",
-          "default": "gnomad_r3",
+          "default": "gnomad_r4",
           "description": "gnomAD dataset ID. Allowed values: gnomad_r4, gnomad_r4_non_ukb, gnomad_r3, gnomad_r3_controls_and_biobanks, gnomad_r3_non_cancer, gnomad_r3_non_neuro, gnomad_r3_non_topmed, gnomad_r3_non_v2, gnomad_r2_1, gnomad_r2_1_controls, gnomad_r2_1_non_neuro, gnomad_r2_1_non_cancer, gnomad_r2_1_non_topmed, exac."
         }
       },
@@ -607,7 +607,7 @@
         "variant_id": "variantId"
       },
       "default_variables": {
-        "dataset": "gnomad_r3"
+        "dataset": "gnomad_r4"
       }
     },
     "return_schema": {

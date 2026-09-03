@@ -131,6 +131,43 @@ def test_the_rcsb_graphql_family_cites_a_structure_page_from_its_id_list():
     assert url == "https://www.rcsb.org/structure/1TUP"
 
 
+def test_the_gnomad_family_cites_the_variant_page_the_call_asked_about():
+    """gnomAD POSTs GraphQL too (DSR-694 / DSR-631): a template is its only citation.
+    The dataset lives in ``default_variables``, not the call, so the page is cited
+    without it and gnomAD's own default dataset applies."""
+    url = source_url_templates.declared_url(
+        "gnomad_get_variant",
+        {"variant_id": "19-44908822-C-T"},
+        {"type": "gnomADGraphQLQueryTool"},
+    )
+
+    assert url == "https://gnomad.broadinstitute.org/variant/19-44908822-C-T"
+
+
+def test_every_gnomad_tool_that_names_a_record_renders_a_link():
+    """Gene, transcript, region and variant pages; the free-text search has no record
+    page until it resolves, so it abstains rather than cite a landing page."""
+    cases = {
+        "gnomad_get_gene_constraints": ({"gene_symbol": "BRCA1"}, "/gene/BRCA1"),
+        "gnomad_get_gene": ({"gene_symbol": "BRCA1"}, "/gene/BRCA1"),
+        "gnomad_get_transcript": ({"transcript_id": "ENST00000357654"},
+                                  "/transcript/ENST00000357654"),
+        "gnomad_get_region": ({"chrom": "17", "start": 43044295, "stop": 43125483},
+                              "/region/17-43044295-43125483"),
+        # The SV query names gnomad_sv_r4 in its body; the site needs it in the URL too.
+        "gnomad_get_sv_detail": ({"variant_id": "DEL_CHR17_1234"},
+                                 "/variant/DEL_CHR17_1234?dataset=gnomad_sv_r4"),
+    }
+    types = {t["name"]: t["type"]
+             for t in json.loads((DATA / "gnomad_tools.json").read_text())}
+    for tool, (arguments, tail) in cases.items():
+        url = source_url_templates.declared_url(tool, arguments, {"type": types[tool]})
+        assert url is not None and url.endswith(tail), (tool, url)
+    assert source_url_templates.declared_url(
+        "gnomad_search_variants", {"query": "rs7412"},
+        {"type": "gnomADGraphQLQueryTool"}) is None
+
+
 def test_a_tool_declaring_its_own_template_overrides_this_module():
     """The tool is the authority on where its answer can be read."""
     url = source_url_templates.declared_url(

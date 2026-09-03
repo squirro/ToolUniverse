@@ -1,9 +1,12 @@
 services:
   # Skill Runs (ADR-0016). The dev-server is one binary with an SQLite file:
   # --db-filename puts it on a volume, because the default is in-memory and the
-  # point of a Run Record is that it survives a restart. Namespace `skills` is
-  # created at start; temporal-init raises its retention from the 24h default.
-  # Nothing host-specific: official image, standard ports, same on AWS.
+  # point of a Run Record is that it survives a restart. The volume mounts on
+  # /home/temporal, which the image owns: Docker copies that ownership onto a
+  # fresh volume, whereas a path the image lacks comes up root-owned and SQLite
+  # reports "unable to open database file: out of memory (14)". Namespace
+  # `skills` is created at start; temporal-init raises its retention from the
+  # 24h default. Nothing host-specific: official image, standard ports, same on AWS.
   temporal:
     image: temporalio/temporal:1.8.3
     container_name: temporal
@@ -14,7 +17,7 @@ services:
       - --ip
       - 0.0.0.0
       - --db-filename
-      - /data/temporal.db
+      - /home/temporal/temporal.db
       - --namespace
       - skills
     ports:
@@ -23,7 +26,7 @@ services:
       - "127.0.0.1:7233:7233"
       - "127.0.0.1:8233:8233"
     volumes:
-      - temporal_data:/data
+      - temporal_data:/home/temporal
     healthcheck:
       test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "127.0.0.1:7233"]
       interval: 10s

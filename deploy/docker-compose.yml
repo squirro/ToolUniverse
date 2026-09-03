@@ -52,6 +52,7 @@ services:
       - temporal:7233
       - --retention
       - 720h
+      - -n
       - skills
 
   smcp:

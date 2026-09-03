@@ -131,6 +131,37 @@ fi
 echo "      → served disease-research body (${#SKILL_TEXT} chars)"
 
 # ---------------------------------------------------------------------
+# Step 2c: run_skill (ADR-0016). Only when the deploy configures Temporal:
+# .env beside this script is what the container reads, so it is the truth.
+# Proves the tool is SERVED and a Skill Run yields its first tick — the
+# worker inside SMCP is polling and the process was read from GraphDB.
+# ---------------------------------------------------------------------
+if grep -qE '^TEMPORAL_ADDRESS=.+' "$(dirname "$0")/.env" 2>/dev/null; then
+  echo "[2c] run_skill is configured — tools/list must advertise it …"
+  for tool in run_skill continue_skill; do
+    if ! echo "$LIST_JSON" | jq -e ".result.tools[] | select(.name==\"$tool\")" >/dev/null; then
+      echo "ERROR: $tool not in tools/list although TEMPORAL_ADDRESS is set." >&2
+      exit 1
+    fi
+  done
+  echo "[2c] tools/call run_skill → clinical-data-integration / Lutathera …"
+  RUN_RESP=$(curl -fsS -X POST "$URL" \
+                -H "$HDR_TYPE" -H "Accept: $ACCEPT" -H "$HDR_SESSION" \
+                -d '{"jsonrpc":"2.0","id":4,"method":"tools/call",
+                     "params":{"name":"run_skill",
+                               "arguments":{"skill":"clinical-data-integration",
+                                            "inputs":{"drug_name":"Lutathera"}}}}')
+  RUN_JSON=$(echo "$RUN_RESP" | sse_payload)
+  RUN_TEXT=$(echo "$RUN_JSON" | jq -r '.result.content[0].text // ""')
+  RUN_STATUS=$(echo "$RUN_TEXT" | jq -r '.status // "none"')
+  case "$RUN_STATUS" in
+    running|waiting|finished)
+      echo "      → $RUN_STATUS $(echo "$RUN_TEXT" | jq -r '.run_id') step=$(echo "$RUN_TEXT" | jq -r '.step_id // "-"')" ;;
+    *) echo "ERROR: run_skill answered: $RUN_TEXT" >&2; exit 1 ;;
+  esac
+fi
+
+# ---------------------------------------------------------------------
 # Step 3: execute_tool → search_clinical_trials. Proves the agent flow:
 #   tools/call(execute_tool) → TU dispatches to a background-loaded tool
 #   → external API round-trip works. If this passes, the LLM can reach

@@ -333,3 +333,13 @@ def test_a_step_tells_the_model_driven_caller_which_names_it_must_judge():
     graph = {"skill": "j", "inputs": [], "steps": [
         {"id": "hypothesis", "calls": [], "produces": ["keyword"], "judge": ["keyword"]}]}
     assert next_step(graph, done=[], facts={})["judge"] == ["keyword"]
+
+
+def test_with_temporal_the_directive_points_at_run_skill_and_forbids_self_execution():
+    from tooluniverse.skill_graph import graph_directive
+    text = graph_directive("clinical-data-integration", server_runs=True)
+    assert "run_skill(" in text and "continue_skill(" in text
+    assert "next_skill_step" not in text
+    assert "Do not call `execute_tool`" in text
+    # and without Temporal the model-driven loop is still the instruction
+    assert "next_skill_step" in graph_directive("clinical-data-integration")

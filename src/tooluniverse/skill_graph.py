@@ -63,15 +63,39 @@ def has_graph(skill: str) -> bool:
     return (GRAPHS_DIR / f"{skill}.yaml").is_file()
 
 
-def graph_directive(skill: str) -> str:
+def graph_directive(skill: str, server_runs: bool = False) -> str:
     """The header prepended to a graphed skill's body, or "" when it has none.
 
     A graph nobody is told about changes nothing. And two sets of instructions that
     disagree are worse than either alone, so this states which one governs and
-    demotes the prose phases to reference.
+    demotes the prose phases to reference. With `server_runs` (Temporal configured,
+    ADR-0016) the server executes the process and the model only starts it,
+    answers its questions, and writes the report.
     """
     if not has_graph(skill):
         return ""
+    if server_runs:
+        return f"""# THE SERVER RUNS THIS SKILL — do not plan from the phases below
+This skill ships its procedure as a Skill Process. The phases further down are
+REFERENCE for what each step means; they are not your plan. The server executes
+every step and every tool call itself.
+
+1. Bind the inputs from the question and call `run_skill(skill="{skill}",
+   inputs={{...}})`. If it answers `schema_mismatch`, bind the named inputs and
+   call again.
+2. While it answers `running` or `waiting`, call `continue_skill(run_id=...)`.
+   `running` is progress — tell the user which phase is done. `waiting` carries a
+   `question`: answer it with `continue_skill(run_id=..., answer={{...}})` — for a
+   `repair`, the named argument mapped to a list of alternative values; for a
+   `judge`, each wanted name mapped to your decision.
+3. When it answers `finished`, write the report from `bundle` and nothing else.
+   Every number in the report comes from `bundle.results`; state `failures`,
+   `blocked` and `unresolved` as gaps.
+
+Do not call `execute_tool` for any step of this skill yourself.
+
+---
+"""
     return f"""# RUN THE PROCESS GRAPH — do not plan from the phases below
 This skill ships its procedure as a graph. The phases further down are REFERENCE
 for what each step means; they are not your plan. Your plan comes one step at a

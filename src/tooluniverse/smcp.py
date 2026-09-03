@@ -1060,6 +1060,8 @@ class SMCP(FastMCP):
         )
 
         skills_dir = self.skills_dir
+        # Temporal configured => the server runs Skill Processes (ADR-0016).
+        temporal_address = __import__("os").environ.get("TEMPORAL_ADDRESS") or None
         # Build the find_skill catalog index ONCE — the served set is fixed at container start.
         skill_index = build_index(skills_dir)
 
@@ -1122,8 +1124,11 @@ class SMCP(FastMCP):
             except SkillNotFound as exc:
                 return f"ERROR: {exc}"
             # A skill that ships a process graph is DRIVEN, not read: the header
-            # says so and demotes the phases below it to reference.
-            return graph_directive(normalize_skill_name(name)) + body
+            # says so and demotes the phases below it to reference. With Temporal
+            # configured the server runs it (run_skill); otherwise the model does
+            # (next_skill_step).
+            return graph_directive(normalize_skill_name(name),
+                                   server_runs=bool(temporal_address)) + body
 
         @self.tool(
             annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
@@ -1220,11 +1225,107 @@ class SMCP(FastMCP):
                                    "note": "Every step is done — write the report."})
             return json.dumps(step, ensure_ascii=False)
 
+        if temporal_address:
+            self._add_skill_run_tools(temporal_address)
+
         self.logger.info(
             f"Registered get_skill + find_skill + next_skill_step tools "
             f"(skills_dir={skills_dir}, graphed={graphed}, "
-            f"available={available_skills(skills_dir)})"
+            f"available={available_skills(skills_dir)}, "
+            f"run_skill={'on' if temporal_address else 'off'})"
         )
+
+    def _add_skill_run_tools(self, temporal_address: str) -> None:
+        """run_skill / continue_skill: the server runs a Skill Process on Temporal.
+
+        Registered only when TEMPORAL_ADDRESS is set — a missing setting is an
+        absent tool, never a silent fallback to the model-driven loop. The logic
+        is in `skill_run_client` (pure, tested over a scripted handle); these
+        wrappers only hold the Temporal client and the GraphDB store.
+        """
+        import json
+        import os
+
+        from mcp.types import ToolAnnotations
+
+        from .skill_process_store import Store
+        from .skill_run_client import resume, start
+
+        namespace = os.environ.get("TEMPORAL_NAMESPACE") or "skills"
+        state: dict = {}
+
+        async def client():
+            if "client" not in state:
+                from temporalio.client import Client
+
+                state["client"] = await Client.connect(temporal_address, namespace=namespace)
+            return state["client"]
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False)
+        )
+        async def run_skill(skill: str, inputs: dict | None = None) -> str:
+            """Run a skill's procedure SERVER-SIDE, start to finish, and follow it.
+
+            For skills that ship a Skill Process this REPLACES both planning from
+            the body and calling tools yourself: the server executes every step
+            and every tool call, extracts what the next step needs, and decides
+            each gateway from real results. Your jobs are to bind the inputs from
+            the question, answer the questions the run asks, and write the report
+            from the bundle at the end.
+
+            Loop: call this once; while the answer is `running` or `waiting`, call
+            `continue_skill(run_id)`; when it is `finished`, write the report.
+              - `running`  → progress: {step_id, step_label, done, remaining}. Tell
+                the user which phase completed, then call continue_skill.
+              - `waiting`  → a `question` {kind, step, wants, context}. Answer with
+                continue_skill(run_id, answer={...}): for kind "repair", the named
+                argument mapped to a LIST of alternative values (e.g. other
+                spellings of the drug); for kind "judge", each wanted name mapped
+                to your decision.
+              - `finished` → `bundle` {facts, results, steps_done, failures,
+                blocked, unresolved}. Every number in the report comes from
+                bundle.results; report failures/blocked/unresolved as gaps.
+              - `schema_mismatch` → bind the `missing_inputs` from the question
+                and call run_skill again.
+
+            Args:
+                skill: skill id with a published Skill Process, e.g.
+                    "clinical-data-integration", "rare-disease-diagnosis".
+                inputs: the process's declared inputs bound from the question,
+                    e.g. {"drug_name": "Lutathera", "requested_aes": ["renal
+                    impairment"]} or {"symptoms": ["hepatosplenomegaly", ...]}.
+
+            Returns:
+                JSON with `status` in {running, waiting, finished, schema_mismatch,
+                error} and `run_id` — pass run_id to continue_skill.
+            """
+            try:
+                out = await start(await client(), Store.from_env(), skill, inputs or {})
+            except Exception as exc:                       # noqa: BLE001
+                out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+            return json.dumps(out, ensure_ascii=False, default=str)
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False)
+        )
+        async def continue_skill(run_id: str, answer: dict | None = None) -> str:
+            """Follow a Skill Run started by run_skill, answering its question if any.
+
+            Call without `answer` after a `running` result; call WITH `answer`
+            after a `waiting` result (see run_skill for the two answer shapes).
+            Returns the same shapes as run_skill. Keep calling until `finished`.
+
+            Args:
+                run_id: the run_id run_skill returned.
+                answer: for a waiting run, the answer to its `question`; omit
+                    otherwise.
+            """
+            try:
+                out = await resume(await client(), run_id, answer)
+            except Exception as exc:                       # noqa: BLE001
+                out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+            return json.dumps(out, ensure_ascii=False, default=str)
 
     def _expose_tooluniverse_tools(self):
         """Convert and register loaded ToolUniverse tools as MCP-compatible tools.

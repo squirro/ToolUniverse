@@ -47,7 +47,9 @@ COPY src/ ./src/
 # Tool_RAG from --exclude-tools below.
 # Explicit python3.11 (AL2023's default python3 is 3.9). pip stamps the
 # tooluniverse-smcp console-script shebang with this interpreter.
-RUN python3.11 -m pip install --no-cache-dir -e .
+# [skill-process]: temporalio (the worker runs in this process, ADR-0016) and
+# rdflib (the BBO reader that loads a Skill Process from GraphDB).
+RUN python3.11 -m pip install --no-cache-dir -e '.[skill-process]'
 
 # Optional dependencies that unblock tools the deployment actually wants.
 #   zeep      -> BRENDA_* (5 tools; SOAP client. Also needs BRENDA_EMAIL/PASSWORD)

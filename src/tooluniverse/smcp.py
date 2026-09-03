@@ -1658,6 +1658,16 @@ class SMCP(FastMCP):
             banner_thread = threading.Thread(target=delayed_banner, daemon=True)
             banner_thread.start()
 
+        # Skill Runs on Temporal (ADR-0016): the worker shares this process so its
+        # activity reaches the loaded registry — exclusions and central repairs
+        # included — through the same door as execute_tool. Only when configured.
+        if not hasattr(self, "_skill_worker"):
+            from .skill_worker import start_in_thread
+
+            self._skill_worker = start_in_thread(self.tooluniverse)
+            if self._skill_worker:
+                self.logger.info("🧵 Skill worker started (TEMPORAL_ADDRESS set)")
+
         # Call parent's run method (blocking call)
         return super().run(*args, **kwargs)
 

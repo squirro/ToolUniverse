@@ -1,4 +1,59 @@
 services:
+  # Skill Runs (ADR-0016). The dev-server is one binary with an SQLite file:
+  # --db-filename puts it on a volume, because the default is in-memory and the
+  # point of a Run Record is that it survives a restart. Namespace `skills` is
+  # created at start; temporal-init raises its retention from the 24h default.
+  # Nothing host-specific: official image, standard ports, same on AWS.
+  temporal:
+    image: temporalio/temporal:1.8.3
+    container_name: temporal
+    restart: unless-stopped
+    command:
+      - server
+      - start-dev
+      - --ip
+      - 0.0.0.0
+      - --db-filename
+      - /data/temporal.db
+      - --namespace
+      - skills
+    ports:
+      # Loopback only — reach both over the SSH tunnel like GraphDB. 7233 is gRPC
+      # for a host-side client (deploy/skill_run.py); 8233 is the web UI.
+      - "127.0.0.1:7233:7233"
+      - "127.0.0.1:8233:8233"
+    volumes:
+      - temporal_data:/data
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "127.0.0.1:7233"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "2"
+
+  # One-shot: 30 days is Temporal's usual ceiling. The permanent Run Record is
+  # the next rung (PROV-O in GraphDB); this keeps a demoed run reviewable meanwhile.
+  temporal-init:
+    image: temporalio/temporal:1.8.3
+    container_name: temporal-init
+    restart: "no"
+    depends_on:
+      temporal:
+        condition: service_healthy
+    command:
+      - operator
+      - namespace
+      - update
+      - --address
+      - temporal:7233
+      - --retention
+      - 720h
+      - skills
+
   smcp:
     build:
       context: ..
@@ -13,6 +68,9 @@ services:
       # on 127.0.0.1:8000 on sempart-demo.
       - "127.0.0.1:8765:8000"
     env_file: .env
+    depends_on:
+      temporal:
+        condition: service_started   # the worker retries until Temporal answers
     volumes:
       # TU workspace: HPA bulk TSVs, NCBI cache, downloaded reference
       # data. Survives container recreate. Mounted at the non-root app
@@ -40,3 +98,4 @@ services:
 
 volumes:
   smcp_workspace:
+  temporal_data:

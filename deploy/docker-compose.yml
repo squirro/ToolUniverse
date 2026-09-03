@@ -72,6 +72,10 @@ services:
       # on 127.0.0.1:8000 on sempart-demo.
       - "127.0.0.1:8765:8000"
     env_file: .env
+    # The host by name, whatever the bridge gateway happens to be: Docker maps
+    # host-gateway itself; podman already resolves host.containers.internal.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       temporal:
         condition: service_started   # the worker retries until Temporal answers

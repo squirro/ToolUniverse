@@ -20,8 +20,10 @@ report.
 
 `execute` is injected — SMCP passes the in-process ToolUniverse (ExecuteTool is
 already constructed with `tooluniverse=self`), and tests pass a stub. State is an
-in-memory dict: durability across restarts is what a workflow engine would add,
-and is deliberately not in this spike.
+in-memory dict. The step logic — `absorb`, `resolved`, `substitute`, `apply`,
+`trim` — is module-level and pure, so a durable host (Temporal, ADR-0016) can
+await the calls itself and hand the results to the same functions; this class is
+the synchronous driver over them.
 """
 from __future__ import annotations
 

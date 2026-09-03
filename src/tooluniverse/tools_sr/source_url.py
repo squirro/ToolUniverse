@@ -18,6 +18,7 @@ than dropping parameters, so the stamped URL still shows that the call needed a 
 from __future__ import annotations
 
 import functools
+import re
 from collections.abc import Mapping
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
@@ -40,6 +41,37 @@ _CREDENTIAL_PARAMS = {
 
 def _normalise(name: str) -> str:
     return "".join(char for char in name.lower() if char.isalnum())
+
+
+# A credential parameter inside free text: `…?api_key=VALUE`, `…&token=VALUE`, or a bare
+# `token=VALUE` in a message. Matched by the same names redact() masks in a URL, on a value
+# that runs to the next delimiter. Case-insensitive on the name; underscores and hyphens
+# in the name are optional so `api_key`, `apiKey` and `api-key` all match.
+_IN_TEXT = re.compile(
+    r"(?i)(?<![\w-])(" + "|".join(
+        r"[_-]?".join(re.escape(ch) for ch in name) for name in sorted(_CREDENTIAL_PARAMS, key=len, reverse=True)
+    ) + r")(=)([^&\s\"'<>,;)\]]+)"
+)
+
+
+def scrub(value):
+    """``value`` with every credential-bearing ``name=value`` in any string masked.
+
+    Recursive over dicts and lists, non-mutating, and applied to the whole result: the
+    openFDA client embeds the full request URL in its HTTPError message, so a 404 put the
+    real ``api_key`` into the ``error`` field, and from there into the agent's transcript
+    and a committed report. ``source_url`` was redacted; nothing else was. Enumerating
+    field names would leak again at the next field the next client invents.
+    """
+    if isinstance(value, str):
+        return _IN_TEXT.sub(lambda m: f"{m.group(1)}={_MASK}", value) if "=" in value else value
+    if isinstance(value, Mapping):
+        return {k: scrub(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [scrub(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple(scrub(v) for v in value)
+    return value
 
 
 def redact(url: str) -> str:
@@ -149,7 +181,7 @@ def install(cls) -> None:
 
         with http_record.recording() as records:
             result = original(self, *args, **kwargs)
-            return stamp(result, records, tool_name=name, arguments=arguments,
+            return stamp(scrub(result), records, tool_name=name, arguments=arguments,
                          config=config)
 
     wrapper._sr_source_url = True

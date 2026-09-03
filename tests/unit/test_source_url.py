@@ -184,3 +184,52 @@ def test_the_stamped_url_is_redacted():
     stamped = source_url.stamp({"results": [1]}, records)
 
     assert "LEAK" not in stamped["source_url"]
+
+
+# --- a credential must not leave through ANY string in a result ----------------
+# The openFDA client embeds the full request URL in its HTTPError message, so a 404
+# carried `api_key=<real key>` in the `error` field of the result, through the agent's
+# trace, into a committed report. `source_url` was redacted; nothing else was.
+
+from tooluniverse.tools_sr.source_url import scrub  # noqa: E402
+
+
+def test_scrub_masks_a_credential_wherever_a_string_carries_it():
+    result = {
+        "status": "error",
+        "error": ("API request failed: 404 Client Error for url: https://api.fda.gov/drug/"
+                  "event.json?search=x&limit=10&api_key=HvU6EZYAgAtaMSoqQvQRjTQ"),
+        "detail": [{"note": "retry with token=abc123def456 later"}],
+        "count": 3,
+        "source_url": "https://api.fda.gov/drug/event.json?search=x&api_key=REDACTED",
+    }
+
+    out = scrub(result)
+
+    assert "HvU6EZYAgAtaMSoqQvQRjTQ" not in str(out)
+    assert out["error"].endswith("&api_key=REDACTED")
+    assert out["detail"][0]["note"] == "retry with token=REDACTED later"
+    assert out["count"] == 3 and out["status"] == "error"
+    assert result["error"].endswith("HvU6EZYAgAtaMSoqQvQRjTQ"), "non-mutating"
+
+
+def test_scrub_leaves_ordinary_text_and_non_credential_parameters_alone():
+    result = {"data": "keyword=apple&limit=5&api_version=2", "list": ["plain", 7, None]}
+    assert scrub(result) == result
+
+
+def test_the_wrapper_scrubs_before_it_stamps():
+    """Through the installed wrapper: an error result with a key in its text comes
+    back masked even when no source URL can be cited."""
+    from tooluniverse.tools_sr import source_url
+
+    class Registry:
+        all_tool_dict = {}
+
+        def run_one_function(self, function_call_json):
+            return {"status": "error", "error": "GET https://x.test/?api_key=SECRET12345678901234 failed"}
+
+    source_url.install(Registry)
+    out = Registry().run_one_function({"name": "t", "arguments": {}})
+    assert "SECRET12345678901234" not in str(out)
+    assert out["error"] == "GET https://x.test/?api_key=REDACTED failed"

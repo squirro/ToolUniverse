@@ -17,12 +17,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
 from pathlib import Path
 
-from .squirro_chat import SquirroChatClient
+from .squirro_chat import SquirroChatClient, StudioProxyChatClient
 from .sweep import _load_dotenv, trim_actions
 
 DEPLOY = Path(__file__).resolve().parents[1]
@@ -48,12 +49,22 @@ ARMS = {
     "modelled": (
         "Use the clinical-data-integration skill. "
     ),
-    # A different agent: web search only, no SMCP tools bound. The one arm where the
-    # persona and toolset differ, so it is the baseline, not a variant.
-    "web": (
-        "Answer from web search. "
-    ),
+    # A different agent, possibly on a different cluster: the General Research agent
+    # with web search, code interpreter, trials and patents — no ToolUniverse, no
+    # skills. The one arm where persona and toolset differ: the baseline, not a variant.
+    "web": "",
 }
+
+_TARGET = {"srdev": "_SRDEV_CLOUD", "srdev-com": "_SRDEV_COM", "sempart": ""}
+
+
+def _client_factory(target: str):
+    suffix = _TARGET[target]
+    cluster = os.environ[f"SQUIRRO_CLUSTER{suffix}"].rstrip("/")
+    token = os.environ[f"SQUIRRO_TOKEN{suffix}"]
+    project = os.environ[f"SQUIRRO_PROJECT{suffix}"]
+    cls = StudioProxyChatClient if target == "srdev-com" else SquirroChatClient
+    return lambda: cls(cluster, token, project)
 
 _NUMBER = re.compile(r"(?<![\w.])(\d{1,4}(?:\.\d{1,3})?)(?![\w.])")
 
@@ -143,18 +154,15 @@ def score(turn_actions: list[dict], answer: str) -> dict:
 
 def run(args) -> int:
     _load_dotenv(Path(args.env_file) if args.env_file else None)
-    import os
-    suffix = {"srdev": "_SRDEV_CLOUD", "srdev-com": "_SRDEV_COM", "sempart": ""}[args.target]
-    cluster = os.environ[f"SQUIRRO_CLUSTER{suffix}"].rstrip("/")
-    token = os.environ[f"SQUIRRO_TOKEN{suffix}"]
-    project = os.environ[f"SQUIRRO_PROJECT{suffix}"]
     out_dir = Path(args.out) if args.out else OUT / f"three-arms-{time.strftime('%Y-%m-%d')}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     arms = args.arms.split(",") if args.arms else list(ARMS)
     agent_for = {arm: args.agent_id for arm in ARMS}
+    client_for = {arm: _client_factory(args.target) for arm in ARMS}
     if args.web_agent_id:
         agent_for["web"] = args.web_agent_id
+        client_for["web"] = _client_factory(args.web_target or args.target)
     elif "web" in arms:
         print("ERROR: --web-agent-id is required for the web arm", file=sys.stderr)
         return 2
@@ -167,8 +175,8 @@ def run(args) -> int:
                 print(f"{arm} r{n}: cached")
                 continue
             started = time.monotonic()
-            turn = SquirroChatClient(cluster, token, project).ask(
-                agent_for[arm], ARMS[arm] + QUESTION, timeout=args.timeout)
+            turn = client_for[arm]().ask(agent_for[arm], ARMS[arm] + QUESTION,
+                                          timeout=args.timeout)
             actions = trim_actions(turn.actions)
             row = {"arm": arm, "run": n, "error": turn.error,
                    "seconds": round(time.monotonic() - started, 1),
@@ -232,7 +240,9 @@ def rescore(args) -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--agent-id")
-    ap.add_argument("--web-agent-id", help="the web-only agent for the `web` arm")
+    ap.add_argument("--web-agent-id", help="the baseline agent for the `web` arm")
+    ap.add_argument("--web-target", choices=list(_TARGET),
+                    help="cluster of the web arm's agent, if not --target")
     ap.add_argument("--target", default="srdev", choices=["srdev", "srdev-com", "sempart"])
     ap.add_argument("--env-file")
     ap.add_argument("--runs", type=int, default=3)

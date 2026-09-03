@@ -152,3 +152,43 @@ def parse_sse(lines) -> tuple[dict | None, str]:
     if error:
         return None, error
     return result, ""
+
+
+STUDIO_PROXY_URL = "{cluster}/studio/genai_proxy/projects/{project}/streaming_chat"
+
+
+class StudioProxyChatClient(SquirroChatClient):
+    """The same one-turn client, through the Studio genai proxy.
+
+    On swiss-rockets-dev.squirro.com the documented /service/genai route is blocked
+    by nginx (405); the UI goes through a Studio proxy plugin that authenticates with
+    the refresh token as a query parameter. Same SSE stream, same result frame.
+    """
+
+    def __init__(self, cluster: str, refresh_token: str, project_id: str):
+        self.cluster = cluster.rstrip("/")
+        self.project_id = project_id
+        self._refresh = refresh_token
+
+    def ask(self, agent_id: str, instruction: str, *, timeout: int = 600) -> Turn:
+        payload = {"instruction": instruction, "agent_id": agent_id,
+                   "conversation_id": str(uuid.uuid4())}
+        url = STUDIO_PROXY_URL.format(cluster=self.cluster, project=self.project_id)
+        try:
+            resp = requests.post(url, params={"token": self._refresh},
+                                 headers={"Content-Type": "application/json",
+                                          "Accept": "text/event-stream"},
+                                 json=payload, timeout=timeout, stream=True)
+        except requests.exceptions.Timeout:
+            return Turn(error="timeout")
+        except requests.RequestException as exc:
+            return Turn(error=f"request_error: {exc}")
+        if not resp.ok:
+            return Turn(error=f"http_{resp.status_code}", http_status=resp.status_code)
+        result, error = parse_sse(resp.iter_lines(decode_unicode=True))
+        if result is None:
+            return Turn(error=error or "missing_result", http_status=resp.status_code)
+        actions = result.get("actions") or []
+        return Turn(answer=result.get("answer") or "", actions=actions,
+                    calls=[a.get("tool_name") for a in actions if a.get("tool_name")],
+                    error=error or None, http_status=resp.status_code)

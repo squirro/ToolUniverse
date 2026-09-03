@@ -198,7 +198,7 @@ def test_scrub_masks_a_credential_wherever_a_string_carries_it():
     result = {
         "status": "error",
         "error": ("API request failed: 404 Client Error for url: https://api.fda.gov/drug/"
-                  "event.json?search=x&limit=10&api_key=HvU6EZYAgAtaMSoqQvQRjTQ"),
+                  "event.json?search=x&limit=10&api_key=EXAMPLEKEY0123456789ABCDEF"),
         "detail": [{"note": "retry with token=abc123def456 later"}],
         "count": 3,
         "source_url": "https://api.fda.gov/drug/event.json?search=x&api_key=REDACTED",
@@ -206,11 +206,11 @@ def test_scrub_masks_a_credential_wherever_a_string_carries_it():
 
     out = scrub(result)
 
-    assert "HvU6EZYAgAtaMSoqQvQRjTQ" not in str(out)
+    assert "EXAMPLEKEY0123456789ABCDEF" not in str(out)
     assert out["error"].endswith("&api_key=REDACTED")
     assert out["detail"][0]["note"] == "retry with token=REDACTED later"
     assert out["count"] == 3 and out["status"] == "error"
-    assert result["error"].endswith("HvU6EZYAgAtaMSoqQvQRjTQ"), "non-mutating"
+    assert result["error"].endswith("EXAMPLEKEY0123456789ABCDEF"), "non-mutating"
 
 
 def test_scrub_leaves_ordinary_text_and_non_credential_parameters_alone():

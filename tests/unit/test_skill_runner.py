@@ -1043,3 +1043,20 @@ def test_a_delegated_step_asks_the_agent_to_make_the_calls_and_takes_the_answer(
                                  "arguments": {"query": "Lutathera safety"}}]}]
     assert runner.state(run_id)["facts"]["web_context"] == ["hit 1", "hit 2"]
     assert out["finished"] and runner.bundle(run_id)["calls"] == {"web_context": ["exa_web_search"]}
+
+
+def test_a_question_carries_the_steps_notes_so_the_agent_knows_what_shape_to_answer_in():
+    """Live, a delegated web search came back as bare URLs: the notes asked for
+    {title, url, snippet}, and the agent never saw them."""
+    graph = {"skill": "n", "inputs": [], "steps": [
+        {"id": "web", "delegate": [{"tool": "exa_web_search", "arguments": {"query": "x"}}],
+         "produces": ["web_context"], "notes": "Return a list of {title, url, snippet}."},
+        {"id": "judge", "requires": ["web"], "calls": [], "produces": ["pick"], "judge": ["pick"],
+         "notes": "Pick the rarest two."}]}
+    asked = []
+    runner = SkillRunner(graph, execute=lambda t, a: {}, ask=lambda q: asked.append(q) or {n: "v" for n in q["wants"]})
+    run_id = runner.start({})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    assert [q["notes"] for q in asked] == ["Return a list of {title, url, snippet}.", "Pick the rarest two."]

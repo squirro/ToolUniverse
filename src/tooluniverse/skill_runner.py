@@ -221,9 +221,14 @@ def substitute(calls: list[dict], argument: str, candidate: Any) -> list[dict]:
 
 
 def question_for(step_id: str, kind: str, wants: list[str], context: dict, **detail) -> dict:
-    """The one question shape the model is asked mid-run, for a repair or a judgement."""
+    """The one question shape the model is asked mid-run: repair, judgement or delegation.
+
+    The step's notes ride along when it has any — they say what shape the answer
+    should take, and an agent that never saw them answered a web search with bare
+    URLs where the author had asked for title, url and snippet.
+    """
     return {"kind": kind, "step": step_id, "wants": list(wants), "context": context,
-            **detail}
+            **{k: v for k, v in detail.items() if v is not None}}
 
 
 def judged(outcome: dict, wants: list[str], answer: dict | None) -> dict:
@@ -454,8 +459,8 @@ class SkillRunner:
                 outcome = judged(outcome, wanted, None)
             else:
                 made.extend(calls)
-                answer = self.ask(question_for(step["id"], "delegate", wanted,
-                                               dict(run["facts"]), calls=calls)) if self.ask else None
+                answer = self.ask(question_for(step["id"], "delegate", wanted, dict(run["facts"]),
+                                               calls=calls, notes=spec.get("notes"))) if self.ask else None
                 outcome = judged(outcome, wanted, answer)
         wants = spec.get("judge") or []
         if wants:
@@ -464,6 +469,7 @@ class SkillRunner:
             # extraction happened to miss.
             answer = self.ask(question_for(
                 step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
+                notes=spec.get("notes"),
             )) if self.ask else None
             outcome = judged(outcome, wants, answer)
         apply(run, step["id"], results, failures, outcome, calls=made)

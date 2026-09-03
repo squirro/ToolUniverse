@@ -184,6 +184,8 @@ async def test_a_repair_is_asked_for_by_signal_and_the_second_suggestion_resolve
                                before_result=answer_the_repair)
 
     assert seen == ["lutetium Lu-177 dotatate", "lutetium lu 177 dotatate", "Lutathera"]
+    assert bundle["calls"] == {"identity": ["DailyMed_search_spls"] * 3,
+                               "label": ["DailyMed_parse"]}, "retries are on the record"
     assert bundle["facts"]["drug_name"] == "Lutathera"
     assert bundle["facts"]["setid"] == "72d1"
     assert bundle["steps_done"] == ["identity", "label"]

@@ -122,12 +122,16 @@ MAX_PAYLOAD = 12_000   # per payload in the bundle; raw results never ride the t
 def new_run(inputs: dict) -> dict:
     """Fresh run state: the whole of it is (done, facts) plus what went wrong."""
     return {"facts": dict(inputs), "done": [], "failures": [], "blocked": [],
-            "skipped": [], "results": {}, "unresolved": []}
+            "skipped": [], "results": {}, "calls": {}, "unresolved": []}
 
 
-def apply(run: dict, step_id: str, results: list, failures: list, outcome: dict) -> None:
+def apply(run: dict, step_id: str, results: list, failures: list, outcome: dict,
+          calls: list[dict] | None = None) -> None:
     """Record a finished step on the run. Pure over its arguments; mutates `run`."""
     run["results"][step_id] = results
+    # The tools this step ran, retries included: the agent's own trace never
+    # shows them, so the bundle carries the record itself.
+    run["calls"][step_id] = [c["tool"] for c in (calls or [])]
     run["done"].append(step_id)
     run["failures"].extend(failures)
     run["facts"].update(outcome["facts"])
@@ -181,6 +185,7 @@ def bundle_of(graph: dict, run: dict, cap: int) -> dict:
         "results": {step_id: trim(results, cap)
                     for step_id, results in run["results"].items()},
         "steps_done": run["done"],
+        "calls": run.get("calls", {}),
         "failures": run["failures"],
         "blocked": run["blocked"],
         "unresolved": run["unresolved"],
@@ -350,7 +355,7 @@ class SkillRunner:
 
     MAX_PAYLOAD = MAX_PAYLOAD
 
-    def _repair(self, spec, step, repair, results, failures, run):
+    def _repair(self, spec, step, repair, results, failures, run, made):
         """Ask for a better argument value and retry, at most MAX_REPAIRS times."""
         if resolved(spec, repair, results):
             return results, failures
@@ -366,7 +371,9 @@ class SkillRunner:
         suggestions = answer.get(argument) if isinstance(answer, dict) else answer
         for candidate in (suggestions or [])[: self.MAX_REPAIRS]:
             retried, retry_failures = [], []
-            for call in substitute(step["calls"], argument, candidate):
+            retry_calls = substitute(step["calls"], argument, candidate)
+            made.extend(retry_calls)
+            for call in retry_calls:
                 try:
                     retried.append(self.execute(call["tool"], call["arguments"]))
                 except Exception as exc:                   # noqa: BLE001
@@ -399,7 +406,7 @@ class SkillRunner:
                     "unresolved": run["unresolved"]}
 
         spec = next(s for s in self.graph["steps"] if s["id"] == step["id"])
-        results, failures = [], []
+        results, failures, made = [], [], list(step["calls"])
         for call in step["calls"]:
             try:
                 results.append(self.execute(call["tool"], call["arguments"]))
@@ -412,7 +419,7 @@ class SkillRunner:
         repair = spec.get("repair")
         if repair and self.ask:
             results, failures = self._repair(
-                spec, step, repair, results, failures, run)
+                spec, step, repair, results, failures, run, made)
 
         outcome = absorb(spec, results, run["facts"])
         wants = spec.get("judge") or []
@@ -424,7 +431,7 @@ class SkillRunner:
                 step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
             )) if self.ask else None
             outcome = judged(outcome, wants, answer)
-        apply(run, step["id"], results, failures, outcome)
+        apply(run, step["id"], results, failures, outcome, calls=made)
         # The caller sees an unknown as an explicit None; facts never hold one.
         extracted = {**outcome["facts"], **{n: None for n in outcome["undecided"]}}
         missed = [{"step": step["id"], "fact": name} for name in outcome["unresolved"]]

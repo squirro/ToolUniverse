@@ -134,17 +134,19 @@ class SkillWorkflow:
                 break
             self._current = step
             spec = next(s for s in process["steps"] if s["id"] == step["id"])
+            made = list(step["calls"])
             results, failures = await self._calls(step["calls"])
             repair = spec.get("repair")
             if repair and not resolved(spec, repair, results):
-                results, failures = await self._repair(spec, step, repair, results, failures)
+                results, failures = await self._repair(spec, step, repair, results,
+                                                       failures, made)
             outcome = absorb(spec, results, run["facts"])
             wants = spec.get("judge") or []
             if wants:
                 answer = await self._ask(question_for(
                     step["id"], "judge", wants, {**run["facts"], **outcome["facts"]}))
                 outcome = judged(outcome, wants, answer)
-            apply(run, step["id"], results, failures, outcome)
+            apply(run, step["id"], results, failures, outcome, calls=made)
         self._current = None
         self._finished = True
         return bundle_of(process, run, MAX_PAYLOAD)
@@ -201,7 +203,7 @@ class SkillWorkflow:
                                  "error": f"{type(cause).__name__}: {cause}"})
         return results, failures
 
-    async def _repair(self, spec, step, repair, results, failures):
+    async def _repair(self, spec, step, repair, results, failures, made):
         argument = repair["argument"]
         original = step["calls"][0]["arguments"].get(argument)
         answer = await self._ask(question_for(
@@ -210,8 +212,9 @@ class SkillWorkflow:
             problem=f"returned nothing for {original!r}"))
         suggestions = (answer or {}).get(argument) or []
         for candidate in suggestions[:MAX_REPAIRS]:
-            retried, retry_failures = await self._calls(
-                substitute(step["calls"], argument, candidate))
+            retry_calls = substitute(step["calls"], argument, candidate)
+            made.extend(retry_calls)
+            retried, retry_failures = await self._calls(retry_calls)
             if resolved(spec, repair, retried):
                 self._run["facts"][argument] = candidate
                 return retried, retry_failures

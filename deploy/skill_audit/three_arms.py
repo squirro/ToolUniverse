@@ -111,7 +111,14 @@ def score(turn_actions: list[dict], answer: str) -> dict:
         if a.get("tool_name") == "execute_tool":
             reached.add(((a.get("content") or {}).get("parameters") or {}).get("tool_name"))
         elif a.get("tool_name") in ("run_skill", "continue_skill"):
-            reached.add("(server-side)")
+            # The server made the calls; the finished bundle names them per step.
+            m = re.search(r'"calls": (\{.*?\})', (a.get("content") or {}).get("output") or "", re.S)
+            if m:
+                try:
+                    for tools in json.loads(m.group(1)).values():
+                        reached.update(tools)
+                except ValueError:
+                    pass
     return {
         "prr_values_stated": len(stated),
         "prr_values_traceable": len(traceable),
@@ -197,6 +204,9 @@ def rescore(args) -> int:
     for path in sorted(out_dir.glob("*-r*.json")):
         r = json.loads(path.read_text())
         r.update(score(r["actions"], r["answer"]))
+        if r.get("server_activities"):
+            # Annotated from the Temporal history for runs whose bundle predates `calls`.
+            r["distinct_tools_reached"] = sorted(r["server_activities"])
         path.write_text(json.dumps(r, indent=1, ensure_ascii=False))
         rows.append(r)
     rows.sort(key=lambda r: (list(ARMS).index(r["arm"]), r["run"]))

@@ -971,3 +971,17 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
     assert ("MyGene_query_genes", {"query": "GBA",
             "fields": "symbol,name,entrezgene,ensembl.gene,summary"}) in calls
     assert "variant" not in state["done"], "no variant supplied, so that phase is off"
+
+
+def test_the_bundle_says_which_tools_the_server_called_per_step():
+    """The agent's trace shows no execute_tool for a server-side run; the bundle
+    itself must carry the record of what ran, repair retries included."""
+    runner, _ = _runner(OK)
+    run_id = runner.start({"drug_name": "cisplatin"})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    calls = runner.bundle(run_id)["calls"]
+
+    assert calls == {"resolve": ["resolve_drug"], "signals": ["disproportionality"],
+                     "stratify": ["stratify"], "report": []}

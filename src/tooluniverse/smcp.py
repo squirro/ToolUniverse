@@ -1068,7 +1068,7 @@ class SMCP(FastMCP):
         @self.tool(
             annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
         )
-        async def get_skill(name: str) -> str:
+        async def get_skill(name: str, plain: bool = False) -> str:
             """Load and execute the authoritative PLAYBOOK (a hardened SOP) for a named
             biomedical/chemistry research skill.
 
@@ -1115,6 +1115,12 @@ class SMCP(FastMCP):
             Args:
                 name: the skill id to load, e.g. "disease-research".
 
+            Args:
+                name: the skill id.
+                plain: serve the prose body only, without the process directive —
+                    for comparison runs that must follow the phases themselves.
+                    Leave unset in normal use.
+
             Returns:
                 The skill's SOP body (markdown). On an unknown name, an error string
                 listing the available skills.
@@ -1123,6 +1129,8 @@ class SMCP(FastMCP):
                 body = load_skill_body(skills_dir, name)
             except SkillNotFound as exc:
                 return f"ERROR: {exc}"
+            if plain:
+                return body
             # A skill that ships a process graph is DRIVEN, not read: the header
             # says so and demotes the phases below it to reference. With Temporal
             # configured the server runs it (run_skill); otherwise the model does

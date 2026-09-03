@@ -30,7 +30,9 @@ report: >-
   reporting, indication, disease progression in an oncology cohort). Terms the
   process excluded as nonspecific are listed under `excluded`; mention that they
   dominate raw report counts and were set aside, and never present them as
-  signals. Name the FAERS cohort (the brand name used). Cite each FAERS and label
+  signals. A term that names the treated indication or its course (the tumour,
+  its metastases, progression) is reported disease, not a drug signal: say so
+  and do not rank it. Name the FAERS cohort (the brand name used). Cite each FAERS and label
   number with the `source_url` from its result; cite literature by PMID or DOI and
   trials by NCT id from `facts`. Read pharmacogenomic findings as risk-narrowing;
   an empty CPIC result means no guideline exists, which is an answer. Web context

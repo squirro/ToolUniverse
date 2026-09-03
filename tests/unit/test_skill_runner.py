@@ -660,3 +660,116 @@ def test_a_value_that_does_arrive_is_not_recorded_as_unresolved():
                          execute=lambda t, a: {"data": [{"setid": "72d1a024"}]})
     run = runner.start({"drug_name": "x"})
     assert runner.advance(run["run_id"])["unresolved"] == []
+
+
+# --- the pure pieces, shared with the Temporal host (DSR-707) ----------------
+# `absorb`, `resolved`, `substitute`, `trim` and `apply` never touch the network,
+# the clock or a random source, so an async driver can await the calls and hand
+# the results to the same functions the sync driver uses.
+
+from tooluniverse.skill_runner import absorb  # noqa: E402
+
+
+def test_absorb_extracts_by_path_regex_limit_and_default():
+    spec = {"id": "s", "extract": {
+        "setid": "data.0.setid",
+        "brand": {"path": "data.0.title", "regex": "^([A-Za-z0-9-]{3,})"},
+        "terms": {"path": "result[].term", "limit": 2},
+        "name": {"path": "data.0.missing", "default_from": "drug_name"},
+        "never": "data.0.absent",
+    }}
+    results = [{"data": [{"setid": "72d1", "title": "LUTATHERA (lutetium) kit"}]},
+               {"result": [{"term": "A"}, {"term": "B"}, {"term": "C"}]}]
+
+    out = absorb(spec, results, facts={"drug_name": "lutathera"})
+
+    assert out["facts"] == {"setid": "72d1", "brand": "LUTATHERA",
+                            "terms": ["A", "B"], "name": "lutathera"}
+    assert out["unresolved"] == ["never"]
+    assert out["blocked"] == []
+
+
+def test_absorb_collects_combines_and_derives_and_blocks_an_unknown():
+    spec = {"id": "prr",
+            "collect": {"prrs": "data.metrics.PRR.value"},
+            "combine": {"signal_aes": {"union": ["requested", "top"], "limit": 3}},
+            "derive": {"strong": {"from": "prrs", "op": ">=", "value": 5, "mode": "any"},
+                       "ghost": {"from": "never_extracted", "op": ">", "value": 0}}}
+    results = [{"data": {"metrics": {"PRR": {"value": 7.1}}}},
+               {"data": {"metrics": {"PRR": {"value": 0.9}}}},
+               {"data": {}}]
+
+    out = absorb(spec, results, facts={"requested": ["MDS"], "top": ["MDS", "Nausea", "Rash"]})
+
+    assert out["facts"]["prrs"] == [7.1, 0.9]
+    assert out["facts"]["signal_aes"] == ["MDS", "Nausea", "Rash"]
+    assert out["facts"]["strong"] is True
+    assert "ghost" not in out["facts"]
+    assert out["undecided"] == ["ghost"]
+    assert out["blocked"] == [{"step": "prr",
+                               "reason": "cannot decide ghost: never_extracted was "
+                                         "never extracted, so the branch was not taken"}]
+
+
+from tooluniverse.skill_runner import resolved, substitute  # noqa: E402
+
+
+def test_resolved_is_true_only_when_the_guarded_value_arrived():
+    spec = {"id": "identity", "extract": {"setid": "data.0.setid", "title": "data.0.title"}}
+    repair = {"argument": "drug_name", "when_missing": "setid"}
+
+    assert resolved(spec, repair, [{"data": []}, {"data": [{"setid": "72d1"}]}])
+    assert not resolved(spec, repair, [{"data": []}, {"data": [{"title": "no id"}]}])
+
+
+def test_substitute_replaces_the_argument_only_where_a_call_carries_it():
+    calls = [{"tool": "DailyMed_search_spls", "arguments": {"drug_name": "lu 177"}},
+             {"tool": "OpenFDA_history", "arguments": {"operation": "history",
+                                                       "drug_name": "lu 177"}},
+             {"tool": "unrelated", "arguments": {"query": "x"}}]
+
+    out = substitute(calls, "drug_name", "Lutathera")
+
+    assert [c["arguments"] for c in out] == [
+        {"drug_name": "Lutathera"},
+        {"operation": "history", "drug_name": "Lutathera"},
+        {"query": "x"}]
+    assert calls[0]["arguments"]["drug_name"] == "lu 177", "the input is not mutated"
+
+
+from tooluniverse.skill_runner import apply, new_run, trim  # noqa: E402
+
+
+def test_apply_records_everything_a_step_leaves_on_the_run():
+    run = new_run({"drug_name": "x"})
+    outcome = {"facts": {"setid": "72d1"}, "unresolved": ["brand"],
+               "blocked": [{"step": "identity", "reason": "r"}], "undecided": []}
+
+    apply(run, "identity", results=[{"data": 1}],
+          failures=[{"tool": "t", "error": "E"}], outcome=outcome)
+
+    assert run["done"] == ["identity"]
+    assert run["results"] == {"identity": [{"data": 1}]}
+    assert run["facts"] == {"drug_name": "x", "setid": "72d1"}
+    assert run["failures"] == [{"tool": "t", "error": "E"}]
+    assert run["unresolved"] == [{"step": "identity", "fact": "brand"}]
+    assert run["blocked"] == [{"step": "identity", "reason": "r"}]
+
+
+def test_trim_caps_each_payload_and_marks_the_cut():
+    small, big = {"a": 1}, {"a": "x" * 50}
+
+    out = trim([small, big], cap=20)
+
+    assert out[0] == small
+    assert out[1]["truncated"] is True and len(out[1]["preview"]) == 20
+
+
+def test_start_accepts_the_run_id_a_host_already_has():
+    """Temporal names the run; the runner must not invent a second identity."""
+    runner, _ = _runner(OK)
+
+    out = runner.start({"drug_name": "x"}, run_id="skill-demo-42")
+
+    assert out["run_id"] == "skill-demo-42"
+    assert runner.state("skill-demo-42")["facts"] == {"drug_name": "x"}

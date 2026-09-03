@@ -113,6 +113,129 @@ def _derive(spec: dict, facts: dict) -> bool | None:
     return all(hits) if spec.get("mode") == "all" else any(hits)
 
 
+
+def new_run(inputs: dict) -> dict:
+    """Fresh run state: the whole of it is (done, facts) plus what went wrong."""
+    return {"facts": dict(inputs), "done": [], "failures": [], "blocked": [],
+            "skipped": [], "results": {}, "unresolved": []}
+
+
+def apply(run: dict, step_id: str, results: list, failures: list, outcome: dict) -> None:
+    """Record a finished step on the run. Pure over its arguments; mutates `run`."""
+    run["results"][step_id] = results
+    run["done"].append(step_id)
+    run["failures"].extend(failures)
+    run["facts"].update(outcome["facts"])
+    run["blocked"].extend(outcome["blocked"])
+    run["unresolved"].extend({"step": step_id, "fact": name}
+                             for name in outcome["unresolved"])
+
+
+def trim(results: list, cap: int) -> list:
+    """Cap each payload so the bundle stays sendable; say where the cut was."""
+    kept = []
+    for payload in results:
+        text = json.dumps(payload, default=str)
+        kept.append(payload if len(text) <= cap
+                    else {"truncated": True, "preview": text[:cap]})
+    return kept
+
+
+def resolved(spec: dict, repair: dict, results: list) -> bool:
+    """Did the value this step exists to produce actually arrive?"""
+    wanted = repair["when_missing"]
+    rule = (spec.get("extract") or {}).get(wanted)
+    path = rule["path"] if isinstance(rule, dict) else rule
+    return any(_dig(payload, path) is not None for payload in results)
+
+
+def substitute(calls: list[dict], argument: str, candidate: Any) -> list[dict]:
+    """The same calls with one argument swapped, wherever a call carries it."""
+    out = []
+    for call in calls:
+        arguments = dict(call["arguments"])
+        if argument in arguments:
+            arguments[argument] = candidate
+        out.append({**call, "arguments": arguments})
+    return out
+
+
+def absorb(spec: dict, results: list, facts: dict) -> dict:
+    """What a step's results yield: facts, what never arrived, what cannot be decided.
+
+    Pure. `extract` takes the first match, `collect` the lot, `combine` merges
+    with facts the question supplied, `derive` decides a gateway from data. A
+    derive over a source that never arrived is UNKNOWN and lands in `blocked`,
+    never in facts — `when` reads a missing key as falsy and would skip the
+    branch silently.
+    """
+    extracted: dict[str, Any] = {}
+    for name, rule in (spec.get("extract") or {}).items():
+        rule = rule if isinstance(rule, dict) else {"path": rule}
+        for payload in results:
+            found = _dig(payload, rule["path"])
+            if found is None:
+                continue
+            if rule.get("regex") and isinstance(found, str):
+                # Some values only exist inside a returned string: DailyMed
+                # puts the BRAND at the head of its SPL title, and FAERS
+                # indexes this drug family by brand (LUTATHERA returns 100
+                # reaction terms where the generic name returns 3).
+                match = re.search(rule["regex"], found)
+                if not match:
+                    continue
+                found = match.group(1) if match.groups() else match.group(0)
+            if rule.get("limit") and isinstance(found, list):
+                found = found[: rule["limit"]]
+            extracted[name] = found
+            break
+        if name not in extracted and rule.get("default_from"):
+            fallback = facts.get(rule["default_from"])
+            if fallback is not None:
+                extracted[name] = fallback
+    # `collect` gathers a value from EVERY call, which is what a loop step
+    # needs: FAERS answers one metrics object per reaction, and the gateway
+    # has to see them all.
+    for name, path in (spec.get("collect") or {}).items():
+        gathered = [found for payload in results
+                    if (found := _dig(payload, path)) is not None]
+        if gathered:
+            extracted[name] = gathered
+    # `combine` merges facts the question supplied with facts the data
+    # produced. Requested terms lead and the cap trims the frequency-ranked
+    # tail, never the ask.
+    for name, rule in (spec.get("combine") or {}).items():
+        merged: list = []
+        for source in rule.get("union", []):
+            value = facts.get(source) or extracted.get(source) or []
+            for item in (value if isinstance(value, list) else [value]):
+                if item not in merged:
+                    merged.append(item)
+        if rule.get("limit"):
+            merged = merged[: rule["limit"]]
+        extracted[name] = merged
+
+    blocked, undecided = [], []
+    known = {**facts, **extracted}
+    for name, rule in (spec.get("derive") or {}).items():
+        decided = _derive(rule, known)
+        if decided is None:
+            undecided.append(name)
+            blocked.append({
+                "step": spec["id"],
+                "reason": (f"cannot decide {name}: {rule['from']} was never "
+                           "extracted, so the branch was not taken"),
+            })
+        else:
+            extracted[name] = decided
+
+    # A value the step SAYS it produces and did not is recorded, always.
+    unresolved = [name for name in (spec.get("extract") or {})
+                  if name not in extracted]
+    return {"facts": extracted, "unresolved": unresolved, "blocked": blocked,
+            "undecided": undecided}
+
+
 class SkillRunner:
     """Server-side execution of one skill graph, one run at a time."""
 
@@ -131,11 +254,11 @@ class SkillRunner:
         self.ask = ask
         self._runs: dict[str, dict] = {}
 
-    def start(self, inputs: dict) -> dict:
-        run_id = uuid.uuid4().hex
-        self._runs[run_id] = {"facts": dict(inputs), "done": [], "failures": [],
-                              "blocked": [], "skipped": [], "results": {},
-                              "unresolved": []}
+    def start(self, inputs: dict, run_id: str | None = None) -> dict:
+        # A host that already names its runs (Temporal) passes the id in; the
+        # in-memory host is the only one that mints its own.
+        run_id = run_id or uuid.uuid4().hex
+        self._runs[run_id] = new_run(inputs)
         return {"run_id": run_id, "step": self._peek(run_id)}
 
     def state(self, run_id: str) -> dict:
@@ -148,16 +271,9 @@ class SkillRunner:
 
     MAX_PAYLOAD = 12_000
 
-    def _resolved(self, spec: dict, repair: dict, results: list) -> bool:
-        """Did the value this step exists to produce actually arrive?"""
-        wanted = repair["when_missing"]
-        rule = (spec.get("extract") or {}).get(wanted)
-        path = rule["path"] if isinstance(rule, dict) else rule
-        return any(_dig(payload, path) is not None for payload in results)
-
     def _repair(self, spec, step, repair, results, failures, run):
         """Ask for a better argument value and retry, at most MAX_REPAIRS times."""
-        if self._resolved(spec, repair, results):
+        if resolved(spec, repair, results):
             return results, failures
         argument = repair["argument"]
         original = step["calls"][0]["arguments"].get(argument)
@@ -169,16 +285,13 @@ class SkillRunner:
         }) or []
         for candidate in suggestions[: self.MAX_REPAIRS]:
             retried, retry_failures = [], []
-            for call in step["calls"]:
-                arguments = dict(call["arguments"])
-                if argument in arguments:
-                    arguments[argument] = candidate
+            for call in substitute(step["calls"], argument, candidate):
                 try:
-                    retried.append(self.execute(call["tool"], arguments))
+                    retried.append(self.execute(call["tool"], call["arguments"]))
                 except Exception as exc:                   # noqa: BLE001
                     retry_failures.append({"tool": call["tool"],
                                            "error": f"{type(exc).__name__}: {exc}"})
-            if self._resolved(spec, repair, retried):
+            if resolved(spec, repair, retried):
                 run["facts"][argument] = candidate
                 return retried, retry_failures
             results, failures = retried, retry_failures
@@ -199,15 +312,8 @@ class SkillRunner:
         transcript on the way, so they arrive once, trimmed, at the end.
         """
         run = self._runs[run_id]
-        trimmed = {}
-        for step_id, results in run["results"].items():
-            kept = []
-            for payload in results:
-                text = json.dumps(payload, default=str)
-                kept.append(payload if len(text) <= self.MAX_PAYLOAD
-                            else {"truncated": True,
-                                  "preview": text[:self.MAX_PAYLOAD]})
-            trimmed[step_id] = kept
+        trimmed = {step_id: trim(results, self.MAX_PAYLOAD)
+                   for step_id, results in run["results"].items()}
         return {
             "skill": self.graph["skill"],
             "facts": run["facts"],
@@ -266,81 +372,11 @@ class SkillRunner:
             results, failures = self._repair(
                 spec, step, repair, results, failures, run)
 
-        extracted: dict[str, Any] = {}
-        for name, rule in (spec.get("extract") or {}).items():
-            rule = rule if isinstance(rule, dict) else {"path": rule}
-            for payload in results:
-                found = _dig(payload, rule["path"])
-                if found is None:
-                    continue
-                if rule.get("regex") and isinstance(found, str):
-                    # Some values only exist inside a returned string: DailyMed
-                    # puts the BRAND at the head of its SPL title, and FAERS
-                    # indexes this drug family by brand (LUTATHERA returns 100
-                    # reaction terms where the generic name returns 3).
-                    match = re.search(rule["regex"], found)
-                    if not match:
-                        continue
-                    found = match.group(1) if match.groups() else match.group(0)
-                if rule.get("limit") and isinstance(found, list):
-                    found = found[: rule["limit"]]
-                extracted[name] = found
-                break
-            if name not in extracted and rule.get("default_from"):
-                fallback = run["facts"].get(rule["default_from"])
-                if fallback is not None:
-                    extracted[name] = fallback
-        # `collect` gathers a value from EVERY call, which is what a loop step
-        # needs: FAERS answers one metrics object per reaction, and the gateway
-        # has to see them all. `extract` takes the first match, `collect` the lot.
-        for name, path in (spec.get("collect") or {}).items():
-            gathered = [found for payload in results
-                        if (found := _dig(payload, path)) is not None]
-            if gathered:
-                extracted[name] = gathered
-        # `combine` merges facts the question supplied with facts the data
-        # produced. The reactions a user names ("especially myelodysplastic
-        # syndrome and renal impairment") exist only in the question and are
-        # rarely frequent enough to survive a top-N cut — for Lutathera neither
-        # is in the top twelve — so requested terms lead and the cap trims the
-        # frequency-ranked tail, never the ask.
-        for name, rule in (spec.get("combine") or {}).items():
-            merged: list = []
-            for source in rule.get("union", []):
-                value = run["facts"].get(source) or extracted.get(source) or []
-                for item in (value if isinstance(value, list) else [value]):
-                    if item not in merged:
-                        merged.append(item)
-            if rule.get("limit"):
-                merged = merged[: rule["limit"]]
-            extracted[name] = merged
-        run["facts"].update(extracted)
-
-        for name, rule in (spec.get("derive") or {}).items():
-            decided = _derive(rule, run["facts"])
-            extracted[name] = decided
-            if decided is None:
-                # Do NOT put an unknown in facts: `when` reads falsy and would
-                # skip the branch silently. Say so instead.
-                run["blocked"].append({
-                    "step": step["id"],
-                    "reason": (f"cannot decide {name}: {rule['from']} was never "
-                               "extracted, so the branch was not taken"),
-                })
-            else:
-                run["facts"][name] = decided
-
-        # A value the step SAYS it produces and did not is recorded, always.
-        # Live, without repair, setid simply came back None and nothing anywhere
-        # noted it — every later step then answered on the wrong drug form.
-        missed = [{"step": step["id"], "fact": name}
-                  for name in (spec.get("extract") or {})
-                  if name not in extracted]
-        run["unresolved"].extend(missed)
-
-        run["results"][step["id"]] = results
-        run["done"].append(step["id"])
-        run["failures"].extend(failures)
+        outcome = absorb(spec, results, run["facts"])
+        apply(run, step["id"], results, failures, outcome)
+        # The caller sees an unknown as an explicit None; facts never hold one.
+        extracted = {**outcome["facts"], **{n: None for n in outcome["undecided"]}}
+        missed = [{"step": step["id"], "fact": name} for name in outcome["unresolved"]]
         following = self._peek_safe(run_id)
         return {
             "step_id": step["id"],

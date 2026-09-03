@@ -116,6 +116,9 @@ def _derive(spec: dict, facts: dict) -> bool | None:
 
 
 
+MAX_PAYLOAD = 12_000   # per payload in the bundle; raw results never ride the transcript
+
+
 def new_run(inputs: dict) -> dict:
     """Fresh run state: the whole of it is (done, facts) plus what went wrong."""
     return {"facts": dict(inputs), "done": [], "failures": [], "blocked": [],
@@ -141,6 +144,47 @@ def trim(results: list, cap: int) -> list:
         kept.append(payload if len(text) <= cap
                     else {"truncated": True, "preview": text[:cap]})
     return kept
+
+
+def next_runnable(graph: dict, run: dict) -> dict | None:
+    """The step to run now, marking any step that cannot be built as blocked.
+
+    Loops, because skipping one blocked step can reveal another. A step we
+    cannot build is BLOCKED, not fatal: live, a missed FAERS extraction killed a
+    ten-step run at step four, and the other four sources did not depend on it.
+    """
+    while True:
+        try:
+            return next_step(graph, done=run["done"] + run["skipped"],
+                             facts=run["facts"])
+        except SkillGraphError as exc:
+            blocked = next(
+                (s["id"] for s in graph["steps"]
+                 if s["id"] not in run["done"] and s["id"] not in run["skipped"]
+                 and all(d in run["done"] for d in s.get("requires", []))),
+                None)
+            if blocked is None:
+                return None
+            run["skipped"].append(blocked)
+            run["blocked"].append({"step": blocked, "reason": str(exc)})
+
+
+def bundle_of(graph: dict, run: dict, cap: int) -> dict:
+    """Everything the report needs, handed over ONCE at the end.
+
+    The run kept every result — label text, the trial list, the papers — because
+    that is what the report is made of. Capping each payload keeps it sendable.
+    """
+    return {
+        "skill": graph["skill"],
+        "facts": run["facts"],
+        "results": {step_id: trim(results, cap)
+                    for step_id, results in run["results"].items()},
+        "steps_done": run["done"],
+        "failures": run["failures"],
+        "blocked": run["blocked"],
+        "unresolved": run["unresolved"],
+    }
 
 
 def resolved(spec: dict, repair: dict, results: list) -> bool:
@@ -304,7 +348,7 @@ class SkillRunner:
         return next_step(self.graph, done=run["done"] + run["skipped"],
                          facts=run["facts"])
 
-    MAX_PAYLOAD = 12_000
+    MAX_PAYLOAD = MAX_PAYLOAD
 
     def _repair(self, spec, step, repair, results, failures, run):
         """Ask for a better argument value and retry, at most MAX_REPAIRS times."""
@@ -340,53 +384,14 @@ class SkillRunner:
         return results, failures
 
     def bundle(self, run_id: str) -> dict:
-        """Everything the report needs, handed over ONCE at the end.
-
-        The runner extracts only what the next step requires; the rest — label
-        text, the trial list, the papers — is what the report is made of, so the
-        run keeps it. Capping each payload keeps the bundle sendable: the point of
-        running server-side is that raw results never travel through the
-        transcript on the way, so they arrive once, trimmed, at the end.
-        """
-        run = self._runs[run_id]
-        trimmed = {step_id: trim(results, self.MAX_PAYLOAD)
-                   for step_id, results in run["results"].items()}
-        return {
-            "skill": self.graph["skill"],
-            "facts": run["facts"],
-            "results": trimmed,
-            "steps_done": run["done"],
-            "failures": run["failures"],
-            "blocked": run["blocked"],
-            "unresolved": run["unresolved"],
-        }
+        return bundle_of(self.graph, self._runs[run_id], self.MAX_PAYLOAD)
 
     def _peek_safe(self, run_id: str):
-        """Peek, and mark any step we cannot build as blocked rather than raising.
-
-        Loops, because skipping one blocked step can reveal another.
-        """
-        run = self._runs[run_id]
-        while True:
-            try:
-                return self._peek(run_id)
-            except SkillGraphError as exc:
-                blocked = next(
-                    (s["id"] for s in self.graph["steps"]
-                     if s["id"] not in run["done"] and s["id"] not in run["skipped"]
-                     and all(d in run["done"] for d in s.get("requires", []))),
-                    None)
-                if blocked is None:
-                    return None
-                run["skipped"].append(blocked)
-                run["blocked"].append({"step": blocked, "reason": str(exc)})
+        return next_runnable(self.graph, self._runs[run_id])
 
     def advance(self, run_id: str) -> dict:
         """Run the current step's calls, extract what follows, and move on."""
         run = self._runs[run_id]
-        # A step we cannot build is BLOCKED, not fatal. Live, a missed FAERS
-        # extraction killed a ten-step run at step four — and the other four
-        # sources did not depend on it.
         step = self._peek_safe(run_id)
         if step is None:
             return {"finished": True, "next_step": None, "extracted": {},

@@ -62,6 +62,12 @@ singlecell = [
     "cellxgene-census>=1.10.0",  # CELLxGENE Census API
     "tiledbsoma>=1.15.3",  # Required for spatial data
 ]
+# Skill Processes (ADR-0016): the process is BBO/RDF in GraphDB, the run is a
+# Temporal workflow whose worker lives inside SMCP.
+skill-process = [
+    "temporalio>=1.7.0",
+    "rdflib>=7.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
@@ -169,7 +175,7 @@ tooluniverse = ["data/*", "data/packages/*", "data/skill_graphs/*"]
 
 [dependency-groups]
 dev = [
-    "tooluniverse[dev,embedding]",
+    "tooluniverse[dev,embedding,skill-process]",
 ]
 
 [tool.uv.sources]

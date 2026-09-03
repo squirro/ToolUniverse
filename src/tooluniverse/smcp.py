@@ -1290,10 +1290,15 @@ class SMCP(FastMCP):
                 continue_skill(run_id, answer={...}): for kind "repair", the named
                 argument mapped to a LIST of alternative values (e.g. other
                 spellings of the drug); for kind "judge", each wanted name mapped
-                to your decision.
-              - `finished` → `bundle` {facts, results, steps_done, failures,
-                blocked, unresolved}. Every number in the report comes from
-                bundle.results; report failures/blocked/unresolved as gaps.
+                to your decision; for kind "delegate", make the listed `calls`
+                with your own tools (web search, code interpreter) and map each
+                wanted name to what came back.
+              - `finished` → `bundle` {facts, results, calls, notes, report,
+                excluded, steps_done, failures, blocked, unresolved}. Write the
+                report as `bundle.report` instructs and read each step as
+                `bundle.notes` says. Every number comes from bundle.results or
+                bundle.facts; cite with each result's `source_url`; report
+                failures/blocked/unresolved/excluded as gaps.
               - `schema_mismatch` → bind the `missing_inputs` from the question
                 and call run_skill again.
 

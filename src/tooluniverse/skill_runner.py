@@ -122,7 +122,7 @@ MAX_PAYLOAD = 12_000   # per payload in the bundle; raw results never ride the t
 def new_run(inputs: dict) -> dict:
     """Fresh run state: the whole of it is (done, facts) plus what went wrong."""
     return {"facts": dict(inputs), "done": [], "failures": [], "blocked": [],
-            "skipped": [], "results": {}, "calls": {}, "unresolved": []}
+            "skipped": [], "results": {}, "calls": {}, "unresolved": [], "excluded": {}}
 
 
 def apply(run: dict, step_id: str, results: list, failures: list, outcome: dict,
@@ -136,6 +136,8 @@ def apply(run: dict, step_id: str, results: list, failures: list, outcome: dict,
     run["failures"].extend(failures)
     run["facts"].update(outcome["facts"])
     run["blocked"].extend(outcome["blocked"])
+    if outcome.get("excluded"):
+        run["excluded"][step_id] = outcome["excluded"]
     run["unresolved"].extend({"step": step_id, "fact": name}
                              for name in outcome["unresolved"])
 
@@ -186,6 +188,13 @@ def bundle_of(graph: dict, run: dict, cap: int) -> dict:
                     for step_id, results in run["results"].items()},
         "steps_done": run["done"],
         "calls": run.get("calls", {}),
+        # The author's judgement, with the data: what each step means and how the
+        # report must read the evidence. Blind-judged 2026-09-03, the reports that
+        # lacked this printed FAERS coding noise as signals.
+        "notes": {s["id"]: s["notes"] for s in graph["steps"]
+                  if s.get("notes") and s["id"] in run["done"]},
+        "report": graph.get("report"),
+        "excluded": run.get("excluded", {}),
         "failures": run["failures"],
         "blocked": run["blocked"],
         "unresolved": run["unresolved"],
@@ -240,6 +249,7 @@ def absorb(spec: dict, results: list, facts: dict) -> dict:
     branch silently.
     """
     extracted: dict[str, Any] = {}
+    excluded: dict[str, list] = {}
     for name, rule in (spec.get("extract") or {}).items():
         rule = rule if isinstance(rule, dict) else {"path": rule}
         for payload in results:
@@ -255,6 +265,14 @@ def absorb(spec: dict, results: list, facts: dict) -> dict:
                 if not match:
                     continue
                 found = match.group(1) if match.groups() else match.group(0)
+            if rule.get("exclude") and isinstance(found, list):
+                # The author knows which returned values are noise — FAERS coding
+                # terms such as ILL-DEFINED DISORDER — and says so in the process,
+                # before any cap, so the cap trims real terms only.
+                dropped = [v for v in found if v in rule["exclude"]]
+                if dropped:
+                    excluded[name] = dropped
+                    found = [v for v in found if v not in rule["exclude"]]
             if rule.get("limit") and isinstance(found, list):
                 found = found[: rule["limit"]]
             extracted[name] = found
@@ -317,7 +335,7 @@ def absorb(spec: dict, results: list, facts: dict) -> dict:
     unresolved = [name for name in (spec.get("extract") or {})
                   if name not in extracted]
     return {"facts": extracted, "unresolved": unresolved, "blocked": blocked,
-            "undecided": undecided}
+            "undecided": undecided, "excluded": excluded}
 
 
 class SkillRunner:
@@ -422,6 +440,23 @@ class SkillRunner:
                 spec, step, repair, results, failures, run, made)
 
         outcome = absorb(spec, results, run["facts"])
+        delegated = spec.get("delegate") or []
+        if delegated:
+            # Web search and code live on the agent, not in the registry. The run
+            # asks the agent to make these calls with its own tools and hands
+            # back the named facts — same pause as a judgement, results on record.
+            wanted = spec.get("produces") or []
+            try:
+                calls = [{"tool": c["tool"], "arguments": _fill(c.get("arguments", {}), run["facts"])}
+                         for c in delegated]
+            except SkillGraphError as exc:
+                run["blocked"].append({"step": step["id"], "reason": str(exc)})
+                outcome = judged(outcome, wanted, None)
+            else:
+                made.extend(calls)
+                answer = self.ask(question_for(step["id"], "delegate", wanted,
+                                               dict(run["facts"]), calls=calls)) if self.ask else None
+                outcome = judged(outcome, wanted, answer)
         wants = spec.get("judge") or []
         if wants:
             # A judgement fact is asked for by name, after the step's own calls,

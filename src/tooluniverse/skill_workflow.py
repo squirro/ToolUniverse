@@ -40,6 +40,7 @@ from temporalio.worker.workflow_sandbox import (
 )
 
 with workflow.unsafe.imports_passed_through():
+    from .skill_graph import SkillGraphError, fill
     from .skill_runner import (
         MAX_PAYLOAD,
         absorb,
@@ -141,6 +142,22 @@ class SkillWorkflow:
                 results, failures = await self._repair(spec, step, repair, results,
                                                        failures, made)
             outcome = absorb(spec, results, run["facts"])
+            delegated = spec.get("delegate") or []
+            if delegated:
+                # Web search and code live on the agent: the run pauses with the
+                # calls composed, the agent makes them, the answer is on record.
+                wanted = spec.get("produces") or []
+                try:
+                    calls = [{"tool": c["tool"], "arguments": fill(c.get("arguments", {}), run["facts"])}
+                             for c in delegated]
+                except SkillGraphError as exc:
+                    run["blocked"].append({"step": step["id"], "reason": str(exc)})
+                    outcome = judged(outcome, wanted, None)
+                else:
+                    made.extend(calls)
+                    answer = await self._ask(question_for(
+                        step["id"], "delegate", wanted, dict(run["facts"]), calls=calls))
+                    outcome = judged(outcome, wanted, answer)
             wants = spec.get("judge") or []
             if wants:
                 answer = await self._ask(question_for(

@@ -87,10 +87,14 @@ every step and every tool call itself.
    `running` is progress — tell the user which phase is done. `waiting` carries a
    `question`: answer it with `continue_skill(run_id=..., answer={{...}})` — for a
    `repair`, the named argument mapped to a list of alternative values; for a
-   `judge`, each wanted name mapped to your decision.
+   `judge`, each wanted name mapped to your decision; for a `delegate`, make the
+   listed `calls` with your own tools (web search, code) and map each wanted name
+   to what came back.
 3. When it answers `finished`, write the report from `bundle` and nothing else.
-   Every number in the report comes from `bundle.results`; state `failures`,
-   `blocked` and `unresolved` as gaps.
+   `bundle.report` is the author's instruction for how to read the evidence and
+   `bundle.notes` says what each step means: follow both. Every number comes from
+   `bundle.results` or `bundle.facts`; cite with the `source_url` in each result;
+   state `failures`, `blocked`, `unresolved` and `excluded` as gaps.
 
 Do not call `execute_tool` for any step of this skill yourself.
 
@@ -116,6 +120,11 @@ failure and continue with the next step.
 
 ---
 """
+
+
+def fill(value: Any, facts: dict) -> Any:
+    """Substitute {placeholders} from facts; public so a host can compose delegated calls."""
+    return _fill(value, facts)
 
 
 def _fill(value: Any, facts: dict) -> Any:

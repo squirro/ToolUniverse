@@ -985,3 +985,61 @@ def test_the_bundle_says_which_tools_the_server_called_per_step():
 
     assert calls == {"resolve": ["resolve_drug"], "signals": ["disproportionality"],
                      "stratify": ["stratify"], "report": []}
+
+
+# --- the author's judgement travels with the data (Rung 2, report quality) ------
+# Blind-judged 2026-09-03: the modelled reports printed FAERS coding noise as
+# signals because the step notes stayed on the server. The bundle now carries
+# every step's notes and the process's report guidance; extraction can exclude
+# what the author knows is noise; and a step can delegate calls to the agent's
+# own tools (web search, code) through the same pause the judgement uses.
+
+
+def test_the_bundle_carries_step_notes_and_the_report_guidance():
+    graph = {"skill": "g", "inputs": [],
+             "report": "Classify every signal against the label. Say which terms are nonspecific.",
+             "steps": [{"id": "a", "calls": [], "notes": "A NOT_FOUND here is normal."},
+                       {"id": "b", "calls": []}]}
+    runner = SkillRunner(graph, execute=lambda t, a: {})
+    run_id = runner.start({})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    bundle = runner.bundle(run_id)
+
+    assert bundle["report"] == "Classify every signal against the label. Say which terms are nonspecific."
+    assert bundle["notes"] == {"a": "A NOT_FOUND here is normal."}
+
+
+def test_extract_can_exclude_values_the_author_knows_are_noise():
+    spec = {"id": "faers_counts",
+            "extract": {"top_aes": {"path": "result[].term", "limit": 4,
+                                    "exclude": ["ILL-DEFINED DISORDER", "DEATH"]}}}
+    results = [{"result": [{"term": "ILL-DEFINED DISORDER"}, {"term": "NAUSEA"},
+                           {"term": "DEATH"}, {"term": "FATIGUE"}, {"term": "RASH"},
+                           {"term": "COUGH"}]}]
+
+    out = absorb(spec, results, facts={})
+
+    assert out["facts"]["top_aes"] == ["NAUSEA", "FATIGUE", "RASH", "COUGH"], "excluded before the cap"
+    assert out["excluded"] == {"top_aes": ["ILL-DEFINED DISORDER", "DEATH"]}
+
+
+def test_a_delegated_step_asks_the_agent_to_make_the_calls_and_takes_the_answer():
+    graph = {"skill": "d", "inputs": ["drug_name"], "steps": [
+        {"id": "web_context",
+         "delegate": [{"tool": "exa_web_search", "arguments": {"query": "{drug_name} safety"}}],
+         "produces": ["web_context"]}]}
+    asked = []
+    runner = SkillRunner(graph, execute=lambda t, a: {},
+                         ask=lambda q: asked.append(q) or {"web_context": ["hit 1", "hit 2"]})
+    run_id = runner.start({"drug_name": "Lutathera"})["run_id"]
+
+    out = runner.advance(run_id)
+
+    assert asked == [{"kind": "delegate", "step": "web_context", "wants": ["web_context"],
+                      "context": {"drug_name": "Lutathera"},
+                      "calls": [{"tool": "exa_web_search",
+                                 "arguments": {"query": "Lutathera safety"}}]}]
+    assert runner.state(run_id)["facts"]["web_context"] == ["hit 1", "hit 2"]
+    assert out["finished"] and runner.bundle(run_id)["calls"] == {"web_context": ["exa_web_search"]}

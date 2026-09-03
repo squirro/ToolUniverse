@@ -300,3 +300,35 @@ async def test_every_shipped_process_finishes_on_temporal_with_a_signalling_orac
 
     assert bundle["skill"] == skill
     assert not any("no answer" in b["reason"] for b in bundle["blocked"]), bundle["blocked"]
+
+
+DELEGATED = {
+    "skill": "delegated", "inputs": ["drug_name"], "report": "Say what the web adds.",
+    "steps": [
+        {"id": "label", "calls": [{"tool": "label_tool", "arguments": {"q": "{drug_name}"}}],
+         "notes": "The label is ground truth."},
+        {"id": "web_context", "requires": ["label"],
+         "delegate": [{"tool": "exa_web_search", "arguments": {"query": "{drug_name} safety"}}],
+         "produces": ["web_context"]},
+    ],
+}
+
+
+async def test_a_delegated_step_pauses_with_the_calls_and_the_answer_lands_in_the_bundle():
+    async def do_the_search(handle, env):
+        state = await _wait_for_question(handle)
+        q = state["waiting_for"]
+        assert q["kind"] == "delegate" and q["wants"] == ["web_context"]
+        assert q["calls"] == [{"tool": "exa_web_search", "arguments": {"query": "Lutathera safety"}}]
+        await handle.signal(SkillWorkflow.answer, {"web_context": [{"title": "hit", "url": "https://x"}]})
+
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, calls = await _run(env, {"label_tool": {"data": "label"}}, DELEGATED,
+                                   {"drug_name": "Lutathera"}, "run-delegate",
+                                   before_result=do_the_search)
+
+    assert calls == [("label_tool", {"q": "Lutathera"})], "the server made only its own call"
+    assert bundle["facts"]["web_context"] == [{"title": "hit", "url": "https://x"}]
+    assert bundle["calls"] == {"label": ["label_tool"], "web_context": ["exa_web_search"]}
+    assert bundle["notes"] == {"label": "The label is ground truth."}
+    assert bundle["report"] == "Say what the web adds."

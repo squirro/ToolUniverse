@@ -57,6 +57,8 @@ def to_bbo(graph: dict, git_commit: str | None = None) -> str:
     # Provenance: a Skill Run carries these, so a record can be matched to the
     # repo revision it executed after the skill has changed.
     g.add((process, SRP.definitionHash, Literal(definition_hash(graph))))
+    if graph.get("report"):
+        g.add((process, SRP.reportGuidance, Literal(graph["report"])))
     if git_commit:
         g.add((process, SRP.gitCommit, Literal(git_commit)))
 
@@ -147,6 +149,7 @@ _JSON_SPECS = {
     "derive": SRP.deriveSpec,
     "produces": SRP.produces,
     "judge": SRP.judges,
+    "delegate": SRP.delegateSpec,
 }
 
 
@@ -275,6 +278,8 @@ def from_bbo(g: Graph) -> dict:
     skill = str(g.value(process, RDFS.label))
     out: dict = {"skill": skill}
 
+    if (guidance := g.value(process, SRP.reportGuidance)) is not None:
+        out["report"] = str(guidance)
     inputs = sorted(g.objects(process, SRP.hasInput),
                     key=lambda n: int(g.value(n, SRP.order) or 0))
     required = [str(g.value(n, RDFS.label)) for n in inputs

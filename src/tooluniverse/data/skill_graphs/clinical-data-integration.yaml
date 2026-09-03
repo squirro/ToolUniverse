@@ -18,6 +18,24 @@
 
 skill: clinical-data-integration
 inputs: [drug_name]
+# How the report must read the evidence. Blind-judged 2026-09-03: the reports
+# written from the bundle alone printed FAERS coding noise as headline signals.
+# The numbers were right; the judgement the author wrote down never reached the
+# writer. It travels in the bundle now.
+report: >-
+  Lead with the two events the question names, then the ranked signals. For every
+  FAERS signal state the PRR, then classify it against the label: known and
+  labelled, known but under-labelled, or a potential new signal. A PRR is a
+  reporting signal, not causality: say so once, and name the biases (stimulated
+  reporting, indication, disease progression in an oncology cohort). Terms the
+  process excluded as nonspecific are listed under `excluded`; mention that they
+  dominate raw report counts and were set aside, and never present them as
+  signals. Name the FAERS cohort (the brand name used). Cite each FAERS and label
+  number with the `source_url` from its result; cite literature by PMID or DOI and
+  trials by NCT id from `facts`. Read pharmacogenomic findings as risk-narrowing;
+  an empty CPIC result means no guideline exists, which is an answer. Web context
+  is supplement, not a finding, and is cited as web. End with a Limitations
+  section built from `failures`, `blocked`, `unresolved` and `excluded`.
 # Optional, and bound by the AGENT from the question: the reactions the user
 # actually asked about. "especially myelodysplastic syndrome and renal
 # impairment" — neither is in Lutathera's top twelve by report count, so without
@@ -76,7 +94,16 @@ steps:
       - tool: FAERS_count_reactions_by_drug_event
         arguments: {medicinalproduct: "{faers_name}"}
     extract:
-      top_aes: {path: "result[].term", limit: 12}   # the execute_tool envelope, same as every saved trace
+      # Coding noise and outcomes, not reactions: they top every raw FAERS count
+      # and carry no clinical information. Excluded before the cap, and the
+      # bundle records what was set aside so the report can say so.
+      top_aes:
+        path: "result[].term"
+        limit: 12
+        exclude: [ILL-DEFINED DISORDER, GENERAL PHYSICAL HEALTH DETERIORATION, ILLNESS,
+                  LABORATORY TEST ABNORMAL, DISEASE PROGRESSION, MALIGNANT NEOPLASM PROGRESSION,
+                  DEATH, COVID-19, CONDITION AGGRAVATED, OFF LABEL USE, DRUG INEFFECTIVE,
+                  PRODUCT USE ISSUE, NO ADVERSE EVENT]
     combine:
       signal_aes: {union: [requested_aes, top_aes], limit: 15}
     produces: [top_aes, signal_aes]
@@ -134,9 +161,15 @@ steps:
     calls:
       - tool: search_clinical_trials
         arguments: {query_term: "{drug_name}"}
+    extract:
+      nct_ids: {path: "data.studies[].NCT ID", limit: 10}
+      trial_titles: {path: "data.studies[].brief_title", limit: 10}
+      trial_phases: {path: "data.studies[].phase", limit: 10}
+      trial_status: {path: "data.studies[].overall_status", limit: 10}
+    produces: [nct_ids, trial_titles, trial_phases, trial_status]
     notes: >-
       Simple single-drug queries work best here; multi-word queries often return
-      nothing.
+      nothing. Cite trials by NCT id.
 
   - id: literature
     label: "Phase 5 — published safety evidence"
@@ -144,11 +177,46 @@ steps:
     calls:
       - tool: PubMed_search_articles
         arguments: {query: "{drug_name} adverse events safety"}
+    extract:
+      pmids: {path: "data[].pmid", limit: 10}
+      paper_titles: {path: "data[].title", limit: 10}
+      paper_years: {path: "data[].pub_year", limit: 10}
+      paper_dois: {path: "data[].doi_url", limit: 10}
+    produces: [pmids, paper_titles, paper_years, paper_dois]
     notes: Real titles, PMIDs and years — meta-analyses before case reports.
+
+  - id: web_context
+    label: "Phase 5b — web context (agent's own search; supplement, not a finding)"
+    requires: [literature]
+    # The agent's web tools are not in the registry: the run pauses and the agent
+    # makes this call itself. Placed after the grounded phases on purpose.
+    delegate:
+      - tool: exa_web_search
+        arguments: {query: "{drug_name} myelodysplastic syndrome renal impairment safety"}
+    produces: [web_context]
+    notes: >-
+      Return the results as a list of {title, url, snippet}. Web is context and
+      recency only; anything it surfaces that the tools did not is reported as
+      web-sourced, never as a finding.
+
+  - id: compute
+    label: "Phase 5c — ranked signal table (agent's code tool)"
+    requires: [disproportionality]
+    delegate:
+      - tool: code_interpreter
+        arguments:
+          task: >-
+            Pair each term in `terms` with the PRR at the same index in `prrs`,
+            sort by PRR descending, flag PRR >= 2, and return the table as a
+            list of {term, prr, flagged}.
+          terms: "{signal_aes}"
+          prrs: "{prrs}"
+    produces: [prr_table]
+    notes: Use your code tool for this; if you have none, compute it carefully and say so.
 
   - id: assessment
     label: "Phase 6 — integrated assessment (synthesis, no new tools)"
-    requires: [label, disproportionality, pharmacogenomics, trials, literature]
+    requires: [label, disproportionality, pharmacogenomics, trials, literature, web_context, compute]
     calls: []
     notes: >-
       Classify every notable FAERS signal against the label: known and labeled,

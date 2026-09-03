@@ -48,6 +48,11 @@ ARMS = {
     "modelled": (
         "Use the clinical-data-integration skill. "
     ),
+    # A different agent: web search only, no SMCP tools bound. The one arm where the
+    # persona and toolset differ, so it is the baseline, not a variant.
+    "web": (
+        "Answer from web search. "
+    ),
 }
 
 _NUMBER = re.compile(r"(?<![\w.])(\d{1,4}(?:\.\d{1,3})?)(?![\w.])")
@@ -128,6 +133,9 @@ def score(turn_actions: list[dict], answer: str) -> dict:
         "tools_called": [a.get("tool_name") for a in turn_actions],
         "used_run_skill": any(a.get("tool_name") == "run_skill" for a in turn_actions),
         "used_get_skill": any(a.get("tool_name") == "get_skill" for a in turn_actions),
+        "delegated_questions": sum(
+            1 for a in turn_actions if a.get("tool_name") in ("run_skill", "continue_skill")
+            and '"kind": "delegate"' in ((a.get("content") or {}).get("output") or "")),
         "execute_tool_calls": sum(1 for a in turn_actions if a.get("tool_name") == "execute_tool"),
         "answer_len": len(answer or ""),
     }
@@ -144,6 +152,12 @@ def run(args) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     arms = args.arms.split(",") if args.arms else list(ARMS)
+    agent_for = {arm: args.agent_id for arm in ARMS}
+    if args.web_agent_id:
+        agent_for["web"] = args.web_agent_id
+    elif "web" in arms:
+        print("ERROR: --web-agent-id is required for the web arm", file=sys.stderr)
+        return 2
     rows = []
     for arm in arms:
         for n in range(1, args.runs + 1):
@@ -154,7 +168,7 @@ def run(args) -> int:
                 continue
             started = time.monotonic()
             turn = SquirroChatClient(cluster, token, project).ask(
-                args.agent_id, ARMS[arm] + QUESTION, timeout=args.timeout)
+                agent_for[arm], ARMS[arm] + QUESTION, timeout=args.timeout)
             actions = trim_actions(turn.actions)
             row = {"arm": arm, "run": n, "error": turn.error,
                    "seconds": round(time.monotonic() - started, 1),
@@ -218,6 +232,7 @@ def rescore(args) -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--agent-id")
+    ap.add_argument("--web-agent-id", help="the web-only agent for the `web` arm")
     ap.add_argument("--target", default="srdev", choices=["srdev", "srdev-com", "sempart"])
     ap.add_argument("--env-file")
     ap.add_argument("--runs", type=int, default=3)

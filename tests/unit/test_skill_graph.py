@@ -154,6 +154,20 @@ def test_a_loop_over_an_empty_list_is_not_a_step_to_run():
     assert step is None
 
 
+def test_a_loop_over_an_empty_list_still_lets_the_steps_after_it_run():
+    """clinical-data-integration: no FAERS terms means no disproportionality calls,
+    and the synthesis phase that REQUIRES that step must still be offered. An empty
+    loop is vacuously complete, not a dead end for everything downstream."""
+    graph = {**LOOP_GRAPH, "steps": LOOP_GRAPH["steps"] + [
+        {"id": "assessment", "requires": ["signals"], "calls": []}]}
+
+    step = next_step(graph, done=["profile"],
+                     facts={"drug_name": "cisplatin", "top_aes": []})
+
+    assert step is not None and step["id"] == "assessment"
+    assert step["remaining"] == 0
+
+
 # --- telling the agent a graph exists ----------------------------------------
 # A graph nobody is told about changes nothing: get_skill still serves the prose
 # phases, and the agent plans from them exactly as before.
@@ -284,3 +298,38 @@ def test_every_step_of_a_shipped_graph_is_reachable():
     for step in graph["steps"]:
         missing = [d for d in step.get("requires", []) if d not in ids]
         assert not missing, f"{step['id']} requires unknown steps: {missing}"
+
+
+@pytest.mark.parametrize("skill", [p.stem for p in
+                                   (Path(__file__).resolve().parents[2] / "src" / "tooluniverse"
+                                    / "data" / "skill_graphs").glob("*.yaml")])
+def test_a_judged_fact_is_one_the_step_says_it_produces(skill):
+    """`judge` names what the model must supply; `produces` is what the step yields.
+    A judged name outside `produces` is a declaration nobody reads downstream."""
+    graph = load_graph(skill)
+    stray = [f"{step['id']}: {name}" for step in graph["steps"]
+             for name in step.get("judge", [])
+             if name not in step.get("produces", [])]
+    assert not stray, stray
+
+
+def test_rare_disease_diagnosis_declares_its_judgement_points():
+    """Phase 0 has no tool at all; the keyword, hypothesis and discriminating
+    features come from the model, and the process says so instead of leaving
+    them to be silently unresolved."""
+    graph = load_graph("rare-disease-diagnosis")
+    judged = {s["id"]: s.get("judge") for s in graph["steps"] if s.get("judge")}
+    assert judged == {
+        "hypothesis": ["primary_keyword", "working_hypothesis", "discriminating_features"],
+        "phenotypes": ["discriminating_hpo_ids"],
+        "keyword_search": ["top_candidate"],
+        "literature": ["genes"],
+    }
+    phenotypes = next(s for s in graph["steps"] if s["id"] == "phenotypes")
+    assert phenotypes["collect"]["hpo_ids"] == {"path": "data.items[].id", "match": "^HP:"}
+
+
+def test_a_step_tells_the_model_driven_caller_which_names_it_must_judge():
+    graph = {"skill": "j", "inputs": [], "steps": [
+        {"id": "hypothesis", "calls": [], "produces": ["keyword"], "judge": ["keyword"]}]}
+    assert next_step(graph, done=[], facts={})["judge"] == ["keyword"]

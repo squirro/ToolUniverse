@@ -162,6 +162,25 @@ def substitute(calls: list[dict], argument: str, candidate: Any) -> list[dict]:
     return out
 
 
+def question_for(step_id: str, kind: str, wants: list[str], context: dict, **detail) -> dict:
+    """The one question shape the model is asked mid-run, for a repair or a judgement."""
+    return {"kind": kind, "step": step_id, "wants": list(wants), "context": context,
+            **detail}
+
+
+def judged(outcome: dict, wants: list[str], answer: dict | None) -> dict:
+    """Fold the model's answer to a judgement into a step outcome.
+
+    Only the names the step declared are taken; a declared name the model did
+    not answer is unresolved, like an extraction that never arrived.
+    """
+    answer = answer or {}
+    facts = {**outcome["facts"],
+             **{name: answer[name] for name in wants if name in answer}}
+    unresolved = outcome["unresolved"] + [n for n in wants if n not in answer]
+    return {**outcome, "facts": facts, "unresolved": unresolved}
+
+
 def absorb(spec: dict, results: list, facts: dict) -> dict:
     """What a step's results yield: facts, what never arrived, what cannot be decided.
 
@@ -198,9 +217,23 @@ def absorb(spec: dict, results: list, facts: dict) -> dict:
     # `collect` gathers a value from EVERY call, which is what a loop step
     # needs: FAERS answers one metrics object per reaction, and the gateway
     # has to see them all.
-    for name, path in (spec.get("collect") or {}).items():
-        gathered = [found for payload in results
-                    if (found := _dig(payload, path)) is not None]
+    for name, rule in (spec.get("collect") or {}).items():
+        rule = rule if isinstance(rule, dict) else {"path": rule}
+        gathered = []
+        for payload in results:
+            found = _dig(payload, rule["path"])
+            if found is None:
+                continue
+            if rule.get("match"):
+                # The first item that matches, per call: an HPO lookup answers
+                # UPHENO:, MP:, then HP:, and only the HP id is a human phenotype.
+                items = found if isinstance(found, list) else [found]
+                found = next((i for i in items
+                              if isinstance(i, str) and re.search(rule["match"], i)),
+                             None)
+                if found is None:
+                    continue
+            gathered.append(found)
         if gathered:
             extracted[name] = gathered
     # `combine` merges facts the question supplied with facts the data
@@ -279,13 +312,15 @@ class SkillRunner:
             return results, failures
         argument = repair["argument"]
         original = step["calls"][0]["arguments"].get(argument)
-        suggestions = self.ask({
-            "tool": step["calls"][0]["tool"],
-            "argument": argument,
-            "value": original,
-            "problem": f"returned nothing for {original!r}",
-        }) or []
-        for candidate in suggestions[: self.MAX_REPAIRS]:
+        answer = self.ask(question_for(
+            step["id"], "repair", [argument], dict(run["facts"]),
+            tool=step["calls"][0]["tool"], argument=argument, value=original,
+            problem=f"returned nothing for {original!r}",
+        ))
+        # One answer shape for every question: the wanted name mapped to its
+        # value — here a list of alternatives. A bare list is still taken.
+        suggestions = answer.get(argument) if isinstance(answer, dict) else answer
+        for candidate in (suggestions or [])[: self.MAX_REPAIRS]:
             retried, retry_failures = [], []
             for call in substitute(step["calls"], argument, candidate):
                 try:
@@ -375,6 +410,15 @@ class SkillRunner:
                 spec, step, repair, results, failures, run)
 
         outcome = absorb(spec, results, run["facts"])
+        wants = spec.get("judge") or []
+        if wants:
+            # A judgement fact is asked for by name, after the step's own calls,
+            # with everything known so far — never inferred from what an
+            # extraction happened to miss.
+            answer = self.ask(question_for(
+                step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
+            )) if self.ask else None
+            outcome = judged(outcome, wants, answer)
         apply(run, step["id"], results, failures, outcome)
         # The caller sees an unknown as an explicit None; facts never hold one.
         extracted = {**outcome["facts"], **{n: None for n in outcome["undecided"]}}

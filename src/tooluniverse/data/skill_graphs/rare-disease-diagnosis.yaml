@@ -23,6 +23,8 @@ steps:
     label: "Phase 0 — clinical reasoning, before any tool call"
     calls: []
     produces: [primary_keyword, working_hypothesis, discriminating_features]
+    # No tool can yield these: the run asks the model for them by name.
+    judge: [primary_keyword, working_hypothesis, discriminating_features]
     notes: >-
       State the top 3-5 candidates and the reasoning chain, and name the rarest,
       most discriminating features. Do this from the presentation alone — it is
@@ -39,7 +41,13 @@ steps:
     calls:
       - tool: get_HPO_ID_by_phenotype
         arguments: {query: "{symptom}", limit: 5}
+    # Live, the lookup answers UPHENO:, MP:, then HP: — the human phenotype is
+    # third. One HP id per symptom, taken mechanically; which two or three
+    # discriminate is judgement.
+    collect:
+      hpo_ids: {path: "data.items[].id", match: "^HP:"}
     produces: [hpo_ids, discriminating_hpo_ids]
+    judge: [discriminating_hpo_ids]
     notes: >-
       One call per symptom. Take the top HP:-prefixed hit — the tool also returns
       MP: and other namespaces, which are not human phenotypes. A symptom that
@@ -77,6 +85,7 @@ steps:
       - tool: Orphanet_search_diseases
         arguments: {query: "{primary_keyword}", limit: 20}
     produces: [top_candidate]
+    judge: [top_candidate]
     notes: >-
       Catches diseases the phenotype lookup misses. SKIP any hit whose name begins
       "OBSOLETE:". Merge with 2a and 2b, then score every candidate against the FULL
@@ -89,6 +98,7 @@ steps:
       - tool: EuropePMC_search_articles
         arguments: {query: "{top_candidate}", limit: 10}
     produces: [genes]
+    judge: [genes]
     notes: >-
       Runs BEFORE gene characterisation on purpose: this cluster has no
       disease-to-gene tool, so causal gene names come from the retrieved titles and

@@ -773,3 +773,201 @@ def test_start_accepts_the_run_id_a_host_already_has():
 
     assert out["run_id"] == "skill-demo-42"
     assert runner.state("skill-demo-42")["facts"] == {"drug_name": "x"}
+
+
+# --- judgement facts and matched collection (DSR-708) -------------------------
+
+
+def test_collect_with_match_keeps_the_first_matching_item_per_call():
+    """Live, get_HPO_ID_by_phenotype answers UPHENO:, MP:, then HP: — the human
+    phenotype is third. One HP id per symptom, mechanically."""
+    spec = {"id": "phenotypes",
+            "collect": {"hpo_ids": {"path": "data.items[].id", "match": "^HP:"},
+                        "everything": "data.items[].id"}}
+    results = [{"data": {"items": [{"id": "UPHENO:7000263"}, {"id": "MP:0031058"},
+                                   {"id": "HP:0001433"}, {"id": "HP:5210171"}]}},
+               {"data": {"items": [{"id": "MP:0000001"}]}},
+               {"data": {"items": [{"id": "HP:0000252"}]}}]
+
+    out = absorb(spec, results, facts={})
+
+    assert out["facts"]["hpo_ids"] == ["HP:0001433", "HP:0000252"]
+    assert out["facts"]["everything"] == [["UPHENO:7000263", "MP:0031058", "HP:0001433",
+                                           "HP:5210171"], ["MP:0000001"], ["HP:0000252"]]
+
+
+JUDGED = {
+    "skill": "judged",
+    "inputs": ["symptoms"],
+    "steps": [
+        {"id": "hypothesis", "calls": [],
+         "produces": ["primary_keyword", "working_hypothesis"],
+         "judge": ["primary_keyword", "working_hypothesis"]},
+        {"id": "phenotypes", "requires": ["hypothesis"],
+         "for_each": "symptoms", "as": "symptom",
+         "calls": [{"tool": "hpo", "arguments": {"query": "{symptom}"}}],
+         "collect": {"hpo_ids": {"path": "data.items[].id", "match": "^HP:"}},
+         "produces": ["hpo_ids", "discriminating_hpo_ids"],
+         "judge": ["discriminating_hpo_ids"]},
+        {"id": "search", "requires": ["phenotypes"],
+         "calls": [{"tool": "orphanet", "arguments": {"query": "{primary_keyword}"}}]},
+    ],
+}
+
+HPO = {"hpo": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0001433"}]}},
+       "orphanet": {"data": []}}
+
+
+def _judged_runner(answers, responses=HPO):
+    asked = []
+
+    def execute(tool, arguments):
+        return responses[tool]
+
+    def ask(question):
+        asked.append(question)
+        return answers.get(question.get("kind"), {})
+
+    return SkillRunner(JUDGED, execute=execute, ask=ask), asked
+
+
+def test_a_judge_step_asks_once_after_its_calls_and_keeps_the_answer():
+    runner, asked = _judged_runner({"judge": {"primary_keyword": "storage disorder",
+                                              "working_hypothesis": "Gaucher"}})
+    run_id = runner.start({"symptoms": ["hepatosplenomegaly"]})["run_id"]
+
+    out = runner.advance(run_id)
+
+    assert out["step_id"] == "hypothesis"
+    assert asked == [{"kind": "judge", "step": "hypothesis",
+                      "wants": ["primary_keyword", "working_hypothesis"],
+                      "context": {"symptoms": ["hepatosplenomegaly"]}}]
+    assert runner.state(run_id)["facts"]["primary_keyword"] == "storage disorder"
+    assert out["extracted"]["working_hypothesis"] == "Gaucher"
+    assert out["unresolved"] == []
+
+
+def test_a_judge_step_sees_what_its_own_calls_extracted():
+    """Phase 1: the HP ids come from the lookups; which two discriminate is judged,
+    and the judge must see the ids to choose among them."""
+    runner, asked = _judged_runner({"judge": {"primary_keyword": "k",
+                                              "working_hypothesis": "h",
+                                              "discriminating_hpo_ids": ["HP:0001433"]}})
+    run_id = runner.start({"symptoms": ["hepatosplenomegaly"]})["run_id"]
+    runner.advance(run_id)
+
+    runner.advance(run_id)
+
+    assert asked[-1]["step"] == "phenotypes"
+    assert asked[-1]["wants"] == ["discriminating_hpo_ids"]
+    assert asked[-1]["context"]["hpo_ids"] == ["HP:0001433"]
+    assert runner.state(run_id)["facts"]["discriminating_hpo_ids"] == ["HP:0001433"]
+
+
+def test_a_judged_name_the_model_does_not_answer_is_unresolved():
+    runner, _ = _judged_runner({"judge": {"primary_keyword": "k"}})
+    run_id = runner.start({"symptoms": ["x"]})["run_id"]
+
+    out = runner.advance(run_id)
+
+    assert out["unresolved"] == [{"step": "hypothesis", "fact": "working_hypothesis"}]
+    assert "working_hypothesis" not in runner.state(run_id)["facts"]
+
+
+def test_a_produced_name_that_is_not_judged_is_a_defect_not_a_question():
+    """A missed extraction path must never become something the model invents."""
+    graph = {"skill": "g", "inputs": [], "steps": [
+        {"id": "s", "calls": [{"tool": "t", "arguments": {}}],
+         "extract": {"setid": "data.0.setid"}, "produces": ["setid"]}]}
+    asked = []
+    runner = SkillRunner(graph, execute=lambda tool, a: {"data": []},
+                         ask=lambda q: asked.append(q) or {"setid": "invented"})
+    run_id = runner.start({})["run_id"]
+
+    out = runner.advance(run_id)
+
+    assert asked == []
+    assert out["unresolved"] == [{"step": "s", "fact": "setid"}]
+    assert "setid" not in runner.state(run_id)["facts"]
+
+
+def test_without_an_oracle_a_judge_step_records_its_names_as_unresolved():
+    runner = SkillRunner(JUDGED, execute=lambda tool, a: HPO[tool])
+    run_id = runner.start({"symptoms": ["x"]})["run_id"]
+
+    out = runner.advance(run_id)
+
+    assert out["step_id"] == "hypothesis"
+    assert [u["fact"] for u in out["unresolved"]] == ["primary_keyword", "working_hypothesis"]
+
+
+# --- every shipped process runs to the end server-side ------------------------
+
+from tooluniverse.skill_graph import GRAPHS_DIR, load_graph  # noqa: E402
+
+
+def _run_to_end(runner, inputs, limit=100):
+    run_id = runner.start(inputs)["run_id"]
+    for _ in range(limit):
+        if runner.advance(run_id)["finished"]:
+            return run_id
+    raise AssertionError("the run did not finish")
+
+
+@pytest.mark.parametrize("skill", sorted(p.stem for p in GRAPHS_DIR.glob("*.yaml")))
+def test_every_shipped_process_finishes_with_stub_tools_and_a_stub_oracle(skill):
+    """The standing net: a YAML edit that the runner cannot execute fails here,
+    not in a live run. Tools answer nothing; the oracle answers every judged name."""
+    graph = load_graph(skill)
+    runner = SkillRunner(graph, execute=lambda tool, a: {},
+                         ask=lambda q: {name: ["stub"] for name in q["wants"]})
+    inputs = {name: ["stub"] for name in graph.get("inputs", [])}
+
+    run_id = _run_to_end(runner, inputs)
+
+    state = runner.state(run_id)
+    facts = state["facts"]
+    off = {s["id"] for s in graph["steps"]
+           if (s.get("when") and not facts.get(s["when"]))            # gate closed
+           or (s.get("for_each") in facts and not facts[s["for_each"]])}  # empty loop
+    accounted = set(state["done"]) | set(state["skipped"]) | off
+    assert accounted == {s["id"] for s in graph["steps"]}
+
+
+def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
+    """The skill that could not run server-side: four judgement points, one
+    mechanical HP id per symptom, no step blocked and no fact unresolved."""
+    responses = {
+        "get_HPO_ID_by_phenotype": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0001433"}]}},
+        "get_joint_associated_diseases_by_HPO_ID_list": {"data": [{"id": "MONDO:1"}]},
+        "Orphanet_search_diseases": {"data": [{"name": "Gaucher disease"}]},
+        "EuropePMC_search_articles": {"data": [{"title": "GBA in Gaucher"}]},
+        "MyGene_query_genes": {"data": {"hits": [{"symbol": "GBA"}]}},
+        "GTEx_get_expression_summary": {"data": []},
+    }
+    answers = {"primary_keyword": "lysosomal storage disorder",
+               "working_hypothesis": "Gaucher disease",
+               "discriminating_features": ["hepatosplenomegaly"],
+               "discriminating_hpo_ids": ["HP:0001433"],
+               "top_candidate": "Gaucher disease",
+               "genes": ["GBA"]}
+    calls, asked = [], []
+    runner = SkillRunner(
+        load_graph("rare-disease-diagnosis"),
+        execute=lambda tool, a: calls.append((tool, a)) or responses[tool],
+        ask=lambda q: asked.append(q) or {n: answers[n] for n in q["wants"]})
+
+    run_id = _run_to_end(runner, {"symptoms": ["hepatosplenomegaly", "coarse facies"]})
+
+    state = runner.state(run_id)
+    assert state["blocked"] == [] and state["unresolved"] == []
+    assert state["facts"]["hpo_ids"] == ["HP:0001433", "HP:0001433"]
+    assert [q["step"] for q in asked] == ["hypothesis", "phenotypes", "keyword_search",
+                                          "literature"]
+    assert ("get_joint_associated_diseases_by_HPO_ID_list",
+            {"HPO_ID_list": ["HP:0001433"], "limit": 30}) in calls
+    assert ("Orphanet_search_diseases",
+            {"query": "lysosomal storage disorder", "limit": 20}) in calls
+    assert ("MyGene_query_genes", {"query": "GBA",
+            "fields": "symbol,name,entrezgene,ensembl.gene,summary"}) in calls
+    assert "variant" not in state["done"], "no variant supplied, so that phase is off"

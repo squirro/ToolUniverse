@@ -81,7 +81,8 @@ names to recall, no arguments to build.
 1. `next_skill_step(skill="{skill}", done=[], facts={{...}})` — facts start with
    the entities named in the question (for example the drug).
 2. Run EVERY call in `calls` through `execute_tool`, exactly as given.
-3. Extract what `produces` names from the results.
+3. Extract what `produces` names from the results. A name listed under
+   `judge` is yours to decide from the case and the facts so far — say it.
 4. Call again with that step's `id` appended to `done`, and everything you
    extracted merged into `facts`.
 5. Stop when it answers `finished`, then write the report.
@@ -112,6 +113,12 @@ def _fill(value: Any, facts: dict) -> Any:
     return _PLACEHOLDER.sub(lambda m: str(facts[m.group(1)]), value)
 
 
+def _vacuous(step: dict, facts: dict) -> bool:
+    """A loop over an empty list: nothing to call, and nothing to wait for."""
+    loop = step.get("for_each")
+    return bool(loop and loop in facts and not facts[loop])
+
+
 def _is_runnable(step: dict, done: set[str], facts: dict) -> bool:
     if step["id"] in done:
         return False
@@ -121,10 +128,9 @@ def _is_runnable(step: dict, done: set[str], facts: dict) -> bool:
     if condition and not facts.get(condition):
         # A gateway: the step is only on this path if the fact is present and true.
         return False
-    loop = step.get("for_each")
     # An empty list means there is nothing to iterate: move on rather than demand
     # a call that cannot be made.
-    return not (loop and loop in facts and not facts[loop])
+    return not _vacuous(step, facts)
 
 
 def _expand_calls(step: dict, facts: dict) -> list[dict]:
@@ -155,8 +161,11 @@ def next_step(graph: dict, done: list[str], facts: dict) -> dict | None:
     the body it replaces. A step whose gateway condition is absent is skipped, and
     skipping it must never stall the procedure.
     """
-    done_set = set(done or [])
     facts = facts or {}
+    # A loop with nothing to iterate is complete without running, so the steps
+    # that require it are not left waiting for a call that will never be made.
+    done_set = set(done or []) | {
+        s["id"] for s in graph["steps"] if _vacuous(s, facts)}
     for step in graph["steps"]:
         if not _is_runnable(step, done_set, facts):
             continue
@@ -165,6 +174,7 @@ def next_step(graph: dict, done: list[str], facts: dict) -> dict | None:
             "label": step.get("label", step["id"]),
             "calls": _expand_calls(step, facts),
             "produces": step.get("produces", []),
+            "judge": step.get("judge", []),
             "notes": step.get("notes"),
             "remaining": sum(
                 1 for s in graph["steps"]

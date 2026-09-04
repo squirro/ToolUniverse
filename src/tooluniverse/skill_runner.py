@@ -407,7 +407,7 @@ class SkillRunner:
                 try:
                     retried.append(self.execute(call["tool"], call["arguments"]))
                 except Exception as exc:                   # noqa: BLE001
-                    retry_failures.append({"tool": call["tool"],
+                    retry_failures.append({"tool": call["tool"], "arguments": call["arguments"],
                                            "error": f"{type(exc).__name__}: {exc}"})
             if resolved(spec, repair, retried):
                 run["facts"][argument] = candidate
@@ -443,7 +443,7 @@ class SkillRunner:
             except Exception as exc:                       # noqa: BLE001
                 # A broken tool must not end the procedure: one bot-blocked FDA
                 # endpoint ended a whole run under the model-driven loop.
-                failures.append({"tool": call["tool"],
+                failures.append({"tool": call["tool"], "arguments": call["arguments"],
                                  "error": f"{type(exc).__name__}: {exc}"})
 
         repair = spec.get("repair")

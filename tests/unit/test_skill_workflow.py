@@ -332,3 +332,113 @@ async def test_a_delegated_step_pauses_with_the_calls_and_the_answer_lands_in_th
     assert bundle["calls"] == {"label": ["label_tool"], "web_context": ["exa_web_search"]}
     assert bundle["notes"] == {"label": "The label is ground truth."}
     assert bundle["report"] == "Say what the web adds."
+
+
+# --- fan-out: concurrent under a per-source ceiling, results in declared order ----
+#
+# Of 366 s inside Temporal on the Lutathera question, 345 s were fourteen FAERS
+# calls made one after another (ADR-0016). A loop's iterations are independent by
+# construction — the same call with one value substituted — so they run at once,
+# capped per source, and are gathered back in the order they were declared.
+
+import threading
+import time
+
+LOOP = {
+    "skill": "loop",
+    "inputs": ["terms"],
+    "steps": [
+        {"id": "prr", "for_each": "terms", "as": "term",
+         "calls": [{"tool": "ChEMBL_lookup", "arguments": {"term": "{term}"}}],
+         "collect": {"seen": {"path": "data.term"}}},
+        {"id": "report", "requires": ["prr"], "calls": []},
+    ],
+}
+
+
+def _counting(delay_for):
+    """A stub that records how many calls are in flight at once."""
+    state = {"in_flight": 0, "peak": 0, "lock": threading.Lock()}
+
+    def respond(call):
+        with state["lock"]:
+            state["in_flight"] += 1
+            state["peak"] = max(state["peak"], state["in_flight"])
+        time.sleep(delay_for(call.arguments["term"]))
+        with state["lock"]:
+            state["in_flight"] -= 1
+        return {"data": {"term": call.arguments["term"]}}
+
+    return respond, state
+
+
+async def test_loop_iterations_run_at_once_but_never_more_than_the_source_ceiling():
+    respond, state = _counting(lambda term: 0.3)
+    terms = ["a", "b", "c", "d", "e", "f"]
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, calls = await _run(env, {"ChEMBL_lookup": respond}, LOOP, {"terms": terms})
+
+    assert state["peak"] == 2                      # ChEMBL's ceiling; 4 worker threads available
+    assert bundle["facts"]["seen"] == terms        # declared order, not completion order
+    assert len(calls) == 6
+
+
+async def test_results_keep_declared_order_when_a_later_call_finishes_first():
+    respond, _ = _counting(lambda term: {"a": 0.4, "b": 0.05}.get(term, 0.05))
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(env, {"ChEMBL_lookup": respond}, LOOP, {"terms": ["a", "b"]})
+
+    assert bundle["facts"]["seen"] == ["a", "b"]
+
+
+async def test_one_failed_iteration_leaves_the_others_and_names_its_item():
+    def respond(call):
+        if call.arguments["term"] == "b":
+            raise ApplicationError("429 Too Many Requests", non_retryable=True)
+        return {"data": {"term": call.arguments["term"]}}
+
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(env, {"ChEMBL_lookup": respond}, LOOP, {"terms": ["a", "b", "c"]})
+
+    assert bundle["facts"]["seen"] == ["a", "c"]
+    assert bundle["steps_done"] == ["prr", "report"]
+    assert len(bundle["failures"]) == 1
+    assert bundle["failures"][0]["tool"] == "ChEMBL_lookup"
+    assert bundle["failures"][0]["arguments"] == {"term": "b"}
+    assert "429" in bundle["failures"][0]["error"]
+
+
+async def test_the_fan_out_changes_nothing_the_in_memory_runner_returns():
+    """Parity is still the claim: the same process, the same stubs, the same bundle."""
+    responses = {"ChEMBL_lookup": lambda call: {"data": {"term": call.arguments["term"]}}}
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(env, responses, LOOP, {"terms": ["x", "y", "z"]})
+
+    sync = SkillRunner(LOOP, execute=lambda tool, a: {"data": {"term": a["term"]}})
+    run_id = sync.start({"terms": ["x", "y", "z"]})["run_id"]
+    while not sync.advance(run_id)["finished"]:
+        pass
+    assert bundle == sync.bundle(run_id)
+
+
+async def test_a_delegated_step_is_handed_to_the_agent_whole_never_fanned_out():
+    process = {"skill": "d", "inputs": ["names"], "steps": [
+        {"id": "web",
+         "delegate": [{"tool": "exa_web_search", "arguments": {"query": "{names}"}}],
+         "produces": ["hits"]}]}
+
+    async def answer_when_asked(handle, env):
+        while True:
+            status = await handle.query(SkillWorkflow.status)
+            if status["waiting_for"]:
+                break
+            await env.sleep(1)
+        assert status["waiting_for"]["kind"] == "delegate"
+        await handle.signal(SkillWorkflow.answer, {"hits": ["ok"]})
+
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, calls = await _run(env, {}, process, {"names": ["p", "q"]},
+                                   before_result=answer_when_asked)
+
+    assert calls == []                      # no execute_tool activity ran
+    assert bundle["facts"]["hits"] == ["ok"]

@@ -1264,3 +1264,31 @@ def test_optimuskg_is_asked_once_as_a_delegated_call_on_the_top_candidate():
     assert state["facts"]["optimuskg_genes"] == [
         {"gene": "IDS", "relation": "CAUSES", "evidence_score": 0.9}]
     assert "OptimusKG_Search" not in [t for t, _ in calls]      # never executed server-side
+
+
+# --- a failed loop iteration names the item it was for --------------------------
+#
+# Fourteen FAERS calls, one rate-limited: the report must say WHICH reaction is
+# missing, not only that "FAERS_calculate_disproportionality" failed once.
+
+def test_a_failed_iteration_is_recorded_with_its_arguments():
+    graph = {"skill": "loop", "inputs": ["terms"], "steps": [
+        {"id": "prr", "for_each": "terms", "as": "term",
+         "calls": [{"tool": "FAERS_calculate_disproportionality",
+                    "arguments": {"drug": "x", "event": "{term}"}}],
+         "collect": {"prrs": {"path": "data.prr"}}}]}
+
+    def execute(tool, arguments):
+        if arguments["event"] == "nausea":
+            raise RuntimeError("429 Too Many Requests")
+        return {"data": {"prr": 2.0}}
+
+    runner = SkillRunner(graph, execute=execute)
+    run_id = runner.start({"terms": ["rash", "nausea", "fever"]})["run_id"]
+    runner.advance(run_id)
+
+    state = runner.state(run_id)
+    assert state["facts"]["prrs"] == [2.0, 2.0]
+    assert state["failures"] == [{"tool": "FAERS_calculate_disproportionality",
+                                  "arguments": {"drug": "x", "event": "nausea"},
+                                  "error": "RuntimeError: 429 Too Many Requests"}]

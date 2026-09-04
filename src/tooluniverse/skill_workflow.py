@@ -33,7 +33,6 @@ from typing import Any
 
 from temporalio import activity, workflow
 from temporalio.common import RetryPolicy
-from temporalio.exceptions import ActivityError
 from temporalio.worker.workflow_sandbox import (
     SandboxedWorkflowRunner,
     SandboxRestrictions,
@@ -41,7 +40,8 @@ from temporalio.worker.workflow_sandbox import (
 
 with workflow.unsafe.imports_passed_through():
     from .skill_graph import SkillGraphError, fill
-    from .skill_runner import (
+    from .skill_ceilings import ceiling_for, source_of
+from .skill_runner import (
         MAX_PAYLOAD,
         absorb,
         apply,
@@ -203,23 +203,39 @@ class SkillWorkflow:
             self._question = None
         return self._answer
 
-    # -- the work: every call an activity, sequential, in declared order ---------
+    # -- the work: every call an activity, all at once, capped per source ---------
 
     async def _calls(self, calls: list[dict]) -> tuple[list, list]:
-        results, failures = [], []
-        for call in calls:
-            try:
+        """Run a step's calls concurrently and gather them in declared order.
+
+        A loop's iterations are the same call with one value substituted, so they
+        are independent and run at once; a per-source semaphore keeps a rate
+        limit from turning fan-out into a ban. One failure is one item missing,
+        named by its arguments, never the whole step.
+        """
+        gates: dict[str, asyncio.Semaphore] = {}
+
+        async def one(call: dict):
+            source = source_of(call["tool"])
+            gate = gates.setdefault(source, asyncio.Semaphore(ceiling_for(call["tool"])))
+            async with gate:
                 out: ToolResult = await workflow.execute_activity(
                     execute_tool, ToolCall(call["tool"], call["arguments"]),
                     start_to_close_timeout=CALL_TIMEOUT,
                     retry_policy=RetryPolicy(maximum_attempts=1))
-                results.append(out.payload)
-            except ActivityError as exc:
+                return out.payload
+
+        settled = await asyncio.gather(*(one(c) for c in calls), return_exceptions=True)
+        results, failures = [], []
+        for call, outcome in zip(calls, settled):
+            if isinstance(outcome, BaseException):
                 # A broken tool must not end the procedure. The failure is in the
-                # history as the failed activity; the bundle names it too.
-                cause = exc.cause or exc
-                failures.append({"tool": call["tool"],
+                # history as the failed activity; the bundle names it and its item.
+                cause = getattr(outcome, "cause", None) or outcome
+                failures.append({"tool": call["tool"], "arguments": call["arguments"],
                                  "error": f"{type(cause).__name__}: {cause}"})
+            else:
+                results.append(outcome)
         return results, failures
 
     async def _repair(self, spec, step, repair, results, failures, made):

@@ -7,6 +7,9 @@ services:
   # reports "unable to open database file: out of memory (14)". Namespace
   # `skills` is created at start; temporal-init raises its retention from the
   # 24h default. Nothing host-specific: official image, standard ports, same on AWS.
+  # After a Docker daemon restart the compose network gets a new id and a container
+  # created before it fails with "network … not found": run `compose up -d
+  # --force-recreate temporal temporal-init smcp`. The volumes are untouched.
   temporal:
     image: temporalio/temporal:1.8.3
     container_name: temporal

@@ -960,7 +960,8 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
                "working_hypothesis": "Gaucher disease",
                "discriminating_features": ["hepatosplenomegaly"],
                "discriminating_hpo_ids": ["HP:0001433"],
-               "top_candidate": "Gaucher disease"}
+               "top_candidate": "Gaucher disease",
+               "optimuskg_genes": [{"gene": "GBA", "relation": "CAUSES", "evidence_score": 0.8}]}
     calls, asked = [], []
     runner = SkillRunner(
         load_graph("rare-disease-diagnosis"),
@@ -972,7 +973,9 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
     state = runner.state(run_id)
     assert state["blocked"] == [] and state["unresolved"] == []
     assert state["facts"]["hpo_ids"] == ["HP:0001433", "HP:0001433"]
-    assert [q["step"] for q in asked] == ["hypothesis", "phenotypes", "keyword_search"]
+    assert [(q["step"], q["kind"]) for q in asked] == [
+        ("hypothesis", "judge"), ("phenotypes", "judge"), ("keyword_search", "judge"),
+        ("gene_evidence_optimuskg", "delegate")]
     assert state["facts"]["genes"] == ["GBA"]
     assert ("get_joint_associated_diseases_by_HPO_ID_list",
             {"HPO_ID_list": ["HP:0001433"], "limit": 30}) in calls
@@ -1241,3 +1244,23 @@ def test_open_targets_scored_targets_are_fetched_per_candidate_and_kept_as_retur
     rows = state["facts"]["opentargets_rows"]
     assert [r["name"] for r in rows] == ["Hurler syndrome", "Hurler syndrome"]  # the stub's one answer
     assert rows[0]["associatedTargets"]["rows"][0] == {"target": {"approvedSymbol": "IDUA"}, "score": 0.85}
+
+
+def test_optimuskg_is_asked_once_as_a_delegated_call_on_the_top_candidate():
+    """The third source is the agent's own tool, so the run pauses and hands the
+    agent the exact calls: search the disease, then evidence on its CURIE
+    restricted to genes. What comes back is recorded like any other result."""
+    state, calls = _rare_disease_run(HITS)
+
+    delegated = [q for q in state["asked"] if q["kind"] == "delegate"]
+    assert len(delegated) == 1
+    tools = [c["tool"] for c in delegated[0]["calls"]]
+    assert tools == ["OptimusKG_Search", "OptimusKG_Search"]
+    search, evidence = delegated[0]["calls"]
+    assert search["arguments"] == {"action": "search", "query": "Hunter syndrome",
+                                   "node_types": ["disease"]}
+    assert evidence["arguments"]["action"] == "evidence"
+    assert evidence["arguments"]["node_types"] == ["gene"]
+    assert state["facts"]["optimuskg_genes"] == [
+        {"gene": "IDS", "relation": "CAUSES", "evidence_score": 0.9}]
+    assert "OptimusKG_Search" not in [t for t, _ in calls]      # never executed server-side

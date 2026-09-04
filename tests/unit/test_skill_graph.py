@@ -358,6 +358,8 @@ def test_rare_disease_diagnosis_carries_report_guidance_and_notes_on_every_step(
     # The writer must be told which facts the model supplied, where genes may
     # come from, how to cite, and what the Limitations section is built from.
     for needle in ("working_hypothesis", "discriminating_hpo_ids", "top_candidate",
-                   "facts.genes", "hpo.jax.org", "orpha.net", "europepmc.org",
+                   "orphanet_gene_rows", "opentargets_rows", "optimuskg_genes",
+                   "hpo.jax.org", "orpha.net", "platform.opentargets.org", "europepmc.org",
                    "failures", "blocked", "unresolved", "No variant data provided"):
         assert needle in report, needle
+    assert "supplied by the model" in report and "genes" not in report.split("supplied by the model")[0].rsplit(".", 1)[-1]

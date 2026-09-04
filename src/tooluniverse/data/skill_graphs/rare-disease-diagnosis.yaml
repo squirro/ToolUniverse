@@ -41,19 +41,29 @@ report: >-
   candidates came only from the discriminating pair and which only from the
   keyword search; weight the HPO route as primary when the two disagree. Name
   the features of the case the leading candidate leaves unexplained. The values
-  `working_hypothesis`, `discriminating_features`, `discriminating_hpo_ids`,
-  `top_candidate` and `genes` in `facts` were supplied by the model when the run
-  asked for them: present them as clinical reasoning, not as tool output, and
-  say so once. Genes come only from `facts.genes` — never add one; if it is
-  empty the gene panel says "no causal gene could be sourced from the retrieved
-  literature" and stops there. Variant interpretation appears only when the
+  `working_hypothesis`, `discriminating_features`, `discriminating_hpo_ids` and
+  `top_candidate` in `facts` were supplied by the model when the run asked for
+  them: present them as clinical reasoning, not as tool output, and say so once.
+  Genes come from three queries and from nowhere else. Per ranked disease, give
+  Orphanet's causal genes from `facts.orphanet_gene_rows` (symbol, association
+  type, status, and the PMID Orphanet cites), Open Targets' associated targets
+  from `facts.opentargets_rows` with their scores exactly as returned — show
+  the top scores and where they drop off, never apply a cut — and, for the top
+  candidate, the SR knowledge graph's gene neighbours from `facts.optimuskg_genes`
+  with relation and evidence score. Where the three agree, say so; where they
+  differ, show all three and do not pick. A gene that appears in none of them is
+  not in the report. A disease with no gene in any source says "no causal gene
+  in Orphanet, Open Targets or OptimusKG". The gene panel (MyGene, GTEx) covers
+  `facts.genes`, the Orphanet causal set. Variant interpretation appears only when the
   `variant` step is in `steps_done`; otherwise one line, "No variant data
   provided", which is an answer. Cite each HPO term as
   https://hpo.jax.org/browse/term/<HP id>, each ranked disease as
   https://www.orpha.net/en/disease/detail/<ORPHAcode> taken from its row in
   `facts.orphanet_matches` (match on the preferred term; a disease with no row
   is "no Orphanet entry found" and gets no link), each
-  paper as https://europepmc.org/article/MED/<PMID>, each gene as
+  paper as https://europepmc.org/article/MED/<PMID>, each Open Targets row as
+  https://platform.opentargets.org/disease/<MONDO id>, each Orphanet gene claim
+  by its PMID, each gene as
   https://www.ncbi.nlm.nih.gov/gene/<entrezgene from the MyGene result> and its
   expression as https://gtexportal.org/home/gene/<symbol>. Every footnote is a
   real https link and every item has its own — never one footnote for a whole
@@ -224,6 +234,26 @@ steps:
       causal gene is normally the top score and the tail drops off sharply —
       let the reader see that. Cite https://platform.opentargets.org/disease/<id>.
 
+  - id: gene_evidence_optimuskg
+    label: "Phase 3d — the SR knowledge graph on the top candidate (agent's own tool)"
+    requires: [keyword_search]
+    # OptimusKG is not in the registry: the run pauses and the agent makes these
+    # two calls with its own tool. Search resolves the disease to its CURIE;
+    # evidence lists the one-hop neighbours restricted to genes, with the
+    # relation and evidence score per edge.
+    delegate:
+      - tool: OptimusKG_Search
+        arguments: {action: "search", query: "{top_candidate}", node_types: ["disease"]}
+      - tool: OptimusKG_Search
+        arguments: {action: "evidence", query: "<the disease CURIE from the search>", node_types: ["gene"]}
+    produces: [optimuskg_genes]
+    notes: >-
+      Run the search, take the CURIE of the best disease hit, and run evidence on
+      it. Return optimuskg_genes as a list of {gene, relation, evidence_score,
+      source} rows from the evidence result — one per gene neighbour, as
+      returned. If the search finds no disease node, return an empty list and
+      say so; do not fill it from memory.
+
   - id: gene_panel
     label: "Phase 4 — characterise the candidate genes"
     requires: [literature]
@@ -265,7 +295,8 @@ steps:
 
   - id: report
     label: "Phase 7 — ranked differential with the evidence"
-    requires: [differential_all, differential_discriminating, resolve_candidates, keyword_search, literature]
+    requires: [differential_all, differential_discriminating, resolve_candidates, keyword_search,
+               literature, gene_evidence_orphanet, gene_evidence_opentargets, gene_evidence_optimuskg]
     calls: []
     notes: >-
       Rank every candidate with its score and the phenotypes that support it, and

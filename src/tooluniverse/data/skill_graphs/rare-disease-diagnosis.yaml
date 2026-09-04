@@ -40,7 +40,14 @@ report: >-
   a guess. Never leave a grade blank when an overlap is known. Say which
   candidates came only from the discriminating pair and which only from the
   keyword search; weight the HPO route as primary when the two disagree. Name
-  the features of the case the leading candidate leaves unexplained. The values
+  the features of the case the leading candidate leaves unexplained. The third
+  answer — the tests that discriminate the top candidates — must be concrete:
+  when the top two are in the same disease family (two mucopolysaccharidoses,
+  two gangliosidoses), name the enzyme or gene pair that separates them from
+  their rows in `facts.orphanet_gene_rows` (for example IDUA for Hurler against
+  IDS for MPS II) and say that the enzyme assay or the gene test decides. If
+  you add the inheritance pattern or a clinical sign that separates them, label
+  it as clinical reasoning: no tool in this run returned it. The values
   `working_hypothesis`, `discriminating_features`, `discriminating_hpo_ids` and
   `top_candidate` in `facts` were supplied by the model when the run asked for
   them: present them as clinical reasoning, not as tool output, and say so once.

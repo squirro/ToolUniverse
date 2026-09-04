@@ -360,6 +360,8 @@ def test_rare_disease_diagnosis_carries_report_guidance_and_notes_on_every_step(
     for needle in ("working_hypothesis", "discriminating_hpo_ids", "top_candidate",
                    "orphanet_gene_rows", "opentargets_rows", "optimuskg_genes",
                    "hpo.jax.org", "orpha.net", "platform.opentargets.org", "europepmc.org",
-                   "failures", "blocked", "unresolved", "No variant data provided"):
+                   "failures", "blocked", "unresolved", "No variant data provided",
+                   # the discriminating-tests line: what separates the top two
+                   "same disease family", "inheritance", "clinical reasoning"):
         assert needle in report, needle
     assert "supplied by the model" in report and "genes" not in report.split("supplied by the model")[0].rsplit(".", 1)[-1]

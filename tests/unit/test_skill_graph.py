@@ -343,3 +343,20 @@ def test_with_temporal_the_directive_points_at_run_skill_and_forbids_self_execut
     assert "Do not call `execute_tool`" in text
     # and without Temporal the model-driven loop is still the instruction
     assert "next_skill_step" in graph_directive("clinical-data-integration")
+
+
+def test_rare_disease_diagnosis_carries_report_guidance_and_notes_on_every_step():
+    """Blind-judged 2026-09-03: a bundle that carries data without the author's
+    rules is written up worse than prose. The rare-disease process is the Rung 2
+    arm, so it must carry the rules the same way clinical-data-integration does —
+    and a case that supplies a variant must be able to say so."""
+    graph = load_graph("rare-disease-diagnosis")
+    assert graph["optional_inputs"] == ["variant_id"]
+    assert [s["id"] for s in graph["steps"] if not s.get("notes")] == []
+    report = graph["report"]
+    # The writer must be told which facts the model supplied, where genes may
+    # come from, how to cite, and what the Limitations section is built from.
+    for needle in ("working_hypothesis", "discriminating_hpo_ids", "top_candidate",
+                   "facts.genes", "hpo.jax.org", "orpha.net", "europepmc.org",
+                   "failures", "blocked", "unresolved", "No variant data provided"):
+        assert needle in report, needle

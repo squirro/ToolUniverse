@@ -17,6 +17,46 @@
 
 skill: rare-disease-diagnosis
 inputs: [symptoms]
+# Optional, bound by the AGENT from the case when it supplies one. Without this
+# the `variant` step's `when: variant_id` could never be true.
+optional_inputs: [variant_id]
+# How the report must read the evidence. The bundle carries the numbers; this
+# carries the author's rules for ranking, grading and citing them. Blind-judged
+# 2026-09-03 on clinical-data-integration: without it the writer had the data and
+# not the judgement.
+report: >-
+  Open with five answers, each its own sentence: the most likely diagnosis and its
+  primary evidence; the ranked differential; the tests or variants that would
+  discriminate the top candidates; any treatable condition that needs urgent
+  work-up; the recommended next diagnostic step. Then the ranked differential:
+  merge `results.differential_all` (strict intersection), `results.differential_discriminating`
+  (the discriminating pair) and `results.keyword_search` (Orphanet), skipping any
+  name that begins "OBSOLETE:". For every candidate give its overlap against the
+  FULL Phase-1 term set in `facts.hpo_ids` as "n of N phenotypes" (a percentage
+  may follow in brackets) and the grade it earns: T1 above 80% with a gene in the
+  literature, T2 60-80%, T3 40-60%, T4 below 40%. Compute the overlap only from
+  phenotypes the result actually lists for that disease; when a result does not
+  list them, write "overlap not computable from the returned data" rather than
+  a guess. Never leave a grade blank when an overlap is known. Say which
+  candidates came only from the discriminating pair and which only from the
+  keyword search; weight the HPO route as primary when the two disagree. Name
+  the features of the case the leading candidate leaves unexplained. The values
+  `working_hypothesis`, `discriminating_features`, `discriminating_hpo_ids`,
+  `top_candidate` and `genes` in `facts` were supplied by the model when the run
+  asked for them: present them as clinical reasoning, not as tool output, and
+  say so once. Genes come only from `facts.genes` — never add one; if it is
+  empty the gene panel says "no causal gene could be sourced from the retrieved
+  literature" and stops there. Variant interpretation appears only when the
+  `variant` step is in `steps_done`; otherwise one line, "No variant data
+  provided", which is an answer. Cite each HPO term as
+  https://hpo.jax.org/browse/term/<HP id>, each Orphanet disease as
+  https://www.orpha.net/en/disease/detail/<ORPHAcode from the result>, each
+  paper as https://europepmc.org/article/MED/<PMID>, each gene as
+  https://www.ncbi.nlm.nih.gov/gene/<entrezgene from the MyGene result> and its
+  expression as https://gtexportal.org/home/gene/<symbol>. Every footnote is a
+  real https link and every item has its own — never one footnote for a whole
+  table. End with a Limitations section built from `failures`, `blocked` and
+  `unresolved`, and from any symptom that resolved to no HP: id.
 
 steps:
   - id: hypothesis
@@ -116,6 +156,11 @@ steps:
         arguments:
           query: "{gene}"
           fields: "symbol,name,entrezgene,ensembl.gene,summary"
+    notes: >-
+      One call per gene in `facts.genes`. Take symbol, name, Entrez id and
+      Ensembl id from the hit whose symbol matches exactly; a gene with no exact
+      hit is reported as unresolved, never replaced by a near match. Skipped
+      entirely when no gene could be sourced.
 
   - id: expression
     label: "Phase 5 — tissue expression context"

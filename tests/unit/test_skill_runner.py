@@ -20,7 +20,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from tooluniverse.skill_runner import SkillRunner
+from tooluniverse.skill_runner import SkillRunner, normalised_executor
 
 pytestmark = pytest.mark.unit
 
@@ -939,9 +939,10 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
     mechanical HP id per symptom, no step blocked and no fact unresolved."""
     responses = {
         "get_HPO_ID_by_phenotype": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0001433"}]}},
-        # Real shapes: the joint tool answers a bare list of names; Orphanet a
-        # results list with the code and the preferred term.
-        "get_joint_associated_diseases_by_HPO_ID_list": ["Gaucher disease"],
+        # Real shapes as the runner sees them: the joint tool answers a bare list
+        # of names, which normalised_executor wraps as {"result": [...]}; Orphanet
+        # a results list with the code and the preferred term.
+        "get_joint_associated_diseases_by_HPO_ID_list": {"result": ["Gaucher disease"]},
         "Orphanet_search_diseases": {"data": {"results": [
             {"ORPHAcode": 355, "Preferred term": "Gaucher disease"}]}},
         "EuropePMC_search_articles": {"data": [{"title": "GBA in Gaucher"}]},
@@ -1085,12 +1086,16 @@ def _rare_disease_run(orphanet_hits):
         "GTEx_get_expression_summary": {"data": []},
     }
 
-    def execute(tool, arguments):
+    def dispatch(call):
+        tool, arguments = call["name"], call["arguments"]
         calls.append((tool, arguments))
         if tool == "Orphanet_search_diseases":
             hits = orphanet_hits.get(arguments["query"], [])
             return {"status": "success", "data": {"results": hits, "count": len(hits)}}
         return responses[tool]
+
+    # Through the same door the worker uses: a bare list becomes {"result": [...]}.
+    execute = normalised_executor(dispatch)
 
     answers = {"primary_keyword": "lysosomal storage disorder",
                "working_hypothesis": ["storage disorder"],

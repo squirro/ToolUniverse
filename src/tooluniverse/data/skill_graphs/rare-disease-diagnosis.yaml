@@ -102,8 +102,9 @@ steps:
     calls:
       - tool: get_joint_associated_diseases_by_HPO_ID_list
         arguments: {HPO_ID_list: "{hpo_ids}", limit: 20}
-    # The tool answers a bare list of disease names: the whole payload is the value.
-    extract: {strict_candidates: {path: "[]"}}
+    # The tool answers a bare list of names, which the executor hands the run as
+    # {"result": [...]} — the same shape every saved trace shows.
+    extract: {strict_candidates: {path: "result"}}
     produces: [strict_candidates]
     notes: >-
       A SHORT list here is normal, not a failure — common terms like developmental
@@ -116,7 +117,7 @@ steps:
     calls:
       - tool: get_joint_associated_diseases_by_HPO_ID_list
         arguments: {HPO_ID_list: "{discriminating_hpo_ids}", limit: 30}
-    extract: {decisive_candidates: {path: "[]"}}
+    extract: {decisive_candidates: {path: "result"}}
     produces: [decisive_candidates]
     notes: >-
       This is the call that surfaces the clinically decisive differential — coarse

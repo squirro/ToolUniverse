@@ -44,17 +44,20 @@ report: >-
   `working_hypothesis`, `discriminating_features`, `discriminating_hpo_ids` and
   `top_candidate` in `facts` were supplied by the model when the run asked for
   them: present them as clinical reasoning, not as tool output, and say so once.
-  Genes come from three queries and from nowhere else. Per ranked disease, give
-  Orphanet's causal genes from `facts.orphanet_gene_rows` (symbol, association
-  type, status, and the PMID Orphanet cites), Open Targets' associated targets
-  from `facts.opentargets_rows` with their scores exactly as returned — show
-  the top scores and where they drop off, never apply a cut — and, for the top
-  candidate, the SR knowledge graph's gene neighbours from `facts.optimuskg_genes`
-  with relation and evidence score. Where the three agree, say so; where they
-  differ, show all three and do not pick. A gene that appears in none of them is
-  not in the report. A disease with no gene in any source says "no causal gene
-  in Orphanet, Open Targets or OptimusKG". The gene panel (MyGene, GTEx) covers
-  `facts.genes`, the Orphanet causal set. Variant interpretation appears only when the
+  Genes come from three queries and from nowhere else. The gene panel is one
+  table with a row per gene in `facts.genes` and these columns: gene; the
+  disease(s) it is causal for and the association type, from
+  `facts.orphanet_gene_rows`; the Open Targets score for that gene in that
+  disease's row of `facts.opentargets_rows`, written as the number returned
+  (or "not in Open Targets"), plus the top three scored targets of that disease
+  with their scores so the drop-off is visible — never apply a cut; the
+  OptimusKG relation and evidence score from `facts.optimuskg_genes` when the
+  gene is there (or "not in OptimusKG"); Ensembl id and expression from the
+  panel results. Where the three agree, say so once; where they differ, show
+  all and do not pick. A gene in none of the three sources is not in the
+  report. A disease with no gene in any source says "no causal gene in
+  Orphanet, Open Targets or OptimusKG". When `facts.optimuskg_genes` is empty
+  because the tool failed, say so in one line. Variant interpretation appears only when the
   `variant` step is in `steps_done`; otherwise one line, "No variant data
   provided", which is an answer. Cite each HPO term as
   https://hpo.jax.org/browse/term/<HP id>, each ranked disease as

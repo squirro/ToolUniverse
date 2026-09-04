@@ -36,24 +36,27 @@ QUESTION = (
     "trial and literature context."
 )
 
-ARMS = {
-    "prose": (
-        "Load the clinical-data-integration skill with get_skill(name=\"clinical-data-"
-        "integration\", plain=true) and follow its phases yourself, calling every tool "
-        "through execute_tool. Do not call run_skill or continue_skill. "
-    ),
-    "bare": (
-        "Do not load any skill (no get_skill, find_skill, run_skill or "
-        "continue_skill). Use find_tools and execute_tool as you see fit. "
-    ),
-    "modelled": (
-        "Use the clinical-data-integration skill. "
-    ),
-    # A different agent, possibly on a different cluster: the General Research agent
-    # with web search, code interpreter, trials and patents — no ToolUniverse, no
-    # skills. The one arm where persona and toolset differ: the baseline, not a variant.
-    "web": "",
-}
+ARM_NAMES = ("prose", "bare", "modelled", "web")
+
+
+def arms_for(skill: str) -> dict[str, str]:
+    """The prompt prefix per arm. Only the two skill arms hear the skill's name."""
+    return {
+        "prose": (
+            f"Load the {skill} skill with get_skill(name=\"{skill}\", plain=true) and "
+            "follow its phases yourself, calling every tool through execute_tool. "
+            "Do not call run_skill or continue_skill. "
+        ),
+        "bare": (
+            "Do not load any skill (no get_skill, find_skill, run_skill or "
+            "continue_skill). Use find_tools and execute_tool as you see fit. "
+        ),
+        "modelled": f"Use the {skill} skill. ",
+        # A different agent, possibly on a different cluster: the General Research agent
+        # with web search, code interpreter, trials and patents — no ToolUniverse, no
+        # skills. The one arm where persona and toolset differ: the baseline, not a variant.
+        "web": "",
+    }
 
 _TARGET = {"srdev": "_SRDEV_CLOUD", "srdev-com": "_SRDEV_COM", "sempart": ""}
 
@@ -157,9 +160,10 @@ def run(args) -> int:
     out_dir = Path(args.out) if args.out else OUT / f"three-arms-{time.strftime('%Y-%m-%d')}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    arms = args.arms.split(",") if args.arms else list(ARMS)
-    agent_for = {arm: args.agent_id for arm in ARMS}
-    client_for = {arm: _client_factory(args.target) for arm in ARMS}
+    prompts = arms_for(args.skill)
+    arms = args.arms.split(",") if args.arms else list(ARM_NAMES)
+    agent_for = {arm: args.agent_id for arm in ARM_NAMES}
+    client_for = {arm: _client_factory(args.target) for arm in ARM_NAMES}
     if args.web_agent_id:
         agent_for["web"] = args.web_agent_id
         client_for["web"] = _client_factory(args.web_target or args.target)
@@ -175,7 +179,7 @@ def run(args) -> int:
                 print(f"{arm} r{n}: cached")
                 continue
             started = time.monotonic()
-            turn = client_for[arm]().ask(agent_for[arm], ARMS[arm] + QUESTION,
+            turn = client_for[arm]().ask(agent_for[arm], prompts[arm] + args.question,
                                           timeout=args.timeout)
             actions = trim_actions(turn.actions)
             row = {"arm": arm, "run": n, "error": turn.error,
@@ -231,7 +235,7 @@ def rescore(args) -> int:
             r["distinct_tools_reached"] = sorted(r["server_activities"])
         path.write_text(json.dumps(r, indent=1, ensure_ascii=False))
         rows.append(r)
-    rows.sort(key=lambda r: (list(ARMS).index(r["arm"]), r["run"]))
+    rows.sort(key=lambda r: (ARM_NAMES.index(r["arm"]), r["run"]))
     print(render(rows))
     (out_dir / "table.md").write_text(render(rows))
     return 0
@@ -246,7 +250,11 @@ def main(argv=None) -> int:
     ap.add_argument("--target", default="srdev", choices=["srdev", "srdev-com", "sempart"])
     ap.add_argument("--env-file")
     ap.add_argument("--runs", type=int, default=3)
-    ap.add_argument("--arms", help="comma-separated subset of prose,bare,modelled")
+    ap.add_argument("--arms", help="comma-separated subset of prose,bare,modelled,web")
+    ap.add_argument("--skill", default="clinical-data-integration",
+                    help="the Skill Process the prose and modelled arms name")
+    ap.add_argument("--question", default=QUESTION,
+                    help="the question every arm is asked")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--out")
     ap.add_argument("--redo", action="store_true")

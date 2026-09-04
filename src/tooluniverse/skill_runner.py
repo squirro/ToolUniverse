@@ -164,7 +164,7 @@ def next_runnable(graph: dict, run: dict) -> dict | None:
             return next_step(graph, done=run["done"] + run["skipped"],
                              facts=run["facts"])
         except SkillGraphError as exc:
-            blocked = next(
+            blocked = getattr(exc, "step", None) or next(
                 (s["id"] for s in graph["steps"]
                  if s["id"] not in run["done"] and s["id"] not in run["skipped"]
                  and all(d in run["done"] for d in s.get("requires", []))),
@@ -305,7 +305,14 @@ def absorb(spec: dict, results: list, facts: dict) -> dict:
                              None)
                 if found is None:
                     continue
-            gathered.append(found)
+            if rule.get("flatten") and isinstance(found, list):
+                # One list per call folded into one list: Orphanet answers a
+                # gene list per disease, and the gene panel loops over genes.
+                gathered.extend(found)
+            else:
+                gathered.append(found)
+        if rule.get("unique"):
+            gathered = list(dict.fromkeys(gathered))
         if gathered:
             extracted[name] = gathered
     # `combine` merges facts the question supplied with facts the data

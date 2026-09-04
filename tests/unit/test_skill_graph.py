@@ -319,11 +319,12 @@ def test_rare_disease_diagnosis_declares_its_judgement_points():
     them to be silently unresolved."""
     graph = load_graph("rare-disease-diagnosis")
     judged = {s["id"]: s.get("judge") for s in graph["steps"] if s.get("judge")}
+    # `genes` is no longer judged (DSR-730): it is looked up per resolved
+    # candidate, so the model is asked for nothing it could recall from memory.
     assert judged == {
         "hypothesis": ["primary_keyword", "working_hypothesis", "discriminating_features"],
         "phenotypes": ["discriminating_hpo_ids"],
         "keyword_search": ["top_candidate"],
-        "literature": ["genes"],
     }
     phenotypes = next(s for s in graph["steps"] if s["id"] == "phenotypes")
     assert phenotypes["collect"]["hpo_ids"] == {"path": "data.items[].id", "match": "^HP:"}

@@ -138,7 +138,8 @@ steps:
     # ranked disease could be linked).
     collect:
       orphanet_matches: {path: "data.results.0"}
-    produces: [orphanet_matches]
+      orphanet_codes: {path: "data.results.0.ORPHAcode"}
+    produces: [orphanet_matches, orphanet_codes]
     notes: >-
       One call per decisive candidate, the top hit only. A candidate with no hit
       has no row in orphanet_matches: report it as "no Orphanet entry found" and
@@ -158,18 +159,36 @@ steps:
       Phase-1 term set: excellent >80%, good 60-80%, possible 40-60%, low <40%.
 
   - id: literature
-    label: "Phase 3 — literature on the leading candidates"
+    label: "Phase 3 — literature on the leading candidate"
     requires: [keyword_search]
     calls:
       - tool: EuropePMC_search_articles
         arguments: {query: "{top_candidate}", limit: 10}
-    produces: [genes]
-    judge: [genes]
     notes: >-
-      Runs BEFORE gene characterisation on purpose: this cluster has no
-      disease-to-gene tool, so causal gene names come from the retrieved titles and
-      abstracts, from the patient data, or from the clinician. Never invent one. If
-      none can be sourced, leave genes empty and say so in the report.
+      Recent papers on the top candidate, cited by PMID. Literature is context
+      for the report; it is not where genes come from.
+
+  - id: gene_evidence_orphanet
+    label: "Phase 3a — causal genes per ranked disease, from Orphanet"
+    requires: [resolve_candidates]
+    for_each: orphanet_codes
+    as: orphacode
+    calls:
+      - tool: Orphanet_get_genes
+        arguments: {orphacode: "{orphacode}"}
+    # Live 2026-09-04 the model, asked for genes, answered four once (three from
+    # its own hypothesis) and none twice on identical data. A gene is a claim the
+    # Run Record must vouch for: it is looked up, never judged. Each row keeps
+    # the disease it belongs to; the flat unique list is what the panel loops over.
+    collect:
+      orphanet_gene_rows: {path: "data"}
+      genes: {path: "data.genes[].Symbol", flatten: true, unique: true}
+    produces: [orphanet_gene_rows, genes]
+    notes: >-
+      One call per resolved candidate. Each row carries the disease, its genes,
+      the association type (causative, modifier, susceptibility), the assessment
+      status and the PMID Orphanet cites. A disease with an empty gene list has no
+      known causal gene in Orphanet — say so, do not fill it from memory.
 
   - id: gene_panel
     label: "Phase 4 — characterise the candidate genes"

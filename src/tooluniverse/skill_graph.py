@@ -202,10 +202,15 @@ def next_step(graph: dict, done: list[str], facts: dict) -> dict | None:
     for step in graph["steps"]:
         if not _is_runnable(step, done_set, facts):
             continue
+        try:
+            calls = _expand_calls(step, facts)
+        except SkillGraphError as exc:
+            exc.step = step["id"]   # the step that cannot be built is the one to blame
+            raise
         return {
             "id": step["id"],
             "label": step.get("label", step["id"]),
-            "calls": _expand_calls(step, facts),
+            "calls": calls,
             "produces": step.get("produces", []),
             "judge": step.get("judge", []),
             "notes": step.get("notes"),

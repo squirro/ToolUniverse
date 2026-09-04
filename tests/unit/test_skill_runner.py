@@ -935,8 +935,9 @@ def test_every_shipped_process_finishes_with_stub_tools_and_a_stub_oracle(skill)
 
 
 def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
-    """The skill that could not run server-side: four judgement points, one
-    mechanical HP id per symptom, no step blocked and no fact unresolved."""
+    """The skill that could not run server-side: three judgement points, one
+    mechanical HP id per symptom, genes looked up per resolved candidate, no
+    step blocked and no fact unresolved."""
     responses = {
         "get_HPO_ID_by_phenotype": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0001433"}]}},
         # Real shapes as the runner sees them: the joint tool answers a bare list
@@ -945,6 +946,7 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
         "get_joint_associated_diseases_by_HPO_ID_list": {"result": ["Gaucher disease"]},
         "Orphanet_search_diseases": {"data": {"results": [
             {"ORPHAcode": 355, "Preferred term": "Gaucher disease"}]}},
+        "Orphanet_get_genes": {"data": {"orpha_code": "355", "genes": [{"Symbol": "GBA"}]}},
         "EuropePMC_search_articles": {"data": [{"title": "GBA in Gaucher"}]},
         "MyGene_query_genes": {"data": {"hits": [{"symbol": "GBA"}]}},
         "GTEx_get_expression_summary": {"data": []},
@@ -953,8 +955,7 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
                "working_hypothesis": "Gaucher disease",
                "discriminating_features": ["hepatosplenomegaly"],
                "discriminating_hpo_ids": ["HP:0001433"],
-               "top_candidate": "Gaucher disease",
-               "genes": ["GBA"]}
+               "top_candidate": "Gaucher disease"}
     calls, asked = [], []
     runner = SkillRunner(
         load_graph("rare-disease-diagnosis"),
@@ -966,8 +967,8 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
     state = runner.state(run_id)
     assert state["blocked"] == [] and state["unresolved"] == []
     assert state["facts"]["hpo_ids"] == ["HP:0001433", "HP:0001433"]
-    assert [q["step"] for q in asked] == ["hypothesis", "phenotypes", "keyword_search",
-                                          "literature"]
+    assert [q["step"] for q in asked] == ["hypothesis", "phenotypes", "keyword_search"]
+    assert state["facts"]["genes"] == ["GBA"]
     assert ("get_joint_associated_diseases_by_HPO_ID_list",
             {"HPO_ID_list": ["HP:0001433"], "limit": 30}) in calls
     assert ("Orphanet_search_diseases",
@@ -1084,7 +1085,13 @@ def _rare_disease_run(orphanet_hits):
         "EuropePMC_search_articles": {"data": []},
         "MyGene_query_genes": {"hits": []},
         "GTEx_get_expression_summary": {"data": []},
+        "OpenTargets_get_associated_targets_by_disease_efoId": {"data": {"disease": {
+            "id": "MONDO_0011758", "name": "Hurler syndrome", "associatedTargets": {"rows": [
+                {"target": {"approvedSymbol": "IDUA"}, "score": 0.85},
+                {"target": {"approvedSymbol": "SLC26A1"}, "score": 0.56}]}}}},
     }
+    orphanet_genes = {580: [{"Symbol": "IDS"}], 354: [{"Symbol": "GLB1"}, {"Symbol": "IDS"}]}
+    mondo_ids = {"Hunter syndrome": "MONDO_0010674", "GM1 gangliosidosis": "MONDO_0018149"}
 
     def dispatch(call):
         tool, arguments = call["name"], call["arguments"]
@@ -1092,6 +1099,12 @@ def _rare_disease_run(orphanet_hits):
         if tool == "Orphanet_search_diseases":
             hits = orphanet_hits.get(arguments["query"], [])
             return {"status": "success", "data": {"results": hits, "count": len(hits)}}
+        if tool == "Orphanet_get_genes":
+            return {"status": "success", "data": {"orpha_code": str(arguments["orphacode"]),
+                                                  "genes": orphanet_genes.get(int(arguments["orphacode"]), [])}}
+        if tool == "OpenTargets_get_disease_ids_by_name":
+            mondo = mondo_ids.get(arguments["name"])
+            return {"data": {"search": {"hits": [{"id": mondo, "name": arguments["name"]}] if mondo else []}}}
         return responses[tool]
 
     # Through the same door the worker uses: a bare list becomes {"result": [...]}.
@@ -1101,17 +1114,22 @@ def _rare_disease_run(orphanet_hits):
                "working_hypothesis": ["storage disorder"],
                "discriminating_features": ["coarse facies"],
                "discriminating_hpo_ids": ["HP:0000280"],
-               "top_candidate": "Hunter syndrome", "genes": []}
+               "top_candidate": "Hunter syndrome", "genes": [],
+               "optimuskg_genes": [{"gene": "IDS", "relation": "CAUSES", "evidence_score": 0.9}]}
+    asked = []
 
     def ask(question):
+        asked.append(question)
         return {name: answers[name] for name in question["wants"]}
 
     runner = SkillRunner(load_graph("rare-disease-diagnosis"), execute=execute, ask=ask)
     run_id = runner.start({"symptoms": ["coarse facies"]})["run_id"]
-    for _ in range(40):
+    for _ in range(60):
         if runner.advance(run_id)["finished"]:
             break
-    return runner.state(run_id), calls
+    state = runner.state(run_id)
+    state["asked"] = asked
+    return state, calls
 
 
 def test_every_decisive_candidate_is_looked_up_in_orphanet_by_name():
@@ -1131,3 +1149,75 @@ def test_every_decisive_candidate_is_looked_up_in_orphanet_by_name():
         {"ORPHAcode": 580, "Preferred term": "Mucopolysaccharidosis type 2"},
         {"ORPHAcode": 354, "Preferred term": "GM1 gangliosidosis"}]
     assert "resolve_candidates" in state["done"]
+
+
+# --- collect can flatten a list-of-lists into one gene set ---------------------
+#
+# Orphanet answers one gene list per disease. The gene panel loops over genes,
+# not over diseases, so the rows must fold into one list — and a gene shared by
+# two candidates must be characterised once, not twice.
+
+def test_collect_can_flatten_one_list_per_call_into_one_list():
+    spec = {"collect": {"genes": {"path": "data.genes[].Symbol", "flatten": True}}}
+    results = [{"data": {"genes": [{"Symbol": "IDUA"}]}},
+               {"data": {"genes": [{"Symbol": "IDS"}, {"Symbol": "GLB1"}]}},
+               {"data": {"genes": []}}]
+
+    out = absorb(spec, results, facts={})
+
+    assert out["facts"]["genes"] == ["IDUA", "IDS", "GLB1"]
+
+
+def test_collect_can_keep_only_the_first_occurrence_of_a_value():
+    spec = {"collect": {"genes": {"path": "data.genes[].Symbol", "flatten": True, "unique": True}}}
+    results = [{"data": {"genes": [{"Symbol": "GLB1"}]}},
+               {"data": {"genes": [{"Symbol": "NEU1"}, {"Symbol": "GLB1"}]}}]
+
+    out = absorb(spec, results, facts={})
+
+    assert out["facts"]["genes"] == ["GLB1", "NEU1"]
+
+
+HITS = {"Hunter syndrome": [{"ORPHAcode": 580, "Preferred term": "Mucopolysaccharidosis type 2"}],
+        "GM1 gangliosidosis": [{"ORPHAcode": 354, "Preferred term": "GM1 gangliosidosis"}],
+        "lysosomal storage disorder": [{"ORPHAcode": 93448, "Preferred term": "LSD group"}]}
+
+
+def test_genes_come_from_orphanet_per_resolved_candidate_never_from_the_model():
+    """DSR-730: the model answered four genes once and none twice on identical
+    data. A gene list is a claim the Run Record must vouch for, so it is an
+    extraction — one Orphanet lookup per resolved candidate, folded into one
+    de-duplicated list for the panel — and no step asks the model for it."""
+    state, calls = _rare_disease_run(HITS)
+
+    looked_up = sorted(int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_genes")
+    assert looked_up == [354, 580]
+    assert state["facts"]["genes"] == ["IDS", "GLB1"]
+    assert "genes" not in {n for q in state["asked"] for n in q["wants"] if q["kind"] == "judge"}
+    assert [q["step"] for q in state["asked"] if q["kind"] == "judge"] == [
+        "hypothesis", "phenotypes", "keyword_search"]
+
+
+# --- a step that cannot be built is blamed by name, not by search ---------------
+#
+# Live 2026-09-04 (rare-disease, tools answering nothing): a loop whose list came
+# from a step that was itself blocked could not be built, and the runner marked
+# the NEXT two steps as blocked with its reason. The step that raised is the one
+# to record.
+
+def test_a_step_that_cannot_be_built_is_the_one_recorded_as_blocked():
+    from tooluniverse.skill_runner import next_runnable, new_run
+    graph = {"skill": "blame", "inputs": [], "steps": [
+        {"id": "a", "for_each": "first_list", "as": "x",
+         "calls": [{"tool": "t", "arguments": {"q": "{x}"}}]},
+        {"id": "b", "requires": ["a"], "for_each": "second_list", "as": "y",
+         "calls": [{"tool": "t", "arguments": {"q": "{y}"}}]},
+        {"id": "c", "calls": []},
+    ]}
+    run = new_run({})
+
+    offered = next_runnable(graph, run)
+
+    assert offered["id"] == "c"
+    assert [b["step"] for b in run["blocked"]] == ["a", "b"]
+    assert "second_list" in run["blocked"][1]["reason"]

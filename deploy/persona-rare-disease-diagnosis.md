@@ -83,14 +83,23 @@ term set.
 Score: Excellent >80%, Good 60–80%, Possible 40–60%, Low <40%.
 
 ## Phase 3 — Gene Panel Characterization
-**NOTE: this cluster has no disease→gene lookup tool** (Orphanet_get_genes is not grounded and
-neither Orphanet_search_diseases nor get_joint_associated_diseases_by_HPO_ID_list returns gene
-names). Source candidate genes from: (a) Phase 6 literature papers — retrieved abstracts and
-titles routinely name causal genes; (b) patient-provided gene names; (c) the user's clinical
-context. NEVER fabricate gene names. If no gene can be sourced from any of these, mark §4 "No
-gene data (no disease→gene tool available on this cluster)". Once a gene name IS in hand:
-`MyGene_query_genes`(query="<gene symbol>", fields="symbol,name,entrezgene,ensembl.gene,summary")
-→ Ensembl ID, Entrez ID, functional summary.
+Genes come from THREE queries and from nowhere else — NEVER from memory, never from a paper
+title. For each ranked candidate:
+(a) **Orphanet (causal, curated):** `Orphanet_search_diseases`(query="<candidate name>", limit=1)
+→ its ORPHAcode, then `Orphanet_get_genes`(orphacode=<that code>) → gene symbols with association
+type (causative / modifier / susceptibility), assessment status and the PMID Orphanet cites. The
+parameter is `orphacode` (lower-case); an empty gene list means Orphanet knows no causal gene.
+(b) **Open Targets (scored associations):** `OpenTargets_get_disease_ids_by_name`(name="<candidate
+name>") → the MONDO id (Orphanet ids do not resolve on the targets endpoint), then
+`OpenTargets_get_associated_targets_by_disease_efoId`(efoId="<MONDO id>") → targets with scores.
+Report the scores AS RETURNED — show the top ones and where they drop off; apply no cut.
+(c) **OptimusKG (SR knowledge graph), top candidate:** `OptimusKG_Search`(action="search",
+query="<top candidate>", node_types=["disease"]) → its CURIE, then `OptimusKG_Search`(action=
+"evidence", curie="<CURIE>", node_types=["gene"]) → gene neighbours with relation and evidence score.
+Where the three agree, say so once; where they differ, show all and do not pick. A disease with no
+gene in any source is reported as "no causal gene in Orphanet, Open Targets or OptimusKG". Then, for
+every Orphanet causal gene: `MyGene_query_genes`(query="<gene symbol>",
+fields="symbol,name,entrezgene,ensembl.gene,summary") → Ensembl ID, Entrez ID, functional summary.
 
 ## Phase 4 — Expression Context
 For the top 2–3 genes from Phase 3:
@@ -161,7 +170,7 @@ Answer ALL FIVE questions, each as its own labelled sentence:
 ## 1. Clinical Reasoning & Working Hypothesis
 ## 2. Phenotype Profile (HPO)   (HPO ID | Phenotype | Core/Variable | Onset | Source)
 ## 3. Candidate Diseases — Ranked Differential   (Disease | Orphanet ID | Overlap % | Grade (T1–T4) | Source)
-## 4. Gene Panel   (Gene | Priority Score | Ensembl ID | Function | Tissue expression | Source)
+## 4. Gene Panel   (Gene | Orphanet: disease, association | Open Targets score | OptimusKG: relation, score | Priority Score | Ensembl ID | Function | Tissue expression | Source)
 ## 5. Variant Interpretation (ACMG)   (Variant | ClinVar class | gnomAD AF | ACMG criteria | Final classification | Source)
 ## 6. Expression Context
 ## 7. Literature

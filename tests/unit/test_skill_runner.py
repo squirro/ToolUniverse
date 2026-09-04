@@ -939,8 +939,11 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
     mechanical HP id per symptom, no step blocked and no fact unresolved."""
     responses = {
         "get_HPO_ID_by_phenotype": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0001433"}]}},
-        "get_joint_associated_diseases_by_HPO_ID_list": {"data": [{"id": "MONDO:1"}]},
-        "Orphanet_search_diseases": {"data": [{"name": "Gaucher disease"}]},
+        # Real shapes: the joint tool answers a bare list of names; Orphanet a
+        # results list with the code and the preferred term.
+        "get_joint_associated_diseases_by_HPO_ID_list": ["Gaucher disease"],
+        "Orphanet_search_diseases": {"data": {"results": [
+            {"ORPHAcode": 355, "Preferred term": "Gaucher disease"}]}},
         "EuropePMC_search_articles": {"data": [{"title": "GBA in Gaucher"}]},
         "MyGene_query_genes": {"data": {"hits": [{"symbol": "GBA"}]}},
         "GTEx_get_expression_summary": {"data": []},
@@ -1060,3 +1063,66 @@ def test_a_question_carries_the_steps_notes_so_the_agent_knows_what_shape_to_ans
         pass
 
     assert [q["notes"] for q in asked] == ["Return a list of {title, url, snippet}.", "Pick the rarest two."]
+
+
+# --- the shipped rare-disease process resolves its differential to Orphanet ----
+#
+# Live 2026-09-04: the HPO joint tool returns bare disease names, so the report
+# could link no ranked disease to Orphanet and said so. The process now looks
+# each decisive candidate up by name and carries the hit — name and code — so
+# every ranked disease gets its own link, and one Orphanet does not know is
+# reported as such rather than dropped by index misalignment.
+
+def _rare_disease_run(orphanet_hits):
+    from tooluniverse.skill_graph import load_graph
+    calls = []
+    responses = {
+        "get_HPO_ID_by_phenotype": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0000280"}]}},
+        "get_joint_associated_diseases_by_HPO_ID_list": ["Hunter syndrome", "GM1 gangliosidosis",
+                                                         "Sialuria"],
+        "EuropePMC_search_articles": {"data": []},
+        "MyGene_query_genes": {"hits": []},
+        "GTEx_get_expression_summary": {"data": []},
+    }
+
+    def execute(tool, arguments):
+        calls.append((tool, arguments))
+        if tool == "Orphanet_search_diseases":
+            hits = orphanet_hits.get(arguments["query"], [])
+            return {"status": "success", "data": {"results": hits, "count": len(hits)}}
+        return responses[tool]
+
+    answers = {"primary_keyword": "lysosomal storage disorder",
+               "working_hypothesis": ["storage disorder"],
+               "discriminating_features": ["coarse facies"],
+               "discriminating_hpo_ids": ["HP:0000280"],
+               "top_candidate": "Hunter syndrome", "genes": []}
+
+    def ask(question):
+        return {name: answers[name] for name in question["wants"]}
+
+    runner = SkillRunner(load_graph("rare-disease-diagnosis"), execute=execute, ask=ask)
+    run_id = runner.start({"symptoms": ["coarse facies"]})["run_id"]
+    for _ in range(40):
+        if runner.advance(run_id)["finished"]:
+            break
+    return runner.state(run_id), calls
+
+
+def test_every_decisive_candidate_is_looked_up_in_orphanet_by_name():
+    hits = {"Hunter syndrome": [{"ORPHAcode": 580, "Preferred term": "Mucopolysaccharidosis type 2"}],
+            "GM1 gangliosidosis": [{"ORPHAcode": 354, "Preferred term": "GM1 gangliosidosis"}],
+            "lysosomal storage disorder": [{"ORPHAcode": 93448, "Preferred term": "LSD group"}]}
+    state, calls = _rare_disease_run(hits)
+
+    by_name = [a["query"] for t, a in calls if t == "Orphanet_search_diseases"]
+    assert sorted(by_name) == sorted(["lysosomal storage disorder", "Hunter syndrome",
+                                      "GM1 gangliosidosis", "Sialuria"])
+    assert all(a["limit"] == 1 for t, a in calls
+               if t == "Orphanet_search_diseases" and a["query"] != "lysosomal storage disorder")
+    assert state["facts"]["decisive_candidates"] == ["Hunter syndrome", "GM1 gangliosidosis", "Sialuria"]
+    # Rows, not aligned lists: Sialuria had no hit and is simply absent.
+    assert state["facts"]["orphanet_matches"] == [
+        {"ORPHAcode": 580, "Preferred term": "Mucopolysaccharidosis type 2"},
+        {"ORPHAcode": 354, "Preferred term": "GM1 gangliosidosis"}]
+    assert "resolve_candidates" in state["done"]

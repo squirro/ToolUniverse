@@ -49,8 +49,10 @@ report: >-
   literature" and stops there. Variant interpretation appears only when the
   `variant` step is in `steps_done`; otherwise one line, "No variant data
   provided", which is an answer. Cite each HPO term as
-  https://hpo.jax.org/browse/term/<HP id>, each Orphanet disease as
-  https://www.orpha.net/en/disease/detail/<ORPHAcode from the result>, each
+  https://hpo.jax.org/browse/term/<HP id>, each ranked disease as
+  https://www.orpha.net/en/disease/detail/<ORPHAcode> taken from its row in
+  `facts.orphanet_matches` (match on the preferred term; a disease with no row
+  is "no Orphanet entry found" and gets no link), each
   paper as https://europepmc.org/article/MED/<PMID>, each gene as
   https://www.ncbi.nlm.nih.gov/gene/<entrezgene from the MyGene result> and its
   expression as https://gtexportal.org/home/gene/<symbol>. Every footnote is a
@@ -100,6 +102,8 @@ steps:
     calls:
       - tool: get_joint_associated_diseases_by_HPO_ID_list
         arguments: {HPO_ID_list: "{hpo_ids}", limit: 20}
+    # The tool answers a bare list of disease names: the whole payload is the value.
+    extract: {strict_candidates: {path: "[]"}}
     produces: [strict_candidates]
     notes: >-
       A SHORT list here is normal, not a failure — common terms like developmental
@@ -112,11 +116,32 @@ steps:
     calls:
       - tool: get_joint_associated_diseases_by_HPO_ID_list
         arguments: {HPO_ID_list: "{discriminating_hpo_ids}", limit: 30}
+    extract: {decisive_candidates: {path: "[]"}}
     produces: [decisive_candidates]
     notes: >-
       This is the call that surfaces the clinically decisive differential — coarse
       facies plus hepatosplenomegaly returns the storage disorders, where the full
       term set returns almost nothing. Both 2a and 2b are required.
+
+  - id: resolve_candidates
+    label: "Phase 2b' — an Orphanet entry for each decisive candidate"
+    requires: [differential_discriminating]
+    for_each: decisive_candidates
+    as: candidate
+    calls:
+      - tool: Orphanet_search_diseases
+        arguments: {query: "{candidate}", limit: 1}
+    # The joint tool gives names only. One lookup per name carries the hit as a
+    # row — code and preferred term together — so a name Orphanet does not know
+    # is absent rather than shifting every later index (live 2026-09-04: no
+    # ranked disease could be linked).
+    collect:
+      orphanet_matches: {path: "data.results.0"}
+    produces: [orphanet_matches]
+    notes: >-
+      One call per decisive candidate, the top hit only. A candidate with no hit
+      has no row in orphanet_matches: report it as "no Orphanet entry found" and
+      give it no link. Never guess a code.
 
   - id: keyword_search
     label: "Phase 2c — Orphanet keyword search"
@@ -186,7 +211,7 @@ steps:
 
   - id: report
     label: "Phase 7 — ranked differential with the evidence"
-    requires: [differential_all, differential_discriminating, keyword_search, literature]
+    requires: [differential_all, differential_discriminating, resolve_candidates, keyword_search, literature]
     calls: []
     notes: >-
       Rank every candidate with its score and the phenotypes that support it, and

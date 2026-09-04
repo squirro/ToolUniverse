@@ -32,9 +32,11 @@ report: >-
   dominate raw report counts and were set aside, and never present them as
   signals. A term that names the treated indication or its course (the tumour,
   its metastases, progression) is reported disease, not a drug signal: say so
-  and do not rank it. Name the FAERS cohort (the brand name used). Cite each FAERS and label
-  number with the `source_url` from its result; cite literature by PMID or DOI and
-  trials by NCT id from `facts`. Read pharmacogenomic findings as risk-narrowing;
+  and do not rank it. Name the FAERS cohort (the brand name used). Cite each PRR
+  with its own query: `facts.prr_urls` is aligned with `facts.signal_aes` and
+  `facts.prrs`, one link per term — never one footnote for the whole table. Cite
+  label numbers with the `source_url` of their result, literature by PMID or DOI
+  from `facts`, and each trial as https://clinicaltrials.gov/study/<NCT id>. Read pharmacogenomic findings as risk-narrowing;
   an empty CPIC result means no guideline exists, which is an answer. Web context
   is supplement, not a finding, and is cited as web. End with a Limitations
   section built from `failures`, `blocked`, `unresolved` and `excluded`.
@@ -123,9 +125,13 @@ steps:
         arguments: {drug_name: "{faers_name}", adverse_event: "{adverse_event}"}
     collect:
       prrs: "data.metrics.PRR.value"   # one metrics object per call, so GATHER
+      # The stamped citation of each call, in the same order as signal_aes and
+      # prrs: the writer cites each PRR with its own query, not one footnote
+      # for the whole table (blind-judged 2026-09-03).
+      prr_urls: "source_url"
     derive:
       strong_signal: {from: prrs, op: ">=", value: 5, mode: any}
-    produces: [prrs, strong_signal]
+    produces: [prrs, prr_urls, strong_signal]
 
   - id: seriousness
     label: "Phase 2c — how seriously the events were reported"
@@ -178,7 +184,9 @@ steps:
     requires: [identity]
     calls:
       - tool: PubMed_search_articles
-        arguments: {query: "{drug_name} adverse events safety"}
+        # Field-tagged: "Lutathera adverse events safety" came back dominated by
+        # 177Lu-PSMA prostate papers. The drug must be in the title or abstract.
+        arguments: {query: "{drug_name}[Title/Abstract] AND (safety OR adverse OR toxicity OR myelodysplastic OR renal)"}
     extract:
       pmids: {path: "data[].pmid", limit: 10}
       paper_titles: {path: "data[].title", limit: 10}

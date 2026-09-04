@@ -190,6 +190,40 @@ steps:
       status and the PMID Orphanet cites. A disease with an empty gene list has no
       known causal gene in Orphanet — say so, do not fill it from memory.
 
+  - id: disease_ids_opentargets
+    label: "Phase 3b — Open Targets disease ids for the decisive candidates"
+    requires: [differential_discriminating]
+    for_each: decisive_candidates
+    as: candidate
+    calls:
+      - tool: OpenTargets_get_disease_ids_by_name
+        arguments: {name: "{candidate}"}
+    # Open Targets indexes rare diseases under MONDO ids; an Orphanet id does
+    # not resolve on the targets endpoint. The top search hit per name.
+    collect:
+      mondo_ids: {path: "data.search.hits.0.id", unique: true}
+    produces: [mondo_ids]
+    notes: >-
+      One name lookup per decisive candidate, top hit only. A candidate Open
+      Targets does not know has no id and no targets row; say so.
+
+  - id: gene_evidence_opentargets
+    label: "Phase 3c — scored target associations per disease, from Open Targets"
+    requires: [disease_ids_opentargets]
+    for_each: mondo_ids
+    as: mondo_id
+    calls:
+      - tool: OpenTargets_get_associated_targets_by_disease_efoId
+        arguments: {efoId: "{mondo_id}"}
+    collect:
+      opentargets_rows: {path: "data.disease"}
+    produces: [opentargets_rows]
+    notes: >-
+      Each row is one disease with its associated targets and their association
+      scores, exactly as returned. Present the scores; do not apply a cut. The
+      causal gene is normally the top score and the tail drops off sharply —
+      let the reader see that. Cite https://platform.opentargets.org/disease/<id>.
+
   - id: gene_panel
     label: "Phase 4 — characterise the candidate genes"
     requires: [literature]

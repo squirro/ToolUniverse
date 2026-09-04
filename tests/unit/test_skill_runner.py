@@ -947,6 +947,11 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
         "Orphanet_search_diseases": {"data": {"results": [
             {"ORPHAcode": 355, "Preferred term": "Gaucher disease"}]}},
         "Orphanet_get_genes": {"data": {"orpha_code": "355", "genes": [{"Symbol": "GBA"}]}},
+        "OpenTargets_get_disease_ids_by_name": {"data": {"search": {"hits": [
+            {"id": "MONDO_0018150", "name": "Gaucher disease"}]}}},
+        "OpenTargets_get_associated_targets_by_disease_efoId": {"data": {"disease": {
+            "id": "MONDO_0018150", "name": "Gaucher disease", "associatedTargets": {"rows": [
+                {"target": {"approvedSymbol": "GBA"}, "score": 0.9}]}}}},
         "EuropePMC_search_articles": {"data": [{"title": "GBA in Gaucher"}]},
         "MyGene_query_genes": {"data": {"hits": [{"symbol": "GBA"}]}},
         "GTEx_get_expression_summary": {"data": []},
@@ -1221,3 +1226,18 @@ def test_a_step_that_cannot_be_built_is_the_one_recorded_as_blocked():
     assert offered["id"] == "c"
     assert [b["step"] for b in run["blocked"]] == ["a", "b"]
     assert "second_list" in run["blocked"][1]["reason"]
+
+
+def test_open_targets_scored_targets_are_fetched_per_candidate_and_kept_as_returned():
+    """The second gene source: name -> MONDO id -> scored targets. Scores are
+    kept as Open Targets returns them; the reader sees the drop-off, no cut."""
+    state, calls = _rare_disease_run(HITS)
+
+    names = sorted(a["name"] for t, a in calls if t == "OpenTargets_get_disease_ids_by_name")
+    assert names == ["GM1 gangliosidosis", "Hunter syndrome", "Sialuria"]
+    ids = sorted(a["efoId"] for t, a in calls
+                 if t == "OpenTargets_get_associated_targets_by_disease_efoId")
+    assert ids == ["MONDO_0010674", "MONDO_0018149"]           # Sialuria had no id: no call
+    rows = state["facts"]["opentargets_rows"]
+    assert [r["name"] for r in rows] == ["Hurler syndrome", "Hurler syndrome"]  # the stub's one answer
+    assert rows[0]["associatedTargets"]["rows"][0] == {"target": {"approvedSymbol": "IDUA"}, "score": 0.85}

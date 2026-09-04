@@ -1,0 +1,18 @@
+{
+  "prefixes": {
+    "FAERS": "openfda",
+    "OpenFDA": "openfda",
+    "ChEMBL": "chembl",
+    "PubMed": "pubmed",
+    "EuropePMC": "europepmc",
+    "OpenTargets": "opentargets",
+    "Orphanet": "orphanet",
+    "MyGene": "mygene",
+    "GTEx": "gtex"
+  },
+  "ceilings": {
+    "openfda": 4,
+    "chembl": 2,
+    "pubmed": 3
+  }
+}

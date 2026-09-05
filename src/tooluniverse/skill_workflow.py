@@ -41,6 +41,7 @@ from temporalio.worker.workflow_sandbox import (
 with workflow.unsafe.imports_passed_through():
     from .skill_graph import SkillGraphError, fill
     from .skill_ceilings import ceiling_for, source_of
+from .skill_run_record import skeleton, to_prov
 from .skill_runner import (
         MAX_PAYLOAD,
         absorb,
@@ -113,6 +114,24 @@ def execute_tool(call: ToolCall) -> ToolResult:
     return ToolResult(payload=payload)
 
 
+RECORD_TIMEOUT = timedelta(seconds=30)
+
+_recorder: Any = None
+
+
+def bind_recorder(store: Any) -> None:
+    """Point the record activity at the store that holds the definitions."""
+    global _recorder
+    _recorder = store
+
+
+@activity.defn(name="record_run")
+def record_run(skel: dict) -> str:
+    if _recorder is None:
+        raise RuntimeError("no store bound: call bind_recorder() at worker start")
+    return _recorder.record(to_prov(skel), skel["run_id"])
+
+
 # --- the workflow: the in-memory driver, awaited ---------------------------------
 
 @workflow.defn(name="SkillWorkflow")
@@ -168,8 +187,10 @@ class SkillWorkflow:
                 outcome = judged(outcome, wants, answer)
             apply(run, step["id"], results, failures, outcome, calls=made)
         self._current = None
+        bundle = bundle_of(process, run, MAX_PAYLOAD)
+        bundle["record"] = await self._record(inp)
         self._finished = True
-        return bundle_of(process, run, MAX_PAYLOAD)
+        return bundle
 
     # -- the model's two holes: a question the caller reads, an answer it sends --
 
@@ -188,6 +209,21 @@ class SkillWorkflow:
     @workflow.signal
     def answer(self, facts: dict) -> None:
         self._answer = dict(facts or {})
+
+    async def _record(self, inp: SkillRunInput) -> dict:
+        """Write the permanent Run Record once. A failed write is a warning, never a failed run."""
+        skel = skeleton(self._process, self._run, run_id=workflow.info().workflow_id,
+                        definition_iri=inp.definition_iri, definition_hash=inp.definition_hash)
+        try:
+            iri = await workflow.execute_activity(
+                record_run, skel,
+                start_to_close_timeout=RECORD_TIMEOUT,
+                retry_policy=RetryPolicy(maximum_attempts=3))
+        except Exception as exc:                          # noqa: BLE001 — soft by design
+            cause = getattr(exc, "cause", None) or exc
+            return {"status": "failed", "error": f"{type(cause).__name__}: {cause}",
+                    "skeleton": skel}
+        return {"status": "written", "iri": iri, "skeleton": skel}
 
     async def _ask(self, question: dict) -> dict | None:
         self._question, self._answer = question, None

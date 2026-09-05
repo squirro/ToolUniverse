@@ -24,13 +24,16 @@ from typing import Any
 from temporalio.client import Client
 from temporalio.worker import Worker
 
+from .skill_process_store import Store
 from .skill_runner import normalised_executor
 from .skill_workflow import (
     TASK_QUEUE,
     WORKFLOW_RUNNER,
     SkillWorkflow,
     bind_executor,
+    bind_recorder,
     execute_tool,
+    record_run,
 )
 
 log = logging.getLogger(__name__)
@@ -47,11 +50,17 @@ def configured() -> str | None:
 def build_worker(client: Client, tooluniverse: Any, *, task_queue: str = TASK_QUEUE) -> Worker:
     """A worker whose activity calls tools through the agent's door."""
     bind_executor(normalised_executor(tooluniverse.run_one_function))
+    try:
+        bind_recorder(Store.from_env())
+    except RuntimeError:
+        # No GRAPHDB_ENDPOINT: run_skill cannot load a definition either, so the
+        # worker is only reached in tests; the record activity then fails soft.
+        log.warning("skill worker: GRAPHDB_ENDPOINT unset; Run Records will not be written")
     return Worker(
         client,
         task_queue=task_queue,
         workflows=[SkillWorkflow],
-        activities=[execute_tool],
+        activities=[execute_tool, record_run],
         activity_executor=ThreadPoolExecutor(MAX_ACTIVITIES),
         workflow_runner=WORKFLOW_RUNNER,
     )

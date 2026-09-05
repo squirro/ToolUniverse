@@ -60,9 +60,9 @@ OK = {
 }
 
 
-def _stub(responses):
-    """A stub under the real activity's name: tool -> payload, or an Exception."""
-    calls = []
+def _stub(responses, record=None):
+    """Stubs under the real activities' names: tool -> payload, and the record sink."""
+    calls, records = [], []
 
     @activity.defn(name="execute_tool")
     def execute_tool(call: ToolCall) -> ToolResult:
@@ -74,13 +74,21 @@ def _stub(responses):
             raise ApplicationError(str(value), non_retryable=True)
         return ToolResult(payload=value)
 
-    return execute_tool, calls
+    @activity.defn(name="record_run")
+    def record_run(skel: dict) -> str:
+        if isinstance(record, Exception):
+            raise ApplicationError(str(record), non_retryable=True)
+        records.append(skel)
+        return "https://data.swissrockets.com/skills/runs/" + skel["run_id"]
+
+    return execute_tool, record_run, calls, records
 
 
-async def _run(env, responses, process, inputs, run_id="run-1", before_result=None):
-    stub, calls = _stub(responses)
+async def _run(env, responses, process, inputs, run_id="run-1", before_result=None, record=None):
+    execute, record_activity, calls, records = _stub(responses, record)
     async with Worker(env.client, task_queue=QUEUE, workflows=[SkillWorkflow],
-                      activities=[stub], activity_executor=ThreadPoolExecutor(4),
+                      activities=[execute, record_activity],
+                      activity_executor=ThreadPoolExecutor(4),
                       workflow_runner=WORKFLOW_RUNNER):
         handle = await env.client.start_workflow(
             SkillWorkflow.run,
@@ -88,7 +96,9 @@ async def _run(env, responses, process, inputs, run_id="run-1", before_result=No
             id=run_id, task_queue=QUEUE)
         if before_result:
             await before_result(handle, env)
-        return await handle.result(), calls
+        bundle = await handle.result()
+        bundle["_records"] = records          # test-only: what the sink received
+        return bundle, calls
 
 
 def _in_memory(responses, process, inputs):
@@ -104,7 +114,9 @@ async def test_the_workflow_returns_the_bundle_the_in_memory_runner_returns():
     async with await WorkflowEnvironment.start_time_skipping() as env:
         bundle, calls = await _run(env, OK, GRAPH, {"drug_name": "cisplatin"})
 
-    assert bundle == _in_memory(OK, GRAPH, {"drug_name": "cisplatin"})
+    # record: the Run Record is written by the Temporal host only.
+    assert {k: v for k, v in bundle.items() if k not in ("record", "_records")} \
+        == _in_memory(OK, GRAPH, {"drug_name": "cisplatin"})
     assert [tool for tool, _ in calls] == ["resolve_drug", "disproportionality", "stratify"]
     assert bundle["facts"]["strong_signal"] is True
     assert bundle["steps_done"] == ["resolve", "signals", "stratify", "report"]
@@ -244,10 +256,11 @@ async def test_the_history_holds_the_process_the_answer_and_replays_deterministi
         await _wait_for_question(handle)
         await handle.signal(SkillWorkflow.answer, {"keyword": "storage disorder"})
 
-    stub, _ = _stub({"orphanet": {"data": []}})
+    stub, record_activity, _, _ = _stub({"orphanet": {"data": []}})
     async with await WorkflowEnvironment.start_time_skipping() as env:
         async with Worker(env.client, task_queue=QUEUE, workflows=[SkillWorkflow],
-                          activities=[stub], activity_executor=ThreadPoolExecutor(2),
+                          activities=[stub, record_activity],
+                          activity_executor=ThreadPoolExecutor(2),
                           workflow_runner=WORKFLOW_RUNNER):
             handle = await env.client.start_workflow(
                 SkillWorkflow.run,
@@ -418,7 +431,8 @@ async def test_the_fan_out_changes_nothing_the_in_memory_runner_returns():
     run_id = sync.start({"terms": ["x", "y", "z"]})["run_id"]
     while not sync.advance(run_id)["finished"]:
         pass
-    assert bundle == sync.bundle(run_id)
+    assert {k: v for k, v in bundle.items() if k not in ("record", "_records")} \
+        == sync.bundle(run_id)
 
 
 async def test_a_delegated_step_is_handed_to_the_agent_whole_never_fanned_out():
@@ -460,3 +474,31 @@ async def test_the_workflow_run_keeps_calls_with_arguments_and_the_questions():
                                         "answer": {"keyword": "storage disorder"}}]
     search = next(s for s in skel["steps"] if s["id"] == "search")
     assert search["calls"] == [{"tool": "orphanet", "arguments": {"query": "storage disorder"}}]
+
+
+# --- the Run Record is written once at run end, and a failed write is a warning --
+
+async def test_the_run_record_is_written_once_when_the_run_finishes():
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(env, OK, GRAPH, {"drug_name": "cisplatin"}, run_id="run-rec")
+
+    assert bundle["record"]["status"] == "written"
+    assert bundle["record"]["iri"] == "https://data.swissrockets.com/skills/runs/run-rec"
+    assert len(bundle["_records"]) == 1
+    skel = bundle["_records"][0]
+    assert skel["run_id"] == "run-rec"
+    assert [(s["id"], s["outcome"]) for s in skel["steps"]] == [
+        ("resolve", "done"), ("signals", "done"), ("stratify", "done"), ("report", "done")]
+    assert skel["steps"][0]["calls"] == [{"tool": "resolve_drug", "arguments": {"name": "cisplatin"}}]
+    assert "rows" not in str(skel)                # no payload: the FAERS rows never reach it
+
+
+async def test_a_failed_record_write_is_a_warning_and_the_run_still_finishes():
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(env, OK, GRAPH, {"drug_name": "cisplatin"},
+                               record=RuntimeError("GraphDB 503"))
+
+    assert bundle["steps_done"] == ["resolve", "signals", "stratify", "report"]
+    assert bundle["facts"]["strong_signal"] is True
+    assert bundle["record"]["status"] == "failed"
+    assert "503" in bundle["record"]["error"]

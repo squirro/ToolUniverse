@@ -102,3 +102,33 @@ def test_ensure_repository_creates_it_only_when_missing(requests_mock):
                       json={"id": "skill-processes"})
     _store().ensure_repository()
     assert post.call_count == 1
+
+
+# --- the Run Record goes into the same repository, one named graph per run ------
+
+from tooluniverse.skill_process_store import run_graph  # noqa: E402
+
+
+def test_the_run_graph_is_one_per_run_under_the_runs_base():
+    assert run_graph("skill-demo-1234") == "https://data.swissrockets.com/skills/runs/skill-demo-1234"
+
+
+def test_record_puts_the_turtle_into_the_runs_named_graph_replacing_it(requests_mock):
+    put = requests_mock.put(
+        f"{ENDPOINT}/repositories/skill-processes/rdf-graphs/service", status_code=204)
+
+    iri = _store().record("@prefix prov: <http://www.w3.org/ns/prov#> .", "skill-demo-1234")
+
+    assert iri == run_graph("skill-demo-1234")
+    assert put.called_once
+    assert put.last_request.qs == {"graph": [iri]}
+    assert put.last_request.headers["Content-Type"].startswith("text/turtle")
+    assert put.last_request.method == "PUT"       # replace, so a second write is a no-op in effect
+
+
+def test_a_failed_record_raises_for_the_caller_to_soften(requests_mock):
+    """The workflow turns this into a warning on the bundle; the store itself is honest."""
+    requests_mock.put(f"{ENDPOINT}/repositories/skill-processes/rdf-graphs/service",
+                      status_code=503)
+    with pytest.raises(requests.HTTPError):
+        _store().record("@prefix prov: <http://www.w3.org/ns/prov#> .", "skill-demo-1234")

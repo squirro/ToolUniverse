@@ -51,6 +51,13 @@ def named_graph(skill: str) -> str:
     return SKILLS_BASE + skill
 
 
+RUNS_BASE = SKILLS_BASE + "runs/"
+
+
+def run_graph(run_id: str) -> str:
+    return RUNS_BASE + run_id
+
+
 @dataclass
 class Store:
     endpoint: str
@@ -76,6 +83,18 @@ class Store:
             f"{self.endpoint}/repositories/{self.repository}/rdf-graphs/service",
             params={"graph": iri},
             data=to_bbo(process, git_commit=git_commit).encode(),
+            headers={"Content-Type": "text/turtle; charset=utf-8"},
+            auth=self.auth, timeout=TIMEOUT)
+        response.raise_for_status()
+        return iri
+
+    def record(self, turtle: str, run_id: str) -> str:
+        """Replace the run's named graph with its Run Record. Returns the graph IRI."""
+        iri = run_graph(run_id)
+        response = requests.put(
+            f"{self.endpoint}/repositories/{self.repository}/rdf-graphs/service",
+            params={"graph": iri},
+            data=turtle.encode(),
             headers={"Content-Type": "text/turtle; charset=utf-8"},
             auth=self.auth, timeout=TIMEOUT)
         response.raise_for_status()

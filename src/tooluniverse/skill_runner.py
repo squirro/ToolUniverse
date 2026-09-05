@@ -122,7 +122,8 @@ MAX_PAYLOAD = 12_000   # per payload in the bundle; raw results never ride the t
 def new_run(inputs: dict) -> dict:
     """Fresh run state: the whole of it is (done, facts) plus what went wrong."""
     return {"facts": dict(inputs), "done": [], "failures": [], "blocked": [],
-            "skipped": [], "results": {}, "calls": {}, "unresolved": [], "excluded": {}}
+            "skipped": [], "results": {}, "calls": {}, "calls_made": {},
+            "questions": [], "unresolved": [], "excluded": {}}
 
 
 def apply(run: dict, step_id: str, results: list, failures: list, outcome: dict,
@@ -132,6 +133,9 @@ def apply(run: dict, step_id: str, results: list, failures: list, outcome: dict,
     # The tools this step ran, retries included: the agent's own trace never
     # shows them, so the bundle carries the record itself.
     run["calls"][step_id] = [c["tool"] for c in (calls or [])]
+    # …and with their arguments, for the Run Record: which reaction, which code.
+    run["calls_made"][step_id] = [{"tool": c["tool"], "arguments": c.get("arguments", {})}
+                                  for c in (calls or [])]
     run["done"].append(step_id)
     run["failures"].extend(failures)
     run["facts"].update(outcome["facts"])
@@ -229,6 +233,12 @@ def question_for(step_id: str, kind: str, wants: list[str], context: dict, **det
     """
     return {"kind": kind, "step": step_id, "wants": list(wants), "context": context,
             **{k: v for k, v in detail.items() if v is not None}}
+
+
+def asked(run: dict, question: dict, answer: dict | None) -> None:
+    """Remember a question and its answer — never its context, which is payload."""
+    run["questions"].append({"step": question["step"], "kind": question["kind"],
+                             "wants": list(question["wants"]), "answer": answer})
 
 
 def judged(outcome: dict, wants: list[str], answer: dict | None) -> dict:
@@ -391,11 +401,13 @@ class SkillRunner:
             return results, failures
         argument = repair["argument"]
         original = step["calls"][0]["arguments"].get(argument)
-        answer = self.ask(question_for(
+        question = question_for(
             step["id"], "repair", [argument], dict(run["facts"]),
             tool=step["calls"][0]["tool"], argument=argument, value=original,
             problem=f"returned nothing for {original!r}",
-        ))
+        )
+        answer = self.ask(question)
+        asked(run, question, answer)
         # One answer shape for every question: the wanted name mapped to its
         # value — here a list of alternatives. A bare list is still taken.
         suggestions = answer.get(argument) if isinstance(answer, dict) else answer
@@ -466,18 +478,22 @@ class SkillRunner:
                 outcome = judged(outcome, wanted, None)
             else:
                 made.extend(calls)
-                answer = self.ask(question_for(step["id"], "delegate", wanted, dict(run["facts"]),
-                                               calls=calls, notes=spec.get("notes"))) if self.ask else None
+                question = question_for(step["id"], "delegate", wanted, dict(run["facts"]),
+                                        calls=calls, notes=spec.get("notes"))
+                answer = self.ask(question) if self.ask else None
+                asked(run, question, answer)
                 outcome = judged(outcome, wanted, answer)
         wants = spec.get("judge") or []
         if wants:
             # A judgement fact is asked for by name, after the step's own calls,
             # with everything known so far — never inferred from what an
             # extraction happened to miss.
-            answer = self.ask(question_for(
+            question = question_for(
                 step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
                 notes=spec.get("notes"),
-            )) if self.ask else None
+            )
+            answer = self.ask(question) if self.ask else None
+            asked(run, question, answer)
             outcome = judged(outcome, wants, answer)
         apply(run, step["id"], results, failures, outcome, calls=made)
         # The caller sees an unknown as an explicit None; facts never hold one.

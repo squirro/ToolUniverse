@@ -45,6 +45,7 @@ from .skill_runner import (
         MAX_PAYLOAD,
         absorb,
         apply,
+        asked,
         bundle_of,
         judged,
         new_run,
@@ -198,9 +199,11 @@ class SkillWorkflow:
                 "step": question["step"],
                 "reason": f"no answer to {question['kind']} for {question['wants']}",
             })
+            asked(self._run, question, None)
             return None
         finally:
             self._question = None
+        asked(self._run, question, self._answer)
         return self._answer
 
     # -- the work: every call an activity, all at once, capped per source ---------

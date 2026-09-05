@@ -1292,3 +1292,50 @@ def test_a_failed_iteration_is_recorded_with_its_arguments():
     assert state["failures"] == [{"tool": "FAERS_calculate_disproportionality",
                                   "arguments": {"drug": "x", "event": "nausea"},
                                   "error": "RuntimeError: 429 Too Many Requests"}]
+
+
+# --- the run remembers what it asked and what it called, for the Run Record ------
+#
+# The bundle carries tool NAMES per step so the writer can cite; the record needs
+# the arguments too, and the questions with their answers — none of which the
+# agent's own trace shows once the run is over.
+
+def test_the_run_keeps_every_call_with_its_arguments_per_step():
+    graph = {"skill": "calls", "inputs": ["terms"], "steps": [
+        {"id": "prr", "for_each": "terms", "as": "term",
+         "calls": [{"tool": "FAERS_calculate_disproportionality",
+                    "arguments": {"drug": "x", "event": "{term}"}}],
+         "collect": {"prrs": {"path": "data.prr"}}}]}
+    runner = SkillRunner(graph, execute=lambda tool, a: {"data": {"prr": 1.0}})
+    run_id = runner.start({"terms": ["rash", "fever"]})["run_id"]
+    runner.advance(run_id)
+
+    assert runner.state(run_id)["calls_made"] == {"prr": [
+        {"tool": "FAERS_calculate_disproportionality", "arguments": {"drug": "x", "event": "rash"}},
+        {"tool": "FAERS_calculate_disproportionality", "arguments": {"drug": "x", "event": "fever"}},
+    ]}
+    assert runner.bundle(run_id)["calls"] == {"prr": ["FAERS_calculate_disproportionality"] * 2}
+
+
+def test_the_run_keeps_each_question_with_the_answer_it_got():
+    runner, asked = _judged_runner({"judge": {"primary_keyword": "storage disorder",
+                                              "working_hypothesis": "MPS",
+                                              "discriminating_hpo_ids": ["HP:0001433"]}})
+    run_id = _run_to_end(runner, {"symptoms": ["hepatosplenomegaly"]})
+
+    questions = runner.state(run_id)["questions"]
+    assert [(q["step"], q["kind"], q["wants"]) for q in questions] == [
+        ("hypothesis", "judge", ["primary_keyword", "working_hypothesis"]),
+        ("phenotypes", "judge", ["discriminating_hpo_ids"]),
+    ]
+    assert questions[0]["answer"] == {"primary_keyword": "storage disorder",
+                                      "working_hypothesis": "MPS",
+                                      "discriminating_hpo_ids": ["HP:0001433"]}
+    assert "context" not in questions[0]          # the record holds no payloads
+
+
+def test_an_unanswered_question_is_kept_with_its_empty_answer():
+    runner, _ = _judged_runner({})                # the oracle answers nothing
+    run_id = _run_to_end(runner, {"symptoms": ["x"]})
+
+    assert [q["answer"] for q in runner.state(run_id)["questions"]] == [{}, {}]

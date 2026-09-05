@@ -442,3 +442,21 @@ async def test_a_delegated_step_is_handed_to_the_agent_whole_never_fanned_out():
 
     assert calls == []                      # no execute_tool activity ran
     assert bundle["facts"]["hits"] == ["ok"]
+
+
+async def test_the_workflow_run_keeps_calls_with_arguments_and_the_questions():
+    """Both hosts remember the same things for the Run Record."""
+    async def judge(handle, env):
+        await _wait_for_question(handle)
+        await handle.signal(SkillWorkflow.answer, {"keyword": "storage disorder"})
+
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(env, {"orphanet": {"data": []}}, JUDGED, {"symptoms": ["x"]},
+                               before_result=judge)
+
+    skel = bundle["record"]["skeleton"]
+    hypothesis = next(s for s in skel["steps"] if s["id"] == "hypothesis")
+    assert hypothesis["questions"] == [{"kind": "judge", "wants": ["keyword"],
+                                        "answer": {"keyword": "storage disorder"}}]
+    search = next(s for s in skel["steps"] if s["id"] == "search")
+    assert search["calls"] == [{"tool": "orphanet", "arguments": {"query": "storage disorder"}}]

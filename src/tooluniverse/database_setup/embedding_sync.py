@@ -23,7 +23,7 @@ from ..database_setup.hf.sync_hf import (
     db_path_for_collection,
 )
 from ..database_setup.sqlite_store import SQLiteStore
-from ..utils import get_user_cache_dir
+from ..utils import get_user_cache_dir, resolve_writable_path
 
 
 def _collection_paths(name: str) -> Tuple[Path, Path]:
@@ -78,9 +78,11 @@ class EmbeddingSync(BaseTool):
         self.hf_endpoint = hf_cfg.get("endpoint", "https://huggingface.co")
 
         storage_cfg = tool_config.get("configs", {}).get("storage_config", {})
+        # Relative resolves into the cache dir, not the container's unwritable
+        # working directory. See EmbeddingDatabase for the same reasoning.
         self.data_dir = Path(
-            storage_cfg.get(
-                "data_dir", os.path.join(get_user_cache_dir(), "embeddings")
+            resolve_writable_path(
+                storage_cfg.get("data_dir", "embeddings"), get_user_cache_dir()
             )
         )
         self.data_dir.mkdir(parents=True, exist_ok=True)

@@ -1,4 +1,5 @@
 <!--
+Triggers: CRISPR screen, knockout screen hit, synthetic lethal, screen hit interpretation, sgRNA dropout
 Ported from ToolUniverse skill `tooluniverse-crispr-screen-analysis`. RESEARCH-SAFE
 functional-genomics target-discovery skill (essentiality, synthetic-lethality, dropout/
 positive-selection screen interpretation) — descriptive target-ID research, no operational
@@ -174,8 +175,7 @@ copy-number or seed-sequence artefact (the skill's deprioritize-for-CNV rule).
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
 `(Source: tool_name)`. Screen statistics taken from the user's input are cited
-`[Source: user-supplied MAGeCK/BAGEL output]`. End with a References section logging every tool
-used + key parameters.
+`[Source: user-supplied MAGeCK/BAGEL output]`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Screen} with the screen name/phenotype the user gave (e.g. "olaparib-resistance
@@ -203,4 +203,4 @@ skip any:
 List the DepMap substitution (gnomAD + literature proxy), any screen statistics that were
 "Not provided", any SL nominations still needing independent-line confirmation, and every
 "No data available" dimension with its reason. Never fabricate to fill a gap.
-## 10. References  — | # | Tool | Parameters | Section | Items Retrieved |
+## 10. References  — numbered footnote definitions only, each `[^n^]: [description](url)`

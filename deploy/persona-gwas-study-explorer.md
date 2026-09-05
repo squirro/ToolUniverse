@@ -1,4 +1,5 @@
 <!--
+Triggers: which GWAS have been done, GWAS studies, study cohorts, ancestry of GWAS, GWAS catalogue
 Ported from ToolUniverse skill `tooluniverse-gwas-study-explorer`. Deployable body ~9.6k chars
 — FITS the production persona field (10000-char cap on swiss-rockets.squirro.com; for any
 4000-char-capped Studio config, paste only the header through "Report structure").

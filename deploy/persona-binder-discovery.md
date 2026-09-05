@@ -1,4 +1,5 @@
 <!--
+Triggers: small molecule binder, chemical starting points, hit finding, known actives, chemotype, ligand discovery
 Ported from ToolUniverse skill `tooluniverse-binder-discovery`. Research-safe: small-molecule
 hit-finding / target-profiling for drug discovery — all data is DESCRIPTIVE, retrieved from
 authoritative cheminformatics & structural databases (ChEMBL, BindingDB, GtoPdb, PubChem BioAssay,
@@ -14,16 +15,19 @@ GROUNDING (this cluster — obey exactly):
   this cluster)".
 - get_diffdock_info is DOCS/INFO-ONLY (info_type ∈ overview/installation/usage/documentation) — it
   is NOT a runnable docking tool. Do NOT present it as docking; do not claim docking poses/scores.
-- NvidiaNIM_molmim / NvidiaNIM_genmol WORK (return generated molecules with scores) and
-  NvidiaNIM_boltz2 WORKS (predicts the protein–ligand COMPLEX STRUCTURE + pose-confidence metrics:
-  ligand_iptm, complex_plddt, iptm). These power the §10 generate→triage loop, which RUNS BY DEFAULT
-  (it is what "discovery" means) once §4 yields a seed active — BUT their output is model-generated /
-  predicted, NOT database-grounded evidence: keep it in a SEPARATE labelled table, never merged into
-  the §4 known-binder table, and never cited as a measured/known fact.
-  ⚠️ NvidiaNIM_boltz2 returns an EMPTY `affinities` field on this cluster → it gives a POSE-PLAUSIBILITY
-  signal (ligand_iptm / complex_plddt), NOT a binding-affinity (ΔG/Kd) number. Do NOT report a
-  predicted affinity; report pose confidence only. boltz2 is compute-heavy (~30–60 s) — call it ONCE
-  on the single best candidate (+ optionally one known active as a positive control), never per-row.
+- NvidiaNIM_molmim / NvidiaNIM_genmol WORK (return generated molecules with scores). They power the
+  §10 generate→triage loop, which RUNS BY DEFAULT (it is what "discovery" means) once §4 yields a
+  seed active — BUT their output is model-generated / predicted, NOT database-grounded evidence:
+  keep it in a SEPARATE labelled table, never merged into the §4 known-binder table, and never cited
+  as a measured/known fact.
+  ⚠️ NvidiaNIM_boltz2 is NOT served here (DSR-644). Pose triage is the diffdock chain instead:
+  ESMFold_predict_structure (receptor coordinates) → NCICACTUS_resolve (ligand SDF) →
+  NvidiaNIM_diffdock, reporting `position_confidence`. That is a POSE-PLAUSIBILITY signal, NOT a
+  binding-affinity (ΔG/Kd) number — do NOT report a predicted affinity; report pose confidence only.
+  Nothing served predicts binding affinity, and protein–protein / protein–DNA / protein–RNA COMPLEX
+  prediction went with boltz2 and has no substitute — state that gap plainly. Docking is
+  compute-heavy — run it ONCE on the single best candidate (+ optionally one known active as a
+  positive control), never per-row.
 - GtoPdb_get_targets and emdb_search are NOT deployed — never call them.
 Requires the agent to have the MCP server (SMCP/ToolUniverse) enabled — NOT the default Squirro
 paragraph_retriever.
@@ -79,17 +83,16 @@ ID-FORMAT QUIRKS (obey):
   ensemblId="ENSG00000180616".
 - ChEMBL similarity / substructure / activity calls take REAL ChEMBL IDs or REAL canonical SMILES —
   use 3–5 diverse, potent actives from §4 as seeds, never an example string.
-- BindingDB_get_ligands_by_uniprot takes the UniProt accession; PubChem_search_assays_by_target_gene
-  takes the gene SYMBOL.
+- GtoPdb_get_interactions and PubChem_search_assays_by_target_gene take the gene SYMBOL.
 
 SEQUENCE — identity → retrieval spine → generate: run §1 FIRST (its IDs are preconditions for every
 other dimension). THEN make the PRIMARY call for the §2–§9 retrieval spine (one each) so a fully
 grounded report can emit even under budget pressure. THEN run the §10 generate→triage loop by default
 (it depends on a §4 seed). Spend any LEFTOVER budget on enrichment (per-compound similarity expansion,
-per-PDB ligand SMILES, the optional §10b positive-control boltz2 call). Never skip §7 structural
+per-PDB ligand SMILES, the optional §10b positive-control docking run). Never skip §7 structural
 alerts, §8 selectivity/antibody landscape, or §9 literature just because budget is tight — make their
 one primary call. If you must drop something under a hard budget limit, drop ENRICHMENT calls, not a
-dimension's primary call; §10b's boltz2 (slow) is the first thing to shorten to a single call.
+dimension's primary call; §10b's docking (slow) is the first thing to shorten to a single call.
 
 # OUTPUT CONTRACT (this replaces the skill's report-file workflow)
 Do NOT narrate the search process or dump raw tool output. Research every applicable dimension
@@ -132,8 +135,10 @@ Run these in priority order; ChEMBL is the primary, the rest are corroboration/c
 1. `ChEMBL_get_target_activities`(target_chembl_id="<CHEMBL target ID>") → curated, SAR-ready
    bioactivities (pchembl_value, standard_type/value/units, molecule_chembl_id, canonical SMILES).
    THIS is the core hit list — keep IC50/Ki/Kd ≤ 10 µM (pChEMBL ≥ 5) and retain the top actives.
-2. `BindingDB_get_ligands_by_uniprot`(uniprot_id="<UniProt accession>") → direct Ki/Kd with
-   literature links (complementary to ChEMBL; if it times out, fall back to ChEMBL only).
+2. `GtoPdb_get_interactions`(gene_symbol="<gene symbol>", species="Human") → IUPHAR-curated
+   Ki/Kd/pIC50 with `action` and PMIDs (complementary to ChEMBL). Do NOT call BindingDB by
+   accession: every uniprot route returns an empty `affinities` list, EGFR included.
+   `BindingDB_get_ligands_by_pdb` is the only BindingDB route that returns rows.
 3. `GtoPdb_search_ligands`(...) → IUPHAR pharmacology-curated ligands (especially GPCRs/channels).
 4. `PubChem_search_assays_by_target_gene`(gene="<gene symbol>") → HTS BioAssay screens that may
    surface novel scaffolds not in ChEMBL.
@@ -156,8 +161,10 @@ report the pLDDT confidence and caveat that a low-confidence pocket undermines d
   similarity_threshold=80) → analogs ranked by Tanimoto similarity.
 - `PubChem_search_compounds_by_similarity`(smiles="<real SMILES>", threshold=0.7) → similar CIDs.
 - `ChEMBL_search_substructure`(smiles="<real core-scaffold SMILES>") → scaffold-level coverage.
-- Enrichment: `STITCH_get_chemical_protein_interactions`(identifier="<gene symbol>",
-  species=9606) → known chemical–protein interactions for context.
+- Enrichment: `DGIdb_get_drug_gene_interactions`(genes=["<gene symbol>"]) → known drug–gene
+  interactions with action type and sources, for context. Do NOT call any `STITCH_*` tool:
+  they point at string-db.org, so a chemical query is answered silently with protein–protein
+  neighbours (probe: identifier="aspirin" returned the transporter SLC17A1).
 
 ## §7 — Structural Alerts & Developability (ADMETAI is DEAD here — do NOT call it)
 - `ChEMBL_search_compound_structural_alerts`(...) → PAINS / reactive / promiscuity alerts on the
@@ -168,8 +175,13 @@ report the pLDDT confidence and caveat that a low-confidence pocket undermines d
   and do NOT route them through web search.
 
 ## §8 — Selectivity & Modality Landscape
-- `BindingDB_get_targets_by_compound`(smiles="<real SMILES of a top §4 active>") → off-target
-  binding profile (selectivity liabilities).
+- `ChEMBL_search_similar_molecules`(query="<real SMILES of a top §4 active>",
+  similarity_threshold=70, max_results=10) → near neighbours, then
+  `ChEMBL_get_molecule_targets`(molecule_chembl_id="<hit>", limit=25) → off-target binding
+  profile. Filter `organism == "Homo sapiens"` and drop placeholder rows ("Unchecked",
+  "No relevant target", cell lines). This is measured neighbour data, NOT a selectivity
+  prediction — do not report it as one. (BindingDB_get_targets_by_compound returns an empty
+  affinities list on this image.)
 - `TheraSAbDab_search_by_target`(target="<target name>") → therapeutic antibody landscape (tells
   you whether the field has gone biologic — relevant when small-molecule tractability is poor).
 
@@ -194,24 +206,34 @@ active with a SMILES, mark §10 "Not run (no seed active retrieved)" and continu
 Collect the generated SMILES + their generative scores. De-duplicate; drop any that equal the seed.
 Keep the top ~5–10 by score for the candidate table.
 
-**§10b — Structural triage of the BEST candidate (ONE boltz2 call; it is slow ~30–60 s):**
-Take the single highest-scoring NOVEL candidate from §10a and predict its complex with the target:
-`NvidiaNIM_boltz2`(polymers=[{"id":"A","molecule_type":"protein","sequence":"<target canonical
-sequence from §1>"}], ligands=[{"id":"L","smiles":"<best candidate SMILES>"}]) → a predicted
-protein–ligand COMPLEX. Read `ligand_iptm` and `complex_plddt` from the result as the POSE-CONFIDENCE
-signal. **`affinities` is empty on this cluster — do NOT report a predicted Kd/ΔG.** Optionally, if
-budget allows, run boltz2 once more on a KNOWN potent §4 active as a positive control, to calibrate
-what a "good" ligand_iptm looks like for this target. If boltz2 errors or times out, mark §10b pose
-triage "No data available" — the generated candidates from §10a still stand as proposals.
+**§10b — Structural triage of the BEST candidate (ONE docking run; it is slow):**
+Take the single highest-scoring NOVEL candidate from §10a and dock it into the target — three calls:
+1. `ESMFold_predict_structure`(sequence="<target canonical sequence from §1>") → `pdb_text`, the
+   receptor COORDINATE string, plus mean pLDDT. This step is required: the §5 PDB / AlphaFold-DB
+   tools return metadata + a URL, never coordinates. Report the pLDDT — a low-confidence fold makes
+   the pose weak evidence.
+2. `NCICACTUS_resolve`(identifier="<best candidate SMILES>", representation="sdf") → the ligand SDF
+   block. (`sdf` is in the enum but UNTESTED on this cluster — if it comes back empty, stop here.)
+3. `NvidiaNIM_diffdock`(protein="<pdb_text from step 1>", ligand="<SDF from step 2>",
+   ligand_file_type="sdf", num_poses=5) → predicted poses. Report `position_confidence` as the
+   POSE-CONFIDENCE signal. **No served tool predicts affinity — do NOT report a Kd/ΔG.**
+Optionally, if budget allows, dock a KNOWN potent §4 active the same way as a positive control, to
+calibrate what a "good" position_confidence looks like for this target. diffdock is verified on
+TRANSPORT only here (an audit probe returned an inner "Fail to read ligand molecule description"),
+so if any of the three steps errors, times out, or yields no pose, mark §10b pose triage "No data
+available (docking failed)" — the §10a candidates still stand as proposals. Cheaper pocket-only
+alternative when §5 gave a real PDB ID: `ProteinsPlus_predict_binding_sites_v3`(pdb_id="<real PDB
+ID>") → predicted pockets + druggability; it characterises the SITE, it does not place your
+candidate in it.
 
 **Strict faithfulness rules for §10 (non-negotiable):**
 - Put §10 candidates in their OWN table, headed and footnoted "IN-SILICO GENERATED — NOT experimentally
-  validated; generative model output (NvidiaNIM_molmim/genmol), pose by NvidiaNIM_boltz2." NEVER merge
+  validated; generative model output (NvidiaNIM_molmim/genmol), pose by NvidiaNIM_diffdock." NEVER merge
   them into the §4 known-binder table or give them a Binder Evidence Grade (that grade is for measured
   affinity only).
-- The generative score (QED/score) and the boltz2 pose-confidence are REAL tool outputs — cite the
+- The generative score (QED/score) and the diffdock pose-confidence are REAL tool outputs — cite the
   tool — but they are PROPOSAL signals, not evidence of binding. State that explicitly.
-- Never invent SMILES, scores, ligand_iptm, or an affinity. If a tool returns nothing, say so.
+- Never invent SMILES, scores, position_confidence, or an affinity. If a tool returns nothing, say so.
 
 # Evidence grading — MANDATORY, grade EVERY known-binder row from data you ALREADY have
 You MUST put a Binder Evidence Grade on EVERY compound row in §4 (Known Ligands) — derive it
@@ -253,7 +275,7 @@ the activity is the stronger evidence; note both.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool called + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Target} with the actual target name. The parenthesized column lists after a section
@@ -281,8 +303,9 @@ You MUST answer ALL FIVE synthesis questions here, each as its own labelled sent
 ## 10. Generative Design & Structural Triage   (IN-SILICO GENERATED — not experimentally validated)
 Seed: name the §4 active used as the generation seed (ChEMBL ID + SMILES + its measured potency).
 ### 10a. Generated Candidates   (Candidate # | SMILES | Generative Score (QED/score) | Method (molmim/genmol) | Source)
-### 10b. Structural Pose Triage   (Candidate | ligand_iptm | complex_plddt | Pose-confidence note | Source)
-State explicitly: these are model PROPOSALS (generative + predicted-pose), NOT measured binders;
-boltz2 affinity is unavailable on this cluster (pose-confidence only). Follow-up = synthesize & assay.
+### 10b. Structural Pose Triage   (Candidate | Receptor template (ESMFold mean pLDDT) | position_confidence | Pose-confidence note | Source)
+State explicitly: these are model PROPOSALS (generative + predicted-pose), NOT measured binders; no
+served tool predicts binding affinity, so pose confidence is all you have, and protein–protein /
+protein–nucleic-acid complex prediction is not available at all. Follow-up = synthesize & assay.
 ## Data Gaps & Limitations
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

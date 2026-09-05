@@ -146,3 +146,53 @@ def test_search_deterministic_tie_break_by_name():
         SkillDoc("a-skill", ("kinase", "kinase"), "d"),
     ]
     assert [h.name for h in search(docs, "kinase", limit=2)] == ["a-skill", "b-skill"]
+
+
+# --- every served skill needs routing triggers (DSR-630 follow-up) -------------
+# Measured on sr-dev: find_skill("...emerging viral clade including genomics, spread
+# dynamics, and countermeasures") returned five *genomics* skills and NOT
+# infectious-disease. _doc_tokens weights Triggers x3 as the deliberate routing signal,
+# but 64 of 76 bodies carried none, leaving them ranked on shared template phrasing.
+
+import re as _re
+from pathlib import Path as _Path
+
+_DEPLOY = _Path(__file__).resolve().parents[2] / "deploy"
+_DISPATCHERS = {"router", "router-spike", "doriano", "smcp-only"}
+
+
+def _served_bodies():
+    for p in sorted(_DEPLOY.glob("persona-*.md")):
+        name = p.stem[len("persona-"):]
+        if name in _DISPATCHERS or name.startswith("prod"):
+            continue
+        yield name, p.read_text()
+
+
+def test_every_served_skill_declares_triggers():
+    from tooluniverse.skill_index import header_triggers
+
+    missing = [name for name, body in _served_bodies() if not header_triggers(body)]
+    assert missing == [], f"skills with no Triggers line (unroutable by find_skill): {missing}"
+
+
+def test_an_outbreak_brief_ranks_the_infectious_disease_skill():
+    """The live failing query, scored against the real corpus."""
+    from tooluniverse.skill_index import build_index, search
+
+    docs = build_index(_DEPLOY_SKILLS_DIR())
+    hits = search(docs, "current situation brief of an emerging viral clade including "
+                        "genomics, spread dynamics, and countermeasures", limit=5)
+    names = [h.name for h in hits]
+    assert "infectious-disease" in names, names
+
+
+def _DEPLOY_SKILLS_DIR(tmp={}):
+    """The served set as the image stages it: persona-<name>.md -> <name>.md."""
+    import tempfile, shutil
+    if "dir" not in tmp:
+        d = _Path(tempfile.mkdtemp())
+        for name, body in _served_bodies():
+            (d / f"{name}.md").write_text(body)
+        tmp["dir"] = d
+    return tmp["dir"]

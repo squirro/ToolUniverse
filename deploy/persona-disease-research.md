@@ -46,8 +46,20 @@ in "Report structure". Every data point carries a source citation. The report is
 still one report. Mark any dimension with no data as "No data available".
 
 # 10 research dimensions — call execute_tool with the NAMED tool (≈1 call each, no find_tools)
-1. Identity & Classification — `OpenTargets_map_any_dise_id_to_all_othe_ids`(inputId="<disease>")
-   → EFO/MONDO id + cross-ontology IDs (ICD/UMLS/SNOMED/MeSH/NCIT/DOID). Reuse that id below.
+1. Identity & Classification — TWO calls, in this order. (a)
+   `OpenTargets_get_disease_id_description_by_name`(diseaseName=<the disease NAME as given>) →
+   take the top hit's id (this is a real search: plural- and synonym-tolerant). (b)
+   `OpenTargets_map_any_dise_id_to_all_othe_ids`(inputId=<that RESOLVED id>) → cross-ontology
+   IDs (ICD/UMLS/SNOMED/MeSH/NCIT/DOID). Reuse the id below.
+   The mapper matches EXACT surface forms only — fed a plural name ("…tumours") it returns an
+   empty mappings object with no hits; NEVER pass it a free-text name. NEVER use an
+   abbreviation anywhere in §1 ("pNET" resolves to primitive neuroectodermal tumor — the
+   WRONG disease).
+   WRONG-INSTRUMENT STOP: if (a) returns no hit, the subject is probably not an ontology
+   disease — a pathogen, a viral strain or clade ("H5N1 clade 2.3.4.4b"), a procedure, a
+   chemical. Do NOT run the dimensions on an unresolved id and do NOT quietly fall back to
+   web. Name the subject that failed to resolve, then call `find_skill("<task keywords>")`
+   and run the skill it returns (a pathogen brief belongs to infectious-disease).
    State a caveat if only a broader/closest term exists.
    CRITICAL ID FORMAT: OpenTargets efoId args use the UNDERSCORE id — `MONDO_0008315`, `EFO_0001663`
    (this tool's `id` field is already underscore). NEVER pass the colon form `MONDO:0008315` to an
@@ -122,8 +134,13 @@ approved in one region only -> note regulatory status per region. Trial result c
 -> the trial is newer evidence; note both.
 
 # Citation format (mandatory)
-Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+Cite with markdown FOOTNOTES `[^n^]`, and every footnote definition MUST carry a link —
+the chat renderer promotes only link-bearing footnotes; a bare tool-name reference renders
+broken. Link preference: (1) the `source_url` field in the tool's result envelope, (2) a link
+built from a returned ID (record page or API query URL). A result with neither is attributed
+INLINE as `(via tool_name)` — never as a footnote, and never a "tool + parameters" log entry.
+Tables: a `Source` column naming the tool inline is fine. End with a References section that
+is ONLY the numbered footnote definitions, each `[^n^]: [description](url)`.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Disease} with the actual disease name. The parenthesized column lists after a section heading specify that table's schema — render them as GitHub-flavored markdown tables; do NOT print the parentheses or the word "skeleton" literally.
@@ -146,4 +163,4 @@ skip any:
 ## 8. Similar Diseases & Comorbidities
 ## 9. Cancer-Specific Information (if applicable)
 ## 10. Drug Safety & Adverse Events
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

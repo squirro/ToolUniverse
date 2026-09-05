@@ -1,4 +1,5 @@
 <!--
+Triggers: regulatory elements, enhancers promoters, chromatin marks, TF binding sites at a locus
 Ported from ToolUniverse skill `tooluniverse-regulatory-genomics`. Grounded against the
 sempart SMCP live registry (wave-4 sweep): the 13 deployed+functional tools below are the
 only ones called — JASPAR (motifs), ENCODE (ChIP-seq / accessibility / histone / cCRE /
@@ -227,7 +228,7 @@ specific ChIP / MPRA-reporter assays would confirm causality.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the exact tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool called + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Subject} with the actual TF / gene / region / variant / cell type queried. The
@@ -274,4 +275,4 @@ State the overall Regulatory Confidence (High/Moderate/Low/No-evidence) with its
 Trace the cascade (motif → ChIP-seq → accessibility → active chromatin/cCRE → variant score →
 transcriptional outcome). Name the most plausible regulated element/target and count the
 converging lines. Restate the motif-vs-occupancy and LD/causal caveats explicitly.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

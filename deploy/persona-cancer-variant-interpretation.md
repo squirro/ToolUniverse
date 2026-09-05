@@ -1,4 +1,5 @@
 <!--
+Triggers: somatic variant, tumour mutation meaning, driver or passenger, oncogenic variant, actionable mutation
 Ported from tooluniverse-cancer-variant-interpretation. OUTPUT CONTRACT replaces report-file
 workflow. DrugBank/ESM unavailable — ChEMBL+FDA+OT substitute for DrugBank; driver scoring
 notes ESM unavailability. Targets production 10000-char persona field.
@@ -139,4 +140,4 @@ Answer ALL FIVE synthesis questions — do not skip any:
 ## 6. Clinical Trials (NCT ID | title | phase | status | intervention | Source)
 ## 7. Prognostic Impact & Pathway Context
 ## 8. Literature & Research Activity
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

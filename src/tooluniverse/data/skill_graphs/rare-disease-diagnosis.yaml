@@ -1,0 +1,313 @@
+# rare-disease-diagnosis as a process graph.
+#
+# Chosen because it is the flakiest skill we measured: three identical probes on
+# 2026-08-21 returned fail, warn and pass. The prose body already carries the right
+# procedure — what varies is whether the agent performs it.
+#
+# Two things the graph fixes that prose could not. Phase 2 demands TWO joint calls,
+# one over every phenotype and one over only the discriminating ones, because the
+# strict intersection of common terms starves while the discriminating pair returns
+# the textbook differential; written as prose it is regularly reduced to one call.
+# And the body sources candidate genes FROM the literature, yet puts literature in
+# Phase 6 and gene work in Phase 3 — here literature runs first, so the dependency
+# is real rather than aspirational.
+#
+# Facts the agent feeds back: symptoms, hpo_ids, discriminating_hpo_ids,
+# top_candidate, genes, variant_id.
+
+skill: rare-disease-diagnosis
+inputs: [symptoms]
+# Optional, bound by the AGENT from the case when it supplies one. Without this
+# the `variant` step's `when: variant_id` could never be true.
+optional_inputs: [variant_id]
+# How the report must read the evidence. The bundle carries the numbers; this
+# carries the author's rules for ranking, grading and citing them. Blind-judged
+# 2026-09-03 on clinical-data-integration: without it the writer had the data and
+# not the judgement.
+report: >-
+  Open with five answers, each its own sentence: the most likely diagnosis and its
+  primary evidence; the ranked differential; the tests or variants that would
+  discriminate the top candidates; any treatable condition that needs urgent
+  work-up; the recommended next diagnostic step. Then the ranked differential:
+  merge `results.differential_all` (strict intersection), `results.differential_discriminating`
+  (the discriminating pair) and `results.keyword_search` (Orphanet), skipping any
+  name that begins "OBSOLETE:". For every candidate give its overlap against the
+  FULL Phase-1 term set in `facts.hpo_ids` as "n of N phenotypes" (a percentage
+  may follow in brackets) and the grade it earns: T1 above 80% with a gene in the
+  literature, T2 60-80%, T3 40-60%, T4 below 40%. Compute the overlap only from
+  phenotypes the result actually lists for that disease; when a result does not
+  list them, write "overlap not computable from the returned data" rather than
+  a guess. Never leave a grade blank when an overlap is known. Say which
+  candidates came only from the discriminating pair and which only from the
+  keyword search; weight the HPO route as primary when the two disagree. Name
+  the features of the case the leading candidate leaves unexplained. The third
+  answer — the tests that discriminate the top candidates — must be concrete:
+  when the top two are in the same disease family (two mucopolysaccharidoses,
+  two gangliosidoses), name the enzyme or gene pair that separates them from
+  their rows in `facts.orphanet_gene_rows` (for example IDUA for Hurler against
+  IDS for MPS II) and say that the enzyme assay or the gene test decides. If
+  you add the inheritance pattern or a clinical sign that separates them, label
+  it as clinical reasoning: no tool in this run returned it. The values
+  `working_hypothesis`, `discriminating_features`, `discriminating_hpo_ids` and
+  `top_candidate` in `facts` were supplied by the model when the run asked for
+  them: present them as clinical reasoning, not as tool output, and say so once.
+  Genes come from three queries and from nowhere else. The gene panel is one
+  table with a row per gene in `facts.genes` and these columns: gene; the
+  disease(s) it is causal for and the association type, from
+  `facts.orphanet_gene_rows`; the Open Targets score for that gene in that
+  disease's row of `facts.opentargets_rows`, written as the number returned
+  (or "not in Open Targets"), plus the top three scored targets of that disease
+  with their scores so the drop-off is visible — never apply a cut; the
+  OptimusKG relation and evidence score from `facts.optimuskg_genes` when the
+  gene is there (or "not in OptimusKG"); Ensembl id and expression from the
+  panel results. Where the three agree, say so once; where they differ, show
+  all and do not pick. A gene in none of the three sources is not in the
+  report. A disease with no gene in any source says "no causal gene in
+  Orphanet, Open Targets or OptimusKG". When `facts.optimuskg_genes` is empty
+  because the tool failed, say so in one line. Variant interpretation appears only when the
+  `variant` step is in `steps_done`; otherwise one line, "No variant data
+  provided", which is an answer. Cite each HPO term as
+  https://hpo.jax.org/browse/term/<HP id>, each ranked disease as
+  https://www.orpha.net/en/disease/detail/<ORPHAcode> taken from its row in
+  `facts.orphanet_matches` (match on the preferred term; a disease with no row
+  is "no Orphanet entry found" and gets no link), each
+  paper as https://europepmc.org/article/MED/<PMID>, each Open Targets row as
+  https://platform.opentargets.org/disease/<MONDO id>, each Orphanet gene claim
+  by its PMID, each gene as
+  https://www.ncbi.nlm.nih.gov/gene/<entrezgene from the MyGene result> and its
+  expression as https://gtexportal.org/home/gene/<symbol>. Every footnote is a
+  real https link and every item has its own — never one footnote for a whole
+  table. End with a Limitations section built from `failures`, `blocked` and
+  `unresolved`, and from any symptom that resolved to no HP: id.
+
+steps:
+  - id: hypothesis
+    label: "Phase 0 — clinical reasoning, before any tool call"
+    calls: []
+    produces: [primary_keyword, working_hypothesis, discriminating_features]
+    # No tool can yield these: the run asks the model for them by name.
+    judge: [primary_keyword, working_hypothesis, discriminating_features]
+    notes: >-
+      State the top 3-5 candidates and the reasoning chain, and name the rarest,
+      most discriminating features. Do this from the presentation alone — it is
+      what decides which phenotypes drive the intersection below. Carry the case's
+      symptoms as a list in `symptoms`, and set `primary_keyword` to ONE short
+      search phrase for the leading syndrome class (a string, not a list — the
+      keyword search takes a single query).
+
+  - id: phenotypes
+    label: "Phase 1 — resolve each symptom to an HPO id"
+    requires: [hypothesis]
+    for_each: symptoms
+    as: symptom
+    calls:
+      - tool: get_HPO_ID_by_phenotype
+        arguments: {query: "{symptom}", limit: 5}
+    # Live, the lookup answers UPHENO:, MP:, then HP: — the human phenotype is
+    # third. One HP id per symptom, taken mechanically; which two or three
+    # discriminate is judgement.
+    collect:
+      hpo_ids: {path: "data.items[].id", match: "^HP:"}
+    produces: [hpo_ids, discriminating_hpo_ids]
+    judge: [discriminating_hpo_ids]
+    notes: >-
+      One call per symptom. Take the top HP:-prefixed hit — the tool also returns
+      MP: and other namespaces, which are not human phenotypes. A symptom that
+      resolves to nothing is not a failure: carry it as an Orphanet keyword instead.
+      Set hpo_ids to every HP: id, and discriminating_hpo_ids to the 2-3 rarest.
+
+  - id: differential_all
+    label: "Phase 2a — diseases annotated with ALL the phenotypes"
+    requires: [phenotypes]
+    calls:
+      - tool: get_joint_associated_diseases_by_HPO_ID_list
+        arguments: {HPO_ID_list: "{hpo_ids}", limit: 20}
+    # The tool answers a bare list of names, which the executor hands the run as
+    # {"result": [...]} — the same shape every saved trace shows.
+    extract: {strict_candidates: {path: "result"}}
+    produces: [strict_candidates]
+    notes: >-
+      A SHORT list here is normal, not a failure — common terms like developmental
+      delay are annotated on thousands of diseases, so the strict intersection
+      starves. Do not stop here.
+
+  - id: differential_discriminating
+    label: "Phase 2b — the same query on the DISCRIMINATING phenotypes only"
+    requires: [phenotypes]
+    calls:
+      - tool: get_joint_associated_diseases_by_HPO_ID_list
+        arguments: {HPO_ID_list: "{discriminating_hpo_ids}", limit: 30}
+    extract: {decisive_candidates: {path: "result"}}
+    produces: [decisive_candidates]
+    notes: >-
+      This is the call that surfaces the clinically decisive differential — coarse
+      facies plus hepatosplenomegaly returns the storage disorders, where the full
+      term set returns almost nothing. Both 2a and 2b are required.
+
+  - id: resolve_candidates
+    label: "Phase 2b' — an Orphanet entry for each decisive candidate"
+    requires: [differential_discriminating]
+    for_each: decisive_candidates
+    as: candidate
+    calls:
+      - tool: Orphanet_search_diseases
+        arguments: {query: "{candidate}", limit: 1}
+    # The joint tool gives names only. One lookup per name carries the hit as a
+    # row — code and preferred term together — so a name Orphanet does not know
+    # is absent rather than shifting every later index (live 2026-09-04: no
+    # ranked disease could be linked).
+    collect:
+      orphanet_matches: {path: "data.results.0"}
+      orphanet_codes: {path: "data.results.0.ORPHAcode"}
+    produces: [orphanet_matches, orphanet_codes]
+    notes: >-
+      One call per decisive candidate, the top hit only. A candidate with no hit
+      has no row in orphanet_matches: report it as "no Orphanet entry found" and
+      give it no link. Never guess a code.
+
+  - id: keyword_search
+    label: "Phase 2c — Orphanet keyword search"
+    requires: [phenotypes]
+    calls:
+      - tool: Orphanet_search_diseases
+        arguments: {query: "{primary_keyword}", limit: 20}
+    produces: [top_candidate]
+    judge: [top_candidate]
+    notes: >-
+      Catches diseases the phenotype lookup misses. SKIP any hit whose name begins
+      "OBSOLETE:". Merge with 2a and 2b, then score every candidate against the FULL
+      Phase-1 term set: excellent >80%, good 60-80%, possible 40-60%, low <40%.
+
+  - id: literature
+    label: "Phase 3 — literature on the leading candidate"
+    requires: [keyword_search]
+    calls:
+      - tool: EuropePMC_search_articles
+        arguments: {query: "{top_candidate}", limit: 10}
+    notes: >-
+      Recent papers on the top candidate, cited by PMID. Literature is context
+      for the report; it is not where genes come from.
+
+  - id: gene_evidence_orphanet
+    label: "Phase 3a — causal genes per ranked disease, from Orphanet"
+    requires: [resolve_candidates]
+    for_each: orphanet_codes
+    as: orphacode
+    calls:
+      - tool: Orphanet_get_genes
+        arguments: {orphacode: "{orphacode}"}
+    # Live 2026-09-04 the model, asked for genes, answered four once (three from
+    # its own hypothesis) and none twice on identical data. A gene is a claim the
+    # Run Record must vouch for: it is looked up, never judged. Each row keeps
+    # the disease it belongs to; the flat unique list is what the panel loops over.
+    collect:
+      orphanet_gene_rows: {path: "data"}
+      genes: {path: "data.genes[].Symbol", flatten: true, unique: true}
+    produces: [orphanet_gene_rows, genes]
+    notes: >-
+      One call per resolved candidate. Each row carries the disease, its genes,
+      the association type (causative, modifier, susceptibility), the assessment
+      status and the PMID Orphanet cites. A disease with an empty gene list has no
+      known causal gene in Orphanet — say so, do not fill it from memory.
+
+  - id: disease_ids_opentargets
+    label: "Phase 3b — Open Targets disease ids for the decisive candidates"
+    requires: [differential_discriminating]
+    for_each: decisive_candidates
+    as: candidate
+    calls:
+      - tool: OpenTargets_get_disease_ids_by_name
+        arguments: {name: "{candidate}"}
+    # Open Targets indexes rare diseases under MONDO ids; an Orphanet id does
+    # not resolve on the targets endpoint. The top search hit per name.
+    collect:
+      mondo_ids: {path: "data.search.hits.0.id", unique: true}
+    produces: [mondo_ids]
+    notes: >-
+      One name lookup per decisive candidate, top hit only. A candidate Open
+      Targets does not know has no id and no targets row; say so.
+
+  - id: gene_evidence_opentargets
+    label: "Phase 3c — scored target associations per disease, from Open Targets"
+    requires: [disease_ids_opentargets]
+    for_each: mondo_ids
+    as: mondo_id
+    calls:
+      - tool: OpenTargets_get_associated_targets_by_disease_efoId
+        arguments: {efoId: "{mondo_id}"}
+    collect:
+      opentargets_rows: {path: "data.disease"}
+    produces: [opentargets_rows]
+    notes: >-
+      Each row is one disease with its associated targets and their association
+      scores, exactly as returned. Present the scores; do not apply a cut. The
+      causal gene is normally the top score and the tail drops off sharply —
+      let the reader see that. Cite https://platform.opentargets.org/disease/<id>.
+
+  - id: gene_evidence_optimuskg
+    label: "Phase 3d — the SR knowledge graph on the top candidate (agent's own tool)"
+    requires: [keyword_search]
+    # OptimusKG is not in the registry: the run pauses and the agent makes these
+    # two calls with its own tool. Search resolves the disease to its CURIE;
+    # evidence lists the one-hop neighbours restricted to genes, with the
+    # relation and evidence score per edge.
+    delegate:
+      - tool: OptimusKG_Search
+        arguments: {action: "search", query: "{top_candidate}", node_types: ["disease"]}
+      - tool: OptimusKG_Search
+        arguments: {action: "evidence", query: "<the disease CURIE from the search>", node_types: ["gene"]}
+    produces: [optimuskg_genes]
+    notes: >-
+      Run the search, take the CURIE of the best disease hit, and run evidence on
+      it. Return optimuskg_genes as a list of {gene, relation, evidence_score,
+      source} rows from the evidence result — one per gene neighbour, as
+      returned. If the search finds no disease node, return an empty list and
+      say so; do not fill it from memory.
+
+  - id: gene_panel
+    label: "Phase 4 — characterise the candidate genes"
+    requires: [literature]
+    when: genes
+    for_each: genes
+    as: gene
+    calls:
+      - tool: MyGene_query_genes
+        arguments:
+          query: "{gene}"
+          fields: "symbol,name,entrezgene,ensembl.gene,summary"
+    notes: >-
+      One call per gene in `facts.genes`. Take symbol, name, Entrez id and
+      Ensembl id from the hit whose symbol matches exactly; a gene with no exact
+      hit is reported as unresolved, never replaced by a near match. Skipped
+      entirely when no gene could be sourced.
+
+  - id: expression
+    label: "Phase 5 — tissue expression context"
+    requires: [gene_panel]
+    when: genes
+    for_each: genes
+    as: gene
+    calls:
+      - tool: GTEx_get_expression_summary
+        arguments: {gene_symbol: "{gene}"}
+    notes: If GTEx has nothing, fall back to HPA_search_genes_by_query.
+
+  - id: variant
+    label: "Phase 6 — variant interpretation"
+    requires: [phenotypes]
+    when: variant_id
+    calls:
+      - tool: gnomad_get_variant
+        arguments: {variant_id: "{variant_id}", dataset: "gnomad_r4"}
+    notes: >-
+      Only when the case supplies variant data. Otherwise the report says
+      "No variant data provided" — that is an answer, not a gap.
+
+  - id: report
+    label: "Phase 7 — ranked differential with the evidence"
+    requires: [differential_all, differential_discriminating, resolve_candidates, keyword_search,
+               literature, gene_evidence_orphanet, gene_evidence_opentargets, gene_evidence_optimuskg]
+    calls: []
+    notes: >-
+      Rank every candidate with its score and the phenotypes that support it, and
+      say which features are unexplained. Every footnote needs a real https link.

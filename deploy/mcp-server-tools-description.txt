@@ -1,0 +1,7 @@
+ToolUniverse — grounded biomedical & chemistry tools. Use whenever a question turns on a gene, protein, variant, drug, compound, SMILES, pathway, target–disease link, clinical trial, structure or toxicity.
+
+Two patterns:
+1) WORKFLOWS — find_skill(query) finds the right expert playbook (never guess a skill name); get_skill(name) returns it; follow that playbook to the letter as BINDING instructions. Skills: disease-research, drug-mechanism-research, drug-target-validation, variant-interpretation, precision-oncology, clinical-trial-matching, pharmacovigilance, toxicology, +60 more.
+2) SINGLE FACTS — find_tools(query) (pass ONLY query; omit categories) then execute_tool(name, args) over ~2,278 DBs (UniProt, ChEMBL, Open Targets, ClinicalTrials, HPA, AlphaFold…). Resolve names→IDs (disease→EFO, drug→ChEMBL, gene→Ensembl); never fabricate one.
+
+Aggregate trial counts are NOT clinical-trial-matching (per-patient).

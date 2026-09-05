@@ -1,0 +1,234 @@
+# clinical-data-integration as a process graph — the multi-source join case.
+#
+# Chosen for the proof of concept because it is the join: label, FAERS,
+# pharmacogenomics, clinical trials and literature, assembled into one safety
+# picture. Its execution genuinely varies — 8, 10, 12, 10 and 16 execute_tool
+# calls across six recorded runs — so there is something for a harness to hold.
+#
+# Only TWO values actually chain, and the prose body spends most of its warnings
+# on exactly those two:
+#   setid   — a DailyMed UUID captured in Phase 0 and reused in Phase 1, with
+#             three lines warning that the parameter is `setid`, not `set_id`.
+#   top_aes — FAERS reaction terms that must be passed back VERBATIM, because
+#             MedDRA is case- and spelling-strict ("Haemorrhage", not
+#             "hemorrhage"). The body pleads "do NOT retype or guess"; here they
+#             are carried mechanically and cannot be retyped.
+# strong_signal is DERIVED by the server from returned PRR values, not asserted
+# by the model — the equivalent of Novartis's _gw_* predicates.
+
+skill: clinical-data-integration
+inputs: [drug_name]
+# How the report must read the evidence. Blind-judged 2026-09-03: the reports
+# written from the bundle alone printed FAERS coding noise as headline signals.
+# The numbers were right; the judgement the author wrote down never reached the
+# writer. It travels in the bundle now.
+report: >-
+  Lead with the two events the question names, then the ranked signals. For every
+  FAERS signal state the PRR, then classify it against the label: known and
+  labelled, known but under-labelled, or a potential new signal. A PRR is a
+  reporting signal, not causality: say so once, and name the biases (stimulated
+  reporting, indication, disease progression in an oncology cohort). Terms the
+  process excluded as nonspecific are listed under `excluded`; mention that they
+  dominate raw report counts and were set aside, and never present them as
+  signals. A term that names the treated indication or its course (the tumour,
+  its metastases, progression) is reported disease, not a drug signal: say so
+  and do not rank it. Name the FAERS cohort (the brand name used). Cite each PRR
+  with its own query: `facts.prr_urls` is aligned with `facts.signal_aes` and
+  `facts.prrs`, one link per term — never one footnote for the whole table. Cite
+  label numbers with the `source_url` of their result, literature by PMID or DOI
+  from `facts`, and each trial as https://clinicaltrials.gov/study/<NCT id>. Read pharmacogenomic findings as risk-narrowing;
+  an empty CPIC result means no guideline exists, which is an answer. Web context
+  is supplement, not a finding, and is cited as web. End with a Limitations
+  section built from `failures`, `blocked`, `unresolved` and `excluded`.
+# Optional, and bound by the AGENT from the question: the reactions the user
+# actually asked about. "especially myelodysplastic syndrome and renal
+# impairment" — neither is in Lutathera's top twelve by report count, so without
+# this the run returns correct numbers that do not answer the question.
+optional_inputs: [requested_aes]
+
+steps:
+  - id: identity
+    label: "Phase 0 — drug identity and label handle"
+    calls:
+      - tool: DailyMed_search_spls
+        arguments: {drug_name: "{drug_name}"}   # NOT `query` — the prose body says query, the schema says drug_name
+      - tool: OpenFDA_get_approval_history
+        arguments: {operation: "get_approval_history", drug_name: "{drug_name}"}
+    repair:
+      # The agent binds "lutetium Lu-177 dotatate" from the question — correctly,
+      # and identically on three runs — and DailyMed returns 0 SPLs for it while
+      # "lutetium lu 177 dotatate" returns 1. The isotope notation is world
+      # knowledge the agent has and the data does not, so ask and retry rather
+      # than fail the whole run at step one.
+      argument: drug_name
+      when_missing: setid
+    extract:
+      setid: "data.0.setid"
+      # FAERS indexes this drug family by BRAND, not by the generic INN the
+      # question uses: measured, "lutetium lu 177 dotatate" returns 3 reaction
+      # terms and "LUTATHERA" returns 100. Case is irrelevant, despite what the
+      # prose body says. DailyMed's SPL title starts with the brand, so lift it
+      # here and let every FAERS step use it.
+      faers_name:
+        path: "data.0.title"
+        regex: "^([A-Za-z0-9-]{3,})"
+        default_from: drug_name
+    produces: [setid, faers_name, approval_history]
+
+  - id: label
+    label: "Phase 1 — FDA label, the ground truth"
+    requires: [identity]
+    calls:
+      - tool: FDA_get_boxed_warning_info_by_drug_name
+        arguments: {drug_name: "{drug_name}"}
+      - tool: FDA_get_warnings_and_cautions_by_drug_name
+        arguments: {drug_name: "{drug_name}"}
+      - tool: DailyMed_parse_adverse_reactions
+        arguments: {setid: "{setid}"}
+      - tool: DailyMed_parse_drug_interactions
+        arguments: {setid: "{setid}"}
+    notes: >-
+      A NOT_FOUND from the boxed-warning call is NORMAL — it means the drug has
+      no boxed warning. Report that, do not treat it as a failure.
+
+  - id: faers_counts
+    label: "Phase 2a — reported adverse-event terms"
+    requires: [identity]
+    calls:
+      - tool: FAERS_count_reactions_by_drug_event
+        arguments: {medicinalproduct: "{faers_name}"}
+    extract:
+      # Coding noise and outcomes, not reactions: they top every raw FAERS count
+      # and carry no clinical information. Excluded before the cap, and the
+      # bundle records what was set aside so the report can say so.
+      top_aes:
+        path: "result[].term"
+        limit: 12
+        exclude: [ILL-DEFINED DISORDER, GENERAL PHYSICAL HEALTH DETERIORATION, ILLNESS,
+                  LABORATORY TEST ABNORMAL, DISEASE PROGRESSION, MALIGNANT NEOPLASM PROGRESSION,
+                  DEATH, COVID-19, CONDITION AGGRAVATED, OFF LABEL USE, DRUG INEFFECTIVE,
+                  PRODUCT USE ISSUE, NO ADVERSE EVENT]
+    combine:
+      signal_aes: {union: [requested_aes, top_aes], limit: 15}
+    produces: [top_aes, signal_aes]
+    notes: >-
+      FAERS drug names are case-strict; the term strings are carried forward
+      exactly as returned.
+
+  - id: disproportionality
+    label: "Phase 2b — disproportionality per reported term"
+    requires: [faers_counts]
+    for_each: signal_aes
+    as: adverse_event
+    calls:
+      - tool: FAERS_calculate_disproportionality
+        arguments: {drug_name: "{faers_name}", adverse_event: "{adverse_event}"}
+    collect:
+      prrs: "data.metrics.PRR.value"   # one metrics object per call, so GATHER
+      # The stamped citation of each call, in the same order as signal_aes and
+      # prrs: the writer cites each PRR with its own query, not one footnote
+      # for the whole table (blind-judged 2026-09-03).
+      prr_urls: "source_url"
+    derive:
+      strong_signal: {from: prrs, op: ">=", value: 5, mode: any}
+    produces: [prrs, prr_urls, strong_signal]
+
+  - id: seriousness
+    label: "Phase 2c — how seriously the events were reported"
+    requires: [faers_counts]
+    calls:
+      - tool: FAERS_filter_serious_events
+        arguments: {drug_name: "{faers_name}", seriousness_type: "hospitalization"}
+      - tool: FAERS_filter_serious_events
+        arguments: {drug_name: "{faers_name}", seriousness_type: "death"}
+
+  - id: stratify
+    label: "Phase 2d — which reported subgroups a strong signal sits in"
+    requires: [disproportionality]
+    when: strong_signal
+    calls:
+      - tool: FAERS_stratify_by_demographics
+        arguments: {drug_name: "{faers_name}", stratify_by: "sex"}
+    notes: Sex codes are 0 unknown, 1 male, 2 female. Skipped when no signal is strong.
+
+  - id: pharmacogenomics
+    label: "Phase 3 — genotypes regulators flag"
+    requires: [identity]
+    calls:
+      - tool: CPIC_list_guidelines
+        arguments: {drug: "{drug_name}"}
+      - tool: fda_pharmacogenomic_biomarkers
+        arguments: {drug_name: "{drug_name}"}
+    notes: >-
+      Most drugs have no CPIC guideline — only about thirty gene-drug pairs do.
+      An empty result is normal and is reported as "No CPIC guideline".
+
+  - id: trials
+    label: "Phase 4 — registry entries and safety endpoints"
+    requires: [identity]
+    calls:
+      - tool: search_clinical_trials
+        arguments: {query_term: "{drug_name}"}
+    extract:
+      nct_ids: {path: "data.studies[].NCT ID", limit: 10}
+      trial_titles: {path: "data.studies[].brief_title", limit: 10}
+      trial_phases: {path: "data.studies[].phase", limit: 10}
+      trial_status: {path: "data.studies[].overall_status", limit: 10}
+    produces: [nct_ids, trial_titles, trial_phases, trial_status]
+    notes: >-
+      Simple single-drug queries work best here; multi-word queries often return
+      nothing. Cite trials by NCT id.
+
+  - id: literature
+    label: "Phase 5 — published safety evidence"
+    requires: [identity]
+    calls:
+      - tool: PubMed_search_articles
+        # Field-tagged: "Lutathera adverse events safety" came back dominated by
+        # 177Lu-PSMA prostate papers. The drug must be in the title or abstract.
+        arguments: {query: "{drug_name}[Title/Abstract] AND (safety OR adverse OR toxicity OR myelodysplastic OR renal)"}
+    extract:
+      pmids: {path: "data[].pmid", limit: 10}
+      paper_titles: {path: "data[].title", limit: 10}
+      paper_years: {path: "data[].pub_year", limit: 10}
+      paper_dois: {path: "data[].doi_url", limit: 10}
+    produces: [pmids, paper_titles, paper_years, paper_dois]
+    notes: Real titles, PMIDs and years — meta-analyses before case reports.
+
+  - id: web_context
+    label: "Phase 5b — web context (agent's own search; supplement, not a finding)"
+    requires: [literature]
+    # The agent's web tools are not in the registry: the run pauses and the agent
+    # makes this call itself. Placed after the grounded phases on purpose.
+    delegate:
+      - tool: exa_web_search
+        arguments: {query: "{drug_name} myelodysplastic syndrome renal impairment safety"}
+    produces: [web_context]
+    notes: >-
+      Return the results as a list of {title, url, snippet}. Web is context and
+      recency only; anything it surfaces that the tools did not is reported as
+      web-sourced, never as a finding.
+
+  - id: compute
+    label: "Phase 5c — ranked signal table (agent's code tool)"
+    requires: [disproportionality]
+    delegate:
+      - tool: code_interpreter
+        arguments:
+          task: >-
+            Pair each term in `terms` with the PRR at the same index in `prrs`,
+            sort by PRR descending, flag PRR >= 2, and return the table as a
+            list of {term, prr, flagged}.
+          terms: "{signal_aes}"
+          prrs: "{prrs}"
+    produces: [prr_table]
+    notes: Use your code tool for this; if you have none, compute it carefully and say so.
+
+  - id: assessment
+    label: "Phase 6 — integrated assessment (synthesis, no new tools)"
+    requires: [label, disproportionality, pharmacogenomics, trials, literature, web_context, compute]
+    calls: []
+    notes: >-
+      Classify every notable FAERS signal against the label: known and labeled,
+      known but under-labeled, or potential new signal. Read pharmacogenomic
+      findings as risk-narrowing.

@@ -165,7 +165,7 @@
   {
     "type": "ProteinsAPIRESTTool",
     "name": "proteins_api_get_epitopes",
-    "description": "Get epitope sequences for a protein. Returns B-cell and T-cell epitope information with antigenicity predictions. Supports batch operations: pass a list of accessions or comma-separated string to retrieve multiple proteins in parallel. Note: This tool extracts epitope-related data from the main protein endpoint (the separate epitopes endpoint is not available). Returns immunology comments and epitope features if present.",
+    "description": "Get annotated epitopes for a protein from the EBI Proteins API. Returns EPITOPE features with residue ranges and IEDB cross-references, plus any immunology comments. P04637 (TP53) returns 62 such features. Supports batch operations: pass a list of accessions or comma-separated string to retrieve multiple proteins in parallel.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -191,7 +191,7 @@
       ]
     },
     "fields": {
-      "endpoint": "https://www.ebi.ac.uk/proteins/api/proteins/{accession}/epitopes",
+      "endpoint": "https://www.ebi.ac.uk/proteins/api/epitope/{accession}",
       "return_format": "JSON"
     },
     "return_schema": {

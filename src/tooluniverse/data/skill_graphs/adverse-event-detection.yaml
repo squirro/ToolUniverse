@@ -1,0 +1,152 @@
+# adverse-event-detection as a process graph (DSR-696 tracer bullet).
+#
+# The same nine phases the prose body carries, with the plan moved out of the
+# model's head. Each step names its calls and their arguments, says what to
+# extract, and declares what must be done before it. The gateways the body writes
+# in capital letters ("do not skip", "if no comparator, skip") are `when:`
+# conditions here, so skipping is a property of the graph rather than a judgement
+# the agent makes while holding 14k characters of instructions.
+#
+# Facts the agent feeds back: chembl_id, top_aes, strong_signal, comparator.
+
+skill: adverse-event-detection
+inputs: [drug_name]
+
+steps:
+  - id: resolve_drug
+    label: "Phase 0 — resolve the drug to a ChEMBL ID"
+    calls:
+      - tool: OpenTargets_get_drug_chembId_by_generic_name
+        arguments: {drugName: "{drug_name}"}
+    produces: [chembl_id]
+    notes: >-
+      Carry the ChEMBL ID into every later step. If nothing resolves, the subject
+      is probably not a drug — say so and stop rather than running the rest.
+
+  - id: indications
+    label: "Phase 0 — approved indications and clinical stage"
+    requires: [resolve_drug]
+    calls:
+      - tool: OpenTargets_get_drug_indications_by_chemblId
+        arguments: {chemblId: "{chembl_id}"}
+    produces: [indications]
+
+  - id: ae_profile
+    label: "Phase 1 — FAERS adverse-event profile (breadth)"
+    requires: [resolve_drug]
+    calls:
+      - tool: FAERS_count_reactions_by_drug_event
+        arguments: {medicinalproduct: "{drug_name}"}
+      - tool: FAERS_count_seriousness_by_drug_event
+        arguments: {medicinalproduct: "{drug_name}"}
+      - tool: FAERS_count_outcomes_by_drug_event
+        arguments: {medicinalproduct: "{drug_name}"}
+      - tool: FAERS_count_death_related_by_drug
+        arguments: {medicinalproduct: "{drug_name}"}
+    produces: [top_aes]
+    notes: >-
+      These counts use MedDRA Lowest Level Terms; the next step uses Preferred
+      Terms, so the numbers will differ. Disproportionality is the primary metric.
+      Select the top 15-20 reactions and carry them as top_aes.
+
+  - id: disproportionality
+    label: "Phase 2 — disproportionality per reaction (PRIMARY SIGNAL METRIC)"
+    requires: [ae_profile]
+    for_each: top_aes
+    as: adverse_event
+    calls:
+      - tool: FAERS_calculate_disproportionality
+        arguments: {drug_name: "{drug_name}", adverse_event: "{adverse_event}"}
+    produces: [signals, strong_signal, strong_aes]
+    notes: >-
+      One call per reaction is emitted for you — run them all.
+      Grade each row: PRR >= 5 strong, >= 2 moderate, > 1 weak, else none. Set
+      strong_signal true if any row grades strong, and strong_aes to the
+      reactions that did.
+
+  - id: stratify
+    label: "Phase 2b — stratify the strong signals"
+    requires: [disproportionality]
+    when: strong_signal
+    for_each: strong_aes
+    as: adverse_event
+    calls:
+      - tool: FAERS_stratify_by_demographics
+        arguments:
+          drug_name: "{drug_name}"
+          adverse_event: "{adverse_event}"
+          stratify_by: "sex"
+    notes: Only for reactions graded strong. Skip entirely when none are.
+
+  - id: label_safety
+    label: "Phase 3 — FDA label safety sections"
+    requires: [resolve_drug]
+    calls:
+      - tool: FDA_get_boxed_warning_info_by_drug_name
+        arguments: {drug_name: "{drug_name}"}
+      - tool: FDA_get_warnings_by_drug_name
+        arguments: {drug_name: "{drug_name}"}
+      - tool: FDA_get_adverse_reactions_by_drug_name
+        arguments: {drug_name: "{drug_name}"}
+      - tool: FDA_get_contraindications_by_drug_name
+        arguments: {drug_name: "{drug_name}"}
+    produces: [label_warnings]
+    notes: >-
+      `{"error": {"code": "NOT_FOUND"}}` is a normal answer here — record
+      "Not present in label" and carry on.
+
+  - id: regulatory_context
+    label: "Phase 4 — regulatory warnings and toxicity context"
+    requires: [resolve_drug]
+    calls:
+      - tool: OpenTargets_get_drug_warnings_by_chemblId
+        arguments: {chemblId: "{chembl_id}"}
+      - tool: FDA_get_pharmacokinetics_by_drug_name
+        arguments: {drug_name: "{drug_name}"}
+    notes: >-
+      hERG, AMES and ClinTox have no served tool — write "no tool available",
+      never estimate.
+
+  - id: comparative
+    label: "Phase 5 — comparative safety against a class member"
+    requires: [disproportionality]
+    when: comparator
+    for_each: strong_aes
+    as: adverse_event
+    calls:
+      - tool: FAERS_compare_drugs
+        arguments:
+          drug1: "{drug_name}"
+          drug2: "{comparator}"
+          adverse_event: "{adverse_event}"
+    notes: >-
+      Only when a comparator is known. A signal present across the class is
+      mechanism-based; one unique to this drug is molecule-specific.
+
+  - id: interactions
+    label: "Phase 6 — interactions and pharmacogenomics"
+    requires: [resolve_drug]
+    calls:
+      - tool: FDA_get_drug_interactions_by_drug_name
+        arguments: {drug_name: "{drug_name}"}
+      - tool: fda_pharmacogenomic_biomarkers
+        arguments: {drug_name: "{drug_name}"}
+
+  - id: literature
+    label: "Phase 7 — literature evidence"
+    requires: [resolve_drug]
+    calls:
+      - tool: PubMed_search_articles
+        arguments: {query: "{drug_name} adverse events safety", limit: 15}
+      - tool: EuropePMC_search_articles
+        arguments: {query: "{drug_name} pharmacovigilance adverse drug reaction", limit: 10}
+    notes: Real titles with PMIDs or DOIs and years — not trial listings.
+
+  - id: report
+    label: "Phase 8 — score the signal and emit the report"
+    requires: [disproportionality, label_safety, literature]
+    calls: []
+    notes: >-
+      Score from data already in hand, out of 100: disproportionality 35, serious
+      AE burden 30, label warnings 25, literature 10. Never leave it blank when
+      the data exists. Every footnote needs a real https link.

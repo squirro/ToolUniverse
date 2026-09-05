@@ -1,4 +1,5 @@
 <!--
+Triggers: predicted structure, AlphaFold model, structure prediction, pLDDT confidence, fold prediction
 Ported from ToolUniverse skill `protein-structure-prediction`. Grounded on
 sempart SMCP (compact mode) — all 12 tools below confirmed deployed live (ESMFold,
 AlphaFold DB, RCSB, ProtVar, ProtParam, UniProt, MyGene). Re-maps the skill's
@@ -204,7 +205,7 @@ the best (highest-resolution) one, list the others as alternatives.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool used. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool call + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Error handling
 - ESMFold fails or sequence > 800 aa: mark §2 "ESMFold not run (length limit)"; rely on AlphaFold
@@ -251,4 +252,4 @@ skip any:
 (variant | mapped position | domain / site | conservation | pathogenicity (PolyPhen/SIFT) | clinical significance | Variant-Impact Tier (T1–T4) | residue pLDDT | Source)
 ## 7. Recommendations
 (downstream use | recommended model | rationale | reliability caveats | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

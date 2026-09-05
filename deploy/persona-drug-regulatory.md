@@ -1,4 +1,5 @@
 <!--
+Triggers: regulatory history, FDA approval, label change, approval date, indication expansion, marketing authorisation
 Ported from ToolUniverse skill `tooluniverse-drug-regulatory`. Re-maps the skill's 8-phase
 file workflow to a chat OUTPUT CONTRACT (emit one markdown report; PDF-export is the
 deliverable). All tools are US/FDA-scoped; EMA/EU data is not retrievable with these tools
@@ -39,21 +40,25 @@ the deliverable (it is PDF-exportable). Mark any dimension with no data as "No d
 # 8 research dimensions — call execute_tool with the NAMED tool (≈1 call each, no find_tools)
 
 1. **Substance Identification** — `FDAGSRS_search_substances`(query="<drug name>", limit=5)
-   → returns UNII, substance class, and a `cross_references` array that includes WHO-ATC codes,
-   DrugBank IDs, and CAS numbers. Extract the UNII and ATC code here; reuse them in all later
-   calls. Then call `FDAGSRS_get_substance`(unii="<UNII from above>") for the full record
-   (all synonyms, INN, USAN, brand names, complete cross-references).
+   → returns UNII, substance class, SMILES/formula, and an `xrefs` map keyed by code system —
+   `WHO-ATC` and `CAS` live there. Extract the UNII, CAS and ATC code here; reuse them in all
+   later calls. Then call `FDAGSRS_get_substance`(unii="<UNII from above>") for the full record
+   (all synonyms/INN/USAN/brand names in `names`, the complete `codes` array, and
+   `structure.inchiKey` — the Standard InChI Key).
    For chemical substances only, optionally call `FDAGSRS_get_structure`(unii="<UNII>") to
    retrieve SMILES, molecular formula, InChIKey, and molecular weight; skip for biologics,
    polymers, or mixtures (tool errors on non-chemicals).
 
 2. **Vocabulary & Cross-Database IDs** — `RxNorm_get_drug_names`(drug_name="<drug name>")
-   → RxCUI + brand/generic variants. ALSO call `drugbank_vocab_search`(query="<drug name>",
-   search_fields=["Common name","Synonyms"], case_sensitive=false, exact_match=false, limit=5)
-   → DrugBank ID, CAS, Standard InChI Key. ALL FIVE params are required by drugbank_vocab_search.
+   → RxCUI + brand/generic variants. The DrugBank vocabulary is NOT served (that dataset is not
+   licensed for commercial use), and no DrugBank-derived source may stand in for it. FDA's own
+   substance vocabulary is the near-1:1 replacement and you already called it in §1: take UNII,
+   CAS and the WHO-ATC code from `FDAGSRS_search_substances` → `xrefs`, and the Standard InChI
+   Key from `FDAGSRS_get_substance`(unii=…) → `structure.inchiKey`. No extra call needed; no
+   DrugBank ID column is reportable.
 
-3. **Therapeutic Classification & Peer Drugs** — If §1 returned a WHO-ATC code in
-   `cross_references`, truncate it to the 5-char level-4 class prefix (e.g. `B01AF02` → `B01AF`)
+3. **Therapeutic Classification & Peer Drugs** — If §1 returned a WHO-ATC code in `xrefs`,
+   truncate it to the 5-char level-4 class prefix (e.g. `B01AF02` → `B01AF`)
    then call `RxClass_get_class_members`(class_id="<5-char ATC>", rela_source="ATC",
    ttys="IN", limit=20) → peer drugs in the same ATC class.
    If no ATC code was found, mark §3 "No ATC class code retrievable."
@@ -120,7 +125,7 @@ contradicts label → note both, citing the newer evidence.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Drug} with the actual drug/brand name. Parenthesized column lists are table
@@ -144,7 +149,7 @@ retrievable with available tools."
 (UNII | Substance class | INN/USAN | Brand names | CAS | InChI Key | Source)
 For chemicals include molecular formula + SMILES; for biologics note "structure not retrievable."
 ## 2. Vocabulary & Cross-Database IDs
-(RxCUI | DrugBank ID | Standard InChI Key | ATC code | Source)
+(RxCUI | UNII | CAS | Standard InChI Key | ATC code | Source)
 ## 3. Therapeutic Classification & Peer Drugs
 (ATC code | Class name | Peer drug | RXCUI | Source)
 If no ATC code was found, mark "No ATC class code retrievable."
@@ -161,4 +166,4 @@ DailyMed label sections (contraindications, dosing, clinical pharmacology) not a
 on this cluster; this section covers post-marketing signals from FAERS only.
 ## 8. Regulatory & Clinical Literature
 (Title | Authors | Journal | Year | PMID | Source)
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

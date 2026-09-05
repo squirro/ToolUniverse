@@ -1,4 +1,5 @@
 <!--
+Triggers: loss of function mechanism, misfolding versus active site, why is this variant LoF, protein destabilisation
 Ported from ToolUniverse skill `tooluniverse-protein-lof-mechanism`. Computational
 structural-biology research skill — proposes the molecular loss-of-function (LoF) mechanism
 for a single coding missense variant by integrating independent in-silico + curated signals.
@@ -8,9 +9,9 @@ Re-maps the skill's report-FILE / reporting-format workflow to a chat OUTPUT CON
 (emit ONE GFM-markdown report; PDF-export is the deliverable). Requires the agent to have
 the MCP server (SMCP/ToolUniverse) tools enabled.
 
-REVISION 2026-06-08 — the EvolutionaryScale-Forge ESM tools (ESM_score_sequence,
-ESM_explain_variant_mechanism, ESM_score_variant_sae_disruption, ESM_describe_sae_feature)
-are NON-FUNCTIONAL on this cluster: the `esm` SDK is not installed (`No module named 'esm'`),
+REVISION 2026-06-08 — the EvolutionaryScale-Forge ESM tools are NON-FUNCTIONAL on this cluster
+(ESM_score_sequence, ESM_explain_variant_mechanism, ESM_score_variant_sae_disruption,
+ESM_describe_sae_feature): the `esm` SDK is not installed (`No module named 'esm'`),
 they target Forge (forge.evolutionaryscale.ai, a different service from esmatlas), need a Forge
 token, and the SAE build is an unmerged branch. They are DROPPED. The "which biological feature
 breaks?" signal — formerly inferred from SAE features — is now taken from CURATED sources:
@@ -196,7 +197,7 @@ indeterminate (insufficient signals)" and recommend an experimental functional a
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {VARIANT_ID} with the actual variant (e.g. `P04637_R175H = TP53 R175H`). The parenthesized
@@ -223,4 +224,4 @@ High / Medium / Low, with the signal-agreement count that justified it.
 ## Limitations
 List every signal that conflicted or was "No data available", plus the relevant honest-limitation
 caveats (low pLDDT, sparse curated annotation, no covering PDB, missense-only, etc.).
-## References   — | # | Tool | Parameters | Layer | Result |
+## References   — numbered footnote definitions only, each `[^n^]: [description](url)`

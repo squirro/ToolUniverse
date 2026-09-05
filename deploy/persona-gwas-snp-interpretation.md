@@ -1,4 +1,5 @@
 <!--
+Triggers: what is this SNP associated with, rsID association, SNP phenotype, GWAS hit meaning
 Ported from ToolUniverse skill `tooluniverse-gwas-snp-interpretation`. Grounded against the
 sempart SMCP live registry — only the 4 tools in the AVAILABLE set are called. Requires the
 agent to have SMCP/ToolUniverse tools enabled (compact mode; reach tools via execute_tool).
@@ -123,7 +124,7 @@ explicitly; never claim a specific variant is mechanistically causal solely from
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool called + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {rsID} with the actual rsID. Parenthesized column lists specify each table's schema —
@@ -160,4 +161,4 @@ State the overall Clinical Actionability tier (High/Moderate/Low) with its deriv
 Restate the LD/causal caveat explicitly.
 Note: ClinVar pathogenicity data and regulatory annotations (ENCODE/ChIP-seq) are not available
 on this cluster — additional databases would be required to assess clinical pathogenicity.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

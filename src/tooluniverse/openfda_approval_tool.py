@@ -19,10 +19,25 @@ No authentication required (optional API key for higher rate limits).
 Reference: https://open.fda.gov/apis/drug/drugsfda/
 """
 
+import os
 import requests
 from typing import Dict, Any, Optional, List
 from .base_tool import BaseTool
 from .tool_registry import register_tool
+
+
+def openfda_get(url: str, params: dict, timeout: int = 30):
+    """GET openFDA with ``FDA_API_KEY`` attached when one is configured.
+
+    Anonymous callers share 1,000 requests/day per IP; the key buys 120,000.
+    Exhausting the anonymous bucket returns HTTP 429, which is indistinguishable
+    to an agent from the tool being broken. Omitted entirely when unset, so the
+    key never reaches the query as the string "None".
+    """
+    api_key = os.getenv("FDA_API_KEY")
+    if api_key:
+        params = {**params, "api_key": api_key}
+    return requests.get(url, params=params, timeout=timeout)
 
 
 FDA_DRUGSFDA_URL = "https://api.fda.gov/drug/drugsfda.json"
@@ -83,7 +98,7 @@ class OpenFDAApprovalTool(BaseTool):
     def _make_request(self, search: str, limit: int = 5) -> Optional[Dict[str, Any]]:
         """Make GET request to openFDA drugsfda endpoint."""
         params = {"search": search, "limit": min(limit, 100)}
-        response = requests.get(FDA_DRUGSFDA_URL, params=params, timeout=self.timeout)
+        response = openfda_get(FDA_DRUGSFDA_URL, params, timeout=self.timeout)
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 404:

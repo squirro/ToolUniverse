@@ -1,4 +1,5 @@
 <!--
+Triggers: rare disease, differential diagnosis, undiagnosed patient, dysmorphic features, syndrome from symptoms, phenotype to diagnosis, which rare diseases should we consider
 Ported from ToolUniverse skill `tooluniverse-rare-disease-diagnosis`. Tool routing grounded in
 rare-disease-diagnosis.prompt.md. Re-maps the skill's report-first FILE workflow to a chat
 OUTPUT CONTRACT. Requires SMCP/ToolUniverse MCP server. OMIM/DisGeNET genuinely NOT available
@@ -21,7 +22,7 @@ English terms in tool calls; respond in the user's language.
 
 # How to reach tools — call execute_tool DIRECTLY (tight step budget)
 The exact tool name for each phase is below — call `execute_tool(tool_name, args)` DIRECTLY.
-Use `find_tools` ONLY in the two explicitly-noted cases (HPO resolution, literature search).
+Use `find_tools` ONLY as a fallback if a named tool actually errors.
 Never call find_tools or execute_tool with an empty name/query. Aim for ~1 primary call per
 phase. If you run low on steps, emit the report with what you have (mark the rest "No data
 available"). Never fabricate tool names or results.
@@ -57,31 +58,48 @@ report. Mark any phase with no data as "No data available".
 Apply the 9-strategy framework. State pre-tool working hypothesis: top 3–5 candidates with
 reasoning chain. Identify the rarest/most discriminating feature.
 
-## Phase 1 — Phenotype → HPO IDs  [one sanctioned find_tools use]
-HPO term search is not a directly-grounded tool. Call
-`find_tools("search HPO phenotype terms by name or keyword")`, then call the returned tool with
-each symptom in English to obtain `HP:XXXXXXX` IDs. Classify each: core vs variable, age of
-onset, inheritance. Fallback if find_tools returns nothing: proceed to Phase 2 using symptom
-keywords in Orphanet.
+## Phase 1 — Phenotype → HPO IDs
+`get_HPO_ID_by_phenotype`(query="<one symptom in English>", limit=5) — ONE call PER symptom.
+Take the top `HP:`-prefixed hit (the tool also returns MP:/other-namespace phenotypes — skip
+those). Fallback per symptom: `HPO_search_terms`(query="<symptom>"). Classify each resolved
+term: core vs variable, age of onset, inheritance. If a symptom resolves to no HP: id,
+proceed to Phase 2 using that symptom as an Orphanet keyword.
 
 ## Phase 2 — Disease Matching
-**HPO-driven (primary):**
-`get_joint_associated_diseases_by_HPO_ID_list`(HPO_ID_list=[real HP:… IDs from Phase 1], limit=20)
-→ ranked candidates by joint phenotype overlap.
+**HPO-driven (primary) — TWO joint calls, both required:**
+(a) `get_joint_associated_diseases_by_HPO_ID_list`(HPO_ID_list=[ALL real HP:… IDs from
+Phase 1], limit=20) → the strict-intersection candidates. This list is often SHORT (2–3
+diseases) because common terms (developmental delay, seizure) are annotated on thousands
+of diseases — a short list here is normal, not a failure.
+(b) `get_joint_associated_diseases_by_HPO_ID_list`(HPO_ID_list=[ONLY the 2–3 MOST
+DISCRIMINATING HP: IDs — the rarest features you flagged in Phase 1, e.g. coarse facial
+features + hepatosplenomegaly, NOT delay/seizures], limit=30) → the clinically decisive
+differential (this is what surfaces the storage-disorder class for a coarse-facies +
+organomegaly picture). Merge (a) and (b); score every candidate against the FULL Phase-1
+term set.
 **Keyword search (always run):**
 `Orphanet_search_diseases`(query="<primary syndrome keyword>", limit=20)
-→ captures diseases the HPO lookup may miss.
+→ captures diseases the HPO lookup may miss. SKIP any hit whose name starts "OBSOLETE:".
 Score: Excellent >80%, Good 60–80%, Possible 40–60%, Low <40%.
 
 ## Phase 3 — Gene Panel Characterization
-**NOTE: this cluster has no disease→gene lookup tool** (Orphanet_get_genes is not grounded and
-neither Orphanet_search_diseases nor get_joint_associated_diseases_by_HPO_ID_list returns gene
-names). Source candidate genes from: (a) Phase 6 literature papers — retrieved abstracts and
-titles routinely name causal genes; (b) patient-provided gene names; (c) the user's clinical
-context. NEVER fabricate gene names. If no gene can be sourced from any of these, mark §4 "No
-gene data (no disease→gene tool available on this cluster)". Once a gene name IS in hand:
-`MyGene_query_genes`(query="<gene symbol>", fields="symbol,name,entrezgene,ensembl.gene,summary")
-→ Ensembl ID, Entrez ID, functional summary.
+Genes come from THREE queries and from nowhere else — NEVER from memory, never from a paper
+title. For each ranked candidate:
+(a) **Orphanet (causal, curated):** `Orphanet_search_diseases`(query="<candidate name>", limit=1)
+→ its ORPHAcode, then `Orphanet_get_genes`(orphacode=<that code>) → gene symbols with association
+type (causative / modifier / susceptibility), assessment status and the PMID Orphanet cites. The
+parameter is `orphacode` (lower-case); an empty gene list means Orphanet knows no causal gene.
+(b) **Open Targets (scored associations):** `OpenTargets_get_disease_ids_by_name`(name="<candidate
+name>") → the MONDO id (Orphanet ids do not resolve on the targets endpoint), then
+`OpenTargets_get_associated_targets_by_disease_efoId`(efoId="<MONDO id>") → targets with scores.
+Report the scores AS RETURNED — show the top ones and where they drop off; apply no cut.
+(c) **OptimusKG (SR knowledge graph), top candidate:** `OptimusKG_Search`(action="search",
+query="<top candidate>", node_types=["disease"]) → its CURIE, then `OptimusKG_Search`(action=
+"evidence", curie="<CURIE>", node_types=["gene"]) → gene neighbours with relation and evidence score.
+Where the three agree, say so once; where they differ, show all and do not pick. A disease with no
+gene in any source is reported as "no causal gene in Orphanet, Open Targets or OptimusKG". Then, for
+every Orphanet causal gene: `MyGene_query_genes`(query="<gene symbol>",
+fields="symbol,name,entrezgene,ensembl.gene,summary") → Ensembl ID, Entrez ID, functional summary.
 
 ## Phase 4 — Expression Context
 For the top 2–3 genes from Phase 3:
@@ -94,8 +112,8 @@ If GTEx returns no data: `HPA_search_genes_by_query`(search_query="<gene symbol>
 → population AF. If no variant provided, skip and note "No variant data provided".
 
 ## Phase 6 — Literature (if steps remain)
-`find_tools("search PubMed or Europe PMC articles")` → call returned tool for 5–10 recent papers
-(title/PMID/year) on the top 1–2 candidates.
+`EuropePMC_search_articles`(query="<top candidate disease>") (or `PubMed_search_articles`) →
+5–10 recent papers (title/PMID/year) on the top 1–2 candidates.
 
 # Evidence grading — MANDATORY, grade EVERY candidate and variant
 
@@ -152,9 +170,9 @@ Answer ALL FIVE questions, each as its own labelled sentence:
 ## 1. Clinical Reasoning & Working Hypothesis
 ## 2. Phenotype Profile (HPO)   (HPO ID | Phenotype | Core/Variable | Onset | Source)
 ## 3. Candidate Diseases — Ranked Differential   (Disease | Orphanet ID | Overlap % | Grade (T1–T4) | Source)
-## 4. Gene Panel   (Gene | Priority Score | Ensembl ID | Function | Tissue expression | Source)
+## 4. Gene Panel   (Gene | Orphanet: disease, association | Open Targets score | OptimusKG: relation, score | Priority Score | Ensembl ID | Function | Tissue expression | Source)
 ## 5. Variant Interpretation (ACMG)   (Variant | ClinVar class | gnomAD AF | ACMG criteria | Final classification | Source)
 ## 6. Expression Context
 ## 7. Literature
 ## 8. Recommended Next Steps
-## References   — | # | Tool | Parameters | Phase | Items Retrieved |
+## References   — numbered footnote definitions only, each `[^n^]: [description](url)`

@@ -182,9 +182,13 @@ class TestDiscoveredBugs(unittest.TestCase):
             "OpenTargets_get_associated_targets_by_disease_efoId": {"efoId": "EFO_0000305"},
         }
         for tool_name, args in tool_args.items():
+            # The invariant is "does not raise, and any FAILURE is a readable
+            # envelope" -- not "always a dict". A tool that needs no key succeeds
+            # and may legitimately return a list: ArXiv_search_papers returns a
+            # list of papers, which this previously called a defect.
             result = self.tu.run({"name": tool_name, "arguments": args})
-            self.assertIsInstance(result, dict, f"Expected dict from {tool_name}")
-            if "error" in result:
+            self.assertIsNotNone(result, f"{tool_name} returned None instead of a result")
+            if isinstance(result, dict) and "error" in result:
                 error_msg = result["error"]
                 self.assertIsInstance(error_msg, str)
                 self.assertGreater(len(error_msg), 0,

@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from typing import Dict, Any
 from .base_tool import BaseTool
 from .tool_registry import register_tool
+from .utils import resolve_writable_path
 
 # Many sites (Wikipedia, Cloudflare-protected hosts, etc.) reject the default
 # python-requests/* User-Agent with 403. Send a generic browser-like UA so the
@@ -21,6 +22,16 @@ _DEFAULT_HEADERS = {
         "Chrome/124.0.0.0 Safari/537.36 ToolUniverse/FileDownload"
     )
 }
+
+
+def _resolve_output_path(path: str) -> str:
+    """Absolute destination for a caller-supplied download path.
+
+    A download is ephemeral, so a relative path lands in the temp directory --
+    the same place this tool already used when given no path at all. TMPDIR
+    redirects it for a deployment that wants downloads elsewhere.
+    """
+    return resolve_writable_path(path, tempfile.gettempdir())
 
 
 @register_tool("FileDownloadTool")
@@ -157,13 +168,7 @@ class FileDownloadTool(BaseTool):
         Returns:
             Normalized path
         """
-        path = os.path.expanduser(path)
-        path = os.path.expandvars(path)
-
-        if not os.path.isabs(path):
-            path = os.path.abspath(path)
-
-        return path
+        return _resolve_output_path(path)
 
 
 @register_tool("BinaryDownloadTool")
@@ -181,6 +186,10 @@ class BinaryDownloadTool(BaseTool):
 
     def __init__(self, tool_config):
         super().__init__(tool_config)
+
+    def _normalize_path(self, path: str) -> str:
+        """Normalize file path for cross-platform compatibility."""
+        return _resolve_output_path(path)
 
     def run(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -205,8 +214,7 @@ class BinaryDownloadTool(BaseTool):
         # 1MB chunks for binary files
         chunk_size = arguments.get("chunk_size", 1024 * 1024)
 
-        output_path = os.path.expanduser(output_path)
-        output_path = os.path.expandvars(output_path)
+        output_path = self._normalize_path(output_path)
 
         output_dir = os.path.dirname(output_path)
         if output_dir and not os.path.exists(output_dir):

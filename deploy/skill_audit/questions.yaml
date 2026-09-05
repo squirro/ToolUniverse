@@ -1,0 +1,405 @@
+# One triggering question per served skill, transcribed verbatim from
+# Confluence "3.3 SMCP — Tool & skill inventory" (page 4620451858) so the two
+# stay diffable. Each question names a concrete entity, because a skill only
+# runs to completion when its Phase 1 has something to resolve.
+#
+# tier 1  = questions where TU measurably beat the web baseline (provisional)
+# tier 2  = the remaining skills
+# note    = a known open defect, recorded so a failure is not re-diagnosed
+
+skills:
+  - skill: adverse-event-detection
+    tier: 1
+    question: >-
+      Lutathera is the closest predicate to our terbium-161 SSTR2 programme.
+      What does FAERS actually show for lutetium Lu-177 dotatate —
+      disproportionality numbers with the case counts behind them, especially
+      myelodysplastic syndrome and renal impairment?
+  - skill: toxicology
+    tier: 1
+    question: >-
+      We are reviewing cisplatin as a comparator arm. Which organ toxicities
+      does the label carry, and do the FAERS reports actually bear out the
+      nephrotoxicity signal with real numbers?
+  - skill: small-molecule-discovery
+    tier: 1
+    question: >-
+      We need chemical starting points against KRAS G12D. Which compounds have
+      measured potency against it, and how good are those numbers?
+  - skill: precision-oncology
+    tier: 1
+    question: >-
+      Stage IV lung adenocarcinoma with an EGFR exon 19 deletion plus a TP53
+      co-mutation. Treatment options by evidence tier, and does the TP53
+      co-mutation change prognosis?
+  - skill: drug-mechanism-research
+    tier: 1
+    question: >-
+      How does lanreotide actually work compared with octreotide — receptor
+      subtype selectivity, and does that difference show up anywhere in the
+      labels?
+  - skill: drug-repurposing
+    tier: 1
+    question: >-
+      Which already-approved drugs could be repurposed against SSTR2-expressing
+      neuroendocrine tumours, and how would you rank them on the evidence?
+
+  - skill: disease-research
+    tier: 2
+    question: >-
+      Give me the full picture on pancreatic neuroendocrine tumours — genetics,
+      targets, drugs in use, trial activity.
+  - skill: rare-disease-diagnosis
+    tier: 2
+    question: >-
+      A four-year-old presents with developmental delay, seizures, coarse
+      facial features and hepatosplenomegaly. What rare diseases should we be
+      considering, and in what order?
+  - skill: rare-disease-genomics
+    tier: 2
+    question: >-
+      What's the genomic picture for Niemann-Pick disease type C — which genes,
+      what variant spectrum, and how solid is the gene-disease validity?
+  - skill: clinical-data-integration
+    tier: 2
+    question: >-
+      Pull together an end-to-end safety picture for lutetium-177 dotatate —
+      label, FAERS reports, pharmacogenomics, and what the trials showed.
+  - skill: clinical-guidelines
+    tier: 2
+    question: >-
+      What do current guidelines recommend as first-line systemic therapy for
+      metastatic well-differentiated GEP-NETs?
+  - skill: precision-medicine-stratification
+    tier: 2
+    question: >-
+      For a stage III triple-negative breast cancer patient with a germline
+      BRCA2 pathogenic variant, how would you stratify her for PARP-inhibitor
+      therapy?
+  - skill: infectious-disease
+    tier: 2
+    question: >-
+      I need a rapid brief on the current H5N1 clade 2.3.4.4b situation —
+      genomics, spread, and what countermeasures exist.
+  - skill: drug-research
+    tier: 2
+    question: >-
+      Give me a full profile of enzalutamide — chemistry, targets, approved
+      indications, PK, and safety.
+  - skill: pharmacogenomics
+    tier: 2
+    question: >-
+      A trial candidate genotyped as a DPYD intermediate metaboliser is due to
+      start capecitabine. What dose reduction is supported, and do the adverse
+      event reports bear out the severity?
+  - skill: pharmacovigilance
+    tier: 2
+    question: >-
+      Give me the real safety picture for abiraterone — what FAERS shows versus
+      what the label warns about.
+  - skill: drug-regulatory
+    tier: 2
+    question: >-
+      What's the FDA regulatory history of abiraterone acetate — approval
+      dates, indication expansions, and label changes?
+  - skill: drug-target-validation
+    tier: 2
+    question: >-
+      Is FOLR1 worth pursuing as a target in ovarian cancer? I want a GO/NO-GO
+      with the evidence scored, not a summary.
+  - skill: drug-drug-interaction
+    tier: 2
+    question: >-
+      One of our NET patients is on lanreotide and also takes metformin. Is
+      there a real interaction to worry about?
+  - skill: network-pharmacology
+    tier: 2
+    question: >-
+      Build me the compound-target-disease network for metformin in colorectal
+      cancer and tell me whether it holds up.
+  - skill: chemical-compound-retrieval
+    tier: 2
+    question: >-
+      Can you pull the structure and identifiers for DOTATATE — SMILES,
+      PubChem CID, ChEMBL ID?
+  - skill: chemical-safety
+    tier: 2
+    question: >-
+      We're going to be handling dimethyl sulfate in the lab. Give me the
+      hazard profile — GHS classification, carcinogenicity, exposure limits.
+  - skill: adverse-outcome-pathway
+    tier: 2
+    question: >-
+      What's the adverse outcome pathway for bisphenol A, and what regulatory
+      hazard classifications does it carry?
+  - skill: cancer-classification
+    tier: 2
+    question: >-
+      A pathology report says 'poorly differentiated neuroendocrine carcinoma
+      of the pancreas'. What's the correct OncoTree code?
+  - skill: cancer-genomics-tcga
+    tier: 2
+    note: blocked — DSR-629, no cohort alteration-frequency tool
+    question: >-
+      In the TCGA prostate adenocarcinoma cohort, how often is PTEN altered,
+      and what's the split between deletion and point mutation?
+  - skill: cancer-variant-interpretation
+    tier: 2
+    question: >-
+      A prostate tumour sample came back with somatic SPOP F133V. Is that a
+      driver, and does it carry therapeutic or prognostic implication?
+  - skill: immunotherapy-response-prediction
+    tier: 2
+    question: >-
+      Colorectal cancer, MSI-high, TMB 42 mut/Mb, PD-L1 CPS 10 — how likely is
+      this patient to respond to pembrolizumab?
+  - skill: variant-interpretation
+    tier: 2
+    question: >-
+      What does SNCA p.A53T (rs104893877) mean clinically? I'd like the ACMG
+      classification with the reasoning.
+  - skill: acmg-variant-classification
+    tier: 2
+    question: >-
+      A family screening panel came back with BRCA1 c.5266dupC. Classify it
+      under ACMG/AMP and show which criteria you applied.
+  - skill: variant-analysis
+    tier: 2
+    question: >-
+      We got a CFTR F508del back on a carrier screen. Can you annotate and
+      classify it for me?
+  - skill: variant-functional-annotation
+    tier: 2
+    question: >-
+      What does the KRAS G12C substitution actually do at the protein level —
+      which domain, what structural context, how conserved?
+  - skill: variant-to-mechanism
+    tier: 2
+    question: >-
+      Take rs7903146 in TCF7L2 and trace how it actually causes type 2 diabetes
+      risk — regulatory element, target gene, pathway, phenotype.
+  - skill: regulatory-variant-analysis
+    tier: 2
+    question: >-
+      rs78378222 sits downstream of TP53 and isn't a coding change. What's the
+      functional evidence that it matters?
+  - skill: structural-variant-analysis
+    tier: 2
+    question: >-
+      We found a 1.2 Mb deletion at 22q11.2 in a patient. Is it pathogenic
+      under the ACMG structural-variant criteria?
+  - skill: gwas-study-explorer
+    tier: 2
+    question: >-
+      What GWAS have actually been done on prostate cancer? Compare them on
+      size, ancestry and top signals.
+  - skill: gwas-trait-to-gene
+    tier: 2
+    question: >-
+      For Parkinson's disease, which genes do the GWAS signals implicate as
+      causal? Not nearest-gene — the fine-mapping and colocalisation evidence.
+  - skill: gwas-snp-interpretation
+    tier: 2
+    question: >-
+      What is rs6265 (the BDNF Val66Met SNP) associated with, and how good is
+      the evidence?
+  - skill: gwas-finemapping
+    tier: 2
+    question: >-
+      For the 8q24 prostate cancer locus, what's in the credible set? Which
+      variants have the highest posterior inclusion probability?
+  - skill: gwas-drug-discovery
+    tier: 2
+    question: >-
+      Can we get druggable targets out of the type 2 diabetes GWAS signals?
+      Take it through to known drugs and repurposing options.
+  - skill: gene-disease-association
+    tier: 2
+    question: >-
+      How strong is the evidence actually linking SSTR2 to neuroendocrine
+      tumours? Grade it for me.
+  - skill: gene-enrichment
+    tier: 2
+    question: >-
+      Our resistant line has these genes up: EGFR, ERBB2, MET, KRAS, PIK3CA,
+      AKT1, MTOR, SRC, STAT3, JAK2, ABCB1, ABCG2. What pathways are enriched?
+  - skill: gene-regulatory-networks
+    tier: 2
+    question: >-
+      Which transcription factors control SSTR2 expression, and where do they
+      bind?
+  - skill: pathway-disease-genetics
+    tier: 2
+    question: >-
+      For type 2 diabetes, trace the chain from GWAS variants through eQTL
+      genes to pathways to druggable targets.
+  - skill: kegg-disease-drug
+    tier: 2
+    question: >-
+      What does KEGG have for non-small cell lung cancer — the pathways, the
+      drugs mapped onto them, and the variants?
+  - skill: functional-genomics-screens
+    tier: 2
+    question: >-
+      Our shRNA dropout screen in pancreatic lines flagged RRM1, POLA1, CHEK1,
+      WEE1 and ATR. Which should we nominate as targets?
+  - skill: crispr-screen-analysis
+    tier: 2
+    question: >-
+      A CRISPR knockout screen in KRAS-mutant colorectal lines gave SHOC2 as a
+      top hit. Credible synthetic-lethal target or artefact?
+  - skill: regulatory-genomics
+    tier: 2
+    question: >-
+      What regulatory elements and transcription-factor binding sites sit
+      around the MYC locus in prostate tissue?
+  - skill: noncoding-rna
+    tier: 2
+    question: >-
+      What's known about MALAT1 — what does it do, what does it target, and
+      what diseases is it linked to?
+  - skill: comparative-genomics
+    tier: 2
+    question: >-
+      How conserved is SSTR2 across species, and which model-organism ortholog
+      is right for our preclinical work?
+  - skill: model-organism-genetics
+    tier: 2
+    question: >-
+      What do mouse knockouts of SSTR2 show, and has anyone modelled it in
+      other organisms?
+  - skill: protein-structure-prediction
+    tier: 2
+    question: >-
+      What's the predicted structure of human SSTR2, and how much confidence
+      should I put in the model?
+  - skill: protein-structure-retrieval
+    tier: 2
+    question: >-
+      What experimental structures exist for SSTR2, and what's in the AlphaFold
+      database for it?
+  - skill: protein-structural-annotation-pdb
+    tier: 2
+    question: >-
+      For PDB 7T10, annotate the ligand-binding residues on chain A — which
+      residues actually contact the ligand?
+  - skill: structural-proteomics
+    tier: 2
+    note: blocked — DSR-630/631, zero tool calls and a wrong accession
+    question: >-
+      Is SSTR2 structurally druggable for a small molecule — structures,
+      AlphaFold confidence, binding pockets?
+  - skill: protein-interactions
+    tier: 2
+    question: >-
+      What proteins does SSTR2 interact with, and what does that network look
+      like?
+  - skill: protein-lof-mechanism
+    tier: 2
+    question: >-
+      PTEN R130Q is loss-of-function — but is that misfolding, or a broken
+      active site? It matters for whether a corrector is viable.
+  - skill: protein-modification-analysis
+    tier: 2
+    question: >-
+      What post-translational modifications are documented on the androgen
+      receptor, and which matter functionally?
+  - skill: protein-therapeutic-design
+    tier: 2
+    question: >-
+      We want a peptide binder to SSTR2 for a terbium-161 conjugate. What
+      epitopes and design options should we consider?
+  - skill: proteomics-data-retrieval
+    tier: 2
+    question: >-
+      Are there public mass-spec proteomics datasets on neuroendocrine tumours
+      we could reuse?
+  - skill: sequence-analysis
+    tier: 2
+    question: >-
+      Get me the SSTR2 protein sequence and analyse it — composition, domains,
+      anything notable.
+  - skill: sequence-retrieval
+    tier: 2
+    question: >-
+      I need the canonical human SSTR2 mRNA and protein sequences, with the
+      accessions.
+  - skill: gpcr-structural-pharmacology
+    tier: 2
+    question: >-
+      SSTR2 is a GPCR. What do the structures tell us about its binding pocket,
+      and how does that explain octreotide-class pharmacology?
+  - skill: immunology
+    tier: 2
+    question: >-
+      What's the immunology around PD-1 — the pathway, the antibodies against
+      it, and the autoimmune links?
+  - skill: hla-immunogenomics
+    tier: 2
+    question: >-
+      What's the immunogenomic basis of the HLA-B*57:01 hypersensitivity
+      reaction to abacavir?
+  - skill: antibody-engineering
+    tier: 2
+    question: >-
+      How tractable is FOLR1 as an antibody target? What antibodies exist,
+      which epitopes, what developability risks?
+  - skill: vaccine-design
+    tier: 2
+    question: >-
+      For the RSV F protein, which epitopes should a vaccine candidate be
+      targeting?
+  - skill: binder-discovery
+    tier: 2
+    question: >-
+      Find me small-molecule starting points for KRAS G12D — known actives, the
+      chemotypes, and how potent they are.
+  - skill: clinical-trial-design
+    tier: 2
+    question: >-
+      We're planning a Phase 1 of a terbium-161 SSTR2-targeted radioligand in
+      GEP-NETs. Is that design feasible?
+  - skill: clinical-trial-matching
+    tier: 2
+    question: >-
+      62-year-old, mCRPC, PSMA-positive, germline BRCA2, progressed on
+      abiraterone and docetaxel, ECOG 1. Which trials is he eligible for,
+      ranked?
+  - skill: expression-data-retrieval
+    tier: 2
+    note: routing unreliable — DSR-630
+    question: >-
+      Where is SSTR2 expressed in normal tissue — quantitative levels from both
+      HPA and GTEx, where they disagree, and which tissues have mRNA but no
+      detectable protein?
+  - skill: cell-line-profiling
+    tier: 2
+    question: >-
+      We need an in-vitro model for SSTR2-targeted radioligand work in NETs.
+      Which cell lines express SSTR2 usefully, and what's their mutational
+      background?
+  - skill: systems-biology
+    tier: 2
+    question: >-
+      Give me the systems view of the PI3K/AKT/mTOR axis — pathways, enzyme
+      kinetics, and any reusable computational models.
+  - skill: aging-senescence
+    tier: 2
+    question: >-
+      What's the actual evidence for dasatinib as a senolytic in age-related
+      disease?
+  - skill: neuroscience
+    tier: 2
+    question: >-
+      What's known about alpha-synuclein in Parkinson's — the biology, the
+      circuits, and what's being developed against it?
+  - skill: target-research
+    tier: 2
+    question: >-
+      Give me a complete target profile for FOLR1 — expression, safety
+      liabilities, tractability, and who else is working on it.
+  - skill: literature-deep-research
+    tier: 2
+    question: >-
+      What's the reported incidence of grade 3+ nephrotoxicity with Lu-177 PSMA
+      radioligand therapy? Primary literature with actual numbers.

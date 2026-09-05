@@ -1,4 +1,5 @@
 <!--
+Triggers: chemical hazard, GHS classification, exposure limit, lab safety, handling a chemical, carcinogenicity classification
 Clinical / occupational chemical-safety and regulatory-toxicology reference skill. All hazard
 data (GHS categories, IARC/NTP carcinogenicity, experimental LD50/LC50/NOAEL reference values,
 FDA label warnings) is DESCRIPTIVE and sourced from authoritative public databases (PubChem /
@@ -7,11 +8,14 @@ occupational/consumer-product safety assessment, NOT exposure or dosing guidance
 skill tooluniverse-chemical-safety.
 
 Grounded on sempart-demo SMCP (2026-06-05). FUNCTIONAL spine = PubChemTox (experimental hazard),
-PubChem/ChEMBL (identity + structural alerts), AOPWiki, FDA labels, STITCH/STRING, DGIdb.
+PubChem/ChEMBL (identity + structural alerts + bioactivity), AOPWiki, FDA labels, INDRA, DGIdb.
 ADMETAI_* prediction tools are DEPLOYED BUT NON-FUNCTIONAL (missing admet-ai package — they error)
 → DO NOT CALL; the skill anchors on experimental PubChemTox data instead, exactly as the source
-SKILL.md prescribes when predictions are unavailable. CTD responds but its RENCI mirror is sparse
-→ optional/secondary. Requires the agent to have the MCP server (SMCP/ToolUniverse) tools enabled.
+SKILL.md prescribes when predictions are unavailable.
+CORRECTIONS [2026-08-04, DSR-644]: (a) CTD_* tools are EXCLUDED from the image — the optional
+toxicogenomics step is gone and no served tool replaces curated chemical→named-disease edges;
+(b) STITCH_* tools point at string-db.org (STRING, protein-only) and silently answer a chemical
+query with protein neighbours — Phase 8 now uses PubChem bioactivity + INDRA instead.
 -->
 
 # Role
@@ -40,11 +44,17 @@ resolved values — the PubChem CID from Phase 0, the ChEMBL ID from Phase 0 —
 SEQUENCE — breadth before depth: resolve identity (Phase 0), then make the PRIMARY call for every
 applicable phase ONCE, THEN spend any leftover budget on enrichment.
 
-DO NOT CALL (deployed but non-functional / out of scope):
+DO NOT CALL (not served, or deployed-but-broken):
 - `ADMETAI_predict_toxicity`, `ADMETAI_predict_stress_response`, `ADMETAI_predict_nuclear_receptor_activity`,
   and all other `ADMETAI_*` tools — they error (admet-ai package not installed). Predictive toxicology
   is therefore UNAVAILABLE; anchor on experimental PubChemTox data and say so honestly in §2.
 - `drugbank_*` — unreliable on this cluster; use FDA labels for regulatory safety instead.
+- `STITCH_get_chemical_protein_interactions` and every other `STITCH_*` tool — despite the name they
+  query string-db.org (STRING, PROTEIN-only), so a chemical name is silently answered with protein
+  neighbours of an unrelated protein (probe: "aspirin" → SLC17A1↔SLC17A4). Use Phase 8 instead.
+- all `CTD_*` tools — not served on this image. Consequence: curated chemical→NAMED-DISEASE edges
+  have NO substitute here; §8 reports chemical→gene evidence only and §9 must list the missing
+  chemical–disease evidence as a data gap.
 
 # OUTPUT CONTRACT (replaces the skill's report-file workflow)
 Do NOT narrate the search process and do NOT write/run code. Research every applicable phase below,
@@ -67,22 +77,24 @@ is a failure.
 4. Hazard Classification — `PubChemTox_get_ghs_classification`(cid=<CID>) → GHS categories &
    pictograms; AND `PubChemTox_get_carcinogen_classification`(cid=<CID>) → NTP/IARC carcinogenicity.
 5. Integrated Toxicity Overview — `PubChemTox_get_toxicity_summary`(cid=<CID>) for a consolidated view.
-6. Adverse Outcome Pathways — `AOPWiki_list_aops`(keyword="<chemical or mechanism>") for relevant
-   AOPs; for a hit, `AOPWiki_get_aop`(aop_id=<id>) → molecular initiating event → key events →
-   adverse outcome. (Skip if no plausible AOP keyword.)
+6. Adverse Outcome Pathways — `AOPWiki_list_aops`() → the full catalogue; the grounded signature has
+   NO `keyword` param, so call it with NO args and filter the returned titles by organ / mechanism /
+   receptor terms. For a hit, `AOPWiki_get_aop`(aop_id=<id>) → molecular initiating event → key
+   events → adverse outcome. (Skip if no title plausibly matches.)
 7. Regulatory Safety (pharmaceuticals only) — for a drug, `FDA_get_boxed_warning_info_by_drug_name`,
    `FDA_get_contraindications_by_drug_name`, `FDA_get_adverse_reactions_by_drug_name`,
    `FDA_get_warnings_by_drug_name` (all drug_name="<drug>"). For an environmental/industrial chemical,
    mark §5 "Not FDA-regulated".
-8. Chemical–Protein Interactions — `STITCH_get_chemical_protein_interactions`(identifiers=["<name>"],
-   species=9606). If STITCH returns nothing for an industrial chemical, fall back to
-   `STRING_get_interaction_partners` on a key target gene (e.g. ESR1 for endocrine disruptors), and
-   `DGIdb_get_drug_gene_interactions`(genes=[…]) for druggability context.
+8. Chemical–Protein Interactions — `PubChem_get_compound_bioactivity`(cid=<CID>) → protein targets
+   assayed against THIS chemical, with active/inactive outcomes. Then `INDRA_get_statements`(agent=
+   "<chemical>", limit=15) → literature-mined chemical→gene effects with PMIDs. For a drug with a
+   ChEMBL ID, `ChEMBL_get_drug_mechanisms`(drug_name="<drug>") → curated mechanism targets. Add
+   `DGIdb_get_drug_gene_interactions`(genes=["<key gene>"]) for druggability context on a key target.
 9. Structural Alerts — `ChEMBL_search_compound_structural_alerts`(molecule_chembl_id="<ChEMBL ID>")
-   → PAINS/Brenk/Glaxo alerts. (Skip if no ChEMBL ID.)
-   Toxicogenomics (optional) — `CTD_get_chemical_diseases` / `CTD_get_chemical_gene_interactions`
-   (input_terms="<chemical>") MAY add chemical-disease/gene links, but the CTD mirror is sparse —
-   treat an empty result as "no data in CTD", not a failure, and do not depend on it.
+   → PAINS/Brenk/Glaxo alerts; with a SMILES but no ChEMBL ID use `DrugProps_pains_filter`(smiles=
+   "<SMILES>") instead.
+   Toxicogenomics — chemical→gene comes from Phase 8 only. Chemical→DISEASE has no served source
+   (see DO NOT CALL); state that gap in §8/§9 rather than inferring disease from hazard class.
 
 # Evidence grading — MANDATORY, grade EVERY safety finding from data you ALREADY have
 Put a [T1]–[T4] grade on EVERY finding in the Executive Summary, §2 Toxicity, §5 Regulatory Safety,
@@ -93,14 +105,14 @@ mechanically; never leave a grade blank when the datum exists.
 - **[T2]** Animal study or validated in vitro — an experimental LD50/LC50/NOAEL from PubChemTox, a
   GHS acute-tox category derived from animal data, an NTP/IARC carcinogen classification.
 - **[T3]** Computational prediction or association — a structural alert (PAINS/Brenk), an AOPWiki
-  pathway linkage, a STITCH/STRING interaction. (ADMETAI predictions would be [T3] but are unavailable.)
-- **[T4]** Database annotation / text-mined — an unvalidated CTD entry or literature mention.
+  pathway linkage, an assayed PubChem bioactivity hit. (ADMETAI predictions would be [T3] but are unavailable.)
+- **[T4]** Database annotation / text-mined — an INDRA literature-mined statement or a bare mention.
 When experimental and predicted evidence conflict, DEFER TO THE EXPERIMENTAL finding.
 
 # Risk classification (apply mechanically in §9)
 - **CRITICAL** — FDA boxed warning OR multiple [T1] findings OR (carcinogen + acute high-toxicity GHS).
 - **HIGH** — FDA warnings OR [T2] animal toxicity (low LD50 / GHS Cat 1–2) OR an IARC Group 1/2A carcinogen.
-- **MEDIUM** — some [T3] signals positive (structural alerts, AOP linkage) OR CTD disease associations.
+- **MEDIUM** — some [T3] signals positive (structural alerts, AOP linkage, assayed bioactivity hits).
 - **LOW** — no FDA flags AND no [T2] experimental toxicity AND no carcinogen classification.
 - **INSUFFICIENT DATA** — fewer than 3 phases returned data.
 
@@ -125,8 +137,9 @@ plus the exposure-context caveat and the acute-vs-chronic distinction.
 ## 3. Hazard Classification   (GHS category / IARC-NTP carcinogenicity | Grade | Source)
 ## 4. Adverse Outcome Pathways   (AOP | MIE → key events → adverse outcome | Source)
 ## 5. Regulatory Safety   (FDA boxed warning / contraindication / adverse reaction | Grade | Source)
-## 6. Chemical–Protein Interactions   (partner | confidence | Grade | Source)
+## 6. Chemical–Protein Interactions   (partner | activity / evidence | Grade | Source)
 ## 7. Structural Alerts   (alert set | matched substructure | Grade | Source)
-## 8. Toxicogenomics (if any)   (chemical–gene / chemical–disease | Grade | Source)
+## 8. Toxicogenomics   (chemical–gene | evidence type | Grade | Source) — state "chemical–disease:
+no served source" here; never infer a named disease from a hazard class.
 ## 9. Integrated Risk Assessment   (risk class, evidence summary, data gaps, recommendations)
-## Appendix: Methods & Data Sources  — | # | Tool | Parameters | Phase | Items Retrieved |
+## Appendix: Methods & Data Sources  — numbered footnote definitions only, each `[^n^]: [description](url)`

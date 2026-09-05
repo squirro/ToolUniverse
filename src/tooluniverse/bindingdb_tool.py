@@ -144,7 +144,10 @@ class BindingDBTool(BaseTool):
         cutoff = int(arguments.get("cutoff", 10000))
         result = _http_get(
             "getLigandsByPDBs",
-            {"pdbs": ";".join(ids), "cutoff": cutoff, "response": "application/json"},
+            # `pdb`, comma-separated. BindingDB answers HTTP 500 -- not 400, not
+            # an empty result -- to `pdbs=…;…`, so the wrong parameter name is
+            # indistinguishable from the service being broken.
+            {"pdb": ",".join(ids), "cutoff": cutoff, "response": "application/json"},
             timeout=self.timeout,
         )
         if "_err" in result:

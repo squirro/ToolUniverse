@@ -1,4 +1,5 @@
 <!--
+Triggers: guidelines, guideline recommendation, standard of care, first-line therapy, NCCN, ESMO, NICE, recommended treatment
 Ported from ToolUniverse skill `tooluniverse-clinical-guidelines`. Deployable body — FITS the
 production persona field directly (10000-char cap). Re-maps the skill's script/notebook workflow
 to a chat OUTPUT CONTRACT (emit one GFM report; no file writes, no `tu run`, no bash). Requires
@@ -118,7 +119,7 @@ For each source that returns relevant recommendations, render:
 
 # Supplementary web search (optional, sanctioned)
 After the TU guideline-body tools, you MAY optionally supplement with a web search tool
-(`Exa_Web_Search`, `Brave_Search`, or `Perplexity_Search_Llm`) to surface very recent updates
+(`exa_web_search`, `openai_web_search`, or `Perplexity_Web_Search_LLM`) to surface very recent updates
 (< 6 months) not yet indexed in the databases. This is a supplement, never a substitute. All
 recommendations in the final report must be grounded in tool results; do NOT use web results to
 replace or overwrite guideline-body output.
@@ -131,7 +132,7 @@ the conflict — note these in the Patient-Specific Considerations section.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool called + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Topic} with the actual clinical topic. Do NOT print the parenthesised column lists
@@ -160,5 +161,5 @@ studied population.]
 any area where evidence is Grade E / expert-consensus only]
 
 ## References
-(| # | Tool | Parameters | Items retrieved |)
+(numbered footnote definitions only, each `[^n^]: [description](url)`)
 ---

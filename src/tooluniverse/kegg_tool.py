@@ -206,7 +206,10 @@ class KEGGListOrganisms(KEGGRESTTool):
 
     def __init__(self, tool_config):
         super().__init__(tool_config)
-        self.endpoint = "/list/organism"
+        # /list/organism was retired and answers 400 with an empty body. The
+        # roster now lives under the genome entries, two fields per line:
+        # "T01001\thsa; Homo sapiens (human)".
+        self.endpoint = "/list/genome"
 
     def run(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """List organisms."""
@@ -214,19 +217,27 @@ class KEGGListOrganisms(KEGGRESTTool):
 
         # Parse organism list
         if result.get("status") == "success" and isinstance(result.get("data"), str):
-            lines = result["data"].split("\n")
             organisms = []
-            for line in lines:
-                if "\t" in line:
-                    parts = line.split("\t")
-                    if len(parts) >= 3:
-                        organisms.append(
-                            {
-                                "organism_code": parts[0],
-                                "organism_name": parts[1],
-                                "description": parts[2] if len(parts) > 2 else "",
-                            }
-                        )
+            for line in result["data"].split("\n"):
+                line = line.strip()
+                if "\t" not in line:
+                    continue
+                genome_id, entry = line.split("\t", 1)
+                # Every live row carries "code; name", but a row that cannot be
+                # split is kept rather than dropped: a parser that discards what
+                # it does not recognise is how this roster silently emptied
+                # itself when the endpoint changed shape.
+                code, _, name = entry.partition("; ")
+                if not name:
+                    code, name = "", entry
+                organisms.append(
+                    {
+                        "genome_id": genome_id,
+                        "organism_code": code,
+                        "organism_name": name,
+                        "description": entry,
+                    }
+                )
             result["data"] = organisms
             result["count"] = len(organisms)
 

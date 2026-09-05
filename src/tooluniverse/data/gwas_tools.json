@@ -1778,7 +1778,7 @@
           "description": "Alias for gene_symbol"
         }
       },
-      "required": []
+      "required": ["gene_symbol"]
     },
     "label": [
       "GWAS",

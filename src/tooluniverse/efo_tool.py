@@ -76,12 +76,24 @@ class OLSRESTTool(BaseTool):
 
     @staticmethod
     def _obo_id_to_efo_iri(obo_id: str) -> str:
-        # Common EFO IDs come as "EFO:0000400" from search results.
-        # Convert to IRI used by term endpoints.
+        """Expand a CURIE to the IRI its own namespace uses.
+
+        EFO imports MONDO, HP, GO and others, and OLS4 serves those classes under
+        the `efo` ontology -- with more children than the source ontology alone,
+        because EFO adds its own subclasses. Only `EFO:` was expanded here, so a
+        MONDO id fell through as a literal CURIE, got double-URL-encoded and
+        never resolved.
+
+        The rule is asymmetric on purpose: EFO's own terms live at
+        ebi.ac.uk/efo/EFO_x, everything imported at the OBO PURL.
+        """
+        if not obo_id or obo_id.startswith("http"):
+            return obo_id
         if ":" in obo_id:
             prefix, num = obo_id.split(":", 1)
             if prefix.upper() == "EFO":
                 return f"http://www.ebi.ac.uk/efo/EFO_{num}"
+            return f"http://purl.obolibrary.org/obo/{prefix.upper()}_{num}"
         return obo_id
 
     def _resolve_term_iri(

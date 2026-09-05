@@ -1,9 +1,24 @@
 # fda_orange_book_tool.py
 
+import os
 import requests
 from typing import Dict, Any, List
 from .base_tool import BaseTool
 from .tool_registry import register_tool
+
+
+def openfda_get(url: str, params: dict, timeout: int = 30):
+    """GET openFDA with ``FDA_API_KEY`` attached when one is configured.
+
+    Anonymous callers share 1,000 requests/day per IP; the key buys 120,000.
+    Exhausting the anonymous bucket returns HTTP 429, which is indistinguishable
+    to an agent from the tool being broken. Omitted entirely when unset, so the
+    key never reaches the query as the string "None".
+    """
+    api_key = os.getenv("FDA_API_KEY")
+    if api_key:
+        params = {**params, "api_key": api_key}
+    return requests.get(url, params=params, timeout=timeout)
 
 FDA_BASE_URL = "https://api.fda.gov"
 
@@ -99,7 +114,7 @@ class FDAOrangeBookTool(BaseTool):
             url = f"{FDA_BASE_URL}/drug/drugsfda.json"
             params = {"search": search_query, "limit": min(limit, 100)}
 
-            response = requests.get(url, params=params, timeout=30)
+            response = openfda_get(url, params, timeout=30)
             response.raise_for_status()
 
             data = response.json()
@@ -158,7 +173,7 @@ class FDAOrangeBookTool(BaseTool):
             url = f"{FDA_BASE_URL}/drug/drugsfda.json"
             params = {"search": f'application_number:"{app_number}"', "limit": 1}
 
-            response = requests.get(url, params=params, timeout=30)
+            response = openfda_get(url, params, timeout=30)
             response.raise_for_status()
 
             data = response.json()

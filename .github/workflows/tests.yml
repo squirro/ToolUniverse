@@ -2,9 +2,9 @@ name: Test Suite
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, swiss-rockets ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, swiss-rockets ]
 
 jobs:
   test:
@@ -47,10 +47,15 @@ jobs:
         run: |
           uv pip install -e .[dev] --system
 
+      # Pinned, not "latest". This step runs before pytest, so if it fails the job stops
+      # and every registry-wide guard below is skipped -- meaning a ruff release could
+      # switch the gate off with no commit to this repo. 0.15.18 (the last version CI
+      # verified green) reports the tree clean; 0.16.1 expanded the default rule set and
+      # reports 22,270 errors. Bump deliberately, with the cleanup, not by drift.
       - name: Check code formatting/linting requirements
         uses: astral-sh/ruff-action@v3
         with:
-          version: "latest"
+          version: "0.15.18"
 
 
       - name: Generate SDK

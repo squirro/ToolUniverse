@@ -44,3 +44,5 @@ The report carries a Literature Summary table with PMID footnotes per reaction.
 they top the PRR table and now cost two searches that return indication papers. The report
 block already treats them as reported disease. The loop could skip a named list of
 indication terms the way the FAERS count step skips coding noise.
+
+**Done, same day:** see `../dsr726-indication-skip/README.md`.

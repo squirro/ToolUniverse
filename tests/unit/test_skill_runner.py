@@ -1459,7 +1459,7 @@ def test_a_question_stubs_facts_larger_than_a_payload_cap():
     q = question_for("keyword_search", "judge", ["top_candidate"], facts)
 
     assert q["context"]["top_candidate"] == "MPS II"
-    assert q["context"]["opentargets_rows"] == {"omitted": "200 items, in the bundle"}
+    assert q["context"]["opentargets_rows"] == {"omitted": "200 items — in the bundle"}
 
 
 def test_the_gene_panel_collects_a_row_per_gene_for_the_writer():

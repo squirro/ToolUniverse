@@ -258,18 +258,27 @@ def question_for(step_id: str, kind: str, wants: list[str], context: dict, **det
     URLs where the author had asked for title, url and snippet.
     """
     return {"kind": kind, "step": step_id, "wants": list(wants),
-            "context": _readable(context),
+            "context": _readable(context, detail.get("calls") or []),
             **{k: v for k, v in detail.items() if v is not None}}
 
 
-def _readable(facts: dict) -> dict:
+def _readable(facts: dict, calls: list[dict]) -> dict:
     """The facts a question shows the model: a fact larger than one payload cap
-    is stubbed — twenty Open Targets rows are in the bundle, not for judging."""
+    is stubbed — twenty Open Targets rows are in the bundle, not for judging.
+
+    The stub says where the value is. Live 2026-09-07 a stub that only said
+    "in the bundle" made the model transcribe an empty list into its code,
+    though the same rows travelled whole in the question's own calls.
+    """
+    carried = json.dumps([c.get("arguments") for c in calls], default=str)
     out = {}
     for name, value in facts.items():
-        if len(json.dumps(value, default=str)) > MAX_PAYLOAD:
+        text = json.dumps(value, default=str)
+        if len(text) > MAX_PAYLOAD:
             what = f"{len(value)} items" if isinstance(value, (list, dict)) else f"{len(str(value))} chars"
-            out[name] = {"omitted": f"{what}, in the bundle"}
+            where = ("passed whole in this question's calls, and in the bundle"
+                     if text in carried else "in the bundle")
+            out[name] = {"omitted": f"{what} — {where}"}
         else:
             out[name] = value
     return out

@@ -1468,3 +1468,19 @@ def test_the_gene_panel_collects_a_row_per_gene_for_the_writer():
     rows = state["facts"]["gene_rows"]
     assert rows and rows[0] == {"symbol": "IDS", "name": "iduronate 2-sulfatase",
                                 "entrezgene": "3423", "ensembl": "ENSG00000010404"}
+
+
+def test_a_stubbed_fact_says_it_travels_whole_in_the_questions_own_calls():
+    """Live 2026-09-07: the stub said "in the bundle" and the model, asked to compute
+    over rows the call's arguments carried whole, transcribed an empty list. The
+    stub must point at where the value is."""
+    from tooluniverse.skill_runner import question_for
+    rows = [{"orpha_code": str(i), "hpo_ids": ["HP:%07d" % j for j in range(60)]} for i in range(20)]
+    facts = {"hpo_ids": ["HP:0000280"], "disease_phenotypes": rows}
+    calls = [{"tool": "code_interpreter", "arguments": {"diseases": rows, "case_hpo_ids": ["HP:0000280"]}}]
+
+    q = question_for("compute_overlap", "delegate", ["overlap_rows"], facts, calls=calls)
+
+    assert q["context"]["disease_phenotypes"] == {
+        "omitted": "20 items — passed whole in this question's calls, and in the bundle"}
+    assert q["calls"][0]["arguments"]["diseases"] == rows          # the arguments are never stubbed

@@ -362,6 +362,8 @@ def test_rare_disease_diagnosis_carries_report_guidance_and_notes_on_every_step(
                    "hpo.jax.org", "orpha.net", "platform.opentargets.org", "europepmc.org",
                    "failures", "blocked", "unresolved", "No variant data provided",
                    # the discriminating-tests line: what separates the top two
-                   "same disease family", "inheritance", "clinical reasoning"):
+                   "same disease family", "inheritance", "clinical reasoning",
+                   "overlap_rows", "disease_inheritance"):
         assert needle in report, needle
+    assert "no tool in this run returned it" not in report     # inheritance now comes from a row
     assert "supplied by the model" in report and "genes" not in report.split("supplied by the model")[0].rsplit(".", 1)[-1]

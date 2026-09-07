@@ -31,13 +31,11 @@ report: >-
   work-up; the recommended next diagnostic step. Then the ranked differential:
   merge `results.differential_all` (strict intersection), `results.differential_discriminating`
   (the discriminating pair) and `results.keyword_search` (Orphanet), skipping any
-  name that begins "OBSOLETE:". For every candidate give its overlap against the
-  FULL Phase-1 term set in `facts.hpo_ids` as "n of N phenotypes" (a percentage
-  may follow in brackets) and the grade it earns: T1 above 80% with a gene in the
-  literature, T2 60-80%, T3 40-60%, T4 below 40%. Compute the overlap only from
-  phenotypes the result actually lists for that disease; when a result does not
-  list them, write "overlap not computable from the returned data" rather than
-  a guess. Never leave a grade blank when an overlap is known. Say which
+  name that begins "OBSOLETE:". Rank by `facts.overlap_rows`: for every
+  candidate give "n of N phenotypes" (overlap_pct) and the grade from its row,
+  and cite the matched HPO ids; a candidate with no row is "overlap not
+  computable: no phenotype annotation returned". Never leave a grade blank when
+  a row exists. Say which
   candidates came only from the discriminating pair and which only from the
   keyword search; weight the HPO route as primary when the two disagree. Name
   the features of the case the leading candidate leaves unexplained. The third
@@ -45,9 +43,11 @@ report: >-
   when the top two are in the same disease family (two mucopolysaccharidoses,
   two gangliosidoses), name the enzyme or gene pair that separates them from
   their rows in `facts.orphanet_gene_rows` (for example IDUA for Hurler against
-  IDS for MPS II) and say that the enzyme assay or the gene test decides. If
-  you add the inheritance pattern or a clinical sign that separates them, label
-  it as clinical reasoning: no tool in this run returned it. The values
+  IDS for MPS II) and say that the enzyme assay or the gene test decides. State
+  the inheritance and age of onset that separate them from their rows in
+  `facts.disease_inheritance` (X-linked MPS II against autosomal recessive
+  Hurler). A clinical sign that no row carries, if you add one, is labelled
+  clinical reasoning. The values
   `working_hypothesis`, `discriminating_features`, `discriminating_hpo_ids` and
   `top_candidate` in `facts` were supplied by the model when the run asked for
   them: present them as clinical reasoning, not as tool output, and say so once.
@@ -165,6 +165,39 @@ steps:
       has no row in orphanet_matches: report it as "no Orphanet entry found" and
       give it no link. Never guess a code.
 
+  - id: disease_phenotypes
+    label: "Phase 2b.2 — each candidate's own phenotype set, from Orphanet"
+    requires: [resolve_candidates]
+    for_each: orphanet_codes
+    as: orphacode
+    calls:
+      - tool: Orphanet_get_phenotypes
+        arguments: {orphacode: "{orphacode}"}
+    # ~10 KB per disease; the run keeps one row: code, name, HPO ids.
+    collect:
+      disease_phenotypes: {path: "data", fields: ["orpha_code", "preferred_term", "phenotypes[].hpo_id as hpo_ids"]}
+    produces: [disease_phenotypes]
+    notes: >-
+      One call per resolved candidate. A disease with no row here had no
+      phenotype annotation in Orphanet (or the lookup failed): its overlap is
+      "not computable", with that reason — never "no phenotypes".
+
+  - id: disease_inheritance
+    label: "Phase 2b.3 — inheritance and onset per candidate, from Orphanet"
+    requires: [resolve_candidates]
+    for_each: orphanet_codes
+    as: orphacode
+    calls:
+      - tool: Orphanet_get_natural_history
+        arguments: {orphacode: "{orphacode}"}
+    collect:
+      disease_inheritance: {path: "data", fields: ["orpha_code", "preferred_term", "type_of_inheritance", "average_age_of_onset"]}
+    produces: [disease_inheritance]
+    notes: >-
+      One call per resolved candidate. Inheritance and onset are what separate
+      siblings the phenotypes cannot (X-linked MPS II against autosomal recessive
+      Hurler); cite them from these rows.
+
   - id: keyword_search
     label: "Phase 2c — Orphanet keyword search"
     requires: [phenotypes]
@@ -264,6 +297,29 @@ steps:
       returned. If the search finds no disease node, return an empty list and
       say so; do not fill it from memory.
 
+  - id: compute_overlap
+    label: "Phase 2c.2 — overlap and grade per candidate (agent's code tool)"
+    requires: [disease_phenotypes, gene_evidence_orphanet]
+    delegate:
+      - tool: code_interpreter
+        arguments:
+          task: >-
+            For every disease in `diseases`, count how many of `case_hpo_ids`
+            appear in its `hpo_ids` (n), with N = len(case_hpo_ids). overlap_pct
+            = round(100*n/N). Grade: T1 if overlap_pct > 80 and the disease's
+            orpha_code has a gene in `causal_genes`; T2 if 60-80; T3 if 40-60;
+            T4 if below 40. Return overlap_rows as a list of {orpha_code,
+            preferred_term, n, N, overlap_pct, grade, matched_hpo_ids}, sorted by
+            overlap_pct descending then preferred_term.
+          case_hpo_ids: "{hpo_ids}"
+          diseases: "{disease_phenotypes}"
+          causal_genes: "{orphanet_gene_rows}"
+    produces: [overlap_rows]
+    notes: >-
+      Use your code tool; if you have none, compute it by hand carefully and say
+      so. A disease absent from `diseases` gets no row; the report says
+      "overlap not computable: no phenotype annotation returned".
+
   - id: gene_panel
     label: "Phase 4 — characterise the candidate genes"
     requires: [literature]
@@ -305,8 +361,9 @@ steps:
 
   - id: report
     label: "Phase 7 — ranked differential with the evidence"
-    requires: [differential_all, differential_discriminating, resolve_candidates, keyword_search,
-               literature, gene_evidence_orphanet, gene_evidence_opentargets, gene_evidence_optimuskg]
+    requires: [differential_all, differential_discriminating, resolve_candidates, disease_inheritance,
+               keyword_search, literature, gene_evidence_orphanet, gene_evidence_opentargets,
+               gene_evidence_optimuskg, compute_overlap]
     calls: []
     notes: >-
       Rank every candidate with its score and the phenotypes that support it, and

@@ -947,6 +947,11 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
         "Orphanet_search_diseases": {"data": {"results": [
             {"ORPHAcode": 355, "Preferred term": "Gaucher disease"}]}},
         "Orphanet_get_genes": {"data": {"orpha_code": "355", "genes": [{"Symbol": "GBA"}]}},
+        "Orphanet_get_phenotypes": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
+                                             "phenotypes": [{"hpo_id": "HP:0001433", "hpo_term": "Hepatosplenomegaly"}]}},
+        "Orphanet_get_natural_history": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
+                                                  "type_of_inheritance": ["Autosomal recessive"],
+                                                  "average_age_of_onset": ["All ages"]}},
         "OpenTargets_get_disease_ids_by_name": {"data": {"search": {"hits": [
             {"id": "MONDO_0018150", "name": "Gaucher disease"}]}}},
         "OpenTargets_get_associated_targets_by_disease_efoId": {"data": {"disease": {
@@ -961,7 +966,9 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
                "discriminating_features": ["hepatosplenomegaly"],
                "discriminating_hpo_ids": ["HP:0001433"],
                "top_candidate": "Gaucher disease",
-               "optimuskg_genes": [{"gene": "GBA", "relation": "CAUSES", "evidence_score": 0.8}]}
+               "optimuskg_genes": [{"gene": "GBA", "relation": "CAUSES", "evidence_score": 0.8}],
+               "overlap_rows": [{"orpha_code": "355", "preferred_term": "Gaucher disease", "n": 1, "N": 1,
+                                 "overlap_pct": 100, "grade": "T1", "matched_hpo_ids": ["HP:0001433"]}]}
     calls, asked = [], []
     runner = SkillRunner(
         load_graph("rare-disease-diagnosis"),
@@ -973,9 +980,11 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
     state = runner.state(run_id)
     assert state["blocked"] == [] and state["unresolved"] == []
     assert state["facts"]["hpo_ids"] == ["HP:0001433", "HP:0001433"]
-    assert [(q["step"], q["kind"]) for q in asked] == [
-        ("hypothesis", "judge"), ("phenotypes", "judge"), ("keyword_search", "judge"),
-        ("gene_evidence_optimuskg", "delegate")]
+    assert [(q["step"], q["kind"]) for q in asked if q["kind"] == "judge"] == [
+        ("hypothesis", "judge"), ("phenotypes", "judge"), ("keyword_search", "judge")]
+    assert {q["step"] for q in asked if q["kind"] == "delegate"} == {
+        "gene_evidence_optimuskg", "compute_overlap"}
+    assert state["facts"]["overlap_rows"][0]["grade"] == "T1"
     assert state["facts"]["genes"] == ["GBA"]
     assert ("get_joint_associated_diseases_by_HPO_ID_list",
             {"HPO_ID_list": ["HP:0001433"], "limit": 30}) in calls
@@ -1110,6 +1119,18 @@ def _rare_disease_run(orphanet_hits):
         if tool == "Orphanet_get_genes":
             return {"status": "success", "data": {"orpha_code": str(arguments["orphacode"]),
                                                   "genes": orphanet_genes.get(int(arguments["orphacode"]), [])}}
+        if tool == "Orphanet_get_natural_history":
+            code = int(arguments["orphacode"])
+            return {"status": "success", "data": {
+                "orpha_code": str(code), "preferred_term": {580: "MPS II", 354: "GM1"}.get(code, "?"),
+                "type_of_inheritance": ["X-linked recessive"] if code == 580 else ["Autosomal recessive"],
+                "average_age_of_onset": ["Childhood"]}}
+        if tool == "Orphanet_get_phenotypes":
+            code = int(arguments["orphacode"])
+            return {"status": "success", "data": {
+                "orpha_code": str(code), "preferred_term": {580: "MPS II", 354: "GM1"}.get(code, "?"),
+                "phenotypes": [{"hpo_id": "HP:0000280", "hpo_term": "Coarse facial features",
+                                "frequency": "Very frequent (99-80%)"}]}}
         if tool == "OpenTargets_get_disease_ids_by_name":
             mondo = mondo_ids.get(arguments["name"])
             return {"data": {"search": {"hits": [{"id": mondo, "name": arguments["name"]}] if mondo else []}}}
@@ -1123,7 +1144,9 @@ def _rare_disease_run(orphanet_hits):
                "discriminating_features": ["coarse facies"],
                "discriminating_hpo_ids": ["HP:0000280"],
                "top_candidate": "Hunter syndrome", "genes": [],
-               "optimuskg_genes": [{"gene": "IDS", "relation": "CAUSES", "evidence_score": 0.9}]}
+               "optimuskg_genes": [{"gene": "IDS", "relation": "CAUSES", "evidence_score": 0.9}],
+               "overlap_rows": [{"orpha_code": "580", "preferred_term": "MPS II", "n": 1, "N": 1,
+                                 "overlap_pct": 100, "grade": "T1", "matched_hpo_ids": ["HP:0000280"]}]}
     asked = []
 
     def ask(question):
@@ -1252,7 +1275,7 @@ def test_optimuskg_is_asked_once_as_a_delegated_call_on_the_top_candidate():
     restricted to genes. What comes back is recorded like any other result."""
     state, calls = _rare_disease_run(HITS)
 
-    delegated = [q for q in state["asked"] if q["kind"] == "delegate"]
+    delegated = [q for q in state["asked"] if q["kind"] == "delegate" and q["step"] == "gene_evidence_optimuskg"]
     assert len(delegated) == 1
     tools = [c["tool"] for c in delegated[0]["calls"]]
     assert tools == ["OptimusKG_Search", "OptimusKG_Search"]
@@ -1362,3 +1385,27 @@ def test_collect_can_project_each_call_to_named_fields():
          "hpo_ids": ["HP:0000280", "HP:0001433"]},
         {"orpha_code": "580", "preferred_term": "MPS II", "hpo_ids": []},
     ]
+
+
+def test_each_resolved_candidate_gets_its_phenotype_set_and_inheritance_as_rows():
+    state, calls = _rare_disease_run(HITS)
+
+    assert sorted(int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_phenotypes") == [354, 580]
+    assert sorted(int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_natural_history") == [354, 580]
+    rows = {r["orpha_code"]: r for r in state["facts"]["disease_phenotypes"]}
+    assert rows["580"]["hpo_ids"] == ["HP:0000280"] and "phenotypes" not in rows["580"]
+    inh = {r["orpha_code"]: r for r in state["facts"]["disease_inheritance"]}
+    assert inh["580"]["type_of_inheritance"] == ["X-linked recessive"]
+
+
+def test_overlap_and_grade_are_computed_by_a_delegated_call_from_the_rows():
+    state, calls = _rare_disease_run(HITS)
+
+    delegated = [q for q in state["asked"] if q["kind"] == "delegate"]
+    compute = next(q for q in delegated if q["step"] == "compute_overlap")
+    assert compute["calls"][0]["tool"] == "code_interpreter"
+    task = compute["calls"][0]["arguments"]
+    assert task["case_hpo_ids"] == ["HP:0000280"]
+    assert {r["orpha_code"] for r in task["diseases"]} == {"580", "354"}
+    assert state["facts"]["overlap_rows"][0]["grade"] == "T1"
+    assert "Orphanet_get_phenotypes" not in [c["tool"] for c in compute["calls"]]

@@ -59,8 +59,9 @@ report: >-
   (or "not in Open Targets"), plus the top three scored targets of that disease
   with their scores so the drop-off is visible — never apply a cut; the
   OptimusKG relation and evidence score from `facts.optimuskg_genes` when the
-  gene is there (or "not in OptimusKG"); Ensembl id and expression from the
-  panel results. Where the three agree, say so once; where they differ, show
+  gene is there (or "not in OptimusKG"); Ensembl and Entrez ids from
+  `facts.gene_rows`; expression from the panel results that the bundle kept.
+  Where the three agree, say so once; where they differ, show
   all and do not pick. A gene in none of the three sources is not in the
   report. A disease with no gene in any source says "no causal gene in
   Orphanet, Open Targets or OptimusKG". When `facts.optimuskg_genes` is empty
@@ -331,6 +332,11 @@ steps:
         arguments:
           query: "{gene}"
           fields: "symbol,name,entrezgene,ensembl.gene,summary"
+    # The writer reads the panel from these rows; loop payloads in the bundle are
+    # bounded per step and may be counted rather than kept.
+    collect:
+      gene_rows: {path: "data.hits.0", fields: ["symbol", "name", "entrezgene", "ensembl.gene as ensembl"]}
+    produces: [gene_rows]
     notes: >-
       One call per gene in `facts.genes`. Take symbol, name, Entrez id and
       Ensembl id from the hit whose symbol matches exactly; a gene with no exact

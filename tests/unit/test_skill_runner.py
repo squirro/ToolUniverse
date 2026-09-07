@@ -13,6 +13,7 @@ calls itself and hand back only what the next step needs.
 The executor is injected here, so these tests need no ToolUniverse and no network.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -1100,7 +1101,8 @@ def _rare_disease_run(orphanet_hits):
         "get_joint_associated_diseases_by_HPO_ID_list": ["Hunter syndrome", "GM1 gangliosidosis",
                                                          "Sialuria"],
         "EuropePMC_search_articles": {"data": []},
-        "MyGene_query_genes": {"hits": []},
+        "MyGene_query_genes": {"data": {"hits": [{"_id": "3423", "symbol": "IDS", "name": "iduronate 2-sulfatase",
+                                                 "entrezgene": "3423", "ensembl": {"gene": "ENSG00000010404"}}]}},
         "GTEx_get_expression_summary": {"data": []},
         "OpenTargets_get_associated_targets_by_disease_efoId": {"data": {"disease": {
             "id": "MONDO_0011758", "name": "Hurler syndrome", "associatedTargets": {"rows": [
@@ -1409,3 +1411,60 @@ def test_overlap_and_grade_are_computed_by_a_delegated_call_from_the_rows():
     assert {r["orpha_code"] for r in task["diseases"]} == {"580", "354"}
     assert state["facts"]["overlap_rows"][0]["grade"] == "T1"
     assert "Orphanet_get_phenotypes" not in [c["tool"] for c in compute["calls"]]
+
+
+# --- the bundle is a tool return the model must read: bounded per step ------------
+#
+# Live 2026-09-07: a rare-disease run finished all seventeen steps and the agent's
+# turn then died on "input exceeds the context window" — the bundle was 716 KB,
+# of which GTEx's twenty-eight payloads were 288 KB. A cap per payload cannot
+# bound a loop. Each step's results get a budget; the rows a loop collected are
+# in facts and are what the writer reads.
+
+def test_a_loop_steps_results_are_kept_whole_up_to_a_budget_then_counted():
+    from tooluniverse.skill_runner import STEP_RESULTS_BUDGET, bundle_of, new_run
+    graph = {"skill": "big", "inputs": ["genes"], "steps": [
+        {"id": "expression", "for_each": "genes", "as": "gene",
+         "calls": [{"tool": "GTEx", "arguments": {"gene": "{gene}"}}]}]}
+    run = new_run({"genes": list("abcdefghij")})
+    payload = {"data": {"x": "y" * 8_000}}                 # ~8 KB each
+    run["results"]["expression"] = [dict(payload, i=i) for i in range(10)]
+    run["done"] = ["expression"]
+
+    kept = bundle_of(graph, run, cap=12_000)["results"]["expression"]
+
+    whole = [p for p in kept if "omitted" not in p]
+    assert whole == run["results"]["expression"][:len(whole)]           # first ones, untouched
+    assert sum(len(json.dumps(p)) for p in whole) <= STEP_RESULTS_BUDGET
+    assert kept[-1] == {"omitted": 10 - len(whole),
+                        "note": "loop results beyond the step budget; the rows this step collected are in facts"}
+
+
+def test_a_single_call_steps_result_is_trimmed_as_before():
+    from tooluniverse.skill_runner import bundle_of, new_run
+    graph = {"skill": "one", "inputs": [], "steps": [{"id": "label", "calls": [{"tool": "t"}]}]}
+    run = new_run({})
+    run["results"]["label"] = [{"data": {"text": "z" * 30_000}}]
+    run["done"] = ["label"]
+
+    kept = bundle_of(graph, run, cap=12_000)["results"]["label"]
+
+    assert len(kept) == 1 and kept[0]["truncated"] is True and len(kept[0]["preview"]) == 12_000
+
+
+def test_a_question_stubs_facts_larger_than_a_payload_cap():
+    from tooluniverse.skill_runner import question_for
+    facts = {"top_candidate": "MPS II", "opentargets_rows": [{"t": "x" * 100}] * 200}
+
+    q = question_for("keyword_search", "judge", ["top_candidate"], facts)
+
+    assert q["context"]["top_candidate"] == "MPS II"
+    assert q["context"]["opentargets_rows"] == {"omitted": "200 items, in the bundle"}
+
+
+def test_the_gene_panel_collects_a_row_per_gene_for_the_writer():
+    """With loop results bounded, the writer reads Ensembl and Entrez ids from rows."""
+    state, _ = _rare_disease_run(HITS)
+    rows = state["facts"]["gene_rows"]
+    assert rows and rows[0] == {"symbol": "IDS", "name": "iduronate 2-sulfatase",
+                                "entrezgene": "3423", "ensembl": "ENSG00000010404"}

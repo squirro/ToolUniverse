@@ -179,16 +179,42 @@ def next_runnable(graph: dict, run: dict) -> dict | None:
             run["blocked"].append({"step": blocked, "reason": str(exc)})
 
 
+STEP_RESULTS_BUDGET = 48_000     # four payload caps: a loop's results, not a loop's worth
+
+
+def _budgeted(results: list, cap: int, budget: int) -> list:
+    """A loop step's payloads, whole and in order, until the budget; then a count.
+
+    Live 2026-09-07 a bundle reached 716 KB — twenty-eight GTEx payloads were
+    288 KB of it — and the agent's turn died on the model's context window. A cap
+    per payload cannot bound a loop; the rows the loop collected are in facts.
+    """
+    kept, used = [], 0
+    for payload in trim(results, cap):
+        size = len(json.dumps(payload, default=str))
+        if kept and used + size > budget:
+            break
+        kept.append(payload)
+        used += size
+    if len(kept) < len(results):
+        kept.append({"omitted": len(results) - len(kept),
+                     "note": "loop results beyond the step budget; the rows this step collected are in facts"})
+    return kept
+
+
 def bundle_of(graph: dict, run: dict, cap: int) -> dict:
     """Everything the report needs, handed over ONCE at the end.
 
     The run kept every result — label text, the trial list, the papers — because
-    that is what the report is made of. Capping each payload keeps it sendable.
+    that is what the report is made of. Capping each payload keeps it sendable;
+    a loop step's results are also bounded as a whole.
     """
+    loops = {s["id"] for s in graph["steps"] if s.get("for_each")}
     return {
         "skill": graph["skill"],
         "facts": run["facts"],
-        "results": {step_id: trim(results, cap)
+        "results": {step_id: (_budgeted(results, cap, STEP_RESULTS_BUDGET)
+                              if step_id in loops else trim(results, cap))
                     for step_id, results in run["results"].items()},
         "steps_done": run["done"],
         "calls": run.get("calls", {}),
@@ -231,8 +257,22 @@ def question_for(step_id: str, kind: str, wants: list[str], context: dict, **det
     should take, and an agent that never saw them answered a web search with bare
     URLs where the author had asked for title, url and snippet.
     """
-    return {"kind": kind, "step": step_id, "wants": list(wants), "context": context,
+    return {"kind": kind, "step": step_id, "wants": list(wants),
+            "context": _readable(context),
             **{k: v for k, v in detail.items() if v is not None}}
+
+
+def _readable(facts: dict) -> dict:
+    """The facts a question shows the model: a fact larger than one payload cap
+    is stubbed — twenty Open Targets rows are in the bundle, not for judging."""
+    out = {}
+    for name, value in facts.items():
+        if len(json.dumps(value, default=str)) > MAX_PAYLOAD:
+            what = f"{len(value)} items" if isinstance(value, (list, dict)) else f"{len(str(value))} chars"
+            out[name] = {"omitted": f"{what}, in the bundle"}
+        else:
+            out[name] = value
+    return out
 
 
 def asked(run: dict, question: dict, answer: dict | None) -> None:

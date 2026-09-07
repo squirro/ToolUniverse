@@ -33,9 +33,11 @@ report: >-
   (the discriminating pair) and `results.keyword_search` (Orphanet), skipping any
   name that begins "OBSOLETE:". Present the candidates in the order of
   `facts.ranked_rows` and say the rule once: onset fit against the patient's age
-  first, then how common the disease is (Orphanet prevalence class), then
-  phenotype overlap. For every candidate give its rank, "n of N phenotypes"
-  (overlap_pct), the grade, the onset and its fit, and the prevalence tier, all
+  first; then whether the disease carries both discriminating phenotypes; then
+  how common the disease is (Orphanet prevalence class); then phenotype overlap.
+  For every candidate give its rank, "n of N phenotypes" (overlap_pct), the
+  grade, whether it carries the discriminating pair, the onset and its fit, and
+  the prevalence tier, all
   from its row, and cite the matched HPO ids; a candidate with no overlap row is
   "overlap not computable: no phenotype annotation returned". Never leave a grade
   blank when a row exists. Say which
@@ -394,14 +396,19 @@ steps:
         patient_age_years: age_years
         early_onset: ["Antenatal", "Neonatal", "Infancy", "Childhood", "All ages"]
         late_onset: ["Adolescent", "Adult", "Elderly"]
+        # A candidate must carry the discriminating pair the run computed to rank
+        # above candidates that do (DSR-729 v2: Sotos-first).
+        must_carry: discriminating_hpo_ids
+        rows_ids: disease_phenotypes
     produces: [ranked_rows]
     notes: >-
-      The differential in the order the report presents it. A disease whose every
-      onset class is later than the patient's age is ranked below every disease
-      that fits; commoner diseases rank above rarer ones (Orphanet prevalence
-      class, unknown in between); overlap breaks ties. The grade stays a column.
-      Without a patient age, onset is "not assessed" and the order is prevalence
-      then overlap.
+      The differential in the order the report presents it. First: onset fit —
+      a disease whose every onset class is later than the patient's age goes
+      below every disease that fits. Second: does the disease carry both
+      discriminating phenotypes? Those that do rank above those that do not.
+      Then commoner above rarer (Orphanet prevalence class, unknown in
+      between), then overlap. The grade stays a column. Without a patient age
+      onset is "not assessed"; without a computed pair the gate is not applied.
 
   - id: gene_panel
     label: "Phase 4 — characterise the candidate genes"

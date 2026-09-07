@@ -1751,3 +1751,51 @@ def test_fewest_counts_distinct_ids_so_two_symptoms_on_one_term_do_not_make_a_pa
     assert _fewest(rule, {"t": same}) is None                       # one distinct id: cannot cut two
     three = same + [{"hpo_id": "HP:2", "diseases": ["d"] * 340}]
     assert _fewest(rule, {"t": three}) == ["HP:1", "HP:2"]
+
+
+# --- a candidate must carry the discriminating pair to rank above those that do ---
+#
+# DSR-729 v2: both judges named Sotos-first as the one clinical fault. Sotos fits
+# the age, is the commonest disease on the list, and carries three of the four case
+# phenotypes — but not hepatosplenomegaly, one of the two the run itself computed
+# as discriminating. The process computes the pair and then ranked without it.
+
+GATED_SPEC = {"compute": {"ranked_rows": {**RANK_SPEC["compute"]["ranked_rows"],
+                                          "must_carry": "discriminating_hpo_ids",
+                                          "rows_ids": "disease_phenotypes"}}}
+
+
+def test_a_candidate_lacking_a_discriminating_phenotype_ranks_below_all_that_carry_both():
+    facts = {
+        "age_years": 4,
+        "discriminating_hpo_ids": ["HP:0001433", "HP:0000280"],
+        "disease_phenotypes": [
+            {"orpha_code": "821", "hpo_ids": ["HP:0001263", "HP:0001250", "HP:0000280"]},          # Sotos: no hepatosplenomegaly
+            {"orpha_code": "580", "hpo_ids": ["HP:0000280", "HP:0001433", "HP:0001250"]},          # MPS II: both
+            {"orpha_code": "93473", "hpo_ids": ["HP:0000280", "HP:0001433"]},                      # Hurler: both
+            {"orpha_code": "3166", "hpo_ids": ["HP:0000280", "HP:0001433", "HP:0001250", "HP:0001263"]},  # Sialuria: both
+        ],
+        "overlap_rows": [
+            {"orpha_code": "821", "preferred_term": "Sotos", "overlap_pct": 75, "grade": "T2"},
+            {"orpha_code": "580", "preferred_term": "MPS II", "overlap_pct": 75, "grade": "T2"},
+            {"orpha_code": "93473", "preferred_term": "Hurler", "overlap_pct": 50, "grade": "T3"},
+            {"orpha_code": "3166", "preferred_term": "Sialuria", "overlap_pct": 100, "grade": "T1"},
+        ],
+        "disease_inheritance": [{"orpha_code": c, "average_age_of_onset": ["Infancy"]} for c in ("821", "580", "93473", "3166")],
+        "disease_prevalence": [{"orpha_code": "821", "classes": ["1-9 / 100 000"]},
+                               {"orpha_code": "580", "classes": ["1-9 / 1 000 000"]},
+                               {"orpha_code": "93473", "classes": ["1-9 / 1 000 000"]},
+                               {"orpha_code": "3166", "classes": ["<1 / 1 000 000"]}],
+    }
+    rows = absorb(GATED_SPEC, results=[], facts=facts)["facts"]["ranked_rows"]
+
+    assert [r["preferred_term"] for r in rows] == ["MPS II", "Hurler", "Sialuria", "Sotos"]
+    assert rows[0]["carries_discriminating"] == "both" and rows[-1]["carries_discriminating"] == "1 of 2"
+    # within the gate, the earlier keys still order: MPS II and Hurler (1-9/1 000 000) above sialuria (<1/1 000 000)
+
+
+def test_without_a_computed_pair_the_gate_is_not_applied_and_says_so():
+    facts = {k: v for k, v in RANK_FACTS.items()}
+    rows = absorb(GATED_SPEC, results=[], facts=facts)["facts"]["ranked_rows"]
+    assert [r["preferred_term"] for r in rows][:2] == ["MPS II", "Hurler"]          # unchanged from the ungated test
+    assert all(r["carries_discriminating"] == "not assessed (no discriminating pair)" for r in rows)

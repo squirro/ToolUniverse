@@ -127,9 +127,22 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
     prev_by = {str(r.get("orpha_code")): r.get("classes") or []
                for r in facts.get(rule.get("epidemiology", ""), []) or []}
     early, late = set(rule.get("early_onset", [])), set(rule.get("late_onset", []))
+    # The gate: a candidate must carry the discriminating phenotypes the run
+    # computed to rank above candidates that do. Without it the commonest disease
+    # matching the NON-discriminating phenotypes floats to the top (Sotos, which
+    # Orphanet lists no hepatosplenomegaly for, above every storage disease).
+    pair = facts.get(rule.get("must_carry", "")) or []
+    ids_by = {str(r.get("orpha_code")): set(r.get("hpo_ids") or [])
+              for r in facts.get(rule.get("rows_ids", ""), []) or []}
     out = []
     for row in overlap:
         code = str(row.get("orpha_code"))
+        if not pair:
+            carries, gate_key = "not assessed (no discriminating pair)", 0
+        else:
+            n_carried = sum(1 for p in pair if p in ids_by.get(code, set()))
+            carries = "both" if n_carried == len(pair) else f"{n_carried} of {len(pair)}"
+            gate_key = len(pair) - n_carried
         onsets = onset_by.get(code, [])
         if age is None:
             fit, fit_key = "not assessed (no patient age)", 0
@@ -144,7 +157,8 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
         # A candidate that matches nothing goes to the bottom of its onset band:
         # prevalence orders the diseases that fit at all, it does not rescue one.
         out.append({**row, "onset": onsets, "onset_fit": fit, "prevalence_tier": tier,
-                    "_key": (fit_key, 0 if pct > 0 else 1, tier_key, -pct)})
+                    "carries_discriminating": carries,
+                    "_key": (fit_key, gate_key, 0 if pct > 0 else 1, tier_key, -pct)})
     out.sort(key=lambda r: (r["_key"], str(r.get("preferred_term"))))
     for i, r in enumerate(out, 1):
         r.pop("_key")

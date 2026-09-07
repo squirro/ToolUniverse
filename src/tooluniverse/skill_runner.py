@@ -89,6 +89,71 @@ def _step_in(current: Any, key: str, mapping: bool) -> Any:
     return None
 
 
+# --- compute: arithmetic over rows the run holds --------------------------------
+
+_PREVALENCE_TIERS = (">1 / 1000", "1-5 / 10 000", "6-9 / 10 000", "1-9 / 100 000",
+                     "1-9 / 1 000 000", "<1 / 1 000 000")   # commonest first, Orphanet's classes
+_UNKNOWN_TIER_POSITION = 4.5      # below every counted class, above the rarest-of-the-rare
+
+
+def _prevalence_tier(classes: list[str]) -> tuple[str, float]:
+    """The commonest class Orphanet gives, and its position; unknown sits mid-table."""
+    known = [c for c in classes or [] if c in _PREVALENCE_TIERS]
+    if not known:
+        return "unknown", _UNKNOWN_TIER_POSITION
+    best = min(known, key=_PREVALENCE_TIERS.index)
+    return best, float(_PREVALENCE_TIERS.index(best))
+
+
+def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
+    """Order candidates the way a clinician does: age fit, then how common, then fit.
+
+    Onset: a disease whose every onset class is later than the patient goes below
+    every disease that fits; no patient age means onset is not assessed. Prevalence:
+    Orphanet's class, commonest first, unknown in the middle. Overlap: last key.
+    """
+    overlap = facts.get(rule["overlap"])
+    if overlap is None:
+        return None
+    age = facts.get(rule.get("patient_age_years", ""))
+    onset_by = {str(r.get("orpha_code")): r.get("average_age_of_onset") or []
+                for r in facts.get(rule.get("inheritance", ""), []) or []}
+    prev_by = {str(r.get("orpha_code")): r.get("classes") or []
+               for r in facts.get(rule.get("epidemiology", ""), []) or []}
+    early, late = set(rule.get("early_onset", [])), set(rule.get("late_onset", []))
+    out = []
+    for row in overlap:
+        code = str(row.get("orpha_code"))
+        onsets = onset_by.get(code, [])
+        if age is None:
+            fit, fit_key = "not assessed (no patient age)", 0
+        elif onsets and all(o in late for o in onsets):
+            fit, fit_key = "later than patient", 1
+        elif onsets and any(o in early for o in onsets):
+            fit, fit_key = "fits", 0
+        else:
+            fit, fit_key = "unknown onset", 0
+        tier, tier_key = _prevalence_tier(prev_by.get(code, []))
+        out.append({**row, "onset": onsets, "onset_fit": fit,
+                    "prevalence_tier": tier, "_key": (fit_key, tier_key, -float(row.get("overlap_pct") or 0))})
+    out.sort(key=lambda r: (r["_key"], str(r.get("preferred_term"))))
+    for i, r in enumerate(out, 1):
+        r.pop("_key")
+        r["rank"] = i
+    return out
+
+
+_COMPUTE_OPS: dict[str, Callable[[dict, dict], Any]] = {"rank_differential": _rank_differential}
+
+
+def _compute(rule: dict, facts: dict) -> Any:
+    """One named operation over facts; None when a source fact never arrived."""
+    op = _COMPUTE_OPS.get(rule.get("op"))
+    if op is None:
+        raise SkillGraphError(f"unknown compute op {rule.get('op')!r}")
+    return op(rule, facts)
+
+
 def _derive(spec: dict, facts: dict) -> bool | None:
     """A gateway condition computed from data, not asserted by the model.
 
@@ -397,6 +462,18 @@ def absorb(spec: dict, results: list, facts: dict) -> dict:
             merged = merged[: rule["limit"]]
         extracted[name] = merged
 
+    # `compute` is arithmetic over rows the run already holds — ranking a
+    # differential by onset, prevalence and overlap is not a judgement, so the
+    # server does it, with the author's rule. Delegated to the agent's code tool,
+    # the same arithmetic ran on a retyped input once (DSR-729, GM1 4/4).
+    computed_missing = []
+    for name, rule in (spec.get("compute") or {}).items():
+        value = _compute(rule, {**facts, **extracted})
+        if value is None:
+            computed_missing.append(name)
+        else:
+            extracted[name] = value
+
     blocked, undecided = [], []
     known = {**facts, **extracted}
     for name, rule in (spec.get("derive") or {}).items():
@@ -413,7 +490,7 @@ def absorb(spec: dict, results: list, facts: dict) -> dict:
 
     # A value the step SAYS it produces and did not is recorded, always.
     unresolved = [name for name in (spec.get("extract") or {})
-                  if name not in extracted]
+                  if name not in extracted] + computed_missing
     return {"facts": extracted, "unresolved": unresolved, "blocked": blocked,
             "undecided": undecided, "excluded": excluded}
 

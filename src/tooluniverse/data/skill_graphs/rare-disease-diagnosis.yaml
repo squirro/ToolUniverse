@@ -19,7 +19,7 @@ skill: rare-disease-diagnosis
 inputs: [symptoms]
 # Optional, bound by the AGENT from the case when it supplies one. Without this
 # the `variant` step's `when: variant_id` could never be true.
-optional_inputs: [variant_id]
+optional_inputs: [variant_id, age_years]
 # How the report must read the evidence. The bundle carries the numbers; this
 # carries the author's rules for ranking, grading and citing them. Blind-judged
 # 2026-09-03 on clinical-data-integration: without it the writer had the data and
@@ -31,11 +31,14 @@ report: >-
   work-up; the recommended next diagnostic step. Then the ranked differential:
   merge `results.differential_all` (strict intersection), `results.differential_discriminating`
   (the discriminating pair) and `results.keyword_search` (Orphanet), skipping any
-  name that begins "OBSOLETE:". Rank by `facts.overlap_rows`: for every
-  candidate give "n of N phenotypes" (overlap_pct) and the grade from its row,
-  and cite the matched HPO ids; a candidate with no row is "overlap not
-  computable: no phenotype annotation returned". Never leave a grade blank when
-  a row exists. Say which
+  name that begins "OBSOLETE:". Present the candidates in the order of
+  `facts.ranked_rows` and say the rule once: onset fit against the patient's age
+  first, then how common the disease is (Orphanet prevalence class), then
+  phenotype overlap. For every candidate give its rank, "n of N phenotypes"
+  (overlap_pct), the grade, the onset and its fit, and the prevalence tier, all
+  from its row, and cite the matched HPO ids; a candidate with no overlap row is
+  "overlap not computable: no phenotype annotation returned". Never leave a grade
+  blank when a row exists. Say which
   candidates came only from the discriminating pair and which only from the
   keyword search; weight the HPO route as primary when the two disagree. Name
   the features of the case the leading candidate leaves unexplained. The third
@@ -199,6 +202,23 @@ steps:
       siblings the phenotypes cannot (X-linked MPS II against autosomal recessive
       Hurler); cite them from these rows.
 
+  - id: disease_prevalence
+    label: "Phase 2b.4 — how common each candidate is, from Orphanet"
+    requires: [resolve_candidates]
+    for_each: orphanet_codes
+    as: orphacode
+    calls:
+      - tool: Orphanet_get_epidemiology
+        arguments: {orphacode: "{orphacode}"}
+    # Orphanet gives prevalence classes ("1-9 / 100 000", "<1 / 1 000 000") or a case
+    # count; the run keeps the classes per disease. No data is a fact, not a zero.
+    collect:
+      disease_prevalence: {path: "data", fields: ["orpha_code", "preferred_term", "prevalences[].class as classes"]}
+    produces: [disease_prevalence]
+    notes: >-
+      One call per resolved candidate. A disease with no prevalence row is of
+      unknown frequency — say so; it is neither promoted nor demoted for it.
+
   - id: keyword_search
     label: "Phase 2c — Orphanet keyword search"
     requires: [phenotypes]
@@ -321,6 +341,32 @@ steps:
       so. A disease absent from `diseases` gets no row; the report says
       "overlap not computable: no phenotype annotation returned".
 
+  - id: rank_differential
+    label: "Phase 2c.3 — the order a clinician uses: age fit, then how common, then overlap"
+    requires: [disease_inheritance, disease_prevalence, compute_overlap]
+    calls: []
+    # DSR-729: both blinded judges marked the reports down for ranking by Orphanet
+    # annotation count — sialuria (five families worldwide) and an adolescent-onset
+    # sialidosis above the mucopolysaccharidoses a four-year-old must have excluded
+    # first. Ranking is arithmetic over rows the run holds, so the server does it.
+    compute:
+      ranked_rows:
+        op: rank_differential
+        overlap: overlap_rows
+        inheritance: disease_inheritance
+        epidemiology: disease_prevalence
+        patient_age_years: age_years
+        early_onset: ["Antenatal", "Neonatal", "Infancy", "Childhood", "All ages"]
+        late_onset: ["Adolescent", "Adult", "Elderly"]
+    produces: [ranked_rows]
+    notes: >-
+      The differential in the order the report presents it. A disease whose every
+      onset class is later than the patient's age is ranked below every disease
+      that fits; commoner diseases rank above rarer ones (Orphanet prevalence
+      class, unknown in between); overlap breaks ties. The grade stays a column.
+      Without a patient age, onset is "not assessed" and the order is prevalence
+      then overlap.
+
   - id: gene_panel
     label: "Phase 4 — characterise the candidate genes"
     requires: [literature]
@@ -368,8 +414,8 @@ steps:
   - id: report
     label: "Phase 7 — ranked differential with the evidence"
     requires: [differential_all, differential_discriminating, resolve_candidates, disease_inheritance,
-               keyword_search, literature, gene_evidence_orphanet, gene_evidence_opentargets,
-               gene_evidence_optimuskg, compute_overlap]
+               disease_prevalence, keyword_search, literature, gene_evidence_orphanet,
+               gene_evidence_opentargets, gene_evidence_optimuskg, compute_overlap, rank_differential]
     calls: []
     notes: >-
       Rank every candidate with its score and the phenotypes that support it, and

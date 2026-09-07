@@ -352,7 +352,7 @@ def test_rare_disease_diagnosis_carries_report_guidance_and_notes_on_every_step(
     arm, so it must carry the rules the same way clinical-data-integration does —
     and a case that supplies a variant must be able to say so."""
     graph = load_graph("rare-disease-diagnosis")
-    assert graph["optional_inputs"] == ["variant_id"]
+    assert graph["optional_inputs"] == ["variant_id", "age_years"]
     assert [s["id"] for s in graph["steps"] if not s.get("notes")] == []
     report = graph["report"]
     # The writer must be told which facts the model supplied, where genes may
@@ -363,7 +363,7 @@ def test_rare_disease_diagnosis_carries_report_guidance_and_notes_on_every_step(
                    "failures", "blocked", "unresolved", "No variant data provided",
                    # the discriminating-tests line: what separates the top two
                    "same disease family", "inheritance", "clinical reasoning",
-                   "overlap_rows", "disease_inheritance"):
+                   "disease_inheritance", "ranked_rows", "prevalence"):
         assert needle in report, needle
     assert "no tool in this run returned it" not in report     # inheritance now comes from a row
     assert "supplied by the model" in report and "genes" not in report.split("supplied by the model")[0].rsplit(".", 1)[-1]

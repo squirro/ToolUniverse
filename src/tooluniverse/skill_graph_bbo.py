@@ -147,6 +147,7 @@ _JSON_SPECS = {
     "collect": SRP.collectSpec,
     "combine": SRP.combineSpec,
     "derive": SRP.deriveSpec,
+    "compute": SRP.computeSpec,
     "produces": SRP.produces,
     "judge": SRP.judges,
     "delegate": SRP.delegateSpec,

@@ -1133,6 +1133,10 @@ def _rare_disease_run(orphanet_hits):
                 "orpha_code": str(code), "preferred_term": {580: "MPS II", 354: "GM1"}.get(code, "?"),
                 "phenotypes": [{"hpo_id": "HP:0000280", "hpo_term": "Coarse facial features",
                                 "frequency": "Very frequent (99-80%)"}]}}
+        if tool == "Orphanet_get_epidemiology":
+            code = int(arguments["orphacode"])
+            return {"status": "success", "data": {"orpha_code": str(code), "preferred_term": "?",
+                                                  "prevalences": [{"class": "1-9 / 100 000"}] if code == 580 else []}}
         if tool == "OpenTargets_get_disease_ids_by_name":
             mondo = mondo_ids.get(arguments["name"])
             return {"data": {"search": {"hits": [{"id": mondo, "name": arguments["name"]}] if mondo else []}}}
@@ -1484,3 +1488,88 @@ def test_a_stubbed_fact_says_it_travels_whole_in_the_questions_own_calls():
     assert q["context"]["disease_phenotypes"] == {
         "omitted": "20 items — passed whole in this question's calls, and in the bundle"}
     assert q["calls"][0]["arguments"]["diseases"] == rows          # the arguments are never stubbed
+
+
+# --- the differential is ranked by onset fit, prevalence, then overlap -------------
+#
+# DSR-729: both blinded judges marked the modelled reports down for ranking by
+# Orphanet annotation count, which put sialuria (five families worldwide) and an
+# adolescent-onset sialidosis above the mucopolysaccharidoses a four-year-old must
+# have excluded first. Ranking is arithmetic over rows the run holds — onset,
+# prevalence, overlap — so the runtime does it, with the author's rule.
+
+RANK_SPEC = {"compute": {"ranked_rows": {
+    "op": "rank_differential",
+    "overlap": "overlap_rows", "inheritance": "disease_inheritance",
+    "epidemiology": "disease_prevalence", "patient_age_years": "age_years",
+    "early_onset": ["Antenatal", "Neonatal", "Infancy", "Childhood", "All ages"],
+    "late_onset": ["Adolescent", "Adult", "Elderly"]}}}
+
+RANK_FACTS = {
+    "age_years": 4,
+    "overlap_rows": [
+        {"orpha_code": "3166", "preferred_term": "Sialuria", "n": 4, "N": 4, "overlap_pct": 100, "grade": "T1"},
+        {"orpha_code": "93399", "preferred_term": "Juvenile sialidosis type 2", "n": 4, "N": 4, "overlap_pct": 100, "grade": "T1"},
+        {"orpha_code": "580", "preferred_term": "MPS II", "n": 3, "N": 4, "overlap_pct": 75, "grade": "T2"},
+        {"orpha_code": "93473", "preferred_term": "Hurler", "n": 2, "N": 4, "overlap_pct": 50, "grade": "T3"},
+        {"orpha_code": "79255", "preferred_term": "GM1 type 1", "n": 3, "N": 4, "overlap_pct": 75, "grade": "T2"},
+    ],
+    "disease_inheritance": [
+        {"orpha_code": "3166", "average_age_of_onset": ["Infancy"]},
+        {"orpha_code": "93399", "average_age_of_onset": ["Adolescent"]},
+        {"orpha_code": "580", "average_age_of_onset": ["Childhood"]},
+        {"orpha_code": "93473", "average_age_of_onset": ["Infancy", "Neonatal"]},
+        {"orpha_code": "79255", "average_age_of_onset": ["Infancy"]},
+    ],
+    "disease_prevalence": [
+        {"orpha_code": "3166", "classes": ["<1 / 1 000 000"]},
+        {"orpha_code": "580", "classes": ["1-9 / 100 000", "1-9 / 1 000 000"]},
+        {"orpha_code": "93473", "classes": ["1-9 / 1 000 000"]},
+        {"orpha_code": "79255", "classes": ["Unknown"]},
+        # 93399 has no epidemiology row at all: unknown, neither punished nor rewarded
+    ],
+}
+
+
+def test_the_differential_is_ranked_by_onset_fit_then_prevalence_then_overlap():
+    out = absorb(RANK_SPEC, results=[], facts=RANK_FACTS)
+
+    rows = out["facts"]["ranked_rows"]
+    assert [r["preferred_term"] for r in rows] == [
+        "MPS II",                      # fits age; commonest (1-9/100 000); 75%
+        "Hurler",                      # fits age; 1-9/1 000 000; 50%
+        "GM1 type 1",                  # fits age; prevalence unknown (middle tier); 75%
+        "Sialuria",                    # fits age; rarest (<1/1 000 000); 100%
+        "Juvenile sialidosis type 2",  # onset excludes a four-year-old: last, whatever the overlap
+    ]
+    assert rows[0]["rank"] == 1 and rows[0]["onset_fit"] == "fits" and rows[0]["prevalence_tier"] == "1-9 / 100 000"
+    assert rows[-1]["onset_fit"] == "later than patient" and rows[-1]["rank"] == 5
+    assert rows[2]["prevalence_tier"] == "unknown"
+    assert rows[0]["overlap_pct"] == 75 and rows[0]["grade"] == "T2"     # overlap and grade travel with the row
+
+
+def test_ranking_without_a_patient_age_uses_prevalence_then_overlap_and_says_so():
+    facts = {k: v for k, v in RANK_FACTS.items() if k != "age_years"}
+    out = absorb(RANK_SPEC, results=[], facts=facts)
+
+    rows = out["facts"]["ranked_rows"]
+    assert [r["preferred_term"] for r in rows][:2] == ["MPS II", "Hurler"]
+    assert all(r["onset_fit"] == "not assessed (no patient age)" for r in rows)
+
+
+def test_ranking_needs_the_overlap_rows_and_is_unresolved_without_them():
+    out = absorb(RANK_SPEC, results=[], facts={"age_years": 4})
+    assert "ranked_rows" in out["unresolved"] and "ranked_rows" not in out["facts"]
+
+
+def test_the_shipped_process_ranks_the_differential_on_the_server_from_its_rows():
+    state, calls = _rare_disease_run(HITS)
+
+    assert sorted(int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_epidemiology") == [354, 580]
+    assert "rank_differential" not in {q["step"] for q in state["asked"]}       # no question asked
+    ranked = state["facts"]["ranked_rows"]                 # one row: the stub's overlap answer has one
+    assert [r["rank"] for r in ranked] == [1]
+    assert ranked[0]["orpha_code"] == "580"
+    assert ranked[0]["prevalence_tier"] == "1-9 / 100 000"
+    assert ranked[0]["onset_fit"] == "not assessed (no patient age)"   # the stub binds no age_years
+    assert ranked[0]["grade"] == "T1" and ranked[0]["overlap_pct"] == 100    # overlap travels with the row

@@ -162,7 +162,8 @@ class SkillWorkflow:
             if repair and not resolved(spec, repair, results):
                 results, failures = await self._repair(spec, step, repair, results,
                                                        failures, made)
-            outcome = absorb(spec, results, run["facts"], items=loop_items(spec, step["calls"]))
+            outcome = absorb(spec, results, run["facts"], items=loop_items(spec, step["calls"]),
+                             calls=step["calls"])
             delegated = spec.get("delegate") or []
             if delegated:
                 # Web search and code live on the agent: the run pauses with the

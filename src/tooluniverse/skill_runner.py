@@ -134,14 +134,15 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
     pair = facts.get(rule.get("must_carry", "")) or []
     ids_by = {str(r.get("orpha_code")): set(r.get("hpo_ids") or [])
               for r in facts.get(rule.get("rows_ids", ""), []) or []}
+    hier = _hierarchy(rule, facts)
     out = []
     for row in overlap:
         code = str(row.get("orpha_code"))
         if not pair:
-            carries, gate_key = "not assessed (no discriminating pair)", 0
+            carried, gate_key = "not assessed (no discriminating pair)", 0
         else:
-            n_carried = sum(1 for p in pair if p in ids_by.get(code, set()))
-            carries = "both" if n_carried == len(pair) else f"{n_carried} of {len(pair)}"
+            n_carried = sum(1 for p in pair if carries(p, ids_by.get(code, set()), hier))
+            carried = "both" if n_carried == len(pair) else f"{n_carried} of {len(pair)}"
             gate_key = len(pair) - n_carried
         onsets = onset_by.get(code, [])
         if age is None:
@@ -157,13 +158,37 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
         # A candidate that matches nothing goes to the bottom of its onset band:
         # prevalence orders the diseases that fit at all, it does not rescue one.
         out.append({**row, "onset": onsets, "onset_fit": fit, "prevalence_tier": tier,
-                    "carries_discriminating": carries,
+                    "carries_discriminating": carried,
                     "_key": (fit_key, gate_key, 0 if pct > 0 else 1, tier_key, -pct)})
     out.sort(key=lambda r: (r["_key"], str(r.get("preferred_term"))))
     for i, r in enumerate(out, 1):
         r.pop("_key")
         r["rank"] = i
     return out
+
+
+def carries(term: str, disease_ids: set, hierarchy: dict) -> bool:
+    """Does a disease's annotation carry a case phenotype?
+
+    Yes if it lists the term itself, or ALL of the term's parents (HPO composes
+    Hepatosplenomegaly from Hepatomegaly and Splenomegaly), or any child (a
+    generalized seizure is a seizure). Ontological, from rows the run fetched;
+    with no hierarchy row for the term, exact match only.
+    """
+    if term in disease_ids:
+        return True
+    h = hierarchy.get(term) or {}
+    parents = h.get("parents") or []
+    # Two or more parents all present is the conjunction the term names; a lone
+    # parent is a broader term and does not stand for it.
+    if len(parents) >= 2 and all(p in disease_ids for p in parents):
+        return True
+    return any(c in disease_ids for c in (h.get("children") or []))
+
+
+def _hierarchy(rule: dict, facts: dict) -> dict:
+    rows = facts.get(rule.get("hierarchy", ""), []) or []
+    return {str(r.get("hpo_id")): r for r in rows}
 
 
 def _overlap(rule: dict, facts: dict) -> list[dict] | None:
@@ -178,10 +203,11 @@ def _overlap(rule: dict, facts: dict) -> list[dict] | None:
     case = list(dict.fromkeys(against))
     gene_rows = facts.get(rule.get("gene_rows", ""), []) or []
     has_gene = {str(g.get("orpha_code")) for g in gene_rows if g.get("genes")}
+    hier = _hierarchy(rule, facts)
     out = []
     for row in rows:
         ids = set(row.get(rule["row_ids"]) or [])
-        matched = [i for i in case if i in ids]
+        matched = [i for i in case if carries(i, ids, hier)]
         pct = round(100 * len(matched) / len(case)) if case else 0
         grade = None
         for g in rule.get("grades", []):
@@ -228,10 +254,9 @@ def loop_items(spec: dict, calls: list[dict]) -> list | None:
     loop, var = spec.get("for_each"), spec.get("as", "item")
     if not loop:
         return None
-    per_item = max(1, len(spec.get("calls") or []))
     marker = "{" + var + "}"
     items = []
-    for call in calls[::per_item]:
+    for call in calls:
         # The filled argument whose template was the loop variable carries the item.
         found = None
         for tmpl in (spec.get("calls") or [{}])[0].get("arguments", {}).items():
@@ -242,8 +267,24 @@ def loop_items(spec: dict, calls: list[dict]) -> list | None:
     return items
 
 
+def _hierarchy_rows(rule: dict, facts: dict) -> list[dict] | None:
+    """Fold the per-call hierarchy rows (parents call, children call, per term) into
+    one row per term: {hpo_id, parents, children}."""
+    rows = facts.get(rule["rows"])
+    if rows is None:
+        return None
+    by: dict[str, dict] = {}
+    for r in rows:
+        t = str(r.get("hpo_id"))
+        entry = by.setdefault(t, {"hpo_id": t, "parents": [], "children": []})
+        key = "parents" if r.get("direction") == "parents" else "children"
+        entry[key] = [i for i in (r.get("ids") or []) if i]
+    return list(by.values())
+
+
 _COMPUTE_OPS: dict[str, Callable[[dict, dict], Any]] = {"rank_differential": _rank_differential,
-                                                       "overlap": _overlap, "fewest": _fewest}
+                                                       "overlap": _overlap, "fewest": _fewest,
+                                                       "hierarchy": _hierarchy_rows}
 
 
 def _compute(rule: dict, facts: dict) -> Any:
@@ -471,7 +512,8 @@ def judged(outcome: dict, wants: list[str], answer: dict | None) -> dict:
     return {**outcome, "facts": facts, "unresolved": unresolved}
 
 
-def absorb(spec: dict, results: list, facts: dict, items: list | None = None) -> dict:
+def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
+           calls: list[dict] | None = None) -> dict:
     """What a step's results yield: facts, what never arrived, what cannot be decided.
 
     Pure. `extract` takes the first match, `collect` the lot, `combine` merges
@@ -532,6 +574,10 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None) ->
                     src, _, alias = spec_field.partition(" as ")
                     if src == "$item":
                         value = items[index] if items and index < len(items) else None
+                    elif src.startswith("$call."):
+                        # a filled argument of the call this payload answered
+                        arg = src[len("$call."):]
+                        value = (calls[index].get("arguments") or {}).get(arg) if calls and index < len(calls) else None
                     else:
                         value = _dig(found, src)
                     if value is not None:
@@ -706,7 +752,8 @@ class SkillRunner:
             results, failures = self._repair(
                 spec, step, repair, results, failures, run, made)
 
-        outcome = absorb(spec, results, run["facts"], items=loop_items(spec, step["calls"]))
+        outcome = absorb(spec, results, run["facts"], items=loop_items(spec, step["calls"]),
+                         calls=step["calls"])
         delegated = spec.get("delegate") or []
         if delegated:
             # Web search and code live on the agent, not in the registry. The run

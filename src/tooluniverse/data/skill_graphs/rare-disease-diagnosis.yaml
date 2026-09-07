@@ -137,6 +137,28 @@ steps:
       500 means at least 500 (the tool's ceiling). A term annotated to few
       diseases discriminates; one annotated to hundreds does not.
 
+  - id: hpo_hierarchy
+    label: "Phase 1b.2 — each case phenotype's parents and children in the ontology"
+    requires: [phenotypes]
+    for_each: hpo_ids
+    as: hpo
+    calls:
+      - tool: HPO_get_term_hierarchy
+        arguments: {term_id: "{hpo}", direction: "parents"}
+      - tool: HPO_get_term_hierarchy
+        arguments: {term_id: "{hpo}", direction: "children"}
+    # Orphanet annotates Hurler with Hepatomegaly and Splenomegaly as two terms; the
+    # case's Hepatosplenomegaly is their conjunction. The match is ontological:
+    # a disease carries a term if it lists it, all its parents, or a child.
+    collect:
+      hpo_hierarchy_calls: {path: "", fields: ["$item as hpo_id", "$call.direction as direction", "data[].id as ids"]}
+    compute:
+      hpo_hierarchy: {op: hierarchy, rows: hpo_hierarchy_calls}
+    produces: [hpo_hierarchy]
+    notes: >-
+      Two calls per case phenotype, folded into one row per term. The rows feed
+      the overlap count and the discriminating-pair gate; they are not for the report.
+
   - id: discriminating
     label: "Phase 1c — the two phenotypes annotated to the fewest diseases"
     requires: [hpo_counts]
@@ -355,7 +377,7 @@ steps:
 
   - id: compute_overlap
     label: "Phase 2c.2 — overlap and grade per candidate, computed by the server"
-    requires: [disease_phenotypes, gene_evidence_orphanet]
+    requires: [hpo_hierarchy, disease_phenotypes, gene_evidence_orphanet]
     calls: []
     # Counting shared HPO ids is arithmetic, not judgement. Delegated to the agent's
     # code tool it came back empty twice and on retyped inputs three times in
@@ -367,6 +389,7 @@ steps:
         row_ids: hpo_ids
         against: hpo_ids
         gene_rows: orphanet_gene_rows
+        hierarchy: hpo_hierarchy
         grades:
           - {grade: "T1", min_pct: 80, needs_gene: true}
           - {grade: "T2", min_pct: 60}
@@ -400,6 +423,7 @@ steps:
         # above candidates that do (DSR-729 v2: Sotos-first).
         must_carry: discriminating_hpo_ids
         rows_ids: disease_phenotypes
+        hierarchy: hpo_hierarchy
     produces: [ranked_rows]
     notes: >-
       The differential in the order the report presents it. First: onset fit —

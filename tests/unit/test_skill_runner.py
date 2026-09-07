@@ -949,6 +949,7 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
             {"ORPHAcode": 355, "Preferred term": "Gaucher disease"}]}},
         "Orphanet_get_genes": {"data": {"orpha_code": "355", "genes": [{"Symbol": "GBA"}]}},
         "HPO_get_diseases_by_phenotype": {"data": {"diseases": [{"id": f"D{i}"} for i in range(190)]}},
+        "HPO_get_term_hierarchy": {"data": [{"id": "HP:0003271", "name": "Visceromegaly"}]},
         "Orphanet_get_phenotypes": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
                                              "phenotypes": [{"hpo_id": "HP:0001433", "hpo_term": "Hepatosplenomegaly"}]}},
         "Orphanet_get_natural_history": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
@@ -1139,6 +1140,9 @@ def _rare_disease_run(orphanet_hits):
                                                   "prevalences": [{"class": "1-9 / 100 000"}] if code == 580 else []}}
         if tool == "HPO_get_diseases_by_phenotype":
             return {"data": {"diseases": [{"id": f"D{i}"} for i in range(190)]}}
+        if tool == "HPO_get_term_hierarchy":
+            return {"data": [{"id": "HP:0000271", "name": "Abnormal facial shape"}] if arguments["direction"] == "parents"
+                    else [{"id": "HP:0000339", "name": "Pugilistic facies"}]}
         if tool == "OpenTargets_get_disease_ids_by_name":
             mondo = mondo_ids.get(arguments["name"])
             return {"data": {"search": {"hits": [{"id": mondo, "name": arguments["name"]}] if mondo else []}}}
@@ -1799,3 +1803,62 @@ def test_without_a_computed_pair_the_gate_is_not_applied_and_says_so():
     rows = absorb(GATED_SPEC, results=[], facts=facts)["facts"]["ranked_rows"]
     assert [r["preferred_term"] for r in rows][:2] == ["MPS II", "Hurler"]          # unchanged from the ungated test
     assert all(r["carries_discriminating"] == "not assessed (no discriminating pair)" for r in rows)
+
+
+# --- a disease carries a case phenotype if it lists the term, all its parents, or a child
+#
+# Orphanet annotates Hurler and MPS II with Hepatomegaly and Splenomegaly as two
+# terms; the case's Hepatosplenomegaly is their conjunction (HPO lists both as its
+# parents). An exact-id match called that "not carried" and demoted the two diseases
+# every clinician puts first. The match is ontological, from rows the run fetches.
+
+HIER = [  # one row per case term, from HPO_get_term_hierarchy (parents) and (children)
+    {"hpo_id": "HP:0001433", "parents": ["HP:0002240", "HP:0001744"], "children": []},
+    {"hpo_id": "HP:0000280", "parents": ["HP:0000271"], "children": ["HP:0000339"]},
+    {"hpo_id": "HP:0001250", "parents": ["HP:0012638"], "children": ["HP:0002123", "HP:0011097"]},
+]
+
+
+def test_a_term_is_carried_by_itself_by_all_its_parents_or_by_a_child():
+    from tooluniverse.skill_runner import carries
+    hier = {h["hpo_id"]: h for h in HIER}
+    assert carries("HP:0001433", {"HP:0001433"}, hier)                                # itself
+    assert carries("HP:0001433", {"HP:0002240", "HP:0001744"}, hier)                  # both parents = the conjunction
+    assert not carries("HP:0001433", {"HP:0002240"}, hier)                            # one parent is not enough
+    assert carries("HP:0000280", {"HP:0000339"}, hier)                                # a child (pugilistic facies)
+    assert not carries("HP:0000280", {"HP:0000271"}, hier)                            # a lone parent is broader, not it
+    assert carries("HP:0001250", {"HP:0002123"}, hier)                                # generalized seizures ⊂ seizures
+    assert carries("HP:0009999", {"HP:0009999"}, {})                                  # no hierarchy row: exact match still counts
+    assert not carries("HP:0009999", {"HP:0000001"}, {})
+
+
+def test_overlap_and_the_gate_use_the_ontological_match_when_a_hierarchy_is_given():
+    spec = {"compute": {"overlap_rows": {**OVERLAP_SPEC["compute"]["overlap_rows"], "hierarchy": "hpo_hierarchy"}}}
+    facts = {**OVERLAP_FACTS, "hpo_hierarchy": HIER,
+             "disease_phenotypes": [
+                 {"orpha_code": "93473", "preferred_term": "Hurler", "hpo_ids": ["HP:0000280", "HP:0002240", "HP:0001744", "HP:0001263"]},
+                 {"orpha_code": "821", "preferred_term": "Sotos", "hpo_ids": ["HP:0000280", "HP:0001263", "HP:0001250"]},
+             ]}
+    rows = {r["preferred_term"]: r for r in absorb(spec, results=[], facts=facts)["facts"]["overlap_rows"]}
+    assert rows["Hurler"]["n"] == 3 and "HP:0001433" in rows["Hurler"]["matched_hpo_ids"]    # hepato+spleno = hepatosplenomegaly
+    assert rows["Sotos"]["n"] == 3 and "HP:0001433" not in rows["Sotos"]["matched_hpo_ids"]
+
+    gated = {"compute": {"ranked_rows": {**GATED_SPEC["compute"]["ranked_rows"], "hierarchy": "hpo_hierarchy"}}}
+    gfacts = {"age_years": 4, "discriminating_hpo_ids": ["HP:0001433", "HP:0000280"], "hpo_hierarchy": HIER,
+              "disease_phenotypes": facts["disease_phenotypes"],
+              "overlap_rows": list(rows.values()),
+              "disease_inheritance": [{"orpha_code": c, "average_age_of_onset": ["Infancy"]} for c in ("93473", "821")],
+              "disease_prevalence": [{"orpha_code": "821", "classes": ["1-9 / 100 000"]}, {"orpha_code": "93473", "classes": ["1-9 / 1 000 000"]}]}
+    ranked = absorb(gated, results=[], facts=gfacts)["facts"]["ranked_rows"]
+    assert [r["preferred_term"] for r in ranked] == ["Hurler", "Sotos"]
+    assert ranked[0]["carries_discriminating"] == "both" and ranked[1]["carries_discriminating"] == "1 of 2"
+
+
+def test_the_shipped_process_fetches_the_hierarchy_and_matches_ontologically():
+    """Hurler's row lists Hepatomegaly and Splenomegaly; the case's Hepatosplenomegaly
+    must count as carried, and the discriminating pair must gate the ranking."""
+    state, calls = _rare_disease_run(HITS)
+    assert sorted(a["term_id"] for t, a in calls if t == "HPO_get_term_hierarchy") == ["HP:0000280", "HP:0000280"]  # one term, parents+children
+    assert {a["direction"] for t, a in calls if t == "HPO_get_term_hierarchy"} == {"parents", "children"}
+    assert state["facts"]["hpo_hierarchy"] == [{"hpo_id": "HP:0000280", "parents": ["HP:0000271"], "children": ["HP:0000339"]}]
+    assert all("carries_discriminating" in r for r in state["facts"]["ranked_rows"])

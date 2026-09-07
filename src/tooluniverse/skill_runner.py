@@ -667,13 +667,22 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
     # differential by onset, prevalence and overlap is not a judgement, so the
     # server does it, with the author's rule. Delegated to the agent's code tool,
     # the same arithmetic ran on a retyped input once (DSR-729, GM1 4/4).
-    computed_missing = []
-    for name, rule in (spec.get("compute") or {}).items():
-        value = _compute(rule, {**facts, **extracted})
-        if value is None:
-            computed_missing.append(name)
-        else:
-            extracted[name] = value
+    # Resolved in passes: a rule may read what another rule in the same step
+    # produces, and a store hands the rules back in its own order, not the
+    # author's (GraphDB: alphabetical, and the literature loop lost its list).
+    pending = dict(spec.get("compute") or {})
+    while pending:
+        settled = []
+        for name, rule in pending.items():
+            value = _compute(rule, {**facts, **extracted})
+            if value is not None:
+                extracted[name] = value
+                settled.append(name)
+        if not settled:
+            break
+        for name in settled:
+            pending.pop(name)
+    computed_missing = list(pending)
 
     blocked, undecided = [], []
     known = {**facts, **extracted}

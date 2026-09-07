@@ -17,7 +17,7 @@ def _url(term):
     return f"https://api.fda.gov/drug/event.json?search={term.replace(' ', '+')}"
 
 
-def _drive(prr=PRR):
+def _drive(prr=PRR, graph=None):
     calls, asked = [], []
 
     def execute(tool, a):
@@ -33,7 +33,7 @@ def _drive(prr=PRR):
             return {"data": [{"pmid": "1", "title": "t", "pub_year": 2024, "doi_url": "d"}]}
         return {}
 
-    runner = SkillRunner(load_graph("clinical-data-integration"), execute=execute,
+    runner = SkillRunner(graph or load_graph("clinical-data-integration"), execute=execute,
                          ask=lambda q: asked.append(q) or {n: ["stub"] for n in q["wants"]})
     run_id = runner.start({"drug_name": "lutetium Lu 177 dotatate"})["run_id"]
     for _ in range(100):
@@ -113,3 +113,28 @@ def test_the_loop_item_is_recovered_when_its_marker_sits_inside_a_longer_argumen
     calls = [{"tool": "PubMed_search_articles",
               "arguments": {"query": "Lutathera[Title/Abstract] AND RENAL IMPAIRMENT[Title/Abstract]"}}]
     assert loop_items(spec, calls) == ["RENAL IMPAIRMENT"]
+
+
+# --- compute rules resolve regardless of the order a store hands them back -------
+
+def test_a_compute_that_reads_another_compute_resolves_whatever_the_declared_order():
+    """GraphDB hands the rules back alphabetically; live, `flagged_aes` ran before
+    `prr_table` existed and the literature loop was blocked."""
+    from tooluniverse.skill_runner import absorb
+    spec = {"id": "compute", "calls": [],
+            "compute": {"flagged_aes": {"op": "pluck", "rows": "prr_table", "field": "term", "where": "flagged"},
+                        "prr_table": {"op": "flag", "rows": "prr_rows", "field": "prr", "threshold": 2}}}
+    out = absorb(spec, [], {"prr_rows": [{"term": "a", "prr": 7.5}, {"term": "b", "prr": 1.0}]})
+    assert out["unresolved"] == []
+    assert out["facts"]["flagged_aes"] == ["a"]
+
+
+def test_the_process_read_back_from_the_store_still_searches_per_flagged_reaction():
+    from rdflib import Graph
+    from tooluniverse.skill_graph_bbo import from_bbo, to_bbo
+    stored = from_bbo(Graph().parse(data=to_bbo(load_graph("clinical-data-integration")), format="turtle"))
+    state, calls, _ = _drive(graph=stored)
+    assert [u for u in state["unresolved"] if u["step"] == "compute"] == []
+    assert [b for b in state["blocked"] if b["step"] == "literature"] == []
+    assert state["facts"]["flagged_aes"] == ["MYELODYSPLASTIC SYNDROME", "RENAL IMPAIRMENT"]
+    assert len([1 for tool, _ in calls if tool == "PubMed_search_articles"]) == 2

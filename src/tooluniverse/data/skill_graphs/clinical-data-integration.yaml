@@ -32,11 +32,15 @@ report: >-
   dominate raw report counts and were set aside, and never present them as
   signals. A term that names the treated indication or its course (the tumour,
   its metastases, progression) is reported disease, not a drug signal: say so
-  and do not rank it. Name the FAERS cohort (the brand name used). Cite each PRR
-  with its own query: `facts.prr_urls` is aligned with `facts.signal_aes` and
-  `facts.prrs`, one link per term — never one footnote for the whole table. Cite
-  label numbers with the `source_url` of their result, literature by PMID or DOI
-  from `facts`, and each trial as https://clinicaltrials.gov/study/<NCT id>. Read pharmacogenomic findings as risk-narrowing;
+  and do not rank it. Name the FAERS cohort (the brand name used). Take every PRR
+  from its row in `facts.prr_table` and cite it with that row's `url`, one link
+  per term — never one footnote for the whole table (`facts.signal_aes`,
+  `facts.prrs` and `facts.prr_urls` are the same numbers as lists, kept for
+  comparison; cite from the rows). Cite label numbers with the `source_url` of
+  their result. Literature is one row per flagged reaction in
+  `facts.literature_rows`: present it per reaction, cited by PMID or DOI, and say
+  when a reaction has no papers. Cite each trial as
+  https://clinicaltrials.gov/study/<NCT id>. Read pharmacogenomic findings as risk-narrowing;
   an empty CPIC result means no guideline exists, which is an answer. Web context
   is supplement, not a finding, and is cited as web. End with a Limitations
   section built from `failures`, `blocked`, `unresolved` and `excluded`.
@@ -129,9 +133,13 @@ steps:
       # prrs: the writer cites each PRR with its own query, not one footnote
       # for the whole table (blind-judged 2026-09-03).
       prr_urls: "source_url"
+      # The same three values as one row per reaction. Rung 1 handed the writer
+      # the lists and one run mis-indexed two footnotes; a row cannot drift. The
+      # lists stay beside the rows for this rung only, for comparison.
+      prr_rows: {path: "", fields: ["$item as term", "data.metrics.PRR.value as prr", "source_url as url"]}
     derive:
       strong_signal: {from: prrs, op: ">=", value: 5, mode: any}
-    produces: [prrs, prr_urls, strong_signal]
+    produces: [prrs, prr_urls, prr_rows, strong_signal]
 
   - id: seriousness
     label: "Phase 2c — how seriously the events were reported"
@@ -180,20 +188,26 @@ steps:
       nothing. Cite trials by NCT id.
 
   - id: literature
-    label: "Phase 5 — published safety evidence"
-    requires: [identity]
+    label: "Phase 5 — published safety evidence, one search per flagged reaction"
+    requires: [compute]
+    # One field-tagged query per flagged reaction: "what has been written about this
+    # drug and this reaction". This is the shape the prose arm already used, and why
+    # it found six relevant papers where one drug-wide query found two.
+    for_each: flagged_aes
+    as: reaction
     calls:
       - tool: PubMed_search_articles
         # Field-tagged: "Lutathera adverse events safety" came back dominated by
         # 177Lu-PSMA prostate papers. The drug must be in the title or abstract.
-        arguments: {query: "{drug_name}[Title/Abstract] AND (safety OR adverse OR toxicity OR myelodysplastic OR renal)"}
-    extract:
-      pmids: {path: "data[].pmid", limit: 10}
-      paper_titles: {path: "data[].title", limit: 10}
-      paper_years: {path: "data[].pub_year", limit: 10}
-      paper_dois: {path: "data[].doi_url", limit: 10}
-    produces: [pmids, paper_titles, paper_years, paper_dois]
-    notes: Real titles, PMIDs and years — meta-analyses before case reports.
+        arguments: {query: "{drug_name}[Title/Abstract] AND {reaction}[Title/Abstract]", limit: 10}
+    collect:
+      literature_rows: {path: "", fields: ["$item as reaction", "data[].pmid as pmids", "data[].title as titles",
+                                           "data[].pub_year as years", "data[].doi_url as dois"]}
+    produces: [literature_rows]
+    notes: >-
+      One row per flagged reaction: the papers found for the drug and that reaction.
+      Real titles, PMIDs and years — meta-analyses before case reports. A reaction
+      with no papers is a finding, not a failure.
 
   - id: web_context
     label: "Phase 5b — web context (agent's own search; supplement, not a finding)"
@@ -210,19 +224,19 @@ steps:
       web-sourced, never as a finding.
 
   - id: compute
-    label: "Phase 5c — ranked signal table (agent's code tool)"
+    label: "Phase 5c — ranked signal table"
     requires: [disproportionality]
-    delegate:
-      - tool: code_interpreter
-        arguments:
-          task: >-
-            Pair each term in `terms` with the PRR at the same index in `prrs`,
-            sort by PRR descending, flag PRR >= 2, and return the table as a
-            list of {term, prr, flagged}.
-          terms: "{signal_aes}"
-          prrs: "{prrs}"
-    produces: [prr_table]
-    notes: Use your code tool for this; if you have none, compute it carefully and say so.
+    calls: []
+    # Ordering the rows by PRR and flagging PRR >= 2 is arithmetic over rows the
+    # run holds, so the server does it (the DSR-729 decision). Delegated to the
+    # agent's code tool it worked from three parallel lists, and could mis-pair.
+    compute:
+      prr_table: {op: flag, rows: prr_rows, field: prr, threshold: 2}
+      flagged_aes: {op: pluck, rows: prr_table, field: term, where: flagged}
+    produces: [prr_table, flagged_aes]
+    notes: >-
+      The signal table, largest PRR first, each row flagged at PRR >= 2 and carrying
+      the query that produced it. Every PRR in the report is one of these rows.
 
   - id: assessment
     label: "Phase 6 — integrated assessment (synthesis, no new tools)"

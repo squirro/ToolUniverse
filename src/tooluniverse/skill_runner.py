@@ -255,16 +255,33 @@ def loop_items(spec: dict, calls: list[dict]) -> list | None:
     if not loop:
         return None
     marker = "{" + var + "}"
+    templates = (spec.get("calls") or [{}])[0].get("arguments", {})
     items = []
     for call in calls:
-        # The filled argument whose template was the loop variable carries the item.
+        # The filled argument whose template was the loop variable carries the item;
+        # failing that, the one whose template contained it (PubMed has one `query`,
+        # so the reaction rides inside it beside the drug name).
         found = None
-        for tmpl in (spec.get("calls") or [{}])[0].get("arguments", {}).items():
-            if tmpl[1] == marker:
-                found = call.get("arguments", {}).get(tmpl[0])
+        filled = call.get("arguments", {})
+        for name, tmpl in templates.items():
+            if tmpl == marker:
+                found = filled.get(name)
                 break
+            if isinstance(tmpl, str) and marker in tmpl and isinstance(filled.get(name), str):
+                found = _item_in(tmpl, marker, filled[name])
+                if found is not None:
+                    break
         items.append(found)
     return items
+
+
+def _item_in(template: str, marker: str, text: str) -> str | None:
+    """The loop value inside a filled argument whose template also carried other
+    placeholders: the marker becomes the capture, every other placeholder a wildcard."""
+    pattern = re.escape(template).replace(re.escape(marker), "(?P<item>.+?)", 1)
+    pattern = re.sub(r"\\\{[A-Za-z_][A-Za-z0-9_]*\\\}", ".+?", pattern)
+    match = re.fullmatch(pattern, text, flags=re.S)
+    return match.group("item") if match else None
 
 
 def _hierarchy_rows(rule: dict, facts: dict) -> list[dict] | None:
@@ -282,9 +299,39 @@ def _hierarchy_rows(rule: dict, facts: dict) -> list[dict] | None:
     return list(by.values())
 
 
+def _flag(rule: dict, facts: dict) -> list[dict] | None:
+    """The rows ordered by one numeric field, largest first, each marked whether it
+    reaches the threshold. A PRR signal table is this and nothing more."""
+    rows = facts.get(rule["rows"])
+    if rows is None:
+        return None
+    field, threshold = rule["field"], float(rule.get("threshold", 0))
+
+    def value(row):
+        try:
+            return float(row.get(field))
+        except (TypeError, ValueError):
+            return None
+
+    out = [{**row, "flagged": value(row) is not None and value(row) >= threshold} for row in rows]
+    out.sort(key=lambda r: (value(r) is None, -(value(r) or 0.0)))
+    return out
+
+
+def _pluck(rule: dict, facts: dict) -> list | None:
+    """One field from every row, or only from the rows whose `where` field is true."""
+    rows = facts.get(rule["rows"])
+    if rows is None:
+        return None
+    where = rule.get("where")
+    return [row.get(rule["field"]) for row in rows
+            if (row.get(where) if where else True) and row.get(rule["field"]) is not None]
+
+
 _COMPUTE_OPS: dict[str, Callable[[dict, dict], Any]] = {"rank_differential": _rank_differential,
                                                        "overlap": _overlap, "fewest": _fewest,
-                                                       "hierarchy": _hierarchy_rows}
+                                                       "hierarchy": _hierarchy_rows,
+                                                       "flag": _flag, "pluck": _pluck}
 
 
 def _compute(rule: dict, facts: dict) -> Any:

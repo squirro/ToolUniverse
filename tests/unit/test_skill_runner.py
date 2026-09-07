@@ -983,8 +983,7 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
     assert state["facts"]["hpo_ids"] == ["HP:0001433", "HP:0001433"]
     assert [(q["step"], q["kind"]) for q in asked if q["kind"] == "judge"] == [
         ("hypothesis", "judge"), ("phenotypes", "judge"), ("keyword_search", "judge")]
-    assert {q["step"] for q in asked if q["kind"] == "delegate"} == {
-        "gene_evidence_optimuskg", "compute_overlap"}
+    assert {q["step"] for q in asked if q["kind"] == "delegate"} == {"gene_evidence_optimuskg"}
     assert state["facts"]["overlap_rows"][0]["grade"] == "T1"
     assert state["facts"]["genes"] == ["GBA"]
     assert ("get_joint_associated_diseases_by_HPO_ID_list",
@@ -1404,17 +1403,14 @@ def test_each_resolved_candidate_gets_its_phenotype_set_and_inheritance_as_rows(
     assert inh["580"]["type_of_inheritance"] == ["X-linked recessive"]
 
 
-def test_overlap_and_grade_are_computed_by_a_delegated_call_from_the_rows():
+def test_overlap_and_grade_are_computed_by_the_server_without_a_question():
     state, calls = _rare_disease_run(HITS)
 
-    delegated = [q for q in state["asked"] if q["kind"] == "delegate"]
-    compute = next(q for q in delegated if q["step"] == "compute_overlap")
-    assert compute["calls"][0]["tool"] == "code_interpreter"
-    task = compute["calls"][0]["arguments"]
-    assert task["case_hpo_ids"] == ["HP:0000280"]
-    assert {r["orpha_code"] for r in task["diseases"]} == {"580", "354"}
-    assert state["facts"]["overlap_rows"][0]["grade"] == "T1"
-    assert "Orphanet_get_phenotypes" not in [c["tool"] for c in compute["calls"]]
+    assert "compute_overlap" not in {q["step"] for q in state["asked"]}
+    rows = {r["orpha_code"]: r for r in state["facts"]["overlap_rows"]}
+    assert rows["580"]["n"] == 1 and rows["580"]["N"] == 1 and rows["580"]["overlap_pct"] == 100
+    assert rows["580"]["grade"] == "T1" and rows["354"]["grade"] == "T1"    # both have Orphanet genes in the stub
+    assert rows["580"]["matched_hpo_ids"] == ["HP:0000280"]
 
 
 # --- the bundle is a tool return the model must read: bounded per step ------------
@@ -1567,10 +1563,10 @@ def test_the_shipped_process_ranks_the_differential_on_the_server_from_its_rows(
 
     assert sorted(int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_epidemiology") == [354, 580]
     assert "rank_differential" not in {q["step"] for q in state["asked"]}       # no question asked
-    ranked = state["facts"]["ranked_rows"]                 # one row: the stub's overlap answer has one
-    assert [r["rank"] for r in ranked] == [1]
-    assert ranked[0]["orpha_code"] == "580"
-    assert ranked[0]["prevalence_tier"] == "1-9 / 100 000"
+    ranked = state["facts"]["ranked_rows"]                 # both stubbed candidates, computed on the server
+    assert [r["rank"] for r in ranked] == [1, 2]
+    assert [r["orpha_code"] for r in ranked] == ["580", "354"]                # known prevalence beats unknown
+    assert ranked[0]["prevalence_tier"] == "1-9 / 100 000" and ranked[1]["prevalence_tier"] == "unknown"
     assert ranked[0]["onset_fit"] == "not assessed (no patient age)"   # the stub binds no age_years
     assert ranked[0]["grade"] == "T1" and ranked[0]["overlap_pct"] == 100    # overlap travels with the row
 
@@ -1600,3 +1596,48 @@ def test_a_candidate_with_no_matching_phenotype_never_outranks_one_that_fits():
                                     {"orpha_code": "2", "classes": ["<1 / 1 000 000"]}]}
     rows = absorb(RANK_SPEC, results=[], facts=facts)["facts"]["ranked_rows"]
     assert [r["preferred_term"] for r in rows] == ["Rare but 2/4", "Common but 0/4"]
+
+
+# --- overlap and grade are arithmetic, so the server computes them ----------------
+#
+# Delegated to the agent's code tool, the overlap came back empty twice and with
+# retyped inputs three times in fifteen runs (DSR-729/732). Counting shared HPO
+# ids is not a judgement; the runtime does it from the rows it already holds,
+# with the author's thresholds.
+
+OVERLAP_SPEC = {"compute": {"overlap_rows": {
+    "op": "overlap",
+    "rows": "disease_phenotypes", "row_ids": "hpo_ids", "against": "hpo_ids",
+    "gene_rows": "orphanet_gene_rows",
+    "grades": [{"grade": "T1", "min_pct": 80, "needs_gene": True},
+               {"grade": "T2", "min_pct": 60}, {"grade": "T3", "min_pct": 40},
+               {"grade": "T4", "min_pct": 0}]}}}
+
+OVERLAP_FACTS = {
+    "hpo_ids": ["HP:0001263", "HP:0001250", "HP:0000280", "HP:0001433"],
+    "disease_phenotypes": [
+        {"orpha_code": "580", "preferred_term": "MPS II", "hpo_ids": ["HP:0000280", "HP:0001433", "HP:0001250", "HP:0009999"]},
+        {"orpha_code": "3166", "preferred_term": "Sialuria", "hpo_ids": ["HP:0000280", "HP:0001433", "HP:0001250", "HP:0001263"]},
+        {"orpha_code": "821", "preferred_term": "Sotos", "hpo_ids": ["HP:0001263"]},
+    ],
+    "orphanet_gene_rows": [{"orpha_code": "580", "genes": [{"Symbol": "IDS"}]},
+                           {"orpha_code": "3166", "genes": []}],
+}
+
+
+def test_overlap_rows_are_computed_from_the_rows_with_the_authors_grades():
+    out = absorb(OVERLAP_SPEC, results=[], facts=OVERLAP_FACTS)
+
+    rows = out["facts"]["overlap_rows"]
+    assert [(r["preferred_term"], r["n"], r["N"], r["overlap_pct"], r["grade"]) for r in rows] == [
+        ("Sialuria", 4, 4, 100, "T2"),      # 100% but no causal gene in Orphanet: not T1
+        ("MPS II", 3, 4, 75, "T2"),
+        ("Sotos", 1, 4, 25, "T4"),
+    ]
+    assert rows[1]["matched_hpo_ids"] == ["HP:0001250", "HP:0000280", "HP:0001433"]   # case order
+    assert rows[1]["orpha_code"] == "580"
+
+
+def test_overlap_without_its_source_rows_is_unresolved_not_empty():
+    out = absorb(OVERLAP_SPEC, results=[], facts={"hpo_ids": ["HP:1"]})
+    assert "overlap_rows" not in out["facts"] and "overlap_rows" in out["unresolved"]

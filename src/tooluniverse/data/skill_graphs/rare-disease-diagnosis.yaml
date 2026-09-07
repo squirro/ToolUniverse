@@ -319,27 +319,30 @@ steps:
       say so; do not fill it from memory.
 
   - id: compute_overlap
-    label: "Phase 2c.2 — overlap and grade per candidate (agent's code tool)"
+    label: "Phase 2c.2 — overlap and grade per candidate, computed by the server"
     requires: [disease_phenotypes, gene_evidence_orphanet]
-    delegate:
-      - tool: code_interpreter
-        arguments:
-          task: >-
-            For every disease in `diseases`, count how many of `case_hpo_ids`
-            appear in its `hpo_ids` (n), with N = len(case_hpo_ids). overlap_pct
-            = round(100*n/N). Grade: T1 if overlap_pct > 80 and the disease's
-            orpha_code has a gene in `causal_genes`; T2 if 60-80; T3 if 40-60;
-            T4 if below 40. Return overlap_rows as a list of {orpha_code,
-            preferred_term, n, N, overlap_pct, grade, matched_hpo_ids}, sorted by
-            overlap_pct descending then preferred_term.
-          case_hpo_ids: "{hpo_ids}"
-          diseases: "{disease_phenotypes}"
-          causal_genes: "{orphanet_gene_rows}"
+    calls: []
+    # Counting shared HPO ids is arithmetic, not judgement. Delegated to the agent's
+    # code tool it came back empty twice and on retyped inputs three times in
+    # fifteen runs. The rubric is the served body's; T1 needs a causal gene.
+    compute:
+      overlap_rows:
+        op: overlap
+        rows: disease_phenotypes
+        row_ids: hpo_ids
+        against: hpo_ids
+        gene_rows: orphanet_gene_rows
+        grades:
+          - {grade: "T1", min_pct: 80, needs_gene: true}
+          - {grade: "T2", min_pct: 60}
+          - {grade: "T3", min_pct: 40}
+          - {grade: "T4", min_pct: 0}
     produces: [overlap_rows]
     notes: >-
-      Use your code tool; if you have none, compute it by hand carefully and say
-      so. A disease absent from `diseases` gets no row; the report says
-      "overlap not computable: no phenotype annotation returned".
+      One row per candidate that had a phenotype row: n of N case phenotypes
+      matched, the percentage, the grade, and the matched HPO ids. A candidate
+      with no phenotype row has no overlap row: "overlap not computable: no
+      phenotype annotation returned".
 
   - id: rank_differential
     label: "Phase 2c.3 — the order a clinician uses: age fit, then how common, then overlap"

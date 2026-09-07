@@ -152,7 +152,38 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
     return out
 
 
-_COMPUTE_OPS: dict[str, Callable[[dict, dict], Any]] = {"rank_differential": _rank_differential}
+def _overlap(rule: dict, facts: dict) -> list[dict] | None:
+    """Per row: how many of the case's ids it carries, and the grade that earns.
+
+    Grades are the author's rubric in the YAML, first match wins; `needs_gene`
+    holds a grade back unless a gene row for the same code lists a gene.
+    """
+    rows, against = facts.get(rule["rows"]), facts.get(rule["against"])
+    if rows is None or against is None:
+        return None
+    case = list(dict.fromkeys(against))
+    gene_rows = facts.get(rule.get("gene_rows", ""), []) or []
+    has_gene = {str(g.get("orpha_code")) for g in gene_rows if g.get("genes")}
+    out = []
+    for row in rows:
+        ids = set(row.get(rule["row_ids"]) or [])
+        matched = [i for i in case if i in ids]
+        pct = round(100 * len(matched) / len(case)) if case else 0
+        grade = None
+        for g in rule.get("grades", []):
+            if pct >= g.get("min_pct", 0) and (not g.get("needs_gene")
+                                               or str(row.get("orpha_code")) in has_gene):
+                grade = g["grade"]
+                break
+        out.append({"orpha_code": row.get("orpha_code"), "preferred_term": row.get("preferred_term"),
+                    "n": len(matched), "N": len(case), "overlap_pct": pct, "grade": grade,
+                    "matched_hpo_ids": matched})
+    out.sort(key=lambda r: (-r["overlap_pct"], str(r["preferred_term"])))
+    return out
+
+
+_COMPUTE_OPS: dict[str, Callable[[dict, dict], Any]] = {"rank_differential": _rank_differential,
+                                                       "overlap": _overlap}
 
 
 def _compute(rule: dict, facts: dict) -> Any:

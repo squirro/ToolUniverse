@@ -948,6 +948,7 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
         "Orphanet_search_diseases": {"data": {"results": [
             {"ORPHAcode": 355, "Preferred term": "Gaucher disease"}]}},
         "Orphanet_get_genes": {"data": {"orpha_code": "355", "genes": [{"Symbol": "GBA"}]}},
+        "HPO_get_diseases_by_phenotype": {"data": {"diseases": [{"id": f"D{i}"} for i in range(190)]}},
         "Orphanet_get_phenotypes": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
                                              "phenotypes": [{"hpo_id": "HP:0001433", "hpo_term": "Hepatosplenomegaly"}]}},
         "Orphanet_get_natural_history": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
@@ -982,7 +983,7 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
     assert state["blocked"] == [] and state["unresolved"] == []
     assert state["facts"]["hpo_ids"] == ["HP:0001433", "HP:0001433"]
     assert [(q["step"], q["kind"]) for q in asked if q["kind"] == "judge"] == [
-        ("hypothesis", "judge"), ("phenotypes", "judge"), ("keyword_search", "judge")]
+        ("hypothesis", "judge"), ("discriminating", "judge"), ("keyword_search", "judge")]
     assert {q["step"] for q in asked if q["kind"] == "delegate"} == {"gene_evidence_optimuskg"}
     assert state["facts"]["overlap_rows"][0]["grade"] == "T1"
     assert state["facts"]["genes"] == ["GBA"]
@@ -1136,6 +1137,8 @@ def _rare_disease_run(orphanet_hits):
             code = int(arguments["orphacode"])
             return {"status": "success", "data": {"orpha_code": str(code), "preferred_term": "?",
                                                   "prevalences": [{"class": "1-9 / 100 000"}] if code == 580 else []}}
+        if tool == "HPO_get_diseases_by_phenotype":
+            return {"data": {"diseases": [{"id": f"D{i}"} for i in range(190)]}}
         if tool == "OpenTargets_get_disease_ids_by_name":
             mondo = mondo_ids.get(arguments["name"])
             return {"data": {"search": {"hits": [{"id": mondo, "name": arguments["name"]}] if mondo else []}}}
@@ -1231,7 +1234,7 @@ def test_genes_come_from_orphanet_per_resolved_candidate_never_from_the_model():
     assert state["facts"]["genes"] == ["IDS", "GLB1"]
     assert "genes" not in {n for q in state["asked"] for n in q["wants"] if q["kind"] == "judge"}
     assert [q["step"] for q in state["asked"] if q["kind"] == "judge"] == [
-        "hypothesis", "phenotypes", "keyword_search"]
+        "hypothesis", "discriminating", "keyword_search"]         # one symptom in the stub: the cut ties
 
 
 # --- a step that cannot be built is blamed by name, not by search ---------------
@@ -1641,3 +1644,73 @@ def test_overlap_rows_are_computed_from_the_rows_with_the_authors_grades():
 def test_overlap_without_its_source_rows_is_unresolved_not_empty():
     out = absorb(OVERLAP_SPEC, results=[], facts={"hpo_ids": ["HP:1"]})
     assert "overlap_rows" not in out["facts"] and "overlap_rows" in out["unresolved"]
+
+
+# --- a loop's rows keep the item they were made for ------------------------------
+#
+# HPO_get_diseases_by_phenotype answers {"diseases": [...]} without echoing the
+# term, so a collected count could not be paired with its symptom. A collect
+# field may name the loop item: "$item as term".
+
+def test_a_collected_row_can_keep_the_loop_item_it_was_made_for():
+    graph = {"skill": "loop", "inputs": ["hpo_ids"], "steps": [
+        {"id": "counts", "for_each": "hpo_ids", "as": "hpo",
+         "calls": [{"tool": "HPO_get_diseases_by_phenotype", "arguments": {"term_id": "{hpo}", "limit": 500}}],
+         "collect": {"term_counts": {"path": "data", "fields": ["$item as hpo_id", "diseases[].id as diseases"]}}}]}
+    sizes = {"HP:0001433": 190, "HP:0000280": 340, "HP:0001250": 500}
+
+    def execute(tool, a):
+        return {"data": {"diseases": [{"id": f"D{i}"} for i in range(sizes[a["term_id"]])]}}
+
+    runner = SkillRunner(graph, execute=execute)
+    run_id = runner.start({"hpo_ids": list(sizes)})["run_id"]
+    runner.advance(run_id)
+
+    rows = runner.state(run_id)["facts"]["term_counts"]
+    assert [r["hpo_id"] for r in rows] == ["HP:0001433", "HP:0000280", "HP:0001250"]
+    assert [len(r["diseases"]) for r in rows] == [190, 340, 500]
+
+
+# --- the discriminating phenotypes are the ones annotated to the fewest diseases ---
+#
+# UI run 3e342e1a: asked for the 2-3 rarest phenotypes the model chose developmental
+# delay and seizures — the two commonest terms in the ontology — once in fifteen
+# runs, and the differential became a neurodevelopmental list. "Fewest annotated
+# diseases" is arithmetic; the model is asked only when the counts tie.
+
+FEWEST_SPEC = {"compute": {"discriminating_hpo_ids": {
+    "op": "fewest", "rows": "term_counts", "id": "hpo_id", "count": "diseases", "take": 2}}}
+
+
+def test_the_two_terms_with_the_fewest_annotated_diseases_are_chosen():
+    facts = {"term_counts": [
+        {"hpo_id": "HP:0001263", "diseases": ["d"] * 500},
+        {"hpo_id": "HP:0001250", "diseases": ["d"] * 500},
+        {"hpo_id": "HP:0000280", "diseases": ["d"] * 340},
+        {"hpo_id": "HP:0001433", "diseases": ["d"] * 190},
+    ]}
+    out = absorb(FEWEST_SPEC, results=[], facts=facts)
+    assert out["facts"]["discriminating_hpo_ids"] == ["HP:0001433", "HP:0000280"]
+
+
+def test_a_tie_at_the_cut_is_left_unresolved_for_the_model_to_break():
+    facts = {"term_counts": [
+        {"hpo_id": "HP:A", "diseases": ["d"] * 100},
+        {"hpo_id": "HP:B", "diseases": ["d"] * 200},
+        {"hpo_id": "HP:C", "diseases": ["d"] * 200},
+    ]}
+    out = absorb(FEWEST_SPEC, results=[], facts=facts)
+    assert "discriminating_hpo_ids" not in out["facts"]
+    assert "discriminating_hpo_ids" in out["unresolved"]
+
+
+def test_the_shipped_process_computes_the_discriminating_pair_and_asks_only_on_a_tie():
+    """One symptom in the stub → one HP id → fewer than two rows → the compute
+    cannot cut, the name stays unresolved, and the judge on `discriminating`
+    fills it. With two or more distinct counts the judge is never reached."""
+    state, calls = _rare_disease_run(HITS)
+    assert [a["term_id"] for t, a in calls if t == "HPO_get_diseases_by_phenotype"] == ["HP:0000280"]
+    asked = [(q["step"], q["kind"]) for q in state["asked"]]
+    assert ("phenotypes", "judge") not in asked
+    assert ("discriminating", "judge") in asked                  # the tie/short-list fallback
+    assert state["facts"]["discriminating_hpo_ids"] == ["HP:0000280"]

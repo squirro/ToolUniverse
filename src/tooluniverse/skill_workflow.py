@@ -49,6 +49,7 @@ from .skill_runner import (
         asked,
         bundle_of,
         judged,
+        loop_items,
         new_run,
         next_runnable,
         question_for,
@@ -161,7 +162,7 @@ class SkillWorkflow:
             if repair and not resolved(spec, repair, results):
                 results, failures = await self._repair(spec, step, repair, results,
                                                        failures, made)
-            outcome = absorb(spec, results, run["facts"])
+            outcome = absorb(spec, results, run["facts"], items=loop_items(spec, step["calls"]))
             delegated = spec.get("delegate") or []
             if delegated:
                 # Web search and code live on the agent: the run pauses with the

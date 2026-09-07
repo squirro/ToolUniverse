@@ -321,9 +321,11 @@ def test_rare_disease_diagnosis_declares_its_judgement_points():
     judged = {s["id"]: s.get("judge") for s in graph["steps"] if s.get("judge")}
     # `genes` is no longer judged (DSR-730): it is looked up per resolved
     # candidate, so the model is asked for nothing it could recall from memory.
+    # The discriminating pair is computed from HPO disease counts; the judge on
+    # `discriminating` is reached only when the counts tie at the cut.
     assert judged == {
         "hypothesis": ["primary_keyword", "working_hypothesis", "discriminating_features"],
-        "phenotypes": ["discriminating_hpo_ids"],
+        "discriminating": ["discriminating_hpo_ids"],
         "keyword_search": ["top_candidate"],
     }
     phenotypes = next(s for s in graph["steps"] if s["id"] == "phenotypes")

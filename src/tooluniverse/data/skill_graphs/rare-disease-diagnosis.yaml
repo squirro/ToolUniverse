@@ -112,13 +112,46 @@ steps:
     # discriminate is judgement.
     collect:
       hpo_ids: {path: "data.items[].id", match: "^HP:"}
-    produces: [hpo_ids, discriminating_hpo_ids]
-    judge: [discriminating_hpo_ids]
+    produces: [hpo_ids]
     notes: >-
       One call per symptom. Take the top HP:-prefixed hit — the tool also returns
       MP: and other namespaces, which are not human phenotypes. A symptom that
       resolves to nothing is not a failure: carry it as an Orphanet keyword instead.
-      Set hpo_ids to every HP: id, and discriminating_hpo_ids to the 2-3 rarest.
+
+  - id: hpo_counts
+    label: "Phase 1b — how many diseases each phenotype is annotated to"
+    requires: [phenotypes]
+    for_each: hpo_ids
+    as: hpo
+    calls:
+      - tool: HPO_get_diseases_by_phenotype
+        arguments: {term_id: "{hpo}", limit: 500}
+    # The tool does not echo its input; "$item" pairs each count with its term.
+    collect:
+      term_counts: {path: "data", fields: ["$item as hpo_id", "diseases[].id as diseases"]}
+    produces: [term_counts]
+    notes: >-
+      One call per HP id. The count is how many diseases carry the phenotype;
+      500 means at least 500 (the tool's ceiling). A term annotated to few
+      diseases discriminates; one annotated to hundreds does not.
+
+  - id: discriminating
+    label: "Phase 1c — the two phenotypes annotated to the fewest diseases"
+    requires: [hpo_counts]
+    calls: []
+    # UI run 3e342e1a: asked for the rarest phenotypes, the model chose developmental
+    # delay and seizures once in fifteen runs and the differential became a
+    # neurodevelopmental list. Fewest annotated diseases is arithmetic; the model
+    # is asked only when the counts tie at the cut (the name stays unresolved and
+    # the judge below fills it).
+    compute:
+      discriminating_hpo_ids: {op: fewest, rows: term_counts, id: hpo_id, count: diseases, take: 2}
+    produces: [discriminating_hpo_ids]
+    judge: [discriminating_hpo_ids]
+    notes: >-
+      Computed from the counts. You are asked only if two phenotypes tie exactly at
+      the cut: then choose the clinically rarer of the tied pair and return the two
+      ids.
 
   - id: differential_all
     label: "Phase 2a — diseases annotated with ALL the phenotypes"

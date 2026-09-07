@@ -182,8 +182,52 @@ def _overlap(rule: dict, facts: dict) -> list[dict] | None:
     return out
 
 
+def _fewest(rule: dict, facts: dict) -> list | None:
+    """The `take` ids whose count is smallest; None (unresolved) when the cut ties.
+
+    Which phenotypes discriminate is "which are annotated to the fewest
+    diseases" — arithmetic. A tie exactly at the cut is the one case left to the
+    model, which is asked because the name stays unresolved.
+    """
+    rows = facts.get(rule["rows"])
+    if rows is None:
+        return None
+    take = int(rule.get("take", 2))
+    sized = []
+    for row in rows:
+        value = row.get(rule["count"])
+        size = len(value) if isinstance(value, (list, dict)) else value
+        if size is not None:
+            sized.append((size, row.get(rule["id"])))
+    if len(sized) < take:
+        return None
+    sized.sort(key=lambda t: (t[0], str(t[1])))
+    if len(sized) > take and sized[take - 1][0] == sized[take][0]:
+        return None                                   # a tie at the cut: the model breaks it
+    return [ident for _, ident in sized[:take]]
+
+
+def loop_items(spec: dict, calls: list[dict]) -> list | None:
+    """The loop value each expanded call was made for, in call order."""
+    loop, var = spec.get("for_each"), spec.get("as", "item")
+    if not loop:
+        return None
+    per_item = max(1, len(spec.get("calls") or []))
+    marker = "{" + var + "}"
+    items = []
+    for call in calls[::per_item]:
+        # The filled argument whose template was the loop variable carries the item.
+        found = None
+        for tmpl in (spec.get("calls") or [{}])[0].get("arguments", {}).items():
+            if tmpl[1] == marker:
+                found = call.get("arguments", {}).get(tmpl[0])
+                break
+        items.append(found)
+    return items
+
+
 _COMPUTE_OPS: dict[str, Callable[[dict, dict], Any]] = {"rank_differential": _rank_differential,
-                                                       "overlap": _overlap}
+                                                       "overlap": _overlap, "fewest": _fewest}
 
 
 def _compute(rule: dict, facts: dict) -> Any:
@@ -404,11 +448,14 @@ def judged(outcome: dict, wants: list[str], answer: dict | None) -> dict:
     answer = answer or {}
     facts = {**outcome["facts"],
              **{name: answer[name] for name in wants if name in answer}}
-    unresolved = outcome["unresolved"] + [n for n in wants if n not in answer]
+    # A name a compute left unresolved (a tie at the cut) and the model then
+    # supplied is resolved; only names nobody answered stay on the list.
+    unresolved = ([n for n in outcome["unresolved"] if n not in answer]
+                  + [n for n in wants if n not in answer])
     return {**outcome, "facts": facts, "unresolved": unresolved}
 
 
-def absorb(spec: dict, results: list, facts: dict) -> dict:
+def absorb(spec: dict, results: list, facts: dict, items: list | None = None) -> dict:
     """What a step's results yield: facts, what never arrived, what cannot be decided.
 
     Pure. `extract` takes the first match, `collect` the lot, `combine` merges
@@ -456,18 +503,23 @@ def absorb(spec: dict, results: list, facts: dict) -> dict:
     for name, rule in (spec.get("collect") or {}).items():
         rule = rule if isinstance(rule, dict) else {"path": rule}
         gathered = []
-        for payload in results:
+        for index, payload in enumerate(results):
             found = _dig(payload, rule["path"])
             if found is None:
                 continue
             if rule.get("fields") and isinstance(found, dict):
                 # Keep the few fields the run needs from a large payload, as one row.
+                # "$item" is the loop value this call was made for — a tool that does
+                # not echo its input (HPO's disease list) still yields a paired row.
                 row = {}
                 for spec_field in rule["fields"]:
                     src, _, alias = spec_field.partition(" as ")
-                    value = _dig(found, src)
+                    if src == "$item":
+                        value = items[index] if items and index < len(items) else None
+                    else:
+                        value = _dig(found, src)
                     if value is not None:
-                        row[alias or src.split(".")[-1].rstrip("[]")] = value
+                        row[alias or src.split(".")[-1].rstrip("[]").lstrip("$")] = value
                 found = row
             if rule.get("match"):
                 # The first item that matches, per call: an HPO lookup answers
@@ -638,7 +690,7 @@ class SkillRunner:
             results, failures = self._repair(
                 spec, step, repair, results, failures, run, made)
 
-        outcome = absorb(spec, results, run["facts"])
+        outcome = absorb(spec, results, run["facts"], items=loop_items(spec, step["calls"]))
         delegated = spec.get("delegate") or []
         if delegated:
             # Web search and code live on the agent, not in the registry. The run

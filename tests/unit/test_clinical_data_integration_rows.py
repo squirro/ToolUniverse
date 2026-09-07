@@ -17,7 +17,7 @@ def _url(term):
     return f"https://api.fda.gov/drug/event.json?search={term.replace(' ', '+')}"
 
 
-def _drive(prr=PRR, graph=None):
+def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate"):
     calls, asked = [], []
 
     def execute(tool, a):
@@ -35,7 +35,7 @@ def _drive(prr=PRR, graph=None):
 
     runner = SkillRunner(graph or load_graph("clinical-data-integration"), execute=execute,
                          ask=lambda q: asked.append(q) or {n: ["stub"] for n in q["wants"]})
-    run_id = runner.start({"drug_name": "lutetium Lu 177 dotatate"})["run_id"]
+    run_id = runner.start({"drug_name": drug_name})["run_id"]
     for _ in range(100):
         if runner.advance(run_id)["finished"]:
             break
@@ -140,3 +140,12 @@ def test_the_process_read_back_from_the_store_still_searches_per_flagged_reactio
     assert [b for b in state["blocked"] if b["step"] == "literature"] == []
     assert state["facts"]["flagged_aes"] == ["MYELODYSPLASTIC SYNDROME", "RENAL IMPAIRMENT"]
     assert len([1 for tool, _ in calls if tool == "PubMed_search_articles"]) == 2
+
+
+def test_the_literature_search_uses_the_inn_from_the_label_even_when_the_agent_bound_the_brand():
+    """Live 2026-09-07 the agent bound "Lutathera"; untagged, the brand maps to the
+    element and the PSMA prostate papers came back. DailyMed's title carries the INN."""
+    _, calls, _ = _drive(drug_name="Lutathera")
+    queries = [a["query"] for tool, a in calls if tool == "PubMed_search_articles"]
+    assert queries == ["lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME",
+                       "lutetium Lu 177 dotatate AND RENAL IMPAIRMENT"]

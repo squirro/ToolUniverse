@@ -77,7 +77,16 @@ steps:
         path: "data.0.title"
         regex: "^([A-Za-z0-9-]{3,})"
         default_from: drug_name
-    produces: [setid, faers_name, approval_history]
+      # The INN, from the same title: "LUTATHERA (lutetium Lu 177 dotatate)". PubMed
+      # maps the INN to its substance record; the brand maps to the element and drew
+      # 177Lu-PSMA papers (live 2026-09-07, the agent bound "Lutathera": 5 of 10
+      # platelet papers and 12 of 29 renal papers were PSMA). The literature loop
+      # searches with this, never with what the agent typed.
+      inn:
+        path: "data.0.title"
+        regex: "\\(([^)]+)\\)"
+        default_from: drug_name
+    produces: [setid, faers_name, inn, approval_history]
 
   - id: label
     label: "Phase 1 — FDA label, the ground truth"
@@ -204,8 +213,9 @@ steps:
         # where the record finds 12 (probed 2026-09-07; renal impairment 0 → 11).
         # The reaction term anchors the search, so the 177Lu-PSMA noise that a bare
         # "adverse events" query drew does not return. The brand name stays OUT: it
-        # maps to the element and brings that noise back (1,126 PSMA papers).
-        arguments: {query: "{drug_name} AND {reaction}", limit: 10}
+        # maps to the element and brings that noise back (1,126 PSMA papers) — hence
+        # `inn` from the label title, not `drug_name` as the agent bound it.
+        arguments: {query: "{inn} AND {reaction}", limit: 10}
     collect:
       literature_rows: {path: "", fields: ["$item as reaction", "data[].pmid as pmids", "data[].title as titles",
                                            "data[].pub_year as years", "data[].doi_url as dois"]}

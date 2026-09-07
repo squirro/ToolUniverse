@@ -54,3 +54,18 @@ def test_without_a_sidecar_the_trace_bundle_is_used():
     row = score(actions, "PRR 3.9 and PRR 21.4.")
 
     assert row["uncited_numbers"] == ["21.4"]
+
+
+def test_rescore_skips_the_bundle_sidecars_it_reads(tmp_path):
+    import json
+    from types import SimpleNamespace
+    from skill_audit.three_arms import rescore
+    trace = {"arm": "modelled", "run": 1, "seconds": 1.0, "error": None, "answer": "PRR 3.9 and ROR 10.861.",
+             "actions": [{"tool_name": "continue_skill", "content": {"parameters": {},
+                          "output": '{"status": "finished", "run_id": "r1", "bundle": {}}'}}]}
+    (tmp_path / "modelled-r1.json").write_text(json.dumps(trace))
+    (tmp_path / "modelled-r1.bundle.json").write_text(json.dumps({"facts": {"prrs": [3.9]}}))
+
+    assert rescore(SimpleNamespace(out=str(tmp_path))) == 0
+    rescored = json.loads((tmp_path / "modelled-r1.json").read_text())
+    assert rescored["uncited_numbers"] == ["10.861"]

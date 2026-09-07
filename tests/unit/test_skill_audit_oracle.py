@@ -598,3 +598,12 @@ def test_a_modelled_run_that_finished_is_not_a_skill_without_tools():
 
 def test_a_number_that_ends_a_sentence_is_still_a_number():
     assert [f["number"] for f in uncited_numbers("The ROR was 10.861.", BUNDLE)] == ["10.861"]
+
+
+def test_a_doi_prefix_and_renderer_markup_are_not_numbers():
+    """A number glued to a slash is an identifier (a DOI, a path); <sub> chips are
+    the chat renderer's attachment sizes, not the report's prose."""
+    answer = ("how great is the risk? (DOI: 10.1530/erc-25-0123) "
+              "[code](sandbox:/mnt/x_code.py) <sub>(573 B)</sub> and PRR 2.5.")
+
+    assert [f["number"] for f in uncited_numbers(answer, BUNDLE)] == ["2.5"]

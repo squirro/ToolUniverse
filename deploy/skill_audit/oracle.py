@@ -281,8 +281,10 @@ def classify_call(text: str, status: str | None = None) -> str:
 
 # A standalone numeric token: not glued to a word or a dot on either side, so
 # HP:0001433, ORPHA:580, [^3^], v3 and 1.2.3 are names, not numbers.
-_NUMERIC = re.compile(r"(?<![\w.:/^])(\d{1,6}(?:\.\d{1,4})?)(?![\w^]|\.\d)")
+_NUMERIC = re.compile(r"(?<![\w.:/^])(\d{1,6}(?:\.\d{1,4})?)(?![\w^/]|\.\d)")
 _URL = re.compile(r"\(?https?://\S+\)?")
+_MARKUP = re.compile(r"<sub>.*?</sub>", re.S)      # the renderer's attachment-size chips
+_DOI = re.compile(r"\b10\.\d{4,9}/\S+")            # a DOI is one identifier, like a URL
 
 
 def _rounded_forms(value: str) -> set[str]:
@@ -300,7 +302,7 @@ def uncited_numbers(answer: str, bundle_text: str) -> list[dict]:
     vouched: set[str] = set()
     for m in _NUMERIC.finditer(bundle_text or ""):
         vouched |= _rounded_forms(m.group(1))
-    prose = _URL.sub(" ", answer or "")
+    prose = _MARKUP.sub(" ", _DOI.sub(" ", _URL.sub(" ", answer or "")))
     flagged, seen = [], set()
     for m in _NUMERIC.finditer(prose):
         number = m.group(1)

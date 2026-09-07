@@ -242,6 +242,8 @@ def rescore(args) -> int:
     out_dir = Path(args.out)
     rows = []
     for path in sorted(out_dir.glob("*-r*.json")):
+        if path.name.endswith(".bundle.json"):        # a sidecar, not a trace
+            continue
         r = json.loads(path.read_text())
         r.update(score(r["actions"], r["answer"], bundle_path=path.with_suffix(".bundle.json")))
         if r.get("server_activities"):

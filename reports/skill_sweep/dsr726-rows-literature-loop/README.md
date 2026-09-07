@@ -52,3 +52,5 @@ the MedDRA reaction term is not the clinical word (renal impairment vs nephrotox
 notation set for the drug and an untagged or synonym-expanded reaction term would lift
 recall; both are surface-form gaps of the same kind as the atlas isotope notation, and
 belong to the next rung.
+
+**Follow-up, same day:** both fixed — see `../dsr726-rows-literature-loop-untagged/README.md`.

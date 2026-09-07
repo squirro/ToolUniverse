@@ -180,7 +180,9 @@ class SkillWorkflow:
                         step["id"], "delegate", wanted, dict(run["facts"]), calls=calls,
                         notes=spec.get("notes")))
                     outcome = judged(outcome, wanted, answer)
-            wants = spec.get("judge") or []
+            # A judgement is for what the step could not resolve itself: a name an
+            # extraction or compute already supplied is never put to the model.
+            wants = [n for n in (spec.get("judge") or []) if n not in outcome["facts"]]
             if wants:
                 answer = await self._ask(question_for(
                     step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},

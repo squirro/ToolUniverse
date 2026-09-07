@@ -193,12 +193,14 @@ def _fewest(rule: dict, facts: dict) -> list | None:
     if rows is None:
         return None
     take = int(rule.get("take", 2))
-    sized = []
+    seen: dict = {}
     for row in rows:
         value = row.get(rule["count"])
         size = len(value) if isinstance(value, (list, dict)) else value
-        if size is not None:
-            sized.append((size, row.get(rule["id"])))
+        ident = row.get(rule["id"])
+        if size is not None and ident not in seen:        # two symptoms on one term are one phenotype
+            seen[ident] = size
+    sized = [(size, ident) for ident, size in seen.items()]
     if len(sized) < take:
         return None
     sized.sort(key=lambda t: (t[0], str(t[1])))
@@ -710,7 +712,9 @@ class SkillRunner:
                 answer = self.ask(question) if self.ask else None
                 asked(run, question, answer)
                 outcome = judged(outcome, wanted, answer)
-        wants = spec.get("judge") or []
+        # A judgement is for what the step could not resolve itself: a name an
+        # extraction or compute already supplied is never put to the model.
+        wants = [n for n in (spec.get("judge") or []) if n not in outcome["facts"]]
         if wants:
             # A judgement fact is asked for by name, after the step's own calls,
             # with everything known so far — never inferred from what an

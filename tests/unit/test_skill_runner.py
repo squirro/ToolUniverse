@@ -1714,3 +1714,40 @@ def test_the_shipped_process_computes_the_discriminating_pair_and_asks_only_on_a
     assert ("phenotypes", "judge") not in asked
     assert ("discriminating", "judge") in asked                  # the tie/short-list fallback
     assert state["facts"]["discriminating_hpo_ids"] == ["HP:0000280"]
+
+
+def test_a_judged_name_a_compute_already_resolved_is_not_asked():
+    """Live: the discriminating pair was computed cleanly and the judge fired anyway,
+    and the model echoed the answer back. A judgement is for what the step could
+    not resolve itself; a name already in hand is never put to the model."""
+    graph = {"skill": "j", "inputs": ["term_counts"], "steps": [
+        {"id": "discriminating", "calls": [],
+         "compute": {"pair": {"op": "fewest", "rows": "term_counts", "id": "hpo_id", "count": "diseases", "take": 2}},
+         "produces": ["pair"], "judge": ["pair"]}]}
+    asked = []
+    runner = SkillRunner(graph, execute=lambda t, a: {}, ask=lambda q: asked.append(q) or {"pair": ["X"]})
+    counts = [{"hpo_id": "A", "diseases": ["d"] * 10}, {"hpo_id": "B", "diseases": ["d"] * 20},
+              {"hpo_id": "C", "diseases": ["d"] * 30}]
+    run_id = runner.start({"term_counts": counts})["run_id"]
+    runner.advance(run_id)
+
+    assert asked == []
+    assert runner.state(run_id)["facts"]["pair"] == ["A", "B"]
+
+    # and when the cut ties, the judge IS asked, for that name only
+    tied = [{"hpo_id": "A", "diseases": ["d"] * 10}, {"hpo_id": "B", "diseases": ["d"] * 20},
+            {"hpo_id": "C", "diseases": ["d"] * 20}]
+    run_id = runner.start({"term_counts": tied})["run_id"]
+    runner.advance(run_id)
+    assert [q["wants"] for q in asked] == [["pair"]]
+    assert runner.state(run_id)["facts"]["pair"] == ["X"]
+
+
+def test_fewest_counts_distinct_ids_so_two_symptoms_on_one_term_do_not_make_a_pair():
+    """Two symptoms resolving to the same HP id are one phenotype, not two."""
+    from tooluniverse.skill_runner import _fewest
+    rule = {"rows": "t", "id": "hpo_id", "count": "diseases", "take": 2}
+    same = [{"hpo_id": "HP:1", "diseases": ["d"] * 190}, {"hpo_id": "HP:1", "diseases": ["d"] * 190}]
+    assert _fewest(rule, {"t": same}) is None                       # one distinct id: cannot cut two
+    three = same + [{"hpo_id": "HP:2", "diseases": ["d"] * 340}]
+    assert _fewest(rule, {"t": three}) == ["HP:1", "HP:2"]

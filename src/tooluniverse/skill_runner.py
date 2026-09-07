@@ -306,6 +306,15 @@ def absorb(spec: dict, results: list, facts: dict) -> dict:
             found = _dig(payload, rule["path"])
             if found is None:
                 continue
+            if rule.get("fields") and isinstance(found, dict):
+                # Keep the few fields the run needs from a large payload, as one row.
+                row = {}
+                for spec_field in rule["fields"]:
+                    src, _, alias = spec_field.partition(" as ")
+                    value = _dig(found, src)
+                    if value is not None:
+                        row[alias or src.split(".")[-1].rstrip("[]")] = value
+                found = row
             if rule.get("match"):
                 # The first item that matches, per call: an HPO lookup answers
                 # UPHENO:, MP:, then HP:, and only the HP id is a human phenotype.

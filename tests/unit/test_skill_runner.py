@@ -1339,3 +1339,26 @@ def test_an_unanswered_question_is_kept_with_its_empty_answer():
     run_id = _run_to_end(runner, {"symptoms": ["x"]})
 
     assert [q["answer"] for q in runner.state(run_id)["questions"]] == [{}, {}]
+
+
+# --- collect can project a large payload to the few fields the run keeps --------
+#
+# Orphanet answers ~10 KB of phenotypes per disease. The run needs the disease
+# and its HPO ids as one row, not the payload and not three aligned lists.
+
+def test_collect_can_project_each_call_to_named_fields():
+    spec = {"collect": {"disease_phenotypes": {
+        "path": "data",
+        "fields": ["orpha_code", "preferred_term", "phenotypes[].hpo_id as hpo_ids"]}}}
+    results = [{"data": {"orpha_code": "93473", "preferred_term": "Hurler syndrome",
+                         "phenotypes": [{"hpo_id": "HP:0000280", "hpo_term": "Coarse facial features"},
+                                        {"hpo_id": "HP:0001433", "hpo_term": "Hepatosplenomegaly"}]}},
+               {"data": {"orpha_code": "580", "preferred_term": "MPS II", "phenotypes": []}}]
+
+    out = absorb(spec, results, facts={})
+
+    assert out["facts"]["disease_phenotypes"] == [
+        {"orpha_code": "93473", "preferred_term": "Hurler syndrome",
+         "hpo_ids": ["HP:0000280", "HP:0001433"]},
+        {"orpha_code": "580", "preferred_term": "MPS II", "hpo_ids": []},
+    ]

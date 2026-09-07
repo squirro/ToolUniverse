@@ -151,11 +151,15 @@ def trim_actions(actions: list[dict]) -> list[dict]:
         output = content.get("output")
         if not isinstance(output, str):
             output = json.dumps(output) if output is not None else ""
+        # The finished Skill Run bundle is the evidence the number check reads
+        # and is larger than the cap: it is kept whole.
+        whole = (action.get("tool_name") in ("run_skill", "continue_skill")
+                 and '"status": "finished"' in output[:200])
         kept.append({
             "tool_name": action.get("tool_name"),
             "status": action.get("status"),
             "content": {"parameters": content.get("parameters") or {},
-                        "output": output[:MAX_OUTPUT]},
+                        "output": output if whole else output[:MAX_OUTPUT]},
         })
     return kept
 

@@ -499,3 +499,102 @@ def test_the_verdict_is_the_worst_finding(codes, expected):
     findings = [SkillFinding(code=c, severity=SEVERITY[c], message="", evidence={})
                 for c in codes]
     assert verdict(findings) == expected
+
+
+# --- numbers the bundle cannot vouch for -----------------------------------------
+#
+# A modelled report is written by the chat agent from the bundle the run handed
+# back — while its other tools are still on. One report quoted a "union-cohort
+# ROR 10.861" that no tool of its run produced (the document index had an older
+# answer). The Run Record vouches for every number in the bundle and for nothing
+# else, so a number found nowhere in the bundle is a warning the reader sees.
+
+from skill_audit.oracle import uncited_numbers  # noqa: E402
+
+BUNDLE = ('{"facts": {"prrs": [393.41, 7.524, 2.289], "signal_aes": ["NEUROENDOCRINE TUMOUR"]},'
+          ' "results": {"faers_counts": [{"count": 1234, "term": "FATIGUE"}]}}')
+
+
+def test_a_number_absent_from_the_bundle_is_reported_with_its_context():
+    answer = "The PRR for neuroendocrine tumour is 393.41. A union-cohort ROR of 10.861 was also seen."
+
+    flagged = uncited_numbers(answer, BUNDLE)
+
+    assert [f["number"] for f in flagged] == ["10.861"]
+    assert "union-cohort ROR of 10.861" in flagged[0]["context"]
+
+
+def test_a_rounded_form_of_a_bundle_value_is_cited():
+    answer = "PRR 393.4 for neuroendocrine tumour; PRR 7.5 for fatigue; 2.29 for nausea."
+
+    assert uncited_numbers(answer, BUNDLE) == []
+
+
+def test_identifiers_and_links_are_names_not_numbers():
+    answer = ("HP:0001433 and ORPHA:580 were resolved[^3^]; see PMID 41066611 at "
+              "https://europepmc.org/article/MED/41066611 and "
+              "[the label](https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=72d1a024-00b7-41). "
+              "Grade T4; 95% CI 1.2-3.4 is a range.")
+    bundle = '{"facts": {"pmids": ["41066611"], "hpo_ids": ["HP:0001433"]}}'
+
+    flagged = uncited_numbers(answer, bundle)
+
+    assert [f["number"] for f in flagged] == ["95", "1.2", "3.4"]   # the CI is the only prose numbers
+
+
+def test_each_uncited_number_is_reported_once():
+    answer = "ROR 10.861 here, and again ROR 10.861 there."
+
+    assert [f["number"] for f in uncited_numbers(answer, BUNDLE)] == ["10.861"]
+
+
+def _modelled_turn(bundle_json, answer):
+    """A modelled trace: get_skill, then run_skill/continue_skill ending in a finished bundle."""
+    return [
+        _action("get_skill", parameters={"name": "clinical-data-integration"}, output="# THE SERVER RUNS THIS SKILL"),
+        _action("run_skill", parameters={"skill": "clinical-data-integration"},
+                output='{"status": "running", "run_id": "r1"}'),
+        _action("continue_skill", parameters={"run_id": "r1"},
+                output='{"status": "finished", "run_id": "r1", "bundle": ' + bundle_json + '}'),
+    ], answer
+
+
+def test_a_modelled_report_with_a_number_the_bundle_lacks_gets_a_warning():
+    actions, answer = _modelled_turn(BUNDLE, "PRR 393.4 for the tumour; a union-cohort ROR of 10.861 was seen.")
+
+    findings = score("clinical-data-integration", actions, answer, error=None)
+
+    uncited = [f for f in findings if f.code == "uncited_number"]
+    assert len(uncited) == 1 and uncited[0].severity == "warn"
+    assert [n["number"] for n in uncited[0].evidence["numbers"]] == ["10.861"]
+    assert "union-cohort ROR of 10.861" in uncited[0].evidence["numbers"][0]["context"]
+    assert verdict(findings) == "warn"
+
+
+def test_a_modelled_report_whose_numbers_are_all_in_the_bundle_gets_no_warning():
+    actions, answer = _modelled_turn(BUNDLE, "PRR 393.4 for the tumour, 7.52 for fatigue; 1234 reports.")
+
+    assert "uncited_number" not in _codes(score("clinical-data-integration", actions, answer, error=None))
+
+
+def test_a_prose_trace_has_no_bundle_and_is_never_checked():
+    actions = [_action("get_skill", parameters={"name": "clinical-data-integration"}, output="# skill"),
+               _exec("FAERS_calculate_disproportionality", output='{"prr": 393.41}')]
+
+    findings = score("clinical-data-integration", actions, "ROR 10.861 from nowhere.", error=None)
+
+    assert "uncited_number" not in _codes(findings)
+
+
+def test_a_modelled_run_that_finished_is_not_a_skill_without_tools():
+    """The server made the calls; the bundle names them. Predating run_skill, the
+    oracle read "no execute_tool after get_skill" as the skill doing nothing."""
+    actions, answer = _modelled_turn(BUNDLE, "PRR 393.4 for the tumour.")
+
+    codes = _codes(score("clinical-data-integration", actions, answer, error=None))
+
+    assert "skill_without_tools" not in codes and "no_skill_loaded" not in codes
+
+
+def test_a_number_that_ends_a_sentence_is_still_a_number():
+    assert [f["number"] for f in uncited_numbers("The ROR was 10.861.", BUNDLE)] == ["10.861"]

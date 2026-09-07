@@ -39,6 +39,7 @@ SEVERITY: dict[str, str] = {
     "skill_after_web": "warn",
     "answer_declined": "warn",
     "lookup_miss": "warn",
+    "uncited_number": "warn",
     # environment artefact
     "provider_refusal": "retry",
 }
@@ -276,6 +277,42 @@ def classify_call(text: str, status: str | None = None) -> str:
     return "empty" if _is_empty_result(stripped) else "ok"
 
 
+# --- numbers the bundle cannot vouch for ------------------------------------------
+
+# A standalone numeric token: not glued to a word or a dot on either side, so
+# HP:0001433, ORPHA:580, [^3^], v3 and 1.2.3 are names, not numbers.
+_NUMERIC = re.compile(r"(?<![\w.:/^])(\d{1,6}(?:\.\d{1,4})?)(?![\w^]|\.\d)")
+_URL = re.compile(r"\(?https?://\S+\)?")
+
+
+def _rounded_forms(value: str) -> set[str]:
+    f = float(value)
+    return {value, f"{f:.0f}", f"{f:.1f}", f"{f:.2f}", f"{f:.3f}"}
+
+
+def uncited_numbers(answer: str, bundle_text: str) -> list[dict]:
+    """Every number the report states that the bundle does not contain.
+
+    A number counts as cited when the bundle holds it in any rounding the
+    bundle value admits (393.41 may be written 393.4). Identifiers and links are
+    names, not numbers, and are never flagged.
+    """
+    vouched: set[str] = set()
+    for m in _NUMERIC.finditer(bundle_text or ""):
+        vouched |= _rounded_forms(m.group(1))
+    prose = _URL.sub(" ", answer or "")
+    flagged, seen = [], set()
+    for m in _NUMERIC.finditer(prose):
+        number = m.group(1)
+        if number in vouched or number in seen:
+            continue
+        seen.add(number)
+        start, end = max(0, m.start() - 40), min(len(prose), m.end() + 40)
+        flagged.append({"number": number,
+                        "context": " ".join(prose[start:end].split())})
+    return flagged
+
+
 def _finding(code: str, message: str, **evidence) -> SkillFinding:
     return SkillFinding(code=code, severity=SEVERITY[code],
                         message=message, evidence=evidence)
@@ -287,6 +324,7 @@ def score(
     answer: str,
     error: str | None,
     body: str | None = None,
+    bundle: str | None = None,
 ) -> list[SkillFinding]:
     """Findings for one turn. Empty list means nothing structural went wrong."""
     actions = actions or []
@@ -332,7 +370,10 @@ def score(
              if names[i] == "execute_tool"
              and (skill_idx is None or i > skill_idx)]
 
-    if skill_idx is not None and not execs:
+    # A modelled run makes its calls on the server; the finished bundle names
+    # them. That is the skill firing tools, by another door.
+    served_run = finished_bundle(actions) is not None
+    if skill_idx is not None and not execs and not served_run:
         findings.append(_finding(
             "skill_without_tools",
             "skill loaded but no execute_tool followed it",
@@ -384,7 +425,46 @@ def score(
                 required=len(required)))
 
     findings.extend(_answer_findings(answer))
+    findings.extend(_bundle_findings(actions, answer, bundle))
     return findings
+
+
+def finished_bundle(actions: list[dict]) -> str | None:
+    """The text of the finished Skill Run bundle in a modelled trace, or None.
+
+    Only run_skill/continue_skill return one; a prose or bare trace has none,
+    so this is what makes the number check apply to modelled runs alone.
+    """
+    for action in actions or []:
+        if action.get("tool_name") not in ("run_skill", "continue_skill"):
+            continue
+        out = _output_text(action)
+        if '"status": "finished"' in out:
+            return out
+    return None
+
+
+def _bundle_findings(actions: list[dict], answer: str, bundle: str | None) -> list[SkillFinding]:
+    text = bundle if bundle is not None else finished_bundle(actions)
+    if text is None:
+        return []
+    flagged = uncited_numbers(answer, text)
+    if not flagged:
+        return []
+    truncated = bundle is None and not _parses(text)
+    return [_finding(
+        "uncited_number",
+        f"{len(flagged)} number(s) in the report are in no tool result of the run"
+        + (" (bundle truncated in the trace: some may be past the cap)" if truncated else ""),
+        numbers=flagged, bundle_truncated=truncated)]
+
+
+def _parses(text: str) -> bool:
+    try:
+        json.loads(text)
+    except ValueError:
+        return False
+    return True
 
 
 def _answer_findings(answer: str) -> list[SkillFinding]:

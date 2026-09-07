@@ -213,3 +213,17 @@ def test_rescoring_a_saved_trace_reproduces_a_verdict_without_the_cluster(tmp_pa
     assert result["skill"] == "toxicology"
     assert result["verdict"] == "fail"
     assert "no_skill_loaded" in [f["code"] for f in result["findings"]]
+
+
+def test_a_finished_bundle_is_kept_whole_in_the_trace():
+    """Every output is capped, except the finished Skill Run bundle: it is the
+    evidence the number check reads, and it is larger than the cap."""
+    from skill_audit.sweep import MAX_OUTPUT
+    big = '{"status": "finished", "run_id": "r1", "bundle": {"facts": {"x": "' + "y" * (2 * MAX_OUTPUT) + '"}}}'
+    actions = [{"tool_name": "execute_tool", "content": {"output": "z" * (2 * MAX_OUTPUT)}},
+               {"tool_name": "continue_skill", "content": {"output": big}}]
+
+    kept = trim_actions(actions)
+
+    assert len(kept[0]["content"]["output"]) == MAX_OUTPUT
+    assert kept[1]["content"]["output"] == big

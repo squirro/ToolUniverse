@@ -24,6 +24,7 @@ import time
 from pathlib import Path
 
 from .squirro_chat import SquirroChatClient, StudioProxyChatClient
+from .oracle import finished_bundle, uncited_numbers
 from .sweep import _load_dotenv, trim_actions
 
 DEPLOY = Path(__file__).resolve().parents[1]
@@ -117,7 +118,15 @@ def prr_values(answer: str) -> list[str]:
     return found
 
 
-def score(turn_actions: list[dict], answer: str) -> dict:
+def score(turn_actions: list[dict], answer: str, bundle_path: Path | None = None) -> dict:
+    # The numbers the bundle cannot vouch for (DSR-727). A .bundle.json sidecar,
+    # read back from Temporal, stands in for a bundle the trace capped.
+    bundle_text = None
+    if bundle_path is not None and Path(bundle_path).exists():
+        bundle_text = Path(bundle_path).read_text()
+    if bundle_text is None:
+        bundle_text = finished_bundle(turn_actions)
+    uncited = uncited_numbers(answer, bundle_text) if bundle_text is not None else []
     evidence: set[str] = set()
     for action in turn_actions:
         output = (action.get("content") or {}).get("output") or ""
@@ -152,6 +161,9 @@ def score(turn_actions: list[dict], answer: str) -> dict:
             and '"kind": "delegate"' in ((a.get("content") or {}).get("output") or "")),
         "execute_tool_calls": sum(1 for a in turn_actions if a.get("tool_name") == "execute_tool"),
         "answer_len": len(answer or ""),
+        "uncited_numbers": [u["number"] for u in uncited],
+        "uncited_contexts": uncited,
+        "uncited_count": len(uncited),
     }
 
 
@@ -201,12 +213,14 @@ def run(args) -> int:
 
 def render(rows: list[dict]) -> str:
     """Per run, then per arm: the value set shared by every repeat over the union."""
-    lines = ["| arm | run | s | PRR stated | traceable | invented | model tool calls | distinct tools | error |",
-             "|---|---|---|---|---|---|---|---|---|"]
+    lines = ["| arm | run | s | PRR stated | traceable | invented | uncited numbers | model tool calls | distinct tools | error |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         model_calls = len(r["tools_called"])
+        uncited = r.get("uncited_count")
         lines.append(f"| {r['arm']} | {r['run']} | {r['seconds']:.0f} | {r['prr_values_stated']} | "
                      f"{r['prr_values_traceable']} | {len(r['prr_values_untraceable'])} | "
+                     f"{'-' if uncited is None else uncited} | "
                      f"{model_calls} | {len(r.get('distinct_tools_reached', []))} | {r['error'] or ''} |")
     lines += ["", "| arm | runs | PRR values in every run | in any run | consistency | invented total |",
               "|---|---|---|---|---|---|"]
@@ -229,7 +243,7 @@ def rescore(args) -> int:
     rows = []
     for path in sorted(out_dir.glob("*-r*.json")):
         r = json.loads(path.read_text())
-        r.update(score(r["actions"], r["answer"]))
+        r.update(score(r["actions"], r["answer"], bundle_path=path.with_suffix(".bundle.json")))
         if r.get("server_activities"):
             # Annotated from the Temporal history for runs whose bundle predates `calls`.
             r["distinct_tools_reached"] = sorted(r["server_activities"])

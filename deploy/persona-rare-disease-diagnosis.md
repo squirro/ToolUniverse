@@ -164,12 +164,13 @@ schema — render as GFM tables; do NOT print parentheses or the word "skeleton"
 Answer ALL FIVE questions, each as its own labelled sentence:
 (1) Most likely diagnosis and primary evidence (overlap %, key gene);
 (2) Full ranked differential with T1–T4 grades;
-(3) Confirmatory tests or variants needed to discriminate top candidates;
+(3) Confirmatory tests or variants needed to discriminate top candidates, and the inheritance
+pattern that separates them (from Orphanet natural history, e.g. X-linked vs autosomal recessive);
 (4) Treatable conditions requiring urgent workup;
 (5) Recommended next diagnostic steps (test type, panel, specialist).
 ## 1. Clinical Reasoning & Working Hypothesis
 ## 2. Phenotype Profile (HPO)   (HPO ID | Phenotype | Core/Variable | Onset | Source)
-## 3. Candidate Diseases — Ranked Differential   (Disease | Orphanet ID | Overlap % | Grade (T1–T4) | Source)
+## 3. Candidate Diseases — Ranked Differential   (Disease | Orphanet ID | Overlap % | Grade (T1–T4) | Inheritance, onset | Source)
 ## 4. Gene Panel   (Gene | Orphanet: disease, association | Open Targets score | OptimusKG: relation, score | Priority Score | Ensembl ID | Function | Tissue expression | Source)
 ## 5. Variant Interpretation (ACMG)   (Variant | ClinVar class | gnomAD AF | ACMG criteria | Final classification | Source)
 ## 6. Expression Context

@@ -282,6 +282,8 @@ def classify_call(text: str, status: str | None = None) -> str:
 # A standalone numeric token: not glued to a word or a dot on either side, so
 # HP:0001433, ORPHA:580, [^3^], v3 and 1.2.3 are names, not numbers.
 _NUMERIC = re.compile(r"(?<![\w.:/^])(\d{1,6}(?:\.\d{1,4})?)(?![\w^/]|\.\d)")
+# The bundle side: a tool writes 0.3788304384 and the report writes 0.3788.
+_NUMERIC_ANY = re.compile(r"(?<![\w.:/^])(\d{1,12}(?:\.\d{1,12})?)(?![\w^/]|\.\d)")
 _URL = re.compile(r"\(?https?://\S+\)?")
 _MARKUP = re.compile(r"<sub>.*?</sub>", re.S)      # the renderer's attachment-size chips
 _DOI = re.compile(r"\b10\.\d{4,9}/\S+")            # a DOI is one identifier, like a URL
@@ -289,7 +291,7 @@ _DOI = re.compile(r"\b10\.\d{4,9}/\S+")            # a DOI is one identifier, li
 
 def _rounded_forms(value: str) -> set[str]:
     f = float(value)
-    return {value, f"{f:.0f}", f"{f:.1f}", f"{f:.2f}", f"{f:.3f}"}
+    return {value, f"{f:.0f}", f"{f:.1f}", f"{f:.2f}", f"{f:.3f}", f"{f:.4f}"}
 
 
 def uncited_numbers(answer: str, bundle_text: str) -> list[dict]:
@@ -300,7 +302,7 @@ def uncited_numbers(answer: str, bundle_text: str) -> list[dict]:
     names, not numbers, and are never flagged.
     """
     vouched: set[str] = set()
-    for m in _NUMERIC.finditer(bundle_text or ""):
+    for m in _NUMERIC_ANY.finditer(bundle_text or ""):
         vouched |= _rounded_forms(m.group(1))
     prose = _MARKUP.sub(" ", _DOI.sub(" ", _URL.sub(" ", answer or "")))
     flagged, seen = [], set()

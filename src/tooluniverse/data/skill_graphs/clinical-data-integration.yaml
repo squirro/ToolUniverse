@@ -197,9 +197,15 @@ steps:
     as: reaction
     calls:
       - tool: PubMed_search_articles
-        # Field-tagged: "Lutathera adverse events safety" came back dominated by
-        # 177Lu-PSMA prostate papers. The drug must be in the title or abstract.
-        arguments: {query: "{drug_name}[Title/Abstract] AND {reaction}[Title/Abstract]", limit: 10}
+        # UNTAGGED on purpose. Untagged, PubMed maps the INN to its substance record
+        # ("lutetium lu 177 dotatate"[Supplementary Concept]) and the MedDRA reaction
+        # to its MeSH heading, whatever spelling the abstract uses. Tagged
+        # [Title/Abstract], "Lutathera AND myelodysplastic syndrome" found 0 papers
+        # where the record finds 12 (probed 2026-09-07; renal impairment 0 → 11).
+        # The reaction term anchors the search, so the 177Lu-PSMA noise that a bare
+        # "adverse events" query drew does not return. The brand name stays OUT: it
+        # maps to the element and brings that noise back (1,126 PSMA papers).
+        arguments: {query: "{drug_name} AND {reaction}", limit: 10}
     collect:
       literature_rows: {path: "", fields: ["$item as reaction", "data[].pmid as pmids", "data[].title as titles",
                                            "data[].pub_year as years", "data[].doi_url as dois"]}

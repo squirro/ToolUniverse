@@ -69,9 +69,11 @@ def test_the_three_lists_stay_in_the_bundle_for_this_rung():
 def test_the_literature_loop_fans_over_exactly_the_flagged_reactions():
     state, calls, _ = _drive()
     queries = [a["query"] for tool, a in calls if tool == "PubMed_search_articles"]
-    assert len(queries) == 2
-    assert "MYELODYSPLASTIC SYNDROME" in queries[0] and "lutetium Lu 177 dotatate" in queries[0]
-    assert "RENAL IMPAIRMENT" in queries[1]
+    # Untagged on purpose: PubMed maps the INN to its substance record and the
+    # reaction to its MeSH heading. Tagged [Title/Abstract], "Lutathera AND
+    # myelodysplastic syndrome" found 0 papers; untagged, 12 (probed 2026-09-07).
+    assert queries == ["lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME",
+                       "lutetium Lu 177 dotatate AND RENAL IMPAIRMENT"]
     rows = state["facts"]["literature_rows"]
     assert [r["reaction"] for r in rows] == ["MYELODYSPLASTIC SYNDROME", "RENAL IMPAIRMENT"]
     assert rows[0]["pmids"] == ["1"]

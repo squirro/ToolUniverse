@@ -611,5 +611,5 @@ def test_a_doi_prefix_and_renderer_markup_are_not_numbers():
 
 def test_a_four_decimal_score_is_cited_by_its_bundle_value():
     """Open Targets and OptimusKG scores are written to four decimals in reports."""
-    bundle = '{"facts": {"opentargets_rows": [{"score": 0.3788304384}, {"score": 9.18142}]}}'
+    bundle = '{"facts": {"opentargets_rows": [{"score": 0.37883043841234567}, {"score": 9.18142}]}}'
     assert uncited_numbers("NEU1 scores 0.3788; liver median TPM 9.1814.", bundle) == []

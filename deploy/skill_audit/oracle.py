@@ -283,7 +283,7 @@ def classify_call(text: str, status: str | None = None) -> str:
 # HP:0001433, ORPHA:580, [^3^], v3 and 1.2.3 are names, not numbers.
 _NUMERIC = re.compile(r"(?<![\w.:/^])(\d{1,6}(?:\.\d{1,4})?)(?![\w^/]|\.\d)")
 # The bundle side: a tool writes 0.3788304384 and the report writes 0.3788.
-_NUMERIC_ANY = re.compile(r"(?<![\w.:/^])(\d{1,12}(?:\.\d{1,12})?)(?![\w^/]|\.\d)")
+_NUMERIC_ANY = re.compile(r"(?<![\w.:/^])(\d+(?:\.\d+)?)(?![\w^/]|\.\d)")
 _URL = re.compile(r"\(?https?://\S+\)?")
 _MARKUP = re.compile(r"<sub>.*?</sub>", re.S)      # the renderer's attachment-size chips
 _DOI = re.compile(r"\b10\.\d{4,9}/\S+")            # a DOI is one identifier, like a URL

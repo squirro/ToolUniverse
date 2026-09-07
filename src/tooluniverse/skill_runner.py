@@ -319,7 +319,23 @@ def _flag(rule: dict, facts: dict) -> list[dict] | None:
 
 
 def _pluck(rule: dict, facts: dict) -> list | None:
-    """One field from every row, or only from the rows whose `where` field is true."""
+    """One field from every row, or only from the rows whose `where` field is true;
+    values matching `exclude_pattern` are set aside (see `_pluck_excluded`)."""
+    picked = _pluck_all(rule, facts)
+    if picked is None:
+        return None
+    pattern = rule.get("exclude_pattern")
+    return [v for v in picked if not (pattern and re.search(pattern, str(v), re.I))]
+
+
+def _pluck_excluded(rule: dict, facts: dict) -> list:
+    """The values `_pluck` set aside — recorded so the report can say so."""
+    picked = _pluck_all(rule, facts) or []
+    pattern = rule.get("exclude_pattern")
+    return [v for v in picked if pattern and re.search(pattern, str(v), re.I)]
+
+
+def _pluck_all(rule: dict, facts: dict) -> list | None:
     rows = facts.get(rule["rows"])
     if rows is None:
         return None
@@ -678,6 +694,10 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
             if value is not None:
                 extracted[name] = value
                 settled.append(name)
+                if rule.get("exclude_pattern"):
+                    dropped = _pluck_excluded(rule, {**facts, **extracted})
+                    if dropped:
+                        excluded[name] = dropped
         if not settled:
             break
         for name in settled:

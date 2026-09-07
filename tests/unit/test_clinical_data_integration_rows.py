@@ -17,7 +17,7 @@ def _url(term):
     return f"https://api.fda.gov/drug/event.json?search={term.replace(' ', '+')}"
 
 
-def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate"):
+def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERMS):
     calls, asked = [], []
 
     def execute(tool, a):
@@ -25,7 +25,7 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate"):
         if tool == "DailyMed_search_spls":
             return {"data": [{"setid": "s1", "title": "LUTATHERA (lutetium Lu 177 dotatate)"}]}
         if tool == "FAERS_count_reactions_by_drug_event":
-            return {"result": [{"term": t} for t in TERMS]}
+            return {"result": [{"term": t} for t in terms]}
         if tool == "FAERS_calculate_disproportionality":
             ae = a["adverse_event"]
             return {"data": {"metrics": {"PRR": {"value": prr[ae]}}}, "source_url": _url(ae)}
@@ -149,3 +149,27 @@ def test_the_literature_search_uses_the_inn_from_the_label_even_when_the_agent_b
     queries = [a["query"] for tool, a in calls if tool == "PubMed_search_articles"]
     assert queries == ["lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME",
                        "lutetium Lu 177 dotatate AND RENAL IMPAIRMENT"]
+
+
+# --- reported disease is not searched as an adverse event -------------------------
+
+def test_pluck_sets_aside_the_rows_whose_field_matches_the_exclude_pattern():
+    rows = [{"term": "NEUROENDOCRINE TUMOUR", "flagged": True}, {"term": "MDS", "flagged": True},
+            {"term": "METASTASES TO LIVER", "flagged": True}, {"term": "NAUSEA", "flagged": False}]
+    rule = {"rows": "r", "field": "term", "where": "flagged", "exclude_pattern": "TUMOU?R|METASTA"}
+    assert _COMPUTE_OPS["pluck"](rule, {"r": rows}) == ["MDS"]
+
+
+def test_the_literature_loop_skips_indication_terms_and_the_bundle_says_which():
+    """Neuroendocrine tumour and liver metastases top Lutathera's PRR table: they are the
+    disease treated, not adverse events. They stay in the table, flagged; the loop does
+    not spend a search on them, and `excluded` names them."""
+    terms = ["NEUROENDOCRINE TUMOUR", "METASTASES TO LIVER", "MYELODYSPLASTIC SYNDROME", "NAUSEA"]
+    prr = {"NEUROENDOCRINE TUMOUR": 393.4, "METASTASES TO LIVER": 21.4, "MYELODYSPLASTIC SYNDROME": 7.5, "NAUSEA": 1.1}
+    state, calls, _ = _drive(prr=prr, terms=terms)
+    facts = state["facts"]
+    assert [r["term"] for r in facts["prr_table"] if r["flagged"]] == terms[:3]
+    assert facts["flagged_aes"] == ["MYELODYSPLASTIC SYNDROME"]
+    assert [a["query"] for tool, a in calls if tool == "PubMed_search_articles"] == [
+        "lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME"]
+    assert state["excluded"]["compute"] == {"flagged_aes": ["NEUROENDOCRINE TUMOUR", "METASTASES TO LIVER"]}

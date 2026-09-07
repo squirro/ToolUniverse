@@ -39,7 +39,8 @@ report: >-
   comparison; cite from the rows). Cite label numbers with the `source_url` of
   their result. Literature is one row per flagged reaction in
   `facts.literature_rows`: present it per reaction, cited by PMID or DOI, and say
-  when a reaction has no papers. Cite each trial as
+  when a reaction has no papers. Reported-disease terms were not searched; they
+  are listed under `excluded` — say so. Cite each trial as
   https://clinicaltrials.gov/study/<NCT id>. Read pharmacogenomic findings as risk-narrowing;
   an empty CPIC result means no guideline exists, which is an answer. Web context
   is supplement, not a finding, and is cited as web. End with a Limitations
@@ -248,11 +249,23 @@ steps:
     # agent's code tool it worked from three parallel lists, and could mis-pair.
     compute:
       prr_table: {op: flag, rows: prr_rows, field: prr, threshold: 2}
-      flagged_aes: {op: pluck, rows: prr_table, field: term, where: flagged}
+      # The reactions the literature loop searches: flagged, minus reported disease.
+      # In an oncology cohort the tumour, its metastases and its progression top the
+      # PRR table (Lutathera: neuroendocrine tumour 393, liver metastases 21); they
+      # are the indication, not adverse events, and a search on them returns the
+      # indication's literature. They stay in the table, flagged; `excluded` names them.
+      flagged_aes:
+        op: pluck
+        rows: prr_table
+        field: term
+        where: flagged
+        exclude_pattern: "TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION"
     produces: [prr_table, flagged_aes]
     notes: >-
       The signal table, largest PRR first, each row flagged at PRR >= 2 and carrying
       the query that produced it. Every PRR in the report is one of these rows.
+      `flagged_aes` is the subset the literature loop searches: flagged terms that
+      are not the treated disease or its course; the terms set aside are in `excluded`.
 
   - id: assessment
     label: "Phase 6 — integrated assessment (synthesis, no new tools)"

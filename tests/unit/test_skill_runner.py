@@ -1573,3 +1573,30 @@ def test_the_shipped_process_ranks_the_differential_on_the_server_from_its_rows(
     assert ranked[0]["prevalence_tier"] == "1-9 / 100 000"
     assert ranked[0]["onset_fit"] == "not assessed (no patient age)"   # the stub binds no age_years
     assert ranked[0]["grade"] == "T1" and ranked[0]["overlap_pct"] == 100    # overlap travels with the row
+
+
+def test_prevalence_tier_is_the_class_most_studies_agree_on_not_one_outlier():
+    """Live 2026-09-07: Mucolipidosis II ranked first because ONE of six Orphanet
+    entries said 1-5 / 10 000 while five said 1 in a million. The tier is the
+    class most entries report; ties go to the commoner class."""
+    from tooluniverse.skill_runner import _prevalence_tier
+    assert _prevalence_tier(["1-9 / 1 000 000", "<1 / 1 000 000", "1-9 / 1 000 000",
+                             "1-9 / 1 000 000", "<1 / 1 000 000", "1-5 / 10 000"])[0] == "1-9 / 1 000 000"
+    assert _prevalence_tier(["1-9 / 100 000", "1-9 / 1 000 000"])[0] == "1-9 / 100 000"   # tie → commoner
+    assert _prevalence_tier(["Unknown", "1-9 / 1 000 000"])[0] == "1-9 / 1 000 000"       # Unknown is not a class
+    assert _prevalence_tier([])[0] == "unknown"
+
+
+def test_a_candidate_with_no_matching_phenotype_never_outranks_one_that_fits():
+    """Live 2026-09-07: Hermansky-Pudlak (0 of 4) ranked second on a prevalence
+    entry. Prevalence orders the candidates that match at all; zero overlap goes
+    to the bottom of its onset band."""
+    facts = {"age_years": 4,
+             "overlap_rows": [{"orpha_code": "1", "preferred_term": "Common but 0/4", "overlap_pct": 0, "grade": "T4"},
+                              {"orpha_code": "2", "preferred_term": "Rare but 2/4", "overlap_pct": 50, "grade": "T3"}],
+             "disease_inheritance": [{"orpha_code": "1", "average_age_of_onset": ["Infancy"]},
+                                     {"orpha_code": "2", "average_age_of_onset": ["Infancy"]}],
+             "disease_prevalence": [{"orpha_code": "1", "classes": ["1-5 / 10 000"]},
+                                    {"orpha_code": "2", "classes": ["<1 / 1 000 000"]}]}
+    rows = absorb(RANK_SPEC, results=[], facts=facts)["facts"]["ranked_rows"]
+    assert [r["preferred_term"] for r in rows] == ["Rare but 2/4", "Common but 0/4"]

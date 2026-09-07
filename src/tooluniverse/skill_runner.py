@@ -97,11 +97,17 @@ _UNKNOWN_TIER_POSITION = 4.5      # below every counted class, above the rarest-
 
 
 def _prevalence_tier(classes: list[str]) -> tuple[str, float]:
-    """The commonest class Orphanet gives, and its position; unknown sits mid-table."""
+    """The class most of Orphanet's entries agree on, and its position.
+
+    Orphanet lists one estimate per study and region; a single outlier must not
+    crown a disease (live: one 1-5/10 000 among five 1-in-a-million entries).
+    Ties go to the commoner class; no counted class at all is "unknown".
+    """
     known = [c for c in classes or [] if c in _PREVALENCE_TIERS]
     if not known:
         return "unknown", _UNKNOWN_TIER_POSITION
-    best = min(known, key=_PREVALENCE_TIERS.index)
+    counts = {c: known.count(c) for c in set(known)}
+    best = min(counts, key=lambda c: (-counts[c], _PREVALENCE_TIERS.index(c)))
     return best, float(_PREVALENCE_TIERS.index(best))
 
 
@@ -134,8 +140,11 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
         else:
             fit, fit_key = "unknown onset", 0
         tier, tier_key = _prevalence_tier(prev_by.get(code, []))
-        out.append({**row, "onset": onsets, "onset_fit": fit,
-                    "prevalence_tier": tier, "_key": (fit_key, tier_key, -float(row.get("overlap_pct") or 0))})
+        pct = float(row.get("overlap_pct") or 0)
+        # A candidate that matches nothing goes to the bottom of its onset band:
+        # prevalence orders the diseases that fit at all, it does not rescue one.
+        out.append({**row, "onset": onsets, "onset_fit": fit, "prevalence_tier": tier,
+                    "_key": (fit_key, 0 if pct > 0 else 1, tier_key, -pct)})
     out.sort(key=lambda r: (r["_key"], str(r.get("preferred_term"))))
     for i, r in enumerate(out, 1):
         r.pop("_key")

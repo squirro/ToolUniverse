@@ -138,6 +138,9 @@ def _task(g: Graph, process: URIRef, skill: str, step: dict, order: int) -> None
         g.add((task, SRP.iterationVariable, Literal(step.get("as", "item"))))
     for name in (step.get("combine") or {}):
         g.add((task, SRP.combines, Literal(name)))
+    for name, rules in (step.get("check") or {}).items():
+        kinds = [next(iter(r)) for r in (rules if isinstance(rules, list) else [rules])]
+        g.add((task, SRP.checks, Literal(f"{name}: {', '.join(kinds)}")))
 
 
 # YAML key -> the srp: property that carries it verbatim, as JSON.
@@ -151,6 +154,7 @@ _JSON_SPECS = {
     "produces": SRP.produces,
     "judge": SRP.judges,
     "delegate": SRP.delegateSpec,
+    "check": SRP.checkSpec,
 }
 
 

@@ -28,6 +28,7 @@ the synchronous driver over them.
 from __future__ import annotations
 
 import json
+import math
 import re
 import uuid
 from collections.abc import Callable
@@ -575,6 +576,177 @@ def judged(outcome: dict, wants: list[str], answer: dict | None) -> dict:
     return {**outcome, "facts": facts, "unresolved": unresolved}
 
 
+# --- check: a model answer is verified against the rows before it becomes a fact ---
+#
+# The server cannot make the agent use a tool; it can refuse an answer that does
+# not hold against the data the run already has. Seven closed kinds, each over a
+# produced fact: rows_of, sorted_by, flag, subset_of, covers, excludes, only.
+
+def _num(value: Any) -> float | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _same(a: Any, b: Any) -> bool:
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)) \
+            and not isinstance(a, bool) and not isinstance(b, bool):
+        return math.isclose(a, b, rel_tol=1e-9, abs_tol=1e-9)
+    return a == b
+
+
+def _check_rows_of(source_name: str, value: Any, facts: dict) -> str | None:
+    """Every row came from the source, with its fields untouched; none dropped."""
+    source = facts.get(source_name)
+    if not isinstance(source, list):
+        return f"{source_name} is not a list of rows"
+    if not isinstance(value, list) or not all(isinstance(r, dict) for r in value):
+        return "not a list of rows"
+    if len(value) != len(source):
+        return f"{len(value)} rows against {len(source)} in {source_name}"
+    pool = [r for r in source if isinstance(r, dict)]
+    for row in value:
+        hit = next((i for i, src in enumerate(pool)
+                    if all(k in row and _same(row[k], src[k]) for k in src)), None)
+        if hit is None:
+            return f"row not in {source_name}: {json.dumps(row, default=str)[:160]}"
+        pool.pop(hit)
+    return None
+
+
+def _check_sorted_by(rule: dict, value: Any, facts: dict) -> str | None:
+    field, order = rule["field"], rule.get("order", "desc")
+    previous, seen_missing = None, False
+    for row in value if isinstance(value, list) else []:
+        n = _num(row.get(field)) if isinstance(row, dict) else None
+        if n is None:
+            seen_missing = True
+            continue
+        if seen_missing:
+            return f"a row with {field} follows a row without it"
+        if previous is not None and (n > previous if order == "desc" else n < previous):
+            return f"{field} not in {order} order: {n} after {previous}"
+        previous = n
+    return None
+
+
+def _check_flag(rule: dict, value: Any, facts: dict) -> str | None:
+    field, on, compare, threshold = rule["field"], rule["from"], _OPS[rule.get("op", ">=")], rule["value"]
+    for row in value if isinstance(value, list) else []:
+        n = _num(row.get(on)) if isinstance(row, dict) else None
+        expected = n is not None and compare(n, threshold)
+        if bool(row.get(field)) != expected:
+            return f"{field}={row.get(field)} with {on}={row.get(on)} in {json.dumps(row, default=str)[:120]}"
+    return None
+
+
+def _picked(rule: dict, facts: dict) -> list | None:
+    rows = facts.get(rule["rows"])
+    if not isinstance(rows, list):
+        return None
+    where = rule.get("where")
+    return [r.get(rule["field"]) for r in rows if isinstance(r, dict)
+            and (not where or r.get(where)) and r.get(rule["field"]) is not None]
+
+
+def _check_subset_of(rule: dict, value: Any, facts: dict) -> str | None:
+    allowed = _picked(rule, facts)
+    if allowed is None:
+        return f"{rule['rows']} is not a list of rows"
+    stray = [v for v in (value if isinstance(value, list) else [value])
+             if not any(_same(v, a) for a in allowed)]
+    return f"not in {rule['rows']}.{rule['field']}: {stray}" if stray else None
+
+
+def _check_covers(rule: dict, value: Any, facts: dict) -> str | None:
+    """Together with the named lists, the value accounts for every picked row."""
+    wanted = _picked(rule, facts)
+    if wanted is None:
+        return f"{rule['rows']} is not a list of rows"
+    have = list(value if isinstance(value, list) else [])
+    for name in rule.get("together_with", []):
+        have.extend(facts.get(name) or [])
+    missing = [w for w in wanted if not any(_same(w, h) for h in have)]
+    return f"missing from {rule['rows']}.{rule['field']}: {missing}" if missing else None
+
+
+def _check_excludes(pattern: str, value: Any, facts: dict) -> str | None:
+    hits = [v for v in (value if isinstance(value, list) else [value]) if re.search(pattern, str(v), re.I)]
+    return f"matches {pattern}: {hits}" if hits else None
+
+
+def _check_only(pattern: str, value: Any, facts: dict) -> str | None:
+    misses = [v for v in (value if isinstance(value, list) else [value]) if not re.search(pattern, str(v), re.I)]
+    return f"does not match {pattern}: {misses}" if misses else None
+
+
+_CHECKS: dict[str, Callable[[Any, Any, dict], str | None]] = {
+    "rows_of": _check_rows_of, "sorted_by": _check_sorted_by, "flag": _check_flag,
+    "subset_of": _check_subset_of, "covers": _check_covers,
+    "excludes": _check_excludes, "only": _check_only,
+}
+
+
+def check_facts(rules: dict, produced: dict, facts: dict) -> list[dict]:
+    """The checks a produced fact fails, as {fact, check, reason}. Pure.
+
+    A name the answer did not supply is skipped: it is already unresolved. Rules
+    may name other produced facts; both are visible to a check.
+    """
+    known = {**facts, **produced}
+    failures = []
+    for name, spec in (rules or {}).items():
+        if name not in produced:
+            continue
+        for rule in (spec if isinstance(spec, list) else [spec]):
+            if not isinstance(rule, dict) or len(rule) != 1:
+                raise SkillGraphError(f"a check on {name} must be one {{kind: rule}}: {rule!r}")
+            (kind, arg), = rule.items()
+            check = _CHECKS.get(kind)
+            if check is None:
+                raise SkillGraphError(f"unknown check {kind!r} on {name}")
+            reason = check(arg, produced[name], known)
+            if reason:
+                failures.append({"fact": name, "check": kind, "reason": reason})
+    return failures
+
+
+def check_problem(failures: list[dict]) -> str:
+    return "the answer failed checks: " + "; ".join(
+        f"{f['fact']} {f['check']} - {f['reason']}" for f in failures)
+
+
+def without_failed(outcome: dict, failures: list[dict], step_id: str) -> dict:
+    """Drop the facts that failed; they are unresolved, and the step says why."""
+    names = {f["fact"] for f in failures}
+    return {**outcome,
+            "facts": {k: v for k, v in outcome["facts"].items() if k not in names},
+            "unresolved": outcome["unresolved"] + [n for n in names if n not in outcome["unresolved"]],
+            "blocked": outcome["blocked"] + [{"step": step_id, "reason": check_problem(failures)}]}
+
+
+def checked(spec: dict, step_id: str, wants: list[str], outcome: dict, facts: dict,
+            answered: bool) -> tuple[dict, str | None]:
+    """Apply the step's checks to what the answer supplied.
+
+    Returns the outcome and, when a re-ask is warranted, the problem to name in
+    it; the host asks once more and calls again with `answered=False` to close.
+    """
+    rules = spec.get("check")
+    if not rules:
+        return outcome, None
+    produced = {n: outcome["facts"][n] for n in wants if n in outcome["facts"]}
+    failures = check_facts(rules, produced, facts)
+    if not failures:
+        return outcome, None
+    if answered:
+        return outcome, check_problem(failures)
+    return without_failed(outcome, failures, step_id), None
+
+
 def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
            calls: list[dict] | None = None) -> dict:
     """What a step's results yield: facts, what never arrived, what cannot be decided.
@@ -800,6 +972,21 @@ class SkillRunner:
     def bundle(self, run_id: str) -> dict:
         return bundle_of(self.graph, self._runs[run_id], self.MAX_PAYLOAD)
 
+    def _answered(self, spec, step, wants, outcome, run, question) -> dict:
+        """Ask, fold the answer in, check it; a failing check is asked once more."""
+        answer = self.ask(question) if self.ask else None
+        asked(run, question, answer)
+        outcome = judged(outcome, wants, answer)
+        outcome, problem = checked(spec, step["id"], wants, outcome, run["facts"],
+                                   answered=answer is not None)
+        if problem:
+            retry = {**question, "problem": problem}
+            answer = self.ask(retry)
+            asked(run, retry, answer)
+            outcome = judged(outcome, wants, answer)
+            outcome, _ = checked(spec, step["id"], wants, outcome, run["facts"], answered=False)
+        return outcome
+
     def _peek_safe(self, run_id: str):
         return next_runnable(self.graph, self._runs[run_id])
 
@@ -846,9 +1033,7 @@ class SkillRunner:
                 made.extend(calls)
                 question = question_for(step["id"], "delegate", wanted, dict(run["facts"]),
                                         calls=calls, notes=spec.get("notes"))
-                answer = self.ask(question) if self.ask else None
-                asked(run, question, answer)
-                outcome = judged(outcome, wanted, answer)
+                outcome = self._answered(spec, step, wanted, outcome, run, question)
         # A judgement is for what the step could not resolve itself: a name an
         # extraction or compute already supplied is never put to the model.
         wants = [n for n in (spec.get("judge") or []) if n not in outcome["facts"]]
@@ -860,9 +1045,7 @@ class SkillRunner:
                 step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
                 notes=spec.get("notes"),
             )
-            answer = self.ask(question) if self.ask else None
-            asked(run, question, answer)
-            outcome = judged(outcome, wants, answer)
+            outcome = self._answered(spec, step, wants, outcome, run, question)
         apply(run, step["id"], results, failures, outcome, calls=made)
         # The caller sees an unknown as an explicit None; facts never hold one.
         extracted = {**outcome["facts"], **{n: None for n in outcome["undecided"]}}

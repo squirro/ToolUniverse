@@ -502,3 +502,60 @@ async def test_a_failed_record_write_is_a_warning_and_the_run_still_finishes():
     assert bundle["facts"]["strong_signal"] is True
     assert bundle["record"]["status"] == "failed"
     assert "503" in bundle["record"]["error"]
+
+
+# --- check: a model answer is held against the rows before it becomes a fact -------
+
+CHECKED = {
+    "skill": "checked", "inputs": ["prr_rows"],
+    "steps": [
+        {"id": "compute",
+         "delegate": [{"tool": "OpenAI_Code_Interpreter", "arguments": {"rows": "{prr_rows}"}}],
+         "produces": ["prr_table"],
+         "check": {"prr_table": [{"rows_of": "prr_rows"},
+                                 {"sorted_by": {"field": "prr", "order": "desc"}}]}},
+    ],
+}
+ROWS = [{"term": "A", "prr": 1.0}, {"term": "B", "prr": 5.0}]
+GOOD_TABLE = [{"term": "B", "prr": 5.0, "flagged": True}, {"term": "A", "prr": 1.0, "flagged": False}]
+
+
+async def test_a_failing_check_re_asks_once_with_the_failure_named_and_the_record_keeps_both():
+    seen = []
+
+    async def answer_twice(handle, env):
+        state = await _wait_for_question(handle)
+        seen.append(state["waiting_for"])
+        await handle.signal(SkillWorkflow.answer, {"prr_table": GOOD_TABLE + [{"term": "Z", "prr": 9.0}]})
+        state = await _wait_for_question(handle)
+        seen.append(state["waiting_for"])
+        await handle.signal(SkillWorkflow.answer, {"prr_table": GOOD_TABLE})
+
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, calls = await _run(env, {}, CHECKED, {"prr_rows": ROWS}, "run-check",
+                                   before_result=answer_twice)
+
+    assert calls == [], "the server made no call of its own"
+    assert [q["kind"] for q in seen] == ["delegate", "delegate"]
+    assert "problem" not in seen[0] and "rows_of" in seen[1]["problem"]
+    assert bundle["facts"]["prr_table"] == GOOD_TABLE
+    assert bundle["unresolved"] == [] and bundle["blocked"] == []
+    skel = bundle["record"]["skeleton"]
+    compute = next(st for st in skel["steps"] if st["id"] == "compute")
+    assert len(compute["questions"]) == 2, "both the answer and the re-ask are on record"
+
+
+async def test_a_second_failure_leaves_the_fact_unresolved_and_the_run_finishes():
+    async def answer_badly_twice(handle, env):
+        for _ in range(2):
+            await _wait_for_question(handle)
+            await handle.signal(SkillWorkflow.answer, {"prr_table": [{"term": "A", "prr": 1.0}]})
+
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(env, {}, CHECKED, {"prr_rows": ROWS}, "run-check-bad",
+                               before_result=answer_badly_twice)
+
+    assert "prr_table" not in bundle["facts"]
+    assert bundle["unresolved"] and bundle["unresolved"][0]["fact"] == "prr_table"
+    assert bundle["blocked"] and "rows_of" in bundle["blocked"][0]["reason"]
+    assert bundle["steps_done"] == ["compute"]

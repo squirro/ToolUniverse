@@ -28,7 +28,8 @@ report: >-
   labelled, known but under-labelled, or a potential new signal. A PRR is a
   reporting signal, not causality: say so once, and name the biases (stimulated
   reporting, indication, disease progression in an oncology cohort). Terms the
-  process excluded as nonspecific are listed under `excluded`; mention that they
+  process excluded as nonspecific are listed under `excluded`, and reported-disease
+  terms the compute step set aside under `facts.excluded_aes`; mention that they
   dominate raw report counts and were set aside, and never present them as
   signals. A term that names the treated indication or its course (the tumour,
   its metastases, progression) is reported disease, not a drug signal: say so
@@ -40,7 +41,10 @@ report: >-
   their result. Literature is one row per flagged reaction in
   `facts.literature_rows`: present it per reaction, cited by PMID or DOI, and say
   when a reaction has no papers. Reported-disease terms were not searched; they
-  are listed under `excluded` — say so. Cite each trial as
+  are listed under `facts.excluded_aes` — say so. The signal table is the agent's
+  answer to the compute step, checked by the server against the FAERS rows: cite
+  each PRR by its row's `url`, and never cite the step itself as code, a sandbox
+  or a file. Cite each trial as
   https://clinicaltrials.gov/study/<NCT id>. Read pharmacogenomic findings as risk-narrowing;
   an empty CPIC result means no guideline exists, which is an answer. Web context
   is supplement, not a finding, and is cited as web. End with a Limitations
@@ -241,31 +245,49 @@ steps:
       web-sourced, never as a finding.
 
   - id: compute
-    label: "Phase 5c — ranked signal table"
+    label: "Phase 5c — ranked signal table (agent's arithmetic, server-checked)"
     requires: [disproportionality]
-    calls: []
-    # Ordering the rows by PRR and flagging PRR >= 2 is arithmetic over rows the
-    # run holds, so the server does it (the DSR-729 decision). Delegated to the
-    # agent's code tool it worked from three parallel lists, and could mis-pair.
-    compute:
-      prr_table: {op: flag, rows: prr_rows, field: prr, threshold: 2}
-      # The reactions the literature loop searches: flagged, minus reported disease.
-      # In an oncology cohort the tumour, its metastases and its progression top the
-      # PRR table (Lutathera: neuroendocrine tumour 393, liver metastases 21); they
-      # are the indication, not adverse events, and a search on them returns the
-      # indication's literature. They stay in the table, flagged; `excluded` names them.
+    # The sort, threshold and selection are the agent's (its code tool, or the model
+    # itself — the runtime cannot tell, measured 2026-09-09: 3/3 exact without a
+    # code call). The rows travel whole in the question, and the server refuses an
+    # answer that does not hold against them: nothing invented, nothing dropped,
+    # order and flags as declared. One re-ask with the failure named, then
+    # unresolved.
+    delegate:
+      - tool: OpenAI_Code_Interpreter
+        arguments:
+          task: >-
+            You receive `rows`: a list of {term, prr, url}. Do exactly this, nothing
+            more. (1) Sort the rows by prr, largest first; a row whose prr is null
+            or missing goes last. (2) Add a boolean field `flagged` to every row:
+            true when prr >= 2, else false (null is false). Keep term, prr and url
+            exactly as received; never retype a number or a term. This sorted list
+            is `prr_table`. (3) `flagged_aes` is the `term` of every flagged row, in
+            table order, EXCEPT terms that match the case-insensitive regular
+            expression TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION. (4)
+            `excluded_aes` is the list of flagged terms that regex set aside. (5)
+            `method` is one sentence: the code you ran, or "computed without code".
+          rows: "{prr_rows}"
+    produces: [prr_table, flagged_aes, excluded_aes, method]
+    check:
+      prr_table:
+        - rows_of: prr_rows
+        - sorted_by: {field: prr, order: desc}
+        - flag: {field: flagged, from: prr, op: ">=", value: 2}
       flagged_aes:
-        op: pluck
-        rows: prr_table
-        field: term
-        where: flagged
-        exclude_pattern: "TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION"
-    produces: [prr_table, flagged_aes]
+        - subset_of: {rows: prr_table, field: term, where: flagged}
+        - excludes: "TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION"
+        - covers: {rows: prr_table, field: term, where: flagged, together_with: [excluded_aes]}
+      excluded_aes:
+        - subset_of: {rows: prr_table, field: term, where: flagged}
+        - only: "TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION"
     notes: >-
       The signal table, largest PRR first, each row flagged at PRR >= 2 and carrying
       the query that produced it. Every PRR in the report is one of these rows.
       `flagged_aes` is the subset the literature loop searches: flagged terms that
-      are not the treated disease or its course; the terms set aside are in `excluded`.
+      are not the treated disease or its course; the terms set aside are in
+      `excluded_aes`. `method` says how the table was made; report it as the
+      agent's statement, not as evidence.
 
   - id: assessment
     label: "Phase 6 — integrated assessment (synthesis, no new tools)"

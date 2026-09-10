@@ -1862,3 +1862,127 @@ def test_the_shipped_process_fetches_the_hierarchy_and_matches_ontologically():
     assert {a["direction"] for t, a in calls if t == "HPO_get_term_hierarchy"} == {"parents", "children"}
     assert state["facts"]["hpo_hierarchy"] == [{"hpo_id": "HP:0000280", "parents": ["HP:0000271"], "children": ["HP:0000339"]}]
     assert all("carries_discriminating" in r for r in state["facts"]["ranked_rows"])
+
+
+# --- check: a model answer is verified before it becomes a fact ------------------
+#
+# Measured 2026-09-09: a delegated compute step answered correctly 3/3 without ever
+# calling the code tool, and one report cited a sandbox that never ran. The server
+# cannot make the agent use a tool; it can refuse an answer that does not hold
+# against the rows it already has. A failing check is asked once more, with the
+# failure named; a second failure leaves the fact unresolved, never in facts.
+
+from tooluniverse.skill_runner import check_facts  # noqa: E402
+
+PRR_ROWS = [{"term": "NEUROENDOCRINE TUMOUR", "prr": 393.571, "url": "u1"},
+        {"term": "MYELODYSPLASTIC SYNDROME", "prr": 7.528, "url": "u2"},
+        {"term": "FATIGUE"},
+        {"term": "NAUSEA", "prr": 1.089, "url": "u4"}]
+PRR_TABLE = [{"term": "NEUROENDOCRINE TUMOUR", "prr": 393.571, "url": "u1", "flagged": True},
+         {"term": "MYELODYSPLASTIC SYNDROME", "prr": 7.528, "url": "u2", "flagged": True},
+         {"term": "NAUSEA", "prr": 1.089, "url": "u4", "flagged": False},
+         {"term": "FATIGUE", "prr": None, "flagged": False}]
+DISEASE_PATTERN = "TUMOU?R|NEOPLASM|METASTA"
+CHECK_RULES = {
+    "prr_table": [{"rows_of": "prr_rows"},
+                  {"sorted_by": {"field": "prr", "order": "desc"}},
+                  {"flag": {"field": "flagged", "from": "prr", "op": ">=", "value": 2}}],
+    "flagged_aes": [{"subset_of": {"rows": "prr_table", "field": "term", "where": "flagged"}},
+                    {"excludes": DISEASE_PATTERN},
+                    {"covers": {"rows": "prr_table", "field": "term", "where": "flagged",
+                                "together_with": ["excluded_aes"]}}],
+    "excluded_aes": [{"subset_of": {"rows": "prr_table", "field": "term", "where": "flagged"}},
+                     {"only": DISEASE_PATTERN}],
+}
+GOOD_ANSWER = {"prr_table": PRR_TABLE, "flagged_aes": ["MYELODYSPLASTIC SYNDROME"],
+        "excluded_aes": ["NEUROENDOCRINE TUMOUR"]}
+
+
+def test_a_faithful_answer_passes_every_check():
+    assert check_facts(CHECK_RULES, GOOD_ANSWER, {"prr_rows": PRR_ROWS}) == []
+
+
+def test_rows_of_rejects_an_invented_dropped_or_retyped_row():
+    facts = {"prr_rows": PRR_ROWS}
+    invented = {**GOOD_ANSWER, "prr_table": PRR_TABLE + [{"term": "RASH", "prr": 3.0, "flagged": True}]}
+    dropped = {**GOOD_ANSWER, "prr_table": PRR_TABLE[:-1]}
+    retyped = {**GOOD_ANSWER, "prr_table": [{**PRR_TABLE[0], "prr": 393.6}] + PRR_TABLE[1:]}
+    for bad in (invented, dropped, retyped):
+        failures = check_facts(CHECK_RULES, bad, facts)
+        assert any(f["fact"] == "prr_table" and f["check"] == "rows_of" for f in failures), bad
+
+
+def test_sorted_by_and_flag_read_a_missing_number_as_last_and_unflagged():
+    facts = {"prr_rows": PRR_ROWS}
+    unsorted = {**GOOD_ANSWER, "prr_table": [PRR_TABLE[1], PRR_TABLE[0]] + PRR_TABLE[2:]}
+    assert [f["check"] for f in check_facts(CHECK_RULES, unsorted, facts)] == ["sorted_by"]
+    # A wrong flag also breaks `covers` on the selection: both are reported.
+    misflagged = {**GOOD_ANSWER, "prr_table": PRR_TABLE[:2] + [{**PRR_TABLE[2], "flagged": True}, PRR_TABLE[3]]}
+    assert {f["check"] for f in check_facts(CHECK_RULES, misflagged, facts)} == {"flag", "covers"}
+    null_flagged = {**GOOD_ANSWER, "prr_table": PRR_TABLE[:3] + [{**PRR_TABLE[3], "flagged": True}]}
+    assert {f["check"] for f in check_facts(CHECK_RULES, null_flagged, facts)} == {"flag", "covers"}
+
+
+def test_list_checks_hold_the_selection_to_the_table():
+    facts = {"prr_rows": PRR_ROWS}
+    foreign = {**GOOD_ANSWER, "flagged_aes": ["MYELODYSPLASTIC SYNDROME", "HEADACHE"]}
+    assert [f["check"] for f in check_facts(CHECK_RULES, foreign, facts)] == ["subset_of"]
+    unflagged = {**GOOD_ANSWER, "flagged_aes": ["MYELODYSPLASTIC SYNDROME", "NAUSEA"]}
+    assert [f["check"] for f in check_facts(CHECK_RULES, unflagged, facts)] == ["subset_of"]
+    kept_disease = {**GOOD_ANSWER, "flagged_aes": ["MYELODYSPLASTIC SYNDROME", "NEUROENDOCRINE TUMOUR"]}
+    assert [f["check"] for f in check_facts(CHECK_RULES, kept_disease, facts)] == ["excludes"]
+    lost_one = {**GOOD_ANSWER, "flagged_aes": [], "excluded_aes": ["NEUROENDOCRINE TUMOUR"]}
+    assert [f["check"] for f in check_facts(CHECK_RULES, lost_one, facts)] == ["covers"]
+    wrong_side = {**GOOD_ANSWER, "excluded_aes": ["MYELODYSPLASTIC SYNDROME"]}
+    assert "only" in [f["check"] for f in check_facts(CHECK_RULES, wrong_side, facts)]
+
+
+def test_a_check_on_a_fact_the_answer_did_not_supply_is_not_a_failure():
+    """An unanswered name is already unresolved; the check has nothing to judge."""
+    assert check_facts(CHECK_RULES, {"prr_table": PRR_TABLE}, {"prr_rows": PRR_ROWS}) == [] or \
+        all(f["fact"] == "flagged_aes" and f["check"] == "covers" for f in
+            check_facts(CHECK_RULES, {"prr_table": PRR_TABLE}, {"prr_rows": PRR_ROWS}))
+
+
+def test_an_unknown_check_kind_is_a_graph_error_not_a_pass():
+    from tooluniverse.skill_graph import SkillGraphError
+    with pytest.raises(SkillGraphError):
+        check_facts({"x": [{"looks_fine": True}]}, {"x": [1]}, {})
+
+
+def _compute_graph():
+    return {"skill": "c", "inputs": ["prr_rows"], "steps": [
+        {"id": "compute",
+         "delegate": [{"tool": "OpenAI_Code_Interpreter", "arguments": {"rows": "{prr_rows}"}}],
+         "produces": ["prr_table", "flagged_aes", "excluded_aes"],
+         "check": CHECK_RULES}]}
+
+
+def test_a_failing_check_is_asked_once_more_with_the_failure_named_then_accepted():
+    answers = iter([{**GOOD_ANSWER, "prr_table": PRR_TABLE[:-1]}, GOOD_ANSWER])
+    asked = []
+    runner = SkillRunner(_compute_graph(), execute=lambda t, a: {},
+                         ask=lambda q: asked.append(q) or next(answers))
+    run_id = runner.start({"prr_rows": PRR_ROWS})["run_id"]
+    out = runner.advance(run_id)
+
+    assert len(asked) == 2
+    assert "problem" not in asked[0] and "rows_of" in asked[1]["problem"]
+    assert asked[1]["calls"] == asked[0]["calls"], "the same composed call, the failure added"
+    assert runner.state(run_id)["facts"]["prr_table"] == PRR_TABLE
+    assert out["unresolved"] == [] and runner.state(run_id)["blocked"] == []
+    assert [q["answer"] is not None for q in runner.state(run_id)["questions"]] == [True, True]
+
+
+def test_a_second_failure_leaves_the_fact_unresolved_and_says_why():
+    bad = {**GOOD_ANSWER, "prr_table": [{**PRR_TABLE[0], "prr": 393.6}] + PRR_TABLE[1:]}     # one retyped number
+    runner = SkillRunner(_compute_graph(), execute=lambda t, a: {}, ask=lambda q: bad)
+    run_id = runner.start({"prr_rows": PRR_ROWS})["run_id"]
+    out = runner.advance(run_id)
+
+    state = runner.state(run_id)
+    assert "prr_table" not in state["facts"], "a fact that fails its check never enters facts"
+    assert state["facts"]["excluded_aes"] == ["NEUROENDOCRINE TUMOUR"], "the names that held are kept"
+    assert {u["fact"] for u in out["unresolved"]} == {"prr_table"}
+    assert state["blocked"] and "rows_of" in state["blocked"][0]["reason"]
+    assert len(state["questions"]) == 2

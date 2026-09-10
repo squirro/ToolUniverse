@@ -48,6 +48,7 @@ from .skill_runner import (
         apply,
         asked,
         bundle_of,
+        checked,
         judged,
         loop_items,
         new_run,
@@ -177,18 +178,16 @@ class SkillWorkflow:
                     outcome = judged(outcome, wanted, None)
                 else:
                     made.extend(calls)
-                    answer = await self._ask(question_for(
+                    outcome = await self._answered(spec, step, wanted, outcome, question_for(
                         step["id"], "delegate", wanted, dict(run["facts"]), calls=calls,
                         notes=spec.get("notes")))
-                    outcome = judged(outcome, wanted, answer)
             # A judgement is for what the step could not resolve itself: a name an
             # extraction or compute already supplied is never put to the model.
             wants = [n for n in (spec.get("judge") or []) if n not in outcome["facts"]]
             if wants:
-                answer = await self._ask(question_for(
+                outcome = await self._answered(spec, step, wants, outcome, question_for(
                     step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
                     notes=spec.get("notes")))
-                outcome = judged(outcome, wants, answer)
             apply(run, step["id"], results, failures, outcome, calls=made)
         self._current = None
         bundle = bundle_of(process, run, MAX_PAYLOAD)
@@ -228,6 +227,20 @@ class SkillWorkflow:
             return {"status": "failed", "error": f"{type(cause).__name__}: {cause}",
                     "skeleton": skel}
         return {"status": "written", "iri": iri, "skeleton": skel}
+
+    async def _answered(self, spec: dict, step: dict, wants: list[str], outcome: dict,
+                        question: dict) -> dict:
+        """Ask, fold the answer in, check it; a failing check is asked once more."""
+        answer = await self._ask(question)
+        outcome = judged(outcome, wants, answer)
+        outcome, problem = checked(spec, step["id"], wants, outcome, self._run["facts"],
+                                   answered=answer is not None)
+        if problem:
+            answer = await self._ask({**question, "problem": problem})
+            outcome = judged(outcome, wants, answer)
+            outcome, _ = checked(spec, step["id"], wants, outcome, self._run["facts"],
+                                 answered=False)
+        return outcome
 
     async def _ask(self, question: dict) -> dict | None:
         self._question, self._answer = question, None

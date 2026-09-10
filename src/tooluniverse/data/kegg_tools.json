@@ -352,14 +352,14 @@
   {
     "type": "KEGGListOrganisms",
     "name": "kegg_list_organisms",
-    "description": "List all available organisms in the KEGG database. Returns organism codes, names, and descriptions.",
+    "description": "List all available organisms in the KEGG database (~11,900 entries). Returns the KEGG genome id, organism code, and scientific name. Read from KEGG's genome roster: the older /list/organism endpoint was retired and now returns HTTP 400.",
     "parameter": {
       "type": "object",
       "properties": {},
       "required": []
     },
     "fields": {
-      "endpoint": "/list/organism",
+      "endpoint": "/list/genome",
       "return_format": "TEXT"
     },
     "return_schema": {
@@ -376,17 +376,21 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "genome_id": {
+                    "type": "string",
+                    "description": "KEGG genome entry id (e.g., 'T01001')"
+                  },
                   "organism_code": {
                     "type": "string",
-                    "description": "KEGG organism code (e.g., 'hsa', 'mmu')"
+                    "description": "KEGG organism code (e.g., 'hsa', 'mmu'); empty for a genome entry that declares no code"
                   },
                   "organism_name": {
                     "type": "string",
-                    "description": "Organism scientific name"
+                    "description": "Organism scientific name (e.g., 'Homo sapiens (human)')"
                   },
                   "description": {
                     "type": "string",
-                    "description": "Organism description"
+                    "description": "Raw genome entry as KEGG returns it ('hsa; Homo sapiens (human)')"
                   }
                 }
               }

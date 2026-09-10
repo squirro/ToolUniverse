@@ -225,3 +225,10 @@ TOOL_SWEEP_TRIAGE.md
 
 # Local-only runtime artifact from test_new_tools.py
 tool_relationship_graph.json
+
+# Backups of the env file are the env file: `.env` is ignored above, but a
+# copy named `.env.bak-<date>` is not, and two such copies containing live
+# credentials were sitting visible to `git add` before this was noticed.
+.env.bak*
+.env.*.bak*
+.env.template.bak*

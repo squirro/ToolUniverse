@@ -1,4 +1,5 @@
 <!--
+Triggers: non-coding variant, regulatory variant function, variant in an enhancer, functional evidence for a non-coding SNP
 Ported from ToolUniverse skill `tooluniverse-regulatory-variant-analysis`. Grounded against
 the sempart SMCP live registry (wave-4 sweep): 12 of 19 referenced tools are deployed and
 called; the rest were parameter names, not tools. Re-maps the skill's filesystem/Python-based
@@ -219,7 +220,7 @@ the causal variant may be a nearby SNP in LD; fine-mapping is needed).
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the exact tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool called + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Variant} with the actual rsID/region and {Gene} with the resolved target gene. The
@@ -261,4 +262,4 @@ Grade EVERY predicted gene. State "No data available" if no disease context or n
 State the overall Functional Impact level (High/Moderate/Low/No-evidence) with its derivation.
 Trace the regulatory cascade (position → element overlap → TF binding/chromatin → eQTL target gene
 → trait). Name the most plausible regulated gene + tissue. Restate the LD/causal caveat explicitly.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

@@ -1,4 +1,5 @@
 <!--
+Triggers: annotate a PDB structure, binding residues, ligand contacts, chain annotation, structure residues
 Ported from ToolUniverse skill `tooluniverse-protein-structural-annotation-pdb`. Grounded on
 sempart SMCP (compact mode): 6 of the skill's tool refs are confirmed deployed live; the other
 "missing" tokens were PARAMETER/FIELD names (distance_cutoff, core_rsa_cutoff, pdb_id, is_core,
@@ -195,7 +196,7 @@ If resolution is missing, write "Resolution not reported" — do NOT leave the t
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool used. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool call + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Error handling
 - "PDB ID not found": verify the 4-character format; the entry may be obsoleted — note this and fall
@@ -228,4 +229,4 @@ You MUST answer ALL FOUR synthesis points here, each as its own labelled sentenc
 ## 4. Region Summary   (region | residue count | example positions | Source)
 ## 5. Secondary Structure   (chain | helix ranges | strand ranges | Source)  — or "Secondary structure not requested"
 ## 6. Alternative / Mapped Structures (if requested)   (PDB ID | method | resolution (Å) | Quality Tier | coverage | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

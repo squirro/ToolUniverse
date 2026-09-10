@@ -1,4 +1,5 @@
-<!-- Clinical pharmacovigilance / regulatory drug-safety REFERENCE skill. All safety data is
+<!--
+Triggers: end to end safety picture, integrate clinical data, combine label trials FAERS, cross-source drug dossier Clinical pharmacovigilance / regulatory drug-safety REFERENCE skill. All safety data is
      DESCRIPTIVE — what authoritative regulatory databases (FDA DailyMed labels, FAERS spontaneous
      reports, CPIC, FDA PGx biomarkers, ClinicalTrials.gov, PubMed) REPORT — for signal detection
      and prescriber reference, NOT dosing guidance or clinical instruction. Ported from TU skill
@@ -75,7 +76,7 @@ report. Mark any phase with no data as "No data available".
 # 6 integration phases — call execute_tool with the NAMED tool (≈1 primary call each, no find_tools)
 
 **Phase 0 — Drug Identity & Context**
-`DailyMed_search_spls`(query="<drug>") → Structured Product Labels: SPL list with **setid** (a UUID),
+`DailyMed_search_spls`(drug_name="<drug>") → Structured Product Labels: SPL list with **setid** (a UUID),
 titles, labeler names. CAPTURE the setid of the correct label — Phase 1 reuses it. Note the generic
 name, brand names, therapeutic class, and approved indications.
 `OpenFDA_get_approval_history`(operation="get_approval_history", drug_name="<drug>") → approval dates,
@@ -221,4 +222,4 @@ patterns, not proven causation.
 ## 5. Clinical Trial Safety Data
 ## 6. Literature Summary           (Title | PMID | Year | Key finding | Source)
 ## 7. Integrated Assessment        (overall risk, populations at elevated risk, data gaps)
-## References  — | # | Tool | Parameters | Phase | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

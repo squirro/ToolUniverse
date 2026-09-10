@@ -55,7 +55,7 @@ Absence from gnomAD is informative (ultra-rare) but does not independently estab
 pathogenicity.
 
 ## Phase 3 — Deleteriousness scoring (CADD always; OpenCRAVAT for missense enrichment)
-`CADD_get_variant_score(chrom, pos, ref, alt, genome="GRCh38")` — chrom WITHOUT "chr" prefix.
+`CADD_get_variant_score(chrom, pos, ref, alt, version="GRCh38")` — chrom WITHOUT "chr" prefix.
 PHRED ≥ 30 = top 0.1% most deleterious; ≥ 20 = top 1–10%; < 10 supports benign.
 
 `OpenCRAVAT_annotate_variant(chrom, pos, ref_base, alt_base, annotators)` — chrom

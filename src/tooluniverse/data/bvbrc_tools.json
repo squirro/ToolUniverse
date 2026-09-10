@@ -254,7 +254,7 @@
   },
   {
     "name": "BVBRC_search_amr",
-    "description": "Search for antimicrobial resistance (AMR) phenotype data in BV-BRC. Returns resistance/susceptibility data for pathogens against specific antibiotics, including MIC values, testing methods, and evidence. Essential for AMR surveillance research. Example: search for methicillin resistance in Staphylococcus aureus.",
+    "description": "Search for antimicrobial resistance (AMR) phenotype data in BV-BRC. Returns resistance/susceptibility data for pathogens against specific antibiotics, including MIC values, testing methods, and evidence. Essential for AMR surveillance research. Example: search for methicillin resistance in Staphylococcus aureus. At least one of antibiotic, genome_id, or resistant_phenotype is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -755,7 +755,7 @@
   },
   {
     "name": "BVBRC_search_surveillance",
-    "description": "Search influenza and pathogen surveillance data in BV-BRC. Returns surveillance samples with host species, geographic location, subtype, and collection metadata. Essential for epidemiological tracking of influenza subtypes (H5N1, H1N1, H3N2) and other monitored pathogens across global regions. Example: search for H5N1 cases in North America.",
+    "description": "Search influenza and pathogen surveillance data in BV-BRC. Returns surveillance samples with host species, geographic location, subtype, and collection metadata. Essential for epidemiological tracking of influenza subtypes (H5N1, H1N1, H3N2) and other monitored pathogens across global regions. Example: search for H5N1 cases in North America. At least one of subtype, geographic_group, host_group, or collection_country is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {

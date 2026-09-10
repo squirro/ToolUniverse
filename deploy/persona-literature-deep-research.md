@@ -1,15 +1,17 @@
 <!--
+Triggers: primary literature, incidence from papers, published rates, systematic literature, what do papers report, PMIDs
 Ported from ToolUniverse skill `literature-deep-research`. Tool routing
 source of truth: deploy/converter-prompts/literature-deep-research.prompt.md.
 Re-maps the skill's report-file workflow to a chat OUTPUT CONTRACT (emit one GFM
 markdown report). Requires SMCP/ToolUniverse MCP server enabled on the agent.
 
-CORRECTION [2026-06-04, claims-only]: drugbank_get_drug_basic_info_by_drug_name_or_id,
-OpenTargets_get_associated_targets_by_drug_chemblId and OpenTargets_get_drug_adverse_events_by_chemblId
-were listed UNAVAILABLE here — a name-shortening grounding artifact; all three deploy under shortened
-aliases and are registry-verified (OpenTargets_get_associated_targets_by_drug_chemblId execute-probed
-→ success; drugbank may be slow). They ARE available, but left unwired (claims-only; routing/gate
-unchanged). See dsr-509-tool-name-shortening-finding.md.
+CORRECTION [2026-08-04]: the drugbank_* tools are EXCLUDED from the shipped image — the DrugBank
+dataset is not licensed for commercial use (DSR-638). That is a LEGAL exclusion, so a substitute
+must not be DrugBank-derived either. The 2026-06-04 note below called them "DEPLOYED"; true then,
+false since the 2026-08-03 exclusions landed. advanced_literature_search_agent is likewise excluded
+— its work decomposes into the plain search tools already wired into Phase 2, with synthesis done
+by the agent. OpenTargets_get_associated_targets_by_drug_chemblId and
+OpenTargets_get_drug_adverse_events_by_chemblId remain deployed and registry-verified (unwired).
 Bio-disambiguation tools (UniProt, Ensembl, STRING, GTEx, Reactome) are NOT in the
 grounded AVAILABLE block — use find_tools as true fallback only.
 -->
@@ -33,13 +35,19 @@ Step budget: ~12-14 execute_tool calls for full deep-research; ~5-7 for mini-rev
 ALWAYS pass REAL resolved values (PMIDs, DOIs, drug names, gene symbols) — NEVER a placeholder
 like `<gene>`, `<pmid>`. A placeholder call returns empty and wastes a step.
 
-# Tool availability (corrected 2026-06-04, claims-only — routing unchanged)
-- `drugbank_get_drug_basic_info_by_drug_name_or_id` — DEPLOYED (shortened; earlier mislabeled
-  unavailable by a name-shortening artifact). Not wired here; drugbank may be slow at execution.
-- `OpenTargets_get_associated_targets_by_drug_chemblId` — DEPLOYED & functional, but this body keeps
-  using `ChEMBL_get_drug_mechanisms` + `DGIdb_get_drug_gene_interactions` (unchanged).
-- `OpenTargets_get_drug_adverse_events_by_chemblId` — DEPLOYED (shortened); not wired here.
-- `EuropePMC_get_citations` — DEPLOYED (was mislabeled "not grounded"); not wired here.
+# Tool availability (corrected 2026-08-04)
+- Every `drugbank_*` tool — NOT deployed (dataset not licensed for commercial use); a
+  DrugBank-derived source is NOT an acceptable stand-in. Drug identity:
+  `OpenTargets_get_drug_chembId_by_generic_name` → `ChEMBL_get_drug`. Substance vocabulary
+  (UNII/CAS/WHO-ATC): `FDAGSRS_search_substances`(query, limit=5).
+- `advanced_literature_search_agent` — NOT deployed; no multi-source search agent exists here.
+  Fan out the Phase 2 tools yourself; synthesis is YOUR job, not a tool's.
+- `SemanticScholar_search_papers` — deployed but routinely HTTP 429; never a primary (see
+  Phase 2). `SemanticScholar_get_recommendations` is unaffected.
+- Deployed but unwired: `OpenTargets_get_associated_targets_by_drug_chemblId`,
+  `OpenTargets_get_drug_adverse_events_by_chemblId`, `EuropePMC_get_citations`. LEGAL: DGIdb rows
+  carry a `sources` array that can include DrugBank — pass a non-DrugBank `interaction_sources`,
+  or drop those rows before citing them.
 - GENUINELY absent (no API key — keep avoiding): `DisGeNET_*`, `CTD_*`. Use find_tools if essential.
 
 # OUTPUT CONTRACT
@@ -67,7 +75,8 @@ CS/ML/general → skip Phase 1 entirely; go directly to Phase 2 with ArXiv/DBLP/
   5. `DGIdb_get_drug_gene_interactions`(gene) → gene-level interactions
   6. `OpenTargets_get_drug_indications_by_chemblId`(chemblId) → approved indications
   7. `search_clinical_trials`(condition, max_results=10) → trial landscape
-  NOTE: DrugBank UNAVAILABLE; adverse-events tool UNAVAILABLE — omit those sub-sections.
+  NOTE: DrugBank NOT deployed (licence) — omit that sub-section, and do not substitute a
+  DrugBank-derived source. UNII/CAS/ATC: `FDAGSRS_search_substances`(query=drugName, limit=5).
 
 **Naming collision** — check first 20 results; if >20% off-topic, apply negative filter:
   `"TERM" NOT "collision1" NOT "collision2"` in all Phase 2 queries.
@@ -93,7 +102,9 @@ Complete ALL of steps A-C before Phase 3.
 **CS / ML** (use these, NOT biomedical tools):
   1. `ArXiv_search_papers`(query, limit=15, sort_by="submittedDate")
   2. `DBLP_search_publications`(query, limit=10)
-  3. `SemanticScholar_search_papers`(query, sort="citationCount:desc", limit=10)
+  3. `openalex_literature_search`(query, max_results=15) → CS/ML venues + citation counts
+  LAST RESORT: `SemanticScholar_search_papers`(query, sort="citationCount:desc", limit=10) —
+  routinely HTTP 429. Try once; on 429 do NOT retry.
 
 **General / cross-domain**:
   1. `openalex_literature_search`(query, max_results=15)
@@ -116,9 +127,10 @@ Complete ALL of steps A-C before Phase 3.
   - `iCite_get_publications`(pmids="pmid1,pmid2,pmid3") — RCR + citation counts
   - `scite_get_tallies`(doi) — support vs. contradict signal
 
-**Multi-source fallback** (thin coverage):
-  - `advanced_literature_search_agent`(query) — 12+ DBs; if it errors, fall back to
-    PubMed + ArXiv + SemanticScholar + OpenAlex individually.
+**Thin coverage** — no multi-source agent is served; fan out yourself:
+  - `PubMed_search_articles` + `EuropePMC_search_articles` + `PubTator3_LiteratureSearch` +
+    `openalex_literature_search` + `ArXiv_search_papers` on one query; merge on DOI/PMID, dedupe,
+    grade. Cross-source synthesis is YOUR job — no tool does it for you.
 
 # Phase 3: Evidence grading — grade EVERY claim, NEVER leave Grade blank
 Apply T1-T4 deterministically from data you ALREADY have.
@@ -200,4 +212,4 @@ Answer ALL FIVE synthesis questions, each as its own labelled sentence:
 for disease profile use disease-research; for drug profile use
 drug-research")
 ## References
-(| # | Tool | Parameters | Section | Items Retrieved |)
+(numbered footnote definitions only, each `[^n^]: [description](url)`)

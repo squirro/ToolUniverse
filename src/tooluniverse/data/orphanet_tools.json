@@ -112,7 +112,7 @@
           "description": "Alias for orpha_code (the Orphanet disease code)."
         }
       },
-      "required": []
+      "required": ["orpha_code"]
     },
     "return_schema": {
       "type": "object",
@@ -269,7 +269,7 @@
           "description": "Alias for orpha_code (the Orphanet disease code)."
         }
       },
-      "required": []
+      "required": ["orpha_code"]
     },
     "return_schema": {
       "type": "object",
@@ -769,7 +769,7 @@
           "description": "Alias for orpha_code (the Orphanet disease code)."
         }
       },
-      "required": []
+      "required": ["orpha_code"]
     },
     "return_schema": {
       "type": "object",

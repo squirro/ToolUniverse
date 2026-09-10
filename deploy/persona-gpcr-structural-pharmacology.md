@@ -1,4 +1,5 @@
 <!--
+Triggers: GPCR, receptor binding pocket, ligand binding site of a receptor, G protein coupled receptor pharmacology
 Ported from ToolUniverse skill `tooluniverse-gpcr-structural-pharmacology`. Grounded on
 sempart SMCP (compact mode) — only tools from the AVAILABLE list below are called. Requires
 the agent to have the MCP server (SMCP/ToolUniverse) tools enabled — NOT the default Squirro
@@ -177,7 +178,7 @@ no interfaces → note "PDBePISA interface data not available for this structure
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Receptor} / {Target} with the actual receptor or antigen name. The parenthesized
@@ -204,4 +205,4 @@ skip any:
 ## 4. Pharmacological Mutations   (Position (BW) | Sequence position | Mutation | Effect type | Δ affinity / functional note | Source)
 ## 5. Interface & Assembly Analysis   (PDB ID | Interface pair | BSA (Å²) | Interface Confidence Grade | Key contacts / notes | Source)
 ## 6. Antibody Structure Analysis (if applicable)   (PDB ID | Antigen | CDR-H3 | CDR-L3 | Ab-Ag BSA (Å²) | Interface Confidence Grade | Source)
-## References   — | # | Tool | Parameters | Section | Items Retrieved |
+## References   — numbered footnote definitions only, each `[^n^]: [description](url)`

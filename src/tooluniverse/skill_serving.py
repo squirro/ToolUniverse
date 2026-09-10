@@ -24,6 +24,57 @@ class SkillNotFound(ValueError):
     """Raised when ``get_skill`` is asked for a name with no served body."""
 
 
+# Appended to EVERY served body (DSR-631). The citation contract is a property of the
+# serving surface — the Squirro chat renderer promotes only LINK-bearing footnotes —
+# not of any one skill, so it rides here rather than being copied into 76 bodies where
+# it drifts. A loaded body is BINDING for the turn, which is exactly why this trailer
+# must supersede any older References convention a body still carries.
+CITATION_CONTRACT = """
+
+---
+# Citation contract (serving surface — SUPERSEDES any References format stated above)
+Cite with markdown footnotes `[^n^]`, and every footnote definition MUST carry a link —
+the chat renderer promotes only link-bearing footnotes; a bare tool-name reference
+renders broken. Link preference: (1) the `source_url` field in the tool's result
+envelope, (2) a link built from a returned ID (record page or API query URL). A result
+with neither is attributed INLINE as `(via tool_name)` — never as a footnote and never
+a "tool + parameters" log entry. The report's References section is ONLY the numbered
+footnote definitions, each `[^n^]: [description](url)`.
+
+BEFORE YOU EMIT the References section, check every footnote: the target must begin
+`https://` or `http://`. A bare domain (`clinicaltrials.gov`), an internal handle
+(`squirro_source#...`), a tool name, or a `(#)` placeholder all render BROKEN — the
+reader sees nothing. A footnote you cannot give a real URL becomes an inline
+`(via tool_name)` instead. Drop it from References; do not leave it linkless.
+
+# Tool-call form (how EVERY database tool above is reached)
+Call `execute_tool(tool_name="<exact tool name>", arguments={...})` — exactly those two
+parameters. NEVER pass a tool's own parameters at the top level of the call. If a call
+is rejected with "unexpected keyword argument", that is what happened — retry with the
+two-parameter form, the stray parameters wrapped inside `arguments`.
+
+Give every parameter the type its schema declares — some tools want a list of terms,
+others want those same terms in one string, and you cannot tell by looking at the
+value. "is not of type 'array'" and "is not of type 'string'" are both common. On
+either, call `get_tool_info(["<tool name>"])`, read the declared type, and send that
+shape. Do not swap the shape and retry blind.
+
+# Tool names: use, don't guess
+The tool names written in this skill are the tool names. NEVER guess or invent a tool
+name that looks plausible — an unregistered name fails the whole step. If you need a
+tool this skill does not name, find the real one with `grep_tools("<substring>")` or
+`find_tools("<keywords that appear in tool names and descriptions>")`, then call what
+they return, spelled exactly as returned.
+
+# Identifiers: resolve before you query
+Database tools match identifiers EXACTLY and each database has its own format. Do not
+guess one, do not reshape the user's, and do not assume one database's identifier works
+in another. Resolve it first with the lookup/search tool for that database, then pass
+back what it returned. A reply like "not found: <id>. Use <format>" means you guessed —
+resolve it properly rather than trying another guess.
+"""
+
+
 def normalize_skill_name(name: str) -> str:
     """Normalize a requested skill name to its file stem.
 
@@ -69,4 +120,4 @@ def load_skill_body(skills_dir: str | Path, name: str) -> str:
         raise SkillNotFound(
             f"no served skill {stem!r}; available: {available_skills(directory)}"
         )
-    return path.read_text(encoding="utf-8")
+    return path.read_text(encoding="utf-8") + CITATION_CONTRACT

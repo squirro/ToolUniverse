@@ -10,11 +10,26 @@ API: https://open.fda.gov/apis/drug/label/
 No authentication required. Optional API key raises rate limits.
 """
 
+import os
 import requests
 from typing import Any
 
 from .base_tool import BaseTool
 from .tool_registry import register_tool
+
+
+def openfda_get(url: str, params: dict, timeout: int = 30):
+    """GET openFDA with ``FDA_API_KEY`` attached when one is configured.
+
+    Anonymous callers share 1,000 requests/day per IP; the key buys 120,000.
+    Exhausting the anonymous bucket returns HTTP 429, which is indistinguishable
+    to an agent from the tool being broken. Omitted entirely when unset, so the
+    key never reaches the query as the string "None".
+    """
+    api_key = os.getenv("FDA_API_KEY")
+    if api_key:
+        params = {**params, "api_key": api_key}
+    return requests.get(url, params=params, timeout=timeout)
 
 FDA_LABEL_URL = "https://api.fda.gov/drug/label.json"
 
@@ -111,9 +126,9 @@ class FDALabelTool(BaseTool):
         """
         for field in ("openfda.generic_name", "openfda.brand_name"):
             for q in (f'{field}:"{drug_name}"', f"{field}:{drug_name}"):
-                resp = requests.get(
+                resp = openfda_get(
                     FDA_LABEL_URL,
-                    params={"search": q, "limit": limit},
+                    {"search": q, "limit": limit},
                     timeout=20,
                 )
                 if resp.status_code == 404:
@@ -137,9 +152,9 @@ class FDALabelTool(BaseTool):
             return _ok(labels, query=drug_name, query_field="drug_name")
 
         q = f'indications_and_usage:"{indication}"'
-        resp = requests.get(
+        resp = openfda_get(
             FDA_LABEL_URL,
-            params={"search": q, "limit": limit},
+            {"search": q, "limit": limit},
             timeout=20,
         )
         labels = []
@@ -171,9 +186,9 @@ class FDALabelTool(BaseTool):
 
     def _list_classes(self, arguments: dict) -> Any:
         limit = min(int(arguments.get("limit", 20)), 100)
-        resp = requests.get(
+        resp = openfda_get(
             FDA_LABEL_URL,
-            params={
+            {
                 "count": "openfda.pharm_class_epc.exact",
                 "limit": limit,
             },

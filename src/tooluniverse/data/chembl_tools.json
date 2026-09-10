@@ -12,7 +12,7 @@
         },
         "similarity_threshold": {
           "type": "integer",
-          "description": "Similarity threshold (0\u2013100).",
+          "description": "Similarity threshold (0–100).",
           "default": 80
         },
         "max_results": {
@@ -372,7 +372,7 @@
   {
     "type": "ChEMBLRESTTool",
     "name": "ChEMBL_search_targets",
-    "description": "Search targets by name, organism, target type, or other criteria. Use this tool to find target ChEMBL IDs needed for other tools.",
+    "description": "Search targets by gene symbol, UniProt accession, name, organism or target type, to find the target ChEMBL ID that other ChEMBL tools require. RESOLUTION ORDER: given a GENE SYMBOL use target_synonym__icontains; given a UNIPROT ACCESSION use target_components__accession; only use pref_name__icontains for a human-readable protein name. pref_name fields do NOT contain gene symbols and will silently return zero results for one.",
     "fields": {
       "endpoint": "/target.json"
     },
@@ -385,7 +385,7 @@
         },
         "pref_name__contains": {
           "type": "string",
-          "description": "Filter by target name (contains)"
+          "description": "Filter by target PREFERRED NAME, case-sensitive substring (e.g. 'Cholecystokinin'). This is the human-readable protein name and will NOT match a gene symbol such as 'CCKBR' or 'KRAS' - use target_synonym__icontains for a gene symbol."
         },
         "organism": {
           "type": "string",
@@ -418,6 +418,18 @@
         "offset": {
           "type": "integer",
           "default": 0
+        },
+        "pref_name__icontains": {
+          "type": "string",
+          "description": "Filter by target preferred name, CASE-INSENSITIVE substring. Prefer this over pref_name__contains for free-text names."
+        },
+        "target_synonym__icontains": {
+          "type": "string",
+          "description": "Filter by any target SYNONYM, case-insensitive substring. This is the correct field for a GENE SYMBOL (e.g. 'CCKBR', 'KRAS', 'SSTR2') or an alias, because ChEMBL stores gene symbols as component synonyms rather than in pref_name. Try this FIRST when the user names a gene."
+        },
+        "target_components__accession": {
+          "type": "string",
+          "description": "Filter by UniProt accession of a target component (e.g. 'P32239' for CCKBR). The most precise way to resolve a protein to its ChEMBL target - use it whenever a UniProt accession is known or can be resolved first."
         }
       },
       "required": []
@@ -621,7 +633,7 @@
   {
     "type": "ChEMBLRESTTool",
     "name": "ChEMBL_get_target_activities",
-    "description": "Get all activity data for a target by ChEMBL target ID. Returns bioactivity measurements (IC50, Ki, etc.) for molecules tested against this target. Note: activity values may be in different units (nM or uM) depending on the assay \u2014 check the 'standard_units' field in each result. To find a target ID, use ChEMBL_search_targets with a target name or gene symbol.",
+    "description": "Get all activity data for a target by ChEMBL target ID. Returns bioactivity measurements (IC50, Ki, etc.) for molecules tested against this target. Note: activity values may be in different units (nM or uM) depending on the assay — check the 'standard_units' field in each result. To find a target ID, use ChEMBL_search_targets with a target name or gene symbol.",
     "fields": {
       "endpoint": "/activity.json"
     },
@@ -924,7 +936,7 @@
   {
     "type": "ChEMBLRESTTool",
     "name": "ChEMBL_search_activities",
-    "description": "Search activity data by molecule, target, assay, or activity values. Supports filtering by IC50, Ki, EC50, etc. Note: activity data is sparse and depends on curation; some specific filter combinations can legitimately return zero results. For reliable retrieval, prefer starting from a known target (`target_chembl_id__exact`) or assay (`assay_chembl_id__exact`). To find molecule or target IDs, use ChEMBL_search_molecules or ChEMBL_search_targets.",
+    "description": "Search activity data by molecule, target, assay, or activity values. Supports filtering by IC50, Ki, EC50, etc. Note: activity data is sparse and depends on curation; some specific filter combinations can legitimately return zero results. For reliable retrieval, prefer starting from a known target (`target_chembl_id`) or assay (`assay_chembl_id`) - both match the id exactly. To find molecule or target IDs, use ChEMBL_search_molecules or ChEMBL_search_targets.",
     "fields": {
       "endpoint": "/activity.json"
     },
@@ -1268,7 +1280,7 @@
   {
     "type": "ChEMBLRESTTool",
     "name": "ChEMBL_get_drug_mechanisms",
-    "description": "Get mechanisms of action for a drug by ChEMBL drug ID or drug name. Accepts drug_chembl_id (e.g., 'CHEMBL1201581') or drug_name (e.g., 'trastuzumab') \u2014 drug_name triggers automatic ChEMBL ID lookup.",
+    "description": "Get mechanisms of action for a drug by ChEMBL drug ID or drug name. Accepts drug_chembl_id (e.g., 'CHEMBL1201581') or drug_name (e.g., 'trastuzumab') — drug_name triggers automatic ChEMBL ID lookup.",
     "fields": {
       "endpoint": "/mechanism.json"
     },
@@ -1290,7 +1302,7 @@
         },
         "drug_name": {
           "type": "string",
-          "description": "Drug name for automatic ChEMBL ID lookup (e.g., \"trastuzumab\", \"lapatinib\", \"aspirin\"). Case-insensitive. Triggers internal ChEMBL molecule search \u2014 use drug_chembl_id if you already know the ID."
+          "description": "Drug name for automatic ChEMBL ID lookup (e.g., \"trastuzumab\", \"lapatinib\", \"aspirin\"). Case-insensitive. Triggers internal ChEMBL molecule search — use drug_chembl_id if you already know the ID."
         },
         "molecule_chembl_id": {
           "type": "string",
@@ -1301,7 +1313,7 @@
           "description": "Alias for drug_chembl_id. ChEMBL ID (e.g., \"CHEMBL3301622\")."
         }
       },
-      "required": []
+      "required": ["drug_chembl_id"]
     },
     "return_schema": {
       "type": "object",

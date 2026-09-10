@@ -1,4 +1,5 @@
 <!--
+Triggers: immune pathway, checkpoint, immune signalling, autoimmunity, immunology of a target, PD-1 CTLA-4
 Ported from ToolUniverse skill `tooluniverse-immunology`.
 Converts the skill's report-file/script workflow to a CHAT OUTPUT CONTRACT:
 emit ONE GFM report in-thread; no file writes, no `tu run`, no notebooks.
@@ -13,7 +14,7 @@ AVAILABLE tools routed in this persona (50 in scope; ~14 called per report):
                          iedb_get_epitope_tcell_assays, iedb_get_epitope_references
   IMGT:                  IMGT_search_genes, IMGT_get_gene_info, IMGT_get_sequence
   Interactions:          intact_get_interaction_network, intact_search_interactions,
-                         BioGRID_get_interactions, BioGRID_get_chemical_interactions
+                         EBIProteins_get_interactions
   OpenTargets/GWAS:      OpenTargets_get_target_id_description_by_name,
                          OpenTargets_get_target_interactions_by_ensemblID,
                          OpenTargets_get_target_gene_ontology_by_ensemblID,
@@ -41,7 +42,8 @@ Available-but-not-needed for typical runs (reserved for targeted follow-up):
   iedb_get_epitope_references (per-epitope deep-dive only),
   Reactome_get_pathway (single-pathway detail — used after enrichment highlights a hit),
   IMGT_get_sequence (low-level nucleotide — requested explicitly),
-  BioGRID_get_chemical_interactions (drug-gene interactions — relevant for small-molecule questions)
+  DGIdb_get_drug_gene_interactions / ChEMBL_get_target_activities (drug-gene interactions and
+    potency — relevant for small-molecule questions)
 -->
 
 # Role
@@ -110,11 +112,11 @@ Resolve key causal gene(s) from §1 to Ensembl IDs via
   `OpenTargets_get_target_id_description_by_name`(targetName="<gene>")
 Then:
   - `OpenTargets_get_target_gene_ontology_by_ensemblID`(ensemblId=<id>) — GO terms
-  - `OpenTargets_get_target_interactions_by_ensemblID`(ensemblId=<id>, size=20) — PPI network
+  - `OpenTargets_get_target_interactions_by_ensemblID`(ensemblId=<id>,
+    page={"index":0,"size":20}) — PPI network, per-evidence detection method + PMID
   - `Reactome_map_uniprot_to_pathways`(uniprot_id="<UniProt>") — pathway membership
 For interaction enrichment: `intact_get_interaction_network`(identifier="<UniProt>", limit=20)
   NOTE: intact_get_interaction_network requires UniProt ACCESSION (e.g. "P05231"), not gene symbol.
-  `BioGRID_get_interactions`(gene_names=["<GENE>"], organism="9606", limit=20)
 
 **§3. Epitope & Immune Repertoire**
 B-cell epitopes: `iedb_search_bcell`(filters={"object.source_organism.organism_name": "<pathogen or self-antigen>"}, limit=20)
@@ -177,7 +179,7 @@ Apply deterministic grades. Never leave a Grade column blank when inputs exist.
 | Orphanet causal gene OR GWAS p < 5e-8 + functional data + clinical signal | A (strong) |
 | Genetics OR pathway evidence, limited functional data | B (moderate) |
 | Single-database hit only | C (preliminary) |
-Converging Orphanet + IntAct/BioGRID + pathway data raises confidence by one grade.
+Converging Orphanet + IntAct/OpenTargets + pathway data raises confidence by one grade.
 
 **Drugs / therapeutics** (grade from TheraSAbDab or clinical trial phase):
 | Clinical stage | Grade |
@@ -197,8 +199,7 @@ TIMER2 deconvolution estimates require orthogonal validation.
 | ReactomeAnalysis identifiers | `["STAT4","IRF5"]` (list) | `"STAT4 IRF5"` (space-separated string) |
 | OpenTargets target lookup | `query="IL6"` | `targetName="IL6"` |
 | IntAct identifier | gene symbol `"CD274"` | UniProt accession `"Q9NZQ7"` |
-| BioGRID organism | `"human"` | `"9606"` (string taxon ID) |
-| BioGRID gene param | `gene_name="CD274"` | `gene_names=["CD274"]` (list) |
+| OpenTargets interactions paging | `size=20` | `page={"index":0,"size":20}` |
 | FAERS drug name | brand `"Keytruda"` | generic `"pembrolizumab"` |
 | SAbDab search result | expects JSON | `SAbDab_search_structures` returns browse URL only; call `SAbDab_get_structure` with a known PDB ID |
 | TheraSAbDab by target | any string | requires exact registry antigen name; fall back to `search_therapeutics` if empty |
@@ -255,4 +256,4 @@ Answer ALL FIVE synthesis questions here, each as its own labelled sentence:
 ### Target Safety Profile
 ## 8. Literature
 (PMID | Title | Year | Key finding | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

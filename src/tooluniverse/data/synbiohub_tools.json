@@ -209,7 +209,7 @@
   },
   {
     "name": "SynBioHub_get_part",
-    "description": "Get detailed SBOL (Synthetic Biology Open Language) information for a specific genetic part from SynBioHub. Returns the part's title, description, DNA sequence, sequence length, functional roles, creation date, and provenance. Can look up by full URI or by iGEM BioBrick display ID (e.g., BBa_E0040 for GFP). Example: get details for BBa_E0040 (GFP coding sequence, 720bp) including its full DNA sequence. Note: SynBioHub anonymous REST access was disabled upstream. Every /public/... read returns 401 'Login required'. The tool returns a structured error; users with a SynBioHub account can supply the auth token via SYNBIOHUB_API_TOKEN.",
+    "description": "Get detailed SBOL (Synthetic Biology Open Language) information for a specific genetic part from SynBioHub. Returns the part's title, description, DNA sequence, sequence length, functional roles, creation date, and provenance. Can look up by full URI or by iGEM BioBrick display ID (e.g., BBa_E0040 for GFP). Example: get details for BBa_E0040 (GFP coding sequence, 720bp) including its full DNA sequence. Note: SynBioHub anonymous REST access was disabled upstream. Every /public/... read returns 401 'Login required'. The tool returns a structured error; users with a SynBioHub account can supply the auth token via SYNBIOHUB_API_TOKEN. At least one of part_uri or display_id is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {

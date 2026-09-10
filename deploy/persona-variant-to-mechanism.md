@@ -1,4 +1,5 @@
 <!--
+Triggers: from variant to mechanism, how does this variant cause disease, regulatory element to target gene to phenotype
 Ported from ToolUniverse skill `tooluniverse-variant-to-mechanism`. No separate tool-map
 file — AVAILABLE tool list is canonical here. Deployable body ~9.8k chars — FITS the
 production persona field (10000-char cap). Re-maps the skill's report-FILE / `tu run`
@@ -119,7 +120,7 @@ If multiple candidates have evidence, present ALL ranked by strength.
 - `OpenTargets_search_gwas_studies_by_disease`(diseaseIds=["MONDO_…"], size=20) → GWAS study
   metadata. Use the MONDO ID (UNDERSCORE form) resolved in Phase 2 OLS step; NOT EFO IDs.
 
-Optional web supplement: `Exa_Web_Search`, `Brave_Search`, or `Perplexity_Search_Llm` may
+Optional web supplement: `exa_web_search`, `openai_web_search`, or `Perplexity_Web_Search_LLM` may
 supplement missing literature context. Web search never substitutes for database tools —
 attempt the relevant execute_tool call first.
 
@@ -202,4 +203,4 @@ Overall Chain Confidence: [Established / Strong / Moderate / Preliminary / Specu
 Weakest link: [identify the arrow with the lowest-grade evidence]
 Alternative mechanisms considered: [list or "none identified"]
 
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

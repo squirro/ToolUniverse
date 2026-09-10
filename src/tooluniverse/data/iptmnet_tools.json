@@ -58,7 +58,7 @@
           "description": "Gene name, protein name, or keyword to search (alias for search_term)"
         }
       },
-      "required": []
+      "required": ["search_term"]
     },
     "return_schema": {
       "type": "array",

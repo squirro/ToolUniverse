@@ -9,7 +9,9 @@ Data sources:
 - EPMC: literature count for shedding/cleavage evidence
 """
 from __future__ import annotations
-import json, logging, re
+import json
+import logging
+import re
 
 log = logging.getLogger(__name__)
 
@@ -211,7 +213,8 @@ def assess_shedding(gene_symbol, uniprot_data, lit_count):
 def exec_shedding_risk(arguments, input_table, output_table, db_path):
     """Assess shedding risk for genes. Reads gene symbols from input table,
     fetches UniProt + EPMC data in parallel, runs scoring."""
-    import sqlite3, time
+    import sqlite3
+    import time
     from concurrent.futures import ThreadPoolExecutor as _TPE, as_completed
 
     genes = []

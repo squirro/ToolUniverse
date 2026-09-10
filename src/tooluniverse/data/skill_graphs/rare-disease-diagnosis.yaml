@@ -1,0 +1,489 @@
+# rare-disease-diagnosis as a process graph.
+#
+# Chosen because it is the flakiest skill we measured: three identical probes on
+# 2026-08-21 returned fail, warn and pass. The prose body already carries the right
+# procedure — what varies is whether the agent performs it.
+#
+# Two things the graph fixes that prose could not. Phase 2 demands TWO joint calls,
+# one over every phenotype and one over only the discriminating ones, because the
+# strict intersection of common terms starves while the discriminating pair returns
+# the textbook differential; written as prose it is regularly reduced to one call.
+# And the body sources candidate genes FROM the literature, yet puts literature in
+# Phase 6 and gene work in Phase 3 — here literature runs first, so the dependency
+# is real rather than aspirational.
+#
+# Facts the agent feeds back: symptoms, hpo_ids, discriminating_hpo_ids,
+# top_candidate, genes, variant_id.
+
+skill: rare-disease-diagnosis
+inputs: [symptoms]
+# Optional, bound by the AGENT from the case when it supplies one. Without this
+# the `variant` step's `when: variant_id` could never be true.
+optional_inputs: [variant_id, age_years]
+# How the report must read the evidence. The bundle carries the numbers; this
+# carries the author's rules for ranking, grading and citing them. Blind-judged
+# 2026-09-03 on clinical-data-integration: without it the writer had the data and
+# not the judgement.
+report: >-
+  Open with five answers, each its own sentence: the most likely diagnosis and its
+  primary evidence; the ranked differential; the tests or variants that would
+  discriminate the top candidates; any treatable condition that needs urgent
+  work-up; the recommended next diagnostic step. Then the ranked differential:
+  merge `results.differential_all` (strict intersection), `results.differential_discriminating`
+  (the discriminating pair) and `results.keyword_search` (Orphanet), skipping any
+  name that begins "OBSOLETE:". Present the candidates in the order of
+  `facts.ranked_rows` and say the rule once: onset fit against the patient's age
+  first; then whether the disease carries both discriminating phenotypes; then
+  how common the disease is (Orphanet prevalence class); then phenotype overlap.
+  For every candidate give its rank, "n of N phenotypes" (overlap_pct), the
+  grade, whether it carries the discriminating pair, the onset and its fit, and
+  the prevalence tier, all
+  from its row, and cite the matched HPO ids; a candidate with no overlap row is
+  "overlap not computable: no phenotype annotation returned". Never leave a grade
+  blank when a row exists. Say which
+  candidates came only from the discriminating pair and which only from the
+  keyword search; weight the HPO route as primary when the two disagree. Name
+  the features of the case the leading candidate leaves unexplained. The third
+  answer — the tests that discriminate the top candidates — must be concrete:
+  when the top two are in the same disease family (two mucopolysaccharidoses,
+  two gangliosidoses), name the enzyme or gene pair that separates them from
+  their rows in `facts.orphanet_gene_rows` (for example IDUA for Hurler against
+  IDS for MPS II) and say that the enzyme assay or the gene test decides. State
+  the inheritance and age of onset that separate them from their rows in
+  `facts.disease_inheritance` (X-linked MPS II against autosomal recessive
+  Hurler). A clinical sign that no row carries, if you add one, is labelled
+  clinical reasoning. The values
+  `working_hypothesis`, `discriminating_features`, `discriminating_hpo_ids` and
+  `top_candidate` in `facts` were supplied by the model when the run asked for
+  them: present them as clinical reasoning, not as tool output, and say so once.
+  Genes come from three queries and from nowhere else. The gene panel is one
+  table with a row per gene in `facts.genes` and these columns: gene; the
+  disease(s) it is causal for and the association type, from
+  `facts.orphanet_gene_rows`; the Open Targets score for that gene in that
+  disease's row of `facts.opentargets_rows`, written as the number returned
+  (or "not in Open Targets"), plus the top three scored targets of that disease
+  with their scores so the drop-off is visible — never apply a cut; the
+  OptimusKG relation and evidence score from `facts.optimuskg_genes` when the
+  gene is there (or "not in OptimusKG"); Ensembl and Entrez ids from
+  `facts.gene_rows`; expression from the panel results that the bundle kept.
+  Where the three agree, say so once; where they differ, show
+  all and do not pick. A gene in none of the three sources is not in the
+  report. A disease with no gene in any source says "no causal gene in
+  Orphanet, Open Targets or OptimusKG". When `facts.optimuskg_genes` is empty
+  because the tool failed, say so in one line. Variant interpretation appears only when the
+  `variant` step is in `steps_done`; otherwise one line, "No variant data
+  provided", which is an answer. Cite each HPO term as
+  https://hpo.jax.org/browse/term/<HP id>, each ranked disease as
+  https://www.orpha.net/en/disease/detail/<ORPHAcode> taken from its row in
+  `facts.orphanet_matches` (match on the preferred term; a disease with no row
+  is "no Orphanet entry found" and gets no link), each
+  paper as https://europepmc.org/article/MED/<PMID>, each Open Targets row as
+  https://platform.opentargets.org/disease/<MONDO id>, each Orphanet gene claim
+  by its PMID, each gene as
+  https://www.ncbi.nlm.nih.gov/gene/<entrezgene from the MyGene result> and its
+  expression as https://gtexportal.org/home/gene/<symbol>. Every footnote is a
+  real https link and every item has its own — never one footnote for a whole
+  table. End with a Limitations section built from `failures`, `blocked` and
+  `unresolved`, and from any symptom that resolved to no HP: id.
+
+steps:
+  - id: hypothesis
+    label: "Phase 0 — clinical reasoning, before any tool call"
+    calls: []
+    produces: [primary_keyword, working_hypothesis, discriminating_features]
+    # No tool can yield these: the run asks the model for them by name.
+    judge: [primary_keyword, working_hypothesis, discriminating_features]
+    notes: >-
+      State the top 3-5 candidates and the reasoning chain, and name the rarest,
+      most discriminating features. Do this from the presentation alone — it is
+      what decides which phenotypes drive the intersection below. Carry the case's
+      symptoms as a list in `symptoms`, and set `primary_keyword` to ONE short
+      search phrase for the leading syndrome class (a string, not a list — the
+      keyword search takes a single query).
+
+  - id: phenotypes
+    label: "Phase 1 — resolve each symptom to an HPO id"
+    requires: [hypothesis]
+    for_each: symptoms
+    as: symptom
+    calls:
+      - tool: get_HPO_ID_by_phenotype
+        arguments: {query: "{symptom}", limit: 5}
+    # Live, the lookup answers UPHENO:, MP:, then HP: — the human phenotype is
+    # third. One HP id per symptom, taken mechanically; which two or three
+    # discriminate is judgement.
+    collect:
+      hpo_ids: {path: "data.items[].id", match: "^HP:"}
+    produces: [hpo_ids]
+    notes: >-
+      One call per symptom. Take the top HP:-prefixed hit — the tool also returns
+      MP: and other namespaces, which are not human phenotypes. A symptom that
+      resolves to nothing is not a failure: carry it as an Orphanet keyword instead.
+
+  - id: hpo_counts
+    label: "Phase 1b — how many diseases each phenotype is annotated to"
+    requires: [phenotypes]
+    for_each: hpo_ids
+    as: hpo
+    calls:
+      - tool: HPO_get_diseases_by_phenotype
+        arguments: {term_id: "{hpo}", limit: 500}
+    # The tool does not echo its input; "$item" pairs each count with its term.
+    collect:
+      term_counts: {path: "data", fields: ["$item as hpo_id", "diseases[].id as diseases"]}
+    produces: [term_counts]
+    notes: >-
+      One call per HP id. The count is how many diseases carry the phenotype;
+      500 means at least 500 (the tool's ceiling). A term annotated to few
+      diseases discriminates; one annotated to hundreds does not.
+
+  - id: hpo_hierarchy
+    label: "Phase 1b.2 — each case phenotype's parents and children in the ontology"
+    requires: [phenotypes]
+    for_each: hpo_ids
+    as: hpo
+    calls:
+      - tool: HPO_get_term_hierarchy
+        arguments: {term_id: "{hpo}", direction: "parents"}
+      - tool: HPO_get_term_hierarchy
+        arguments: {term_id: "{hpo}", direction: "children"}
+    # Orphanet annotates Hurler with Hepatomegaly and Splenomegaly as two terms; the
+    # case's Hepatosplenomegaly is their conjunction. The match is ontological:
+    # a disease carries a term if it lists it, all its parents, or a child.
+    collect:
+      hpo_hierarchy_calls: {path: "", fields: ["$item as hpo_id", "$call.direction as direction", "data[].id as ids"]}
+    compute:
+      hpo_hierarchy: {op: hierarchy, rows: hpo_hierarchy_calls}
+    produces: [hpo_hierarchy]
+    notes: >-
+      Two calls per case phenotype, folded into one row per term. The rows feed
+      the overlap count and the discriminating-pair gate; they are not for the report.
+
+  - id: discriminating
+    label: "Phase 1c — the two phenotypes annotated to the fewest diseases"
+    requires: [hpo_counts]
+    calls: []
+    # UI run 3e342e1a: asked for the rarest phenotypes, the model chose developmental
+    # delay and seizures once in fifteen runs and the differential became a
+    # neurodevelopmental list. Fewest annotated diseases is arithmetic; the model
+    # is asked only when the counts tie at the cut (the name stays unresolved and
+    # the judge below fills it).
+    compute:
+      discriminating_hpo_ids: {op: fewest, rows: term_counts, id: hpo_id, count: diseases, take: 2}
+    produces: [discriminating_hpo_ids]
+    judge: [discriminating_hpo_ids]
+    notes: >-
+      Computed from the counts. You are asked only if two phenotypes tie exactly at
+      the cut: then choose the clinically rarer of the tied pair and return the two
+      ids.
+
+  - id: differential_all
+    label: "Phase 2a — diseases annotated with ALL the phenotypes"
+    requires: [phenotypes]
+    calls:
+      - tool: get_joint_associated_diseases_by_HPO_ID_list
+        arguments: {HPO_ID_list: "{hpo_ids}", limit: 20}
+    # The tool answers a bare list of names, which the executor hands the run as
+    # {"result": [...]} — the same shape every saved trace shows.
+    extract: {strict_candidates: {path: "result"}}
+    produces: [strict_candidates]
+    notes: >-
+      A SHORT list here is normal, not a failure — common terms like developmental
+      delay are annotated on thousands of diseases, so the strict intersection
+      starves. Do not stop here.
+
+  - id: differential_discriminating
+    label: "Phase 2b — the same query on the DISCRIMINATING phenotypes only"
+    requires: [phenotypes]
+    calls:
+      - tool: get_joint_associated_diseases_by_HPO_ID_list
+        arguments: {HPO_ID_list: "{discriminating_hpo_ids}", limit: 30}
+    extract: {decisive_candidates: {path: "result"}}
+    produces: [decisive_candidates]
+    notes: >-
+      This is the call that surfaces the clinically decisive differential — coarse
+      facies plus hepatosplenomegaly returns the storage disorders, where the full
+      term set returns almost nothing. Both 2a and 2b are required.
+
+  - id: resolve_candidates
+    label: "Phase 2b' — an Orphanet entry for each decisive candidate"
+    requires: [differential_discriminating]
+    for_each: decisive_candidates
+    as: candidate
+    calls:
+      - tool: Orphanet_search_diseases
+        arguments: {query: "{candidate}", limit: 1}
+    # The joint tool gives names only. One lookup per name carries the hit as a
+    # row — code and preferred term together — so a name Orphanet does not know
+    # is absent rather than shifting every later index (live 2026-09-04: no
+    # ranked disease could be linked).
+    collect:
+      orphanet_matches: {path: "data.results.0"}
+      orphanet_codes: {path: "data.results.0.ORPHAcode"}
+    produces: [orphanet_matches, orphanet_codes]
+    notes: >-
+      One call per decisive candidate, the top hit only. A candidate with no hit
+      has no row in orphanet_matches: report it as "no Orphanet entry found" and
+      give it no link. Never guess a code.
+
+  - id: disease_phenotypes
+    label: "Phase 2b.2 — each candidate's own phenotype set, from Orphanet"
+    requires: [resolve_candidates]
+    for_each: orphanet_codes
+    as: orphacode
+    calls:
+      - tool: Orphanet_get_phenotypes
+        arguments: {orphacode: "{orphacode}"}
+    # ~10 KB per disease; the run keeps one row: code, name, HPO ids.
+    collect:
+      disease_phenotypes: {path: "data", fields: ["orpha_code", "preferred_term", "phenotypes[].hpo_id as hpo_ids"]}
+    produces: [disease_phenotypes]
+    notes: >-
+      One call per resolved candidate. A disease with no row here had no
+      phenotype annotation in Orphanet (or the lookup failed): its overlap is
+      "not computable", with that reason — never "no phenotypes".
+
+  - id: disease_inheritance
+    label: "Phase 2b.3 — inheritance and onset per candidate, from Orphanet"
+    requires: [resolve_candidates]
+    for_each: orphanet_codes
+    as: orphacode
+    calls:
+      - tool: Orphanet_get_natural_history
+        arguments: {orphacode: "{orphacode}"}
+    collect:
+      disease_inheritance: {path: "data", fields: ["orpha_code", "preferred_term", "type_of_inheritance", "average_age_of_onset"]}
+    produces: [disease_inheritance]
+    notes: >-
+      One call per resolved candidate. Inheritance and onset are what separate
+      siblings the phenotypes cannot (X-linked MPS II against autosomal recessive
+      Hurler); cite them from these rows.
+
+  - id: disease_prevalence
+    label: "Phase 2b.4 — how common each candidate is, from Orphanet"
+    requires: [resolve_candidates]
+    for_each: orphanet_codes
+    as: orphacode
+    calls:
+      - tool: Orphanet_get_epidemiology
+        arguments: {orphacode: "{orphacode}"}
+    # Orphanet gives prevalence classes ("1-9 / 100 000", "<1 / 1 000 000") or a case
+    # count; the run keeps the classes per disease. No data is a fact, not a zero.
+    collect:
+      disease_prevalence: {path: "data", fields: ["orpha_code", "preferred_term", "prevalences[].class as classes"]}
+    produces: [disease_prevalence]
+    notes: >-
+      One call per resolved candidate. A disease with no prevalence row is of
+      unknown frequency — say so; it is neither promoted nor demoted for it.
+
+  - id: keyword_search
+    label: "Phase 2c — Orphanet keyword search"
+    requires: [phenotypes]
+    calls:
+      - tool: Orphanet_search_diseases
+        arguments: {query: "{primary_keyword}", limit: 20}
+    produces: [top_candidate]
+    judge: [top_candidate]
+    notes: >-
+      Catches diseases the phenotype lookup misses. SKIP any hit whose name begins
+      "OBSOLETE:". Merge with 2a and 2b, then score every candidate against the FULL
+      Phase-1 term set: excellent >80%, good 60-80%, possible 40-60%, low <40%.
+
+  - id: literature
+    label: "Phase 3 — literature on the leading candidate"
+    requires: [keyword_search]
+    calls:
+      - tool: EuropePMC_search_articles
+        arguments: {query: "{top_candidate}", limit: 10}
+    notes: >-
+      Recent papers on the top candidate, cited by PMID. Literature is context
+      for the report; it is not where genes come from.
+
+  - id: gene_evidence_orphanet
+    label: "Phase 3a — causal genes per ranked disease, from Orphanet"
+    requires: [resolve_candidates]
+    for_each: orphanet_codes
+    as: orphacode
+    calls:
+      - tool: Orphanet_get_genes
+        arguments: {orphacode: "{orphacode}"}
+    # Live 2026-09-04 the model, asked for genes, answered four once (three from
+    # its own hypothesis) and none twice on identical data. A gene is a claim the
+    # Run Record must vouch for: it is looked up, never judged. Each row keeps
+    # the disease it belongs to; the flat unique list is what the panel loops over.
+    collect:
+      orphanet_gene_rows: {path: "data"}
+      genes: {path: "data.genes[].Symbol", flatten: true, unique: true}
+    produces: [orphanet_gene_rows, genes]
+    notes: >-
+      One call per resolved candidate. Each row carries the disease, its genes,
+      the association type (causative, modifier, susceptibility), the assessment
+      status and the PMID Orphanet cites. A disease with an empty gene list has no
+      known causal gene in Orphanet — say so, do not fill it from memory.
+
+  - id: disease_ids_opentargets
+    label: "Phase 3b — Open Targets disease ids for the decisive candidates"
+    requires: [differential_discriminating]
+    for_each: decisive_candidates
+    as: candidate
+    calls:
+      - tool: OpenTargets_get_disease_ids_by_name
+        arguments: {name: "{candidate}"}
+    # Open Targets indexes rare diseases under MONDO ids; an Orphanet id does
+    # not resolve on the targets endpoint. The top search hit per name.
+    collect:
+      mondo_ids: {path: "data.search.hits.0.id", unique: true}
+    produces: [mondo_ids]
+    notes: >-
+      One name lookup per decisive candidate, top hit only. A candidate Open
+      Targets does not know has no id and no targets row; say so.
+
+  - id: gene_evidence_opentargets
+    label: "Phase 3c — scored target associations per disease, from Open Targets"
+    requires: [disease_ids_opentargets]
+    for_each: mondo_ids
+    as: mondo_id
+    calls:
+      - tool: OpenTargets_get_associated_targets_by_disease_efoId
+        arguments: {efoId: "{mondo_id}"}
+    collect:
+      opentargets_rows: {path: "data.disease"}
+    produces: [opentargets_rows]
+    notes: >-
+      Each row is one disease with its associated targets and their association
+      scores, exactly as returned. Present the scores; do not apply a cut. The
+      causal gene is normally the top score and the tail drops off sharply —
+      let the reader see that. Cite https://platform.opentargets.org/disease/<id>.
+
+  - id: gene_evidence_optimuskg
+    label: "Phase 3d — the SR knowledge graph on the top candidate (agent's own tool)"
+    requires: [keyword_search]
+    # OptimusKG is not in the registry: the run pauses and the agent makes these
+    # two calls with its own tool. Search resolves the disease to its CURIE;
+    # evidence lists the one-hop neighbours restricted to genes, with the
+    # relation and evidence score per edge.
+    delegate:
+      - tool: OptimusKG_Search
+        arguments: {action: "search", query: "{top_candidate}", node_types: ["disease"]}
+      - tool: OptimusKG_Search
+        arguments: {action: "evidence", query: "<the disease CURIE from the search>", node_types: ["gene"]}
+    produces: [optimuskg_genes]
+    notes: >-
+      Run the search, take the CURIE of the best disease hit, and run evidence on
+      it. Return optimuskg_genes as a list of {gene, relation, evidence_score,
+      source} rows from the evidence result — one per gene neighbour, as
+      returned. If the search finds no disease node, return an empty list and
+      say so; do not fill it from memory.
+
+  - id: compute_overlap
+    label: "Phase 2c.2 — overlap and grade per candidate, computed by the server"
+    requires: [hpo_hierarchy, disease_phenotypes, gene_evidence_orphanet]
+    calls: []
+    # Counting shared HPO ids is arithmetic, not judgement. Delegated to the agent's
+    # code tool it came back empty twice and on retyped inputs three times in
+    # fifteen runs. The rubric is the served body's; T1 needs a causal gene.
+    compute:
+      overlap_rows:
+        op: overlap
+        rows: disease_phenotypes
+        row_ids: hpo_ids
+        against: hpo_ids
+        gene_rows: orphanet_gene_rows
+        hierarchy: hpo_hierarchy
+        grades:
+          - {grade: "T1", min_pct: 80, needs_gene: true}
+          - {grade: "T2", min_pct: 60}
+          - {grade: "T3", min_pct: 40}
+          - {grade: "T4", min_pct: 0}
+    produces: [overlap_rows]
+    notes: >-
+      One row per candidate that had a phenotype row: n of N case phenotypes
+      matched, the percentage, the grade, and the matched HPO ids. A candidate
+      with no phenotype row has no overlap row: "overlap not computable: no
+      phenotype annotation returned".
+
+  - id: rank_differential
+    label: "Phase 2c.3 — the order a clinician uses: age fit, then how common, then overlap"
+    requires: [disease_inheritance, disease_prevalence, compute_overlap]
+    calls: []
+    # DSR-729: both blinded judges marked the reports down for ranking by Orphanet
+    # annotation count — sialuria (five families worldwide) and an adolescent-onset
+    # sialidosis above the mucopolysaccharidoses a four-year-old must have excluded
+    # first. Ranking is arithmetic over rows the run holds, so the server does it.
+    compute:
+      ranked_rows:
+        op: rank_differential
+        overlap: overlap_rows
+        inheritance: disease_inheritance
+        epidemiology: disease_prevalence
+        patient_age_years: age_years
+        early_onset: ["Antenatal", "Neonatal", "Infancy", "Childhood", "All ages"]
+        late_onset: ["Adolescent", "Adult", "Elderly"]
+        # A candidate must carry the discriminating pair the run computed to rank
+        # above candidates that do (DSR-729 v2: Sotos-first).
+        must_carry: discriminating_hpo_ids
+        rows_ids: disease_phenotypes
+        hierarchy: hpo_hierarchy
+    produces: [ranked_rows]
+    notes: >-
+      The differential in the order the report presents it. First: onset fit —
+      a disease whose every onset class is later than the patient's age goes
+      below every disease that fits. Second: does the disease carry both
+      discriminating phenotypes? Those that do rank above those that do not.
+      Then commoner above rarer (Orphanet prevalence class, unknown in
+      between), then overlap. The grade stays a column. Without a patient age
+      onset is "not assessed"; without a computed pair the gate is not applied.
+
+  - id: gene_panel
+    label: "Phase 4 — characterise the candidate genes"
+    requires: [literature]
+    when: genes
+    for_each: genes
+    as: gene
+    calls:
+      - tool: MyGene_query_genes
+        arguments:
+          query: "{gene}"
+          fields: "symbol,name,entrezgene,ensembl.gene,summary"
+    # The writer reads the panel from these rows; loop payloads in the bundle are
+    # bounded per step and may be counted rather than kept.
+    collect:
+      gene_rows: {path: "data.hits.0", fields: ["symbol", "name", "entrezgene", "ensembl.gene as ensembl"]}
+    produces: [gene_rows]
+    notes: >-
+      One call per gene in `facts.genes`. Take symbol, name, Entrez id and
+      Ensembl id from the hit whose symbol matches exactly; a gene with no exact
+      hit is reported as unresolved, never replaced by a near match. Skipped
+      entirely when no gene could be sourced.
+
+  - id: expression
+    label: "Phase 5 — tissue expression context"
+    requires: [gene_panel]
+    when: genes
+    for_each: genes
+    as: gene
+    calls:
+      - tool: GTEx_get_expression_summary
+        arguments: {gene_symbol: "{gene}"}
+    notes: If GTEx has nothing, fall back to HPA_search_genes_by_query.
+
+  - id: variant
+    label: "Phase 6 — variant interpretation"
+    requires: [phenotypes]
+    when: variant_id
+    calls:
+      - tool: gnomad_get_variant
+        arguments: {variant_id: "{variant_id}", dataset: "gnomad_r4"}
+    notes: >-
+      Only when the case supplies variant data. Otherwise the report says
+      "No variant data provided" — that is an answer, not a gap.
+
+  - id: report
+    label: "Phase 7 — ranked differential with the evidence"
+    requires: [differential_all, differential_discriminating, resolve_candidates, disease_inheritance,
+               disease_prevalence, keyword_search, literature, gene_evidence_orphanet,
+               gene_evidence_opentargets, gene_evidence_optimuskg, compute_overlap, rank_differential]
+    calls: []
+    notes: >-
+      Rank every candidate with its score and the phenotypes that support it, and
+      say which features are unexplained. Every footnote needs a real https link.

@@ -4,7 +4,9 @@ Ported from ToolUniverse skill `tooluniverse-variant-interpretation`. Tool routi
 of truth: converter-prompts/variant-interpretation.prompt.md. Re-maps the skill's
 report-first FILE workflow to a chat OUTPUT CONTRACT. Requires SMCP/ToolUniverse MCP
 enabled. OMIM/DisGeNET are key-gated → substituted by ClinVar/gnomAD. CELLxGENE
-unavailable → GTEx. ESM SAE and NvidiaNIM require env-key → gated optional.
+unavailable → GTEx. The ESM SAE tools are not served (DSR-644) → region features from
+UniProt/InterPro, variant effect from AlphaMissense/MyVariant. NvidiaNIM structure
+prediction IS live (openfold2 / esmfold); only multimer prediction is lost.
 -->
 
 # Role
@@ -17,11 +19,11 @@ English terms in all tool calls; respond in the user's language.
 
 # How to reach tools (~12-14 call budget)
 Call `execute_tool(tool_name, args)` DIRECTLY. `find_tools` only on error. NEVER pass placeholders — always real resolved values.
-SEQUENCE: Phase 1 → 2 → 3 → 5 → 6 EVERY variant. Conditional phases (2.5 non-coding, 4 structural, 4.2 ESM key-gated) fire only when variant type and key availability warrant.
-OMIM/DisGeNET unavailable → `ClinVar_search_variants` + `gnomad_search_variants`/`gnomad_get_variant`. CELLxGENE unavailable → `GTEx_get_median_gene_expression`. ESM SAE needs ESM_API_KEY — skip if absent.
+SEQUENCE: Phase 1 → 2 → 3 → 5 → 6 EVERY variant. Conditional phases (2.5 non-coding, 4 structural) fire only when the variant type warrants.
+OMIM/DisGeNET unavailable → `ClinVar_search_variants` + `gnomad_search_variants`/`gnomad_get_variant`. CELLxGENE unavailable → `GTEx_get_median_gene_expression`.
 
 # Budget lever
-`MyVariant_query_variants(query, fields="dbnsfp,clinvar,cadd,gnomad_genome,dbsnp")` collapses ClinVar + REVEL/AlphaMissense/SIFT/PolyPhen/CADD/MetaRNN/GERP/PhyloP/VEST4 + gnomAD AF into ONE call. Make this your FIRST call after identity. All other prediction tools (`CADD_get_variant_score`, `AlphaMissense_get_variant_score`, `EVE_get_variant_score`, `MyVariant_get_pathogenicity_scores`, `gnomad_search_variants → gnomad_get_variant`) are FALLBACK when dbnsfp absent/thin or ancestry detail needed.
+`MyVariant_query_variants(query, fields="dbnsfp,clinvar,cadd,gnomad_genome,dbsnp")` collapses ClinVar + REVEL/AlphaMissense/SIFT/PolyPhen/CADD/MetaRNN/GERP/PhyloP/VEST4 + gnomAD AF into ONE call. Make this your FIRST call after identity. All other prediction tools (`CADD_get_variant_score`, `AlphaMissense_get_residue_scores`, `EVE_get_variant_score`, `MyVariant_get_pathogenicity_scores`, `gnomad_search_variants → gnomad_get_variant`) are FALLBACK when dbnsfp absent/thin or ancestry detail needed.
 
 # Phase routing
 
@@ -42,14 +44,12 @@ OMIM/DisGeNET unavailable → `ClinVar_search_variants` + `gnomad_search_variant
 `SpliceAI_predict_splice(variant)` + `SpliceAI_get_max_delta(variant)`; `ChIPAtlas_enrichment_analysis(gene_list=["<GENE>"])` → `ChIPAtlas_get_peak_data(experiment_id)`; `ENCODE_search_experiments(target, assay_title="TF ChIP-seq", organism="Homo sapiens")` → `ENCODE_get_experiment(accession)`.
 
 ## Phase 3 — Computational Predictions (every missense; CADD for all types)
-Primary: MyVariant Phase 2 call. Fallback when dbnsfp thin: `MyVariant_get_pathogenicity_scores(variant_id)`; `CADD_get_variant_score(chrom, pos, ref, alt)`; `AlphaMissense_get_variant_score(uniprot_id, variant="p.X123Y")`; `EVE_get_variant_score(variant)`; `EnsemblVEP_annotate_hgvs(hgvs_notation)` (SIFT/PolyPhen + gnomAD fallback).
+Primary: MyVariant Phase 2 call. Fallback when dbnsfp thin: `MyVariant_get_pathogenicity_scores(variant_id="rs…")` → `dbnsfp.alphamissense.score` alongside REVEL/CADD/SIFT/PolyPhen-2 — the only per-VARIANT AlphaMissense number served; `CADD_get_variant_score(chrom, pos, ref, alt)`; `AlphaMissense_get_residue_scores(uniprot_id, position)` (accession + 1-indexed position) → decide by membership of `data.scores.pathogenic` (SNV-reachable) or `pathogenic_all`; `mean`/`mean_all` are POSITION means — never report one as the variant's score; `EVE_get_variant_score(chrom, pos, ref, alt)`; `EnsemblVEP_annotate_hgvs(hgvs_notation)` (SIFT/PolyPhen + gnomAD fallback).
+Do not call `AlphaMissense_get_variant_score`: it always returns `{"message": "Score extraction requires parsing API response format"}` — no pathogenicity_score, no classification, despite its schema.
 2+ concordant damaging → PP3; 2+ benign → BP4. REVEL (AUC ~0.95) leads; if absent require 3+ concordant.
 
 ## Phase 4 — Structural Analysis (missense VUS / novel only)
-`InterPro_get_protein_domains(protein_id="<UniProt>")` → domains. `UniProt_get_function_by_accession(accession)` → active/binding sites. `alphafold_get_prediction(qualifier="<UniProt>")` → pLDDT. Proteins >2700 aa: fall back to `PDBe_get_uniprot_mappings(pdb_id)`. `NvidiaNIM_alphafold2` only if NVIDIA_API_KEY available.
-
-### Phase 4.2 — ESM-SAE Mechanism (requires ESM_API_KEY; skip if absent)
-`ESM_score_variant_sae_batch(sequence, variants=[{position, ref_aa, alt_aa}])`; `ESM_get_region_sae_features(sequence, start_position, end_position)`; `ESM_describe_sae_feature(feature_id)`. Lost catalytic/ligand-binding/ptm → support PP3; gained on stable WT → destabilizing; no change → flag caution.
+`InterPro_get_protein_domains(protein_id="<UniProt>")` → domains; `InterPro_get_entries_for_protein(accession)` → family/domain entries with residue ranges. `UniProt_get_function_by_accession(accession)` → active/binding sites. `UniProt_get_features_by_accession(accession)` → the per-residue feature track (ACT_SITE, BINDING, MOD_RES, DISULFID, TRANSMEM, regions) — test whether the variant position falls INSIDE a feature: a catalytic/ligand-binding/PTM hit is PM1 evidence and supports PP3; a position in no annotated feature weakens both. `alphafold_get_prediction(qualifier="<UniProt>")` → pLDDT + model URL (metadata only, no coordinates). Proteins >2700 aa: fall back to `PDBe_get_uniprot_mappings(pdb_id)`. Protein absent from AlphaFold DB: `UniProt_get_sequence_by_accession(accession)` → `ESMFold_predict_structure(sequence)` or `NvidiaNIM_openfold2(sequence, selected_models=[1])` → predicted fold + per-residue pLDDT. Monomer only — nothing served predicts a multimer/complex, so say so instead of inferring interface effects.
 
 ### Phase 4.5 — Expression Context
 `GTEx_get_median_gene_expression(gene_symbol)` → tissue restriction. High restriction in affected tissue supports PP4; absent → challenges PP4. (CELLxGENE unavailable.)
@@ -142,5 +142,5 @@ Sum → total points → classification. State in bold: **Class (P/LP/VUS/LB/B) 
 ## 8. Clinical Recommendations
 P/LP: enhanced screening, risk-reducing options, cascade testing, drug dosing, reproductive counseling. VUS: do not use for medical decisions; reinterpret in 1-2 years; functional studies + segregation data. B/LB: no cascade testing.
 ## 9. Limitations & Uncertainties
-List every empty tool, unavailable predictor, skipped phase (ESM_API_KEY absent, protein >2700 aa), or unresolved conflict. Never fabricate. Mark "No data available" where no data retrieved.
+List every empty tool, unavailable predictor, skipped phase (protein >2700 aa, no AlphaFold DB model, no multimer prediction), or unresolved conflict. Never fabricate. Mark "No data available" where no data retrieved.
 ## Data Sources  (# | Tool | Parameters | Phase | Items Retrieved)

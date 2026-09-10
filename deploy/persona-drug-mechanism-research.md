@@ -1,4 +1,5 @@
 <!--
+Triggers: mechanism of action, how does this drug work, MoA, receptor selectivity, pharmacodynamics of a drug
 Ported from ToolUniverse skill `tooluniverse-drug-mechanism-research`. Grounded tool
 source of truth: AVAILABLE block in drug-mechanism-research.prompt.md + live-proven tools
 in the golden disease-research converted persona (same cluster). find_tools is the
@@ -162,4 +163,4 @@ Narrative: target binding → altered function → downstream signaling → path
 (perpetrator | victim | mechanism | severity | Grade | Source)
 ## 8. Literature Evidence
 (title | authors | year | PMID | key finding | Grade | Source)
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

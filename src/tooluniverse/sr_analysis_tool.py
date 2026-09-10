@@ -14,6 +14,7 @@ import logging
 from typing import Dict, Any
 
 from .base_tool import BaseTool
+from .tool_name_utils import shorten_tool_name
 from .tool_registry import register_tool
 
 log = logging.getLogger(__name__)
@@ -65,6 +66,20 @@ class SRAnalysisTool(BaseTool):
     def run(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         tool_name = self.tool_config.get("name", "")
         exec_fn = _DISPATCH.get(tool_name)
+
+        if exec_fn is None:
+            # A name past the MCP length cap is served in its shortened form, so
+            # the call arrives as "ClinicalTrials_sear_by_inte_and_cond" while
+            # this map is keyed on the 51-character original. Match on the
+            # shortened form rather than aliasing, so any future long name works.
+            exec_fn = next(
+                (
+                    fn
+                    for key, fn in _DISPATCH.items()
+                    if shorten_tool_name(key, len(tool_name)) == tool_name
+                ),
+                None,
+            )
 
         if exec_fn is None:
             return {

@@ -324,7 +324,7 @@
   {
     "type": "ExecuteTool",
     "name": "execute_tool",
-    "description": "Execute a ToolUniverse tool directly with custom arguments. This is the primary way to run any tool in the ToolUniverse system. You must get the tool definition first to figure out the arguments to pass.",
+    "description": "Run a single ToolUniverse database tool by name and return its result — the primary way to fetch a grounded biomedical/chemistry fact (gene, protein, variant, drug, compound, pathway, trial, structure) from ~2,278 underlying tools (UniProt, ChEMBL, Open Targets, ClinicalTrials.gov, HPA, AlphaFold, PubChem, FAERS, EPO, GWAS Catalog, and more). WORKFLOW: first discover the tool and its input schema with find_tools(query) (omit categories) or get_tool_info(name), then call execute_tool(tool_name, arguments) with arguments matching that schema. Resolve entity names to IDs before calling (disease->EFO, drug->ChEMBL, gene->Ensembl/UniProt); never fabricate an ID — if you don't have one, find it with another tool first. For a multi-step biomedical WORKFLOW prefer get_skill (a binding playbook that orchestrates these tools for you); use execute_tool directly for a single ad-hoc lookup. Returns the tool's raw result, or an error describing the bad argument so you can correct and retry.",
     "use_case": "Execute any ToolUniverse tool by name with custom arguments. Use after discovering tools via find_tools or list_tools.",
     "workflow_hint": "First use find_tools or list_tools to discover available tools, then use execute_tool to run them with your specific parameters.",
     "related_tools": [
@@ -336,25 +336,13 @@
       "type": "object",
       "properties": {
         "tool_name": {
-          "type": "string",
-          "description": "Name of the tool to execute (e.g., 'example_tool_name')"
+          "description": "REQUIRED. Name of the tool to execute (e.g., 'example_tool_name'). Enforced by the tool itself, which answers with a readable error rather than failing schema validation."
         },
         "arguments": {
-          "oneOf": [
-            {
-              "type": "object",
-              "additionalProperties": true
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "Tool arguments as either (1) a JSON object dictionary or (2) a JSON string that decodes to an object. Object example: {\"param1\": \"value1\", \"param2\": 5}. JSON string example: \"{\\\"param1\\\": \\\"value1\\\", \\\"param2\\\": 5}\"."
+          "description": "Tool arguments as either (1) a JSON object dictionary or (2) a JSON string that decodes to an object. Object example: {\"param1\": \"value1\", \"param2\": 5}. JSON string example: \"{\\\"param1\\\": \\\"value1\\\", \\\"param2\\\": 5}\". Anything else is rejected by the tool with an explanation you can act on."
         }
       },
-      "required": [
-        "tool_name"
-      ]
+      "required": []
     },
     "return_schema": {
       "type": "object",

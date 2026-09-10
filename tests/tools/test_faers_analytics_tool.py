@@ -38,8 +38,12 @@ class TestFAERSAnalyticsTool:
         )
         
         assert result.get("status") in ["success", "error"]
-        
-        if result.get("status") == "success":
+
+        # The payload moved under a "data" envelope; these assertions still named
+        # the pre-envelope top level, so all six had been red regardless of the code.
+        result = result.get("data", result)
+
+        if result.get("status") == "success" or "error" not in result:
             assert "metrics" in result
             assert "ROR" in result["metrics"]
             assert "PRR" in result["metrics"]
@@ -63,8 +67,12 @@ class TestFAERSAnalyticsTool:
         )
         
         assert result.get("status") in ["success", "error"]
-        
-        if result.get("status") == "success":
+
+        # The payload moved under a "data" envelope; these assertions still named
+        # the pre-envelope top level, so all six had been red regardless of the code.
+        result = result.get("data", result)
+
+        if result.get("status") == "success" or "error" not in result:
             assert "stratification" in result
             assert isinstance(result["stratification"], list)
             print(f"\n✅ Total reports: {result['total_reports']}")
@@ -83,8 +91,12 @@ class TestFAERSAnalyticsTool:
         )
         
         assert result.get("status") in ["success", "error"]
-        
-        if result.get("status") == "success":
+
+        # The payload moved under a "data" envelope; these assertions still named
+        # the pre-envelope top level, so all six had been red regardless of the code.
+        result = result.get("data", result)
+
+        if result.get("status") == "success" or "error" not in result:
             assert "total_serious_events" in result
             assert "top_serious_reactions" in result
             print(f"\n✅ Total serious events: {result['total_serious_events']}")
@@ -104,8 +116,12 @@ class TestFAERSAnalyticsTool:
         )
         
         assert result.get("status") in ["success", "error"]
-        
-        if result.get("status") == "success":
+
+        # The payload moved under a "data" envelope; these assertions still named
+        # the pre-envelope top level, so all six had been red regardless of the code.
+        result = result.get("data", result)
+
+        if result.get("status") == "success" or "error" not in result:
             assert "drug1" in result
             assert "drug2" in result
             assert "comparison" in result
@@ -127,8 +143,12 @@ class TestFAERSAnalyticsTool:
         )
         
         assert result.get("status") in ["success", "error"]
-        
-        if result.get("status") == "success":
+
+        # The payload moved under a "data" envelope; these assertions still named
+        # the pre-envelope top level, so all six had been red regardless of the code.
+        result = result.get("data", result)
+
+        if result.get("status") == "success" or "error" not in result:
             assert "temporal_data" in result
             assert "trend_analysis" in result
             print(f"\n✅ Trend: {result['trend_analysis']['trend']}")
@@ -146,8 +166,12 @@ class TestFAERSAnalyticsTool:
         )
         
         assert result.get("status") in ["success", "error"]
-        
-        if result.get("status") == "success":
+
+        # The payload moved under a "data" envelope; these assertions still named
+        # the pre-envelope top level, so all six had been red regardless of the code.
+        result = result.get("data", result)
+
+        if result.get("status") == "success" or "error" not in result:
             assert "meddra_hierarchy" in result
             assert "PT_level" in result["meddra_hierarchy"]
             print(f"\n✅ Unique PTs: {result['meddra_hierarchy']['total_unique_PTs']}")

@@ -8,6 +8,10 @@ import os
 import pickle
 from datetime import datetime
 
+# Absolute: ComposeTool loads this file by path as `compose_module`, which has
+# no parent package, so a relative import raises at call time.
+from tooluniverse.utils import get_user_cache_dir, resolve_writable_path
+
 
 def compose(arguments, tooluniverse, call_tool):
     """
@@ -23,7 +27,12 @@ def compose(arguments, tooluniverse, call_tool):
     """
     try:
         # Extract arguments with defaults
-        output_path = arguments.get("output_path", "./tool_composition_graph")
+        # Relative paths resolve into the cache directory; the server's working
+        # directory belongs to root and this write is where the tool died.
+        output_path = resolve_writable_path(
+            arguments.get("output_path", "tool_composition_graph"),
+            get_user_cache_dir(),
+        )
         analysis_depth = arguments.get("analysis_depth", "detailed")
         min_compatibility_score = arguments.get("min_compatibility_score", 60)
         exclude_categories = arguments.get(
@@ -342,6 +351,11 @@ def _save_graph(graph_data, output_path):
     """Save the graph in multiple formats."""
 
     output_files = {}
+
+    # Resolved here as well as in compose(), so a direct caller cannot land back
+    # on the unwritable working directory. Resolution is idempotent.
+    output_path = resolve_writable_path(output_path, get_user_cache_dir())
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 
     try:
         # Save as JSON

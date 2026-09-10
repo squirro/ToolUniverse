@@ -176,8 +176,13 @@ class OpentargetTool(GraphQLTool):
             else:
                 return {
                     "status": "error",
-                    "error": f"Could not resolve disease name to EFO ID. "
-                    "Try passing efoId directly (e.g. EFO_0000384 for Crohn's disease).",
+                    # Must cite a LIVE id. EFO has migrated its disease branch to
+                    # MONDO and obsoleted the EFO disease terms, so the example
+                    # this message used to give (EFO_0000384) resolves to nothing
+                    # -- an error message recommending a dead identifier.
+                    "error": f"Could not resolve disease name to a disease ID. "
+                    "Try passing efoId directly (e.g. MONDO_0005011 for Crohn "
+                    "disease); OpenTargets indexes diseases under MONDO ids.",
                 }
 
         result = super().run(arguments)
@@ -202,6 +207,29 @@ class OpentargetTool(GraphQLTool):
                 if isinstance(arg_value, str) and "-" in arg_value:
                     modified_arguments[each_arg] = arg_value.replace("-", " ")
             result = super().run(modified_arguments)
+
+        # An id the platform cannot resolve comes back as {"data": {"disease": null}},
+        # and remove_none_and_empty_values strips the null to leave {"data": {}}.
+        # execute_query documents that callers are meant to tell that apart from a
+        # real empty result -- no caller ever did, so it surfaced as
+        # {"status": "success", "data": {}}. An agent reads that as "this disease
+        # genuinely has no associated targets" and reports a confident wrong answer
+        # it has no way to question.
+        if result.get("status") == "success" and "disease(" in self.query_schema:
+            data = result.get("data") or {}
+            if not data.get("disease"):
+                requested = arguments.get("efoId") or arguments.get("diseaseIds")
+                return {
+                    "status": "error",
+                    "error": (
+                        f"OpenTargets could not resolve the disease id {requested!r}, "
+                        "so there is no result to report (this is not an empty result "
+                        "set). The platform indexes many diseases under MONDO ids and "
+                        "plain EFO ids frequently do not resolve -- EFO_0000384 returns "
+                        "nothing while MONDO_0004975 returns data. Pass the MONDO id, "
+                        "or pass disease_name instead and it will be resolved by search."
+                    ),
+                }
 
         return result
 

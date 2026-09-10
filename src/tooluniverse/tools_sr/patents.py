@@ -13,7 +13,10 @@ Data sources:
 Score 0-1 where higher = more freedom to operate (fewer patents).
 """
 from __future__ import annotations
-import json, logging, os, re
+import json
+import logging
+import os
+import re
 from datetime import datetime
 
 log = logging.getLogger(__name__)
@@ -135,7 +138,8 @@ def _get_epo_token(timeout=20):
 
 def fetch_epo_patents(query, token, max_results=25, timeout=30):
     """Search EPO OPS published-data for patents. Uses curl --http1.1."""
-    import subprocess, urllib.parse
+    import subprocess
+    import urllib.parse
     if not token:
         return []
 
@@ -312,7 +316,8 @@ def _find_query_column(entity_type, all_cols):
 def exec_patent_landscape(arguments, input_table, output_table, db_path):
     """Search patents for entities in input table. Supports gene, drug, or topic
     entity types with different search strategies."""
-    import sqlite3, time
+    import sqlite3
+    import time
     from concurrent.futures import ThreadPoolExecutor as _TPE, as_completed
 
     indication = arguments.get("indication", "")

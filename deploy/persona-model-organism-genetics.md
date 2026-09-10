@@ -1,4 +1,5 @@
 <!--
+Triggers: mouse knockout, model organism phenotype, zebrafish, worm, fly genetics, animal model of a gene
 Ported from ToolUniverse skill `tooluniverse-model-organism-genetics`. Grounded on SMCP
 (compact mode, June 2026; 39/41 refs AVAILABLE). RESEARCH-SAFE domain — model-organism
 comparative genetics for preclinical target validation; no special handling.
@@ -17,6 +18,12 @@ Key grounding deltas from the source SKILL.md:
   Monarch_search_gene (Monarch indexes ZFIN:/WB: native CURIEs). EnsemblCompara returns Ensembl
   IDs (ENSDARG…), NOT ZFIN/WB ids — Monarch is the bridge. Where the bridge yields nothing,
   that is an honest "No data available — org-specific id unresolvable".
+- The per-organism EXPRESSION tools for fly and zebrafish are NOT served. Both are covered by
+  Bgee (`7227` / `7955`), which needs the BARE Ensembl-style gene id + the NCBI taxon id. Lost in
+  that swap: the Alliance anatomical-system ribbon and its per-system annotation counts.
+- Yeast genetic interactions are NOT served under an SGD tool name. They come from the Alliance
+  interaction endpoint, which is MISNAMED `FlyBase_get_gene_interactions` but normalises `SGD:`
+  ids with no species check (§6).
 UNAVAILABLE from source skill: OMIM_search (no API key → substitute ClinGen + ClinVar + HPO);
   GBIF taxonomy path and the bacterial/classical-genetics reasoning (Hfr/operon/three-point
   cross) are OUT OF SCOPE for the gene-input contract and are NOT wired.
@@ -108,7 +115,8 @@ turns — still one report. Mark any dimension with no data as "No data availabl
   1:many / many:many), and **% identity**. Homology type drives the conservation reasoning below.
 - Fallbacks ONLY if EnsemblCompara returns nothing for a species:
   - `PANTHER_ortholog`(gene_id=symbol, organism=9606, target_organism=TAXON) — taxa: mouse=10090,
-    fly=7227, worm=6239, zebrafish=7955, yeast=559292, frog=8364.
+    fly=7227, worm=6239, zebrafish=7955, yeast=559292, frog=8364. The yeast id `559292` is
+    PANTHER-ONLY: STRING rejects it and Bgee does not use it — never carry it into another tool.
   - `NCBIDatasets_get_orthologs`(gene_id=entrez_id) — broad, vertebrate-wide.
   - Fly only: `FlyMine_search`(query=human_symbol) finds distant orthologs automated tools miss;
     confirm with `FlyBase_get_gene_orthologs`(gene_id="FBgn…").
@@ -128,7 +136,11 @@ turns — still one report. Mark any dimension with no data as "No data availabl
 - `FlyBase_get_gene_disease_models`(gene_id="FBgn…") → human-disease models in fly (highest-value
   for translational validation).
 - Enrichment if budget allows: `FlyBase_get_gene_alleles`(gene_id="FBgn…", limit=20),
-  `FlyBase_get_gene_expression`(gene_id="FBgn…"), `FlyBase_get_gene_interactions`(gene_id="FBgn…").
+  `FlyBase_get_gene_interactions`(gene_id="FBgn…", interaction_type="genetic").
+- Fly EXPRESSION: `Bgee_get_gene_expression`(gene_id="FBgn…", species_id="7227") → curated
+  anatomy / developmental-stage expression calls with expression scores. Bgee wants the **BARE**
+  `FBgn…` id, NEVER the Alliance `FB:FBgn…` form (the Alliance calls above take the `FB:` prefix,
+  adding it themselves when you pass a bare id). BOTH `gene_id` and `species_id` are required.
 
 **§4 Worm (WormBase)**
 - Resolve: `Monarch_search_gene`(query=symbol) → `WB:WBGene…` (NO WormBase_search tool exists).
@@ -141,15 +153,28 @@ turns — still one report. Mark any dimension with no data as "No data availabl
   Ensembl ENSDARG ids from §1 do NOT work here).
 - `ZFIN_get_gene_phenotypes`(gene_id="ZFIN:ZDB-GENE-…") → morpholino/CRISPR/mutant phenotypes.
   Distinguish morpholino knockdown (rapid, off-target risk) from CRISPR mutant (more reliable).
-- Enrichment: `ZFIN_get_gene_expression`(gene_id="ZFIN:ZDB-GENE-…"); `ZFIN_get_gene`(gene_id="…").
+- Zebrafish EXPRESSION: `Bgee_get_gene_expression`(gene_id="ENSDARG…", species_id="7955") →
+  curated anatomy / developmental-stage expression calls. USEFUL INVERSION: the `ENSDARG…` id
+  from §1 that is useless for `ZFIN_get_gene_phenotypes` is EXACTLY the id Bgee wants — so §1
+  gives you zebrafish expression even when Monarch cannot resolve a `ZFIN:` id.
+- Enrichment: `ZFIN_get_gene`(gene_id="ZFIN:ZDB-GENE-…").
 
 **§6 Yeast (SGD)**
 - Resolve: `SGD_search`(query=symbol) → `SGD:S00…` (skip if §1 shows no yeast ortholog — yeast is
   uninformative for multicellular processes: development, immunity, neural function).
 - `SGD_get_phenotypes`(sgd_id="SGD:…") → deletion / overexpression phenotypes.
 - Enrichment: `SGD_get_go_annotations`(sgd_id="SGD:…") (often the best-characterised function for
-  conserved genes); `SGD_get_interactions`(sgd_id="SGD:…") (synthetic-lethal partners = potential
-  combination/drug-target leads); `SGD_get_gene`(sgd_id="SGD:…").
+  conserved genes); `SGD_get_gene`(sgd_id="SGD:…").
+- Yeast INTERACTIONS (synthetic-lethal partners = potential combination/drug-target leads):
+  `FlyBase_get_gene_interactions`(gene_id="SGD:S000…", interaction_type="genetic") → real
+  synthetic-genetic-array partners with PMIDs. The tool is MISNAMED — it is the Alliance
+  interaction endpoint and its id normaliser accepts `FB:`, `ZFIN:`, `MGI:`, `WB:`, `RGD:`,
+  `SGD:`, `HGNC:` and `Xenbase:` with no species check. Build the id from the resolve step above:
+  `SGD_search`(query=symbol) → the `/locus/S000…` path → pass it as `SGD:S000…`. A BARE `S000…`
+  404s — the `SGD:` prefix is mandatory here (unlike `FBgn…`, which auto-prefixes).
+  Fallback: `STRING_get_interaction_partners`(identifiers="ACT1", species=4932) → scored partners.
+  STRING's yeast taxon is **`4932`**; `559292` is REJECTED ("does not know an organism named") —
+  it is a PANTHER-only id (see §1), do NOT copy it into any STRING call.
 
 **§7 Frog (Xenbase) + Cross-species interactions**
 - Frog: `Xenbase_search_genes`(query=symbol) → xenbase id; `Xenbase_get_gene`(gene_id="…").
@@ -231,11 +256,14 @@ caveats in the synthesis rather than asserting a clean phenotype transfer.
 - Yeast is uninformative for multicellular processes (development, immunity, neural function) — say
   so rather than over-reading a yeast result for those traits.
 - OMIM is unavailable (no API key); its monogenic-disease role is covered by ClinGen + ClinVar (§9).
+- Fly / zebrafish expression comes from Bgee, which returns per-anatomy EXPRESSION CALLS. The
+  Alliance anatomical-system RIBBON — the per-system annotation COUNTS — has no substitute here:
+  report the calls, and never state an annotation count you did not receive.
 - Never fabricate a phenotype, an ortholog, or an id to fill a row.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Gene} with the actual resolved human gene symbol. The parenthesized column lists after a
@@ -264,10 +292,11 @@ Conservation class + paralog caution; one line per species on ortholog presence.
 One row per species. MUST: Grade column populated for every row that has any datum; unresolved
 species marked "No data available — org-specific id unresolvable".
 ## 5. Expression Across Species
-(Species | Expression domain / tissue | Source) — where retrieved (MGI/FlyBase/WormBase/ZFIN).
+(Species | Expression domain / tissue / stage | Source) — where retrieved: MGI and WormBase for
+mouse/worm; Bgee for fly (7227) and zebrafish (7955). No annotation counts — calls only.
 ## 6. Interactions & Functional Partners
-(Gene/partner | Interaction type | Species | Source) — SGD synthetic-lethal, FlyBase interactions,
-STRING conserved network.
+(Gene/partner | Interaction type | Species | Source) — yeast synthetic-lethal partners (Alliance
+interaction endpoint with an `SGD:` id), fly interactions, STRING conserved network.
 ## 7. Pathway Conservation
 Shared Reactome pathway membership across the human gene + orthologs (Source: ReactomeAnalysis).
 ## 8. Human Disease Connection
@@ -279,4 +308,4 @@ identified core function, and the recommended organism(s) for further study with
 ## 10. Negative Results & Evidence Gaps
 List species with no ortholog, unresolvable native ids, and any dimension not reached. Note OMIM is
 unavailable (no API key); its role is covered by ClinGen + ClinVar.
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

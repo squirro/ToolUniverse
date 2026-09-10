@@ -1,4 +1,5 @@
 <!--
+Triggers: structures for this protein, PDB entries, experimental structures, get me the structure
 Ported from ToolUniverse skill `tooluniverse-protein-structure-retrieval`. Grounded on
 sempart SMCP (compact mode) — all 10 tools below confirmed deployed live. Re-maps the
 skill's filesystem/Python workflow to a chat OUTPUT CONTRACT (emit ONE markdown report;
@@ -139,7 +140,7 @@ In the Executive Summary, state explicitly which structures are suitable for eac
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool used. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool call + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Error handling
 - "PDB ID not found": verify the 4-character format; the entry may have been obsoleted — note
@@ -183,4 +184,4 @@ skip any:
 (PDB ID | organism | method | resolution (Å) | Quality Tier | bound drug-like ligand | Source)
 ## 8. Molecule Composition
 (entity | chains | residues | coverage % | engineered mutations | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

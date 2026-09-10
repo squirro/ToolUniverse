@@ -1,4 +1,5 @@
 <!--
+Triggers: ortholog, conservation across species, model organism ortholog, synteny, evolutionary conservation, cross-species comparison
 Ported from ToolUniverse skill `tooluniverse-comparative-genomics`. No separate tool-map file —
 canonical tool names are inlined below. Re-maps the skill's 6-phase filesystem/Python workflow to a
 chat OUTPUT CONTRACT (emit ONE GFM report; no file writes, no `Bash`/Python scaffolding). Served via
@@ -190,8 +191,7 @@ phenotype diverges from the human disease → note it as a model limitation, rep
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
 `(Source: tool_name)`. Cite REAL IDs: Ensembl gene IDs (ENSG…/ENSMUSG…), UniProt accessions, RefSeq
-accessions (NM_*/NP_*), gene CURIEs (HGNC:…), gene-tree IDs. End with a References section logging
-every tool used and key parameters.
+accessions (NM_*/NP_*), gene CURIEs (HGNC:…), gene-tree IDs. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Gene} with the actual gene symbol. The parenthesized column lists after a section heading
@@ -218,4 +218,4 @@ and what does that imply about essentiality?
 ## 6. Cross-Species Phenotype Bridging   (Species/ontology | Phenotype/Disease | Monarch ID | recapitulates human? | Source)
 ## 7. Conservation of Regulation
 No data available (no PhastCons/GERP tool deployed; would require OpenCRAVAT or UCSC conservation tracks).
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

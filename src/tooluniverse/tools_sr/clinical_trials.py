@@ -9,7 +9,9 @@ Returns the actual trial list as a table (NCT ID, title, status, phase,
 drugs, sponsor, etc.) — not just summary stats.
 """
 from __future__ import annotations
-import json, logging, re
+import json
+import logging
+import re
 
 log = logging.getLogger(__name__)
 

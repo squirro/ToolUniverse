@@ -10,7 +10,10 @@ Combines multiple sources for comprehensive drug/intervention synonym coverage:
 All sources use requests + stdlib only (no cross-module imports).
 """
 from __future__ import annotations
-import json, logging, re, threading
+import json
+import logging
+import re
+import threading
 
 log = logging.getLogger(__name__)
 
@@ -325,7 +328,6 @@ def expand_synonyms(term, timeout=15, max_terms=15):
         sym = element_symbol(term)
         full = element_name(term)
         if sym or full:
-            resolved_name = full or term.lower()
             # Don't add bare short symbols — too ambiguous
             results["isotope"] = []
 

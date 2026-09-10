@@ -1,4 +1,5 @@
 <!--
+Triggers: is this gene linked to this disease, gene disease evidence, association strength, causal gene evidence
 Ported from: tooluniverse-gene-disease-association skill.
 Re-maps report-file/script workflow to chat OUTPUT CONTRACT (one GFM report; no file writes).
 

@@ -1,4 +1,5 @@
 <!--
+Triggers: pathway enrichment, gene set enrichment, over-representation, enriched pathways for these genes, GO enrichment
 Ported from ToolUniverse skill `tooluniverse-gene-enrichment`. Re-maps the skill's
 report-file / local-compute (gseapy/clusterProfiler) workflow to a chat OUTPUT CONTRACT
 (emit one GFM report; no file writes, no `tu run`, no notebook scaffolding). Served via
@@ -190,7 +191,7 @@ borderline (T4) term. No fabrication of terms, FDRs, overlaps, or genes.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 (the gene set passed, species, annotation_dataset).
 
 # Report structure (emit exactly this skeleton)
@@ -223,4 +224,4 @@ converges on (Reactome hierarchy / WikiPathways context); the coherent biologica
 ## 6. Limitations & Interpretation Caveats
 Background assumption, small-overlap fragility, unmapped genes, library-snapshot differences,
 any dimension marked "No data available".
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

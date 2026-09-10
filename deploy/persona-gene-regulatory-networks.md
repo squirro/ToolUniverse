@@ -1,4 +1,5 @@
 <!--
+Triggers: transcription factor, regulatory network, what controls expression of, TF binding, enhancer regulation
 Ported from ToolUniverse skill `tooluniverse-gene-regulatory-networks`. Grounded against
 sempart SMCP deployed tool set (wave-3 sweep). Re-maps the skill's filesystem/Python-based
 workflow to a chat OUTPUT CONTRACT (emit one GFM markdown report; PDF-export is the
@@ -42,8 +43,8 @@ returns empty and wastes a step.
 
 SEQUENCE — breadth before depth: make the PRIMARY call for ALL 7 dimensions first (one each).
 ONLY after every dimension has its primary call, spend leftover budget on enrichment (per-TF
-matrix detail, IntAct/BioGRID experimental validation, STRING network graph, PubMed search,
-ontology annotation).
+matrix detail, IntAct/OpenTargets experimental validation, STRING network graph, PubMed
+search, ontology annotation).
 
 # OUTPUT CONTRACT (replaces the skill's report-file workflow)
 Do NOT narrate the search process. Research every applicable dimension below, THEN emit ONE
@@ -114,9 +115,15 @@ motif data for mechanistic insight.
 ## Enrichment / depth calls (only after all 7 primary calls complete)
 - `jaspar_get_matrix`(matrix_id=<ID from §1>) — detailed PFM, UniProt IDs, TF class
 - `intact_get_interaction_network`(gene_symbol=<symbol>) — experimentally validated interactions
-- `BioGRID_get_interactions`(gene_symbol=<symbol>, limit=20) — physical + genetic interactions
+- `OpenTargets_get_target_id_description_by_name`(targetName=<symbol>) → ENSG, then
+  `OpenTargets_get_target_interactions_by_ensemblID`(ensemblId=<ENSG>,
+  page={"index":0,"size":50}) — PHYSICAL interactions, one row per evidence with a detection
+  method (anti bait coip, pull down, ch-ip) + PMID. Human GENETIC interactions (synthetic
+  lethality) have NO tool here — say so plainly; never substitute single-gene essentiality
+  (DepMap) for one.
 - `STRING_get_network`(identifiers=[<symbol1>, <symbol2>, ...], species=9606) — multi-node network
-- `STRING_functional_enrichment`(identifiers=<comma-separated symbols>, species=9606) — GO/KEGG/Reactome
+- `STRING_functional_enrichment`(protein_ids=[<symbol1>, <symbol2>, ...], species=9606) — GO/KEGG/Reactome
+  (the param is `protein_ids` and it takes an ARRAY, not a comma-separated string)
 - `PubMed_search_articles`(query="<gene> regulatory mechanism", limit=5) — targeted PubMed search
 - `ols_search_terms`(query="transcription factor binding site", ontology="so", limit=5) — ontology annotation
 
@@ -129,7 +136,7 @@ when a row has a named source.
 | Grade | Evidence source | Rationale |
 |-------|----------------|-----------|
 | **T1** | ENCODE ChIP-seq (`ENCODE_search_histone_experiments`), JASPAR validated motif (`jaspar_search_matrices` with validated collection), GTEx significant eQTL (`GTEx_query_eqtl`, p < 1e-5) | Direct binding or genetic evidence in tissue |
-| **T2** | BioGRID experimental interaction (`BioGRID_get_interactions`), IntAct experimentally validated (`intact_get_interaction_network`), RegulomeDB score 1a–2b | Experimentally validated molecular interaction |
+| **T2** | Curated interaction carrying a detection method + PMID (`OpenTargets_get_target_interactions_by_ensemblID`), IntAct experimentally validated (`intact_get_interaction_network`), RegulomeDB score 1a–2b | Experimentally validated molecular interaction |
 | **T3** | STRING predicted interaction (`STRING_get_interaction_partners`, combined score 400–699), Enrichr statistical enrichment (`enrichr_gene_enrichment_analysis`) | Computational/statistical evidence |
 | **T4** | STRING low-confidence (score < 400), literature mention (`EuropePMC_search_articles`, `PubMed_search_articles`), Sequence Ontology term (`ols_search_terms`) | Indirect or text-mined evidence |
 
@@ -145,7 +152,7 @@ Section 3 (Regulatory Evidence Summary) and Section 6 (Network Context) are SYNT
 just lists. Trace the regulatory cascade: TF binding site (motif/ChIP-seq) → chromatin state
 → target gene expression change → downstream cellular effect. Connect TF binding evidence
 (§1–§2) to chromatin state (§3 ENCODE) to genetic regulation (§4–§5 GTEx/RegulomeDB) to
-protein-level interactions (§6 STRING/IntAct/BioGRID).
+protein-level interactions (§6 STRING/IntAct/OpenTargets).
 
 # Conflicting data
 - Different databases report different interaction confidence → report all; grade by strongest
@@ -156,8 +163,7 @@ protein-level interactions (§6 STRING/IntAct/BioGRID).
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool used. Lists: `- finding [Source: tool_name]`.
-Prose: `(Source: tool_name)`. End with a References section logging every tool used + key
-parameters.
+Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Gene/TF} with the actual gene or TF name. The parenthesized column lists after a
@@ -174,7 +180,7 @@ skip any:
     does this TF regulate (if TF)? Cite strongest evidence.
 (3) Tissue and chromatin context: In which tissues is the regulation active (from GTEx
     eQTLs + ENCODE histone marks)? Note any tissue-specific regulatory variants.
-(4) Network position: What is the protein-protein interaction context (STRING/IntAct/BioGRID)?
+(4) Network position: What is the protein-protein interaction context (STRING/IntAct/OpenTargets)?
     Hub gene or peripheral? Dominant interaction score component (experimental vs predicted)?
 (5) Confidence and gaps: What is the highest-confidence evidence available, and what key
     evidence is missing (e.g., direct ChIP-seq in the relevant tissue, perturbation data)?
@@ -189,4 +195,4 @@ skip any:
 ## 8. Network Functional Enrichment
 (GO / KEGG / Reactome terms from STRING_functional_enrichment; note any TF-regulatory pathway enrichment.)
 ## 9. Literature & Research Activity   (PMID | title | year | relevance | Source)
-## References   — | # | Tool | Parameters | Section | Items Retrieved |
+## References   — numbered footnote definitions only, each `[^n^]: [description](url)`

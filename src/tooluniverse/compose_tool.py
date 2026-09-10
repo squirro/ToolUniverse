@@ -126,28 +126,28 @@ class ComposeTool(BaseTool):
             return set(), missing_tools
 
         tool_to_category = self._get_tool_category_mapping()
-        categories_to_load = set()
         successfully_loaded = set()
-        failed_to_load = set()
 
-        # Determine which categories need to be loaded
-        for tool_name in missing_tools:
-            category = tool_to_category.get(tool_name)
-            if category:
-                categories_to_load.add(category)
-            else:
-                failed_to_load.add(tool_name)
+        # A dependency we can locate in a category file is loadable by name.
+        loadable = {name for name in missing_tools if tool_to_category.get(name)}
 
-        # Load the required categories
-        for category in categories_to_load:
+        if loadable:
             try:
                 print(
-                    f"🔄 Auto-loading category '{category}' for ComposeTool '{self.name}'"
+                    f"🔄 Auto-loading {len(loadable)} dependencies for "
+                    f"ComposeTool '{self.name}'"
                 )
-                self.tooluniverse.load_tools(tool_type=[category])
+                # include_tools= is ADDITIVE and scans every category file.
+                # A category-filtered load (tool_type=/categories=) instead takes
+                # load_tools' full-reload branch, which clears all_tools and
+                # all_tool_dict before refilling them from that one category --
+                # evicting every other tool from the shared registry, for the
+                # life of the process. Served over MCP that removed all ~2,261
+                # tools, including the meta-tools, for every client until the
+                # container was restarted. See DSR-634.
+                self.tooluniverse.load_tools(include_tools=sorted(loadable))
 
-                # Check which tools from this category are now available
-                for tool_name in missing_tools:
+                for tool_name in loadable:
                     # Check both callable_functions and all_tool_dict
                     if (
                         tool_name in self.tooluniverse.callable_functions
@@ -156,7 +156,7 @@ class ComposeTool(BaseTool):
                         successfully_loaded.add(tool_name)
 
             except Exception as e:
-                print(f"❌ Failed to auto-load category '{category}': {e}")
+                print(f"❌ Failed to auto-load dependencies: {e}")
 
         failed_to_load = missing_tools - successfully_loaded
 

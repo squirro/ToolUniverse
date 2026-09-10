@@ -267,8 +267,8 @@ from .ClinGen_get_variant_classifications import ClinGen_get_variant_classificat
 from .ClinGen_search_actionability import ClinGen_search_actionability
 from .ClinGen_search_dosage_sensitivity import ClinGen_search_dosage_sensitivity
 from .ClinGen_search_gene_validity import ClinGen_search_gene_validity
-from .ClinVar_get_clinical_significance import ClinVar_get_clinical_significance
-from .ClinVar_get_variant_details import ClinVar_get_variant_details
+from .clinvar_get_clinical_significance import ClinVar_get_clinical_significance
+from .clinvar_get_variant_details import ClinVar_get_variant_details
 from .ClinVar_search_variants import ClinVar_search_variants
 from .ClinicalTrialDesignAgent import ClinicalTrialDesignAgent
 from .ClinicalTrials_get_database_stats import ClinicalTrials_get_database_stats
@@ -2217,7 +2217,7 @@ from .dbfetch_fetch_entry import dbfetch_fetch_entry
 from .dbfetch_list_databases import dbfetch_list_databases
 from .dbfetch_list_formats import dbfetch_list_formats
 from .dbsnp_get_frequencies import dbsnp_get_frequencies
-from .dbsnp_get_variant_by_rsid import dbsnp_get_variant_by_rsid
+from .dbSNP_get_variant_by_rsid import dbsnp_get_variant_by_rsid
 from .dbsnp_search_by_gene import dbsnp_search_by_gene
 from .dict_search import dict_search
 from .dili_search import dili_search

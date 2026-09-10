@@ -440,12 +440,16 @@ def exec_analyze_table(arguments, input_table, output_table, db_path):
     runtime_args: Dict[str, Any] = {}
     try:
         import pandas as _pd
-        _make_df = lambda records: _pd.DataFrame(records)
+
+        def _make_df(records):
+            return _pd.DataFrame(records)
     except ImportError:
         log.warning("exec_analyze_table: pandas not installed; injecting "
                     "session tables as list-of-dicts. LLM code that expects "
                     "DataFrame methods will fail.")
-        _make_df = lambda records: records
+
+        def _make_df(records):
+            return records
     table_names = _introspect_session_tables(db_path)
     for tname in table_names:
         records = _read_table_as_records(db_path, tname)

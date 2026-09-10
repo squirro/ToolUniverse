@@ -60,8 +60,10 @@ class ProteinsAPIRESTTool(BaseTool):
         elif tool_name == "proteins_api_get_epitopes":
             accession = args.get("accession", "")
             if accession:
-                # Try epitopes endpoint, fallback to main protein endpoint
-                return f"{self.base_url}/proteins/{accession}/epitopes"
+                # Singular, and NOT under /proteins: `/proteins/{acc}/epitopes`
+                # answers 404, which used to send this into a fallback that
+                # scraped the main entry and found nothing.
+                return f"{self.base_url}/epitope/{accession}"
 
         elif tool_name == "proteins_api_search":
             # Proteins API search uses query parameter, not path

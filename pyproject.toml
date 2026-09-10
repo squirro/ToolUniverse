@@ -30,7 +30,6 @@ dependencies = [
     "huggingface_hub>=0.34.0",
     "jsonpath-ng>=1.6.0",
     "rcsb-api>=1.4.0",
-    "fitz>=0.0.1.dev2",
     "pandas>=2.2.3",
     "setuptools>=70.0.0", # Fix pkg_resources deprecation warnings
     "pdfplumber>=0.11.0",
@@ -62,6 +61,12 @@ smolagents = [
 singlecell = [
     "cellxgene-census>=1.10.0",  # CELLxGENE Census API
     "tiledbsoma>=1.15.3",  # Required for spatial data
+]
+# Skill Processes (ADR-0016): the process is BBO/RDF in GraphDB, the run is a
+# Temporal workflow whose worker lives inside SMCP.
+skill-process = [
+    "temporalio>=1.7.0",
+    "rdflib>=7.0",
 ]
 dev = [
     "pytest>=7.0",
@@ -166,11 +171,11 @@ tooluniverse-doctor = "tooluniverse.doctor:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-tooluniverse = ["data/*", "data/packages/*"]
+tooluniverse = ["data/*", "data/packages/*", "data/skill_graphs/*"]
 
 [dependency-groups]
 dev = [
-    "tooluniverse[dev,embedding]",
+    "tooluniverse[dev,embedding,skill-process]",
 ]
 
 [tool.uv.sources]

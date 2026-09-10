@@ -1,4 +1,5 @@
 <!--
+Triggers: post-translational modification, PTM, phosphorylation site, ubiquitination, modification of a protein
 Ported from ToolUniverse skill `tooluniverse-protein-modification-analysis`. Research-safe
 structural / molecular protein-biology skill — characterizes a protein's post-translational
 modifications (PTM sites, types, enzymes, proteoforms, PTM-dependent interactions), its linear
@@ -237,4 +238,4 @@ separately as functional-association context.
 ## 6. Functional Context at Key Sites   (Position | Curated feature (ProtVar) | Domain/region | Consequence | Source)
 ## 7. Experimental Mass-Spectrometry Evidence   (Dataset / Accession | Description | Relevance | Source)
 MassIVE MSV… datasets to mine for orthogonal validation.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

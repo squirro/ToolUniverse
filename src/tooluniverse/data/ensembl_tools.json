@@ -624,6 +624,7 @@
     "name": "ensembl_get_homology",
     "description": "Get homology (orthologues and paralogues) for a gene by symbol across species. Returns evolutionary relationships with gene IDs, protein IDs, chromosomal locations, and homology types (1-to-1, 1-to-many, etc). Essential for comparative genomics studies.",
     "endpoint": "/homology/symbol/{species}/{symbol}",
+    "timeout": 120,
     "parameter": {
       "type": "object",
       "properties": {

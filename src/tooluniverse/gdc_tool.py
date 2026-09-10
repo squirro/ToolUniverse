@@ -474,7 +474,16 @@ class GDCGeneExpressionTool:
     config={
         "name": "GDC_get_cnv_data",
         "type": "GDCCNVTool",
-        "description": "Query copy number variation (CNV) data from GDC/TCGA",
+        "description": (
+            "Query copy number variation (CNV) data from GDC/TCGA. "
+            "WITH `gene_symbol`: returns per-gene CNV calls for the cohort plus a "
+            "`cnv_change_counts` gain/loss split and a `total` — this is how to get "
+            "a cohort alteration frequency (e.g. PTEN in TCGA-PRAD: 159 occurrences, "
+            "151 Loss, 8 Gain). Pair it with GDC_get_mutation_frequency for the "
+            "mutation half, and note GDC's 'Loss' merges shallow and deep deletions. "
+            "WITHOUT `gene_symbol`: lists the cohort's raw CNV FILES, which is not a "
+            "frequency and is rarely what a biological question wants."
+        ),
         "parameter": {
             "type": "object",
             "properties": {
@@ -505,6 +514,66 @@ class GDCCNVTool:
     def __init__(self, tool_config=None):
         self.tool_config = tool_config or {}
 
+    def _gene_cnv_occurrences(
+        self, base, project_id, gene_symbol, arguments, timeout
+    ):
+        """Per-gene CNV calls for a cohort, with the gain/loss split counted.
+
+        Verified against GDC 2026-08-03: PTEN in TCGA-PRAD returns 159
+        occurrences, 151 Loss and 8 Gain. cBioPortal reports the same locus as
+        95 deep + 64 shallow deletions of 492 samples; GDC's "Loss" merges those
+        two buckets, and 95 + 64 = 159.
+        """
+        filters = {
+            "op": "and",
+            "content": [
+                {
+                    "op": "=",
+                    "content": {
+                        "field": "cnv.consequence.gene.symbol",
+                        "value": [gene_symbol],
+                    },
+                },
+                {
+                    "op": "=",
+                    "content": {
+                        "field": "cases.project.project_id",
+                        "value": [project_id],
+                    },
+                },
+            ],
+        }
+        query = {
+            "filters": json.dumps(filters),
+            "fields": "cnv.cnv_change,cnv.gene_level_copy_number,case.case_id",
+            "size": arguments.get("size", 100),
+        }
+        url = f"{base}/cnv_occurrences?{urlencode(query)}"
+        try:
+            data = _http_get(
+                url, headers={"Accept": "application/json"}, timeout=timeout
+            )
+            payload = data.get("data", data) if isinstance(data, dict) else {}
+            hits = payload.get("hits", []) or []
+            counts = {}
+            for hit in hits:
+                change = (hit.get("cnv") or {}).get("cnv_change")
+                if change:
+                    counts[change] = counts.get(change, 0) + 1
+            return {
+                "status": "success",
+                "source": "GDC",
+                "endpoint": "cnv_occurrences",
+                "project": project_id,
+                "gene_symbol": gene_symbol,
+                "total": (payload.get("pagination") or {}).get("total"),
+                "cnv_change_counts": counts,
+                "returned": len(hits),
+                "data": data,
+            }
+        except Exception as e:
+            return {"status": "error", "error": str(e), "source": "GDC"}
+
     def run(self, arguments: Dict[str, Any]):
         base = self.tool_config.get("settings", {}).get(
             "base_url", "https://api.gdc.cancer.gov"
@@ -514,6 +583,18 @@ class GDCCNVTool:
         project_id = arguments.get("project_id")
         if not project_id:
             return {"status": "error", "error": "project_id parameter is required"}
+
+        # A gene-qualified request goes to /cnv_occurrences, which is the only
+        # endpoint that can filter by gene: a copy-number FILE covers the whole
+        # genome, so /files has nothing per-gene to select. `gene_symbol` was
+        # declared in the schema and then never referenced, so asking for PTEN in
+        # TCGA-PRAD returned 3,005 unfiltered file records with no sign the
+        # filter had been dropped.
+        gene_symbol = arguments.get("gene_symbol")
+        if gene_symbol:
+            return self._gene_cnv_occurrences(
+                base, project_id, gene_symbol, arguments, timeout
+            )
 
         # Build filters for CNV files
         filters = {

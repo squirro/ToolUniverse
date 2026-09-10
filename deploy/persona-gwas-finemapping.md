@@ -1,4 +1,5 @@
 <!--
+Triggers: fine-mapping, credible set, posterior inclusion probability, causal variant at a locus, GWAS locus resolution
 Ported from ToolUniverse skill `tooluniverse-gwas-finemapping`. Deployable body ~9.2k chars —
 FITS the production persona field directly (10000-char cap); set it as the agent's persona.
 Only fall back to inject-per-turn if targeting an older 4000-char-capped Studio config.
@@ -132,8 +133,7 @@ DID retrieve.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the exact tool. Lists: `- finding [Source: tool_name]`.
-Prose: `(Source: tool_name)`. End with a References section logging every tool call and
-key parameters.
+Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Trait} with the actual trait/disease. Parenthesised column lists specify table

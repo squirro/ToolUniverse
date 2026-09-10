@@ -18,6 +18,11 @@ from .tool_registry import register_tool
 
 LOVD_BASE_URL = "https://databases.lovd.nl/shared/api/rest.php"
 
+# LOVD serves its search routes only to a client that has passed its browser
+# check. Without this cookie it answers a "Checking your browser..." HTML page
+# with HTTP 200, which then fails as a JSON parse error naming the wrong thing.
+LOVD_COOKIES = {"lovd_cookie_check": "OK"}
+
 
 @register_tool("LOVDTool")
 class LOVDTool(BaseTool):
@@ -55,7 +60,18 @@ class LOVDTool(BaseTool):
         if params is None:
             params = {}
         params["format"] = "application/json"
-        response = requests.get(url, params=params, timeout=self.timeout)
+        response = requests.get(
+            url, params=params, cookies=LOVD_COOKIES, timeout=self.timeout
+        )
+        # Only for a 200: a 404 legitimately returns HTML and the callers turn
+        # it into a "not found" message of their own.
+        if response.status_code == 200 and "json" not in response.headers.get(
+            "content-type", ""
+        ):
+            raise requests.RequestException(
+                "LOVD returned an HTML page instead of JSON, which is its browser "
+                f"check rather than a data error: {url}"
+            )
         return response
 
     def _get_gene(self, arguments: Dict[str, Any]) -> Dict[str, Any]:

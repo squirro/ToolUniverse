@@ -25,7 +25,7 @@
           "description": "Filter by motif functional type. CLV=cleavage sites, DEG=degradation motifs, DOC=docking sites, LIG=ligand binding, MOD=modification sites, TRG=targeting signals. Omit for all types."
         }
       },
-      "required": ["operation"]
+      "required": ["operation", "uniprot_id"]
     },
     "return_schema": {
       "type": "array",

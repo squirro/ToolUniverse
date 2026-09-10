@@ -20,6 +20,10 @@ from .tool_registry import register_tool
 
 # Base URLs for ClinGen APIs
 CLINGEN_BASE_URL = "https://search.clinicalgenome.org"
+# Where the actionability curations actually live. The per-context hosts below are
+# retired (both /summ routes answer 404) and are kept only for the two tools that
+# still reference them, which should be re-pointed the same way when touched.
+ACTIONABILITY_SEARCH_URL = "https://search.clinicalgenome.org/api/actionability"
 ACTIONABILITY_ADULT_URL = "https://actionability.clinicalgenome.org/ac/Adult/api"
 ACTIONABILITY_PEDIATRIC_URL = (
     "https://actionability.clinicalgenome.org/ac/Pediatric/api"
@@ -306,34 +310,47 @@ class ClinGenTool(BaseTool):
         try:
             results = {"Adult": [], "Pediatric": []}
 
-            for context, base_url in [
-                ("Adult", ACTIONABILITY_ADULT_URL),
-                ("Pediatric", ACTIONABILITY_PEDIATRIC_URL),
-            ]:
-                try:
-                    url = f"{base_url}/summ?flavor=flat"
-                    headers = {"Accept": "application/json"}
-                    response = requests.get(url, headers=headers, timeout=self.timeout)
-                    response.raise_for_status()
+            # One request, not two. The per-context hosts
+            # (actionability.clinicalgenome.org/ac/{Adult,Pediatric}/api/summ) are
+            # both 404 now; the curation list moved to the search API, and each
+            # record already carries its own adult/paediatric assertions. The old
+            # loop wrapped each context in `except Exception: pass`, so two 404s
+            # became an empty result reported as success.
+            url = ACTIONABILITY_SEARCH_URL
+            response = requests.get(
+                url, headers={"Accept": "application/json"}, timeout=self.timeout
+            )
+            response.raise_for_status()
 
-                    data = response.json()
-                    curations = (
-                        data if isinstance(data, list) else data.get("data", data)
-                    )
+            payload = response.json()
+            curations = (
+                payload.get("rows", [])
+                if isinstance(payload, dict)
+                else payload
+            )
 
-                    # Filter by gene
-                    gene_upper = gene.upper()
-                    if isinstance(curations, list):
-                        matches = [
-                            c
-                            for c in curations
-                            if gene_upper in str(c.get("gene", "")).upper()
-                            or gene_upper in str(c.get("Gene", "")).upper()
-                        ]
-                        results[context] = matches
-                except Exception:
-                    # Continue with other context if one fails
-                    pass
+            # The records key on `symbol`. Matching `gene`/`Gene` returned nothing
+            # even when the request succeeded.
+            gene_upper = gene.upper()
+            matches = [
+                c
+                for c in curations
+                if isinstance(c, dict)
+                and str(c.get("symbol", "")).upper() == gene_upper
+            ]
+
+            for record in matches:
+                if any(a for a in (record.get("adults") or [])):
+                    results["Adult"].append(record)
+                if any(p for p in (record.get("pediatrics") or [])):
+                    results["Pediatric"].append(record)
+                # Curated but with neither assertion populated: report it once
+                # rather than dropping it, so "curated" is never mistaken for
+                # "not found".
+                if not any(a for a in (record.get("adults") or [])) and not any(
+                    p for p in (record.get("pediatrics") or [])
+                ):
+                    results["Adult"].append(record)
 
             return {
                 "status": "success",

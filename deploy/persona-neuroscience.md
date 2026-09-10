@@ -1,4 +1,5 @@
 <!--
+Triggers: neuroscience, brain circuit, neurodegeneration, CNS target, alpha-synuclein, neuronal biology
 Ported from ToolUniverse skill `tooluniverse-neuroscience`. Grounded on SMCP (compact mode,
 June 2026; 12/12 wired refs AVAILABLE). RESEARCH-SAFE domain — neuroscience literature,
 neural-gene/protein, and neuro-disease-genetics research; no special handling.
@@ -223,8 +224,7 @@ aggregate significance and note the conflict.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. Literature claims cite the PMID/title. End with a References section logging
-every tool used + key parameters.
+`(Source: tool_name)`. Literature claims cite the PMID/title. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Subject} with the actual disease / gene / circuit name. The parenthesized column lists
@@ -267,4 +267,4 @@ genes to §7 pathways and §2–§3 circuits. Include computed quantitative resu
 ## 9. Negative Results & Evidence Gaps
 List dimensions not applicable to this subject, unresolved WBGene ids, the Allen/FlyWire atlas
 limitation, and any dimension not reached (step budget).
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

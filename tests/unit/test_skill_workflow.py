@@ -30,8 +30,10 @@ from tooluniverse.skill_workflow import (  # noqa: E402
     ToolCall,
     absorb_step,
     bind_executor,
+    bind_lookup,
     bind_records,
     execute_tool,
+    place_mapping,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.asyncio]
@@ -87,7 +89,7 @@ def _stub(responses, record=None):
         records.append(skel)
         return "https://data.swissrockets.com/skills/runs/" + skel["run_id"]
 
-    return [execute_tool, absorb_step], record_run, calls, records
+    return [execute_tool, absorb_step, place_mapping], record_run, calls, records
 
 
 async def _run(env, responses, process, inputs, run_id="run-1", before_result=None, record=None):
@@ -589,3 +591,69 @@ async def test_a_closed_gateway_strands_nothing_on_temporal_either():
     assert handed["steps_skipped"] == [{"step": "map_terms", "gate": "requested"}]
     assert {k: v for k, v in handed.items() if k not in ("record", "run_id", "_records")} \
         == _in_memory(responses, gated, {"drug_name": "x"})
+
+
+# --- a judged mapping: checked against the source's list, placed by an ontology ---------
+
+MAPPED = {
+    "skill": "mapped", "inputs": ["drug_name"], "optional_inputs": ["requested_aes"],
+    "tables": {"faers_term_rows": "fact", "requested_meddra": "fact"},
+    "steps": [
+        {"id": "faers_counts",
+         "calls": [{"tool": "count_reactions", "arguments": {"drug": "{drug_name}"}}],
+         "collect": {"faers_term_rows": {"path": "result", "flatten": True, "fields": ["term"]}}},
+        {"id": "requested_terms", "requires": ["faers_counts"], "when": "requested_aes",
+         "judge": ["requested_meddra"],
+         "mapping": {"requested_meddra": {"of": "requested_aes",
+                                          "onto": {"rows": "faers_term_rows", "field": "term"}}},
+         "produces": ["requested_meddra"]},
+    ],
+}
+FAERS_TERMS = {"result": [{"term": t} for t in ("DEAFNESS", "TINNITUS", "FALL", "NAUSEA")]}
+STRAY = {"requested_meddra": [{"of": "ototoxicity", "term": "HEARING DAMAGE", "reason": "r",
+                               "concept": ["ear"]}]}
+MAPPING = {"requested_meddra": [
+    {"of": "ototoxicity", "term": "DEAFNESS", "reason": "hearing loss is the ototoxic injury",
+     "concept": ["ear", "hearing", "vestibular"]},
+    {"of": "ototoxicity", "term": "FALL", "reason": "may follow from dizziness",
+     "concept": ["ear", "hearing", "vestibular"]}]}
+
+
+def _recorded_lookup(term):
+    import json
+    recorded = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "ols"
+                           / "placing_probe_2026-09-21.json").read_text())
+    return recorded.get(term, {})
+
+
+async def test_a_judged_mapping_is_checked_and_placed_on_temporal_too():
+    """The runner's rule, on the host that serves: an invented term is asked again, and
+    every accepted term arrives in the hand-over with its placing."""
+    asked, answers = [], iter([STRAY, MAPPING])
+
+    async def map_twice(handle, env):
+        for _ in range(2):
+            state = await _wait_for_question(handle)
+            asked.append(state["waiting_for"])
+            await handle.signal(SkillWorkflow.answer, next(answers))
+
+    bind_lookup(_recorded_lookup)
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        handed, _ = await _run(env, {"count_reactions": FAERS_TERMS}, MAPPED,
+                               {"drug_name": "x", "requested_aes": ["ototoxicity"]},
+                               "run-mapped", before_result=map_twice)
+
+    assert "HEARING DAMAGE" in asked[1]["problem"]
+    assert [(r["of"], r["term"], r["placing"]) for r in handed["facts"]["requested_meddra"]] == [
+        ("ototoxicity", "DEAFNESS", "placed"), ("ototoxicity", "FALL", "not placed")]
+    assert handed["facts"]["requested_meddra_terms"] == ["DEAFNESS", "FALL"]
+    assert handed["mappings"] == ["requested_meddra"]
+
+    replies = iter([STRAY, MAPPING])
+    runner = SkillRunner(MAPPED, execute=lambda tool, a: FAERS_TERMS, ask=lambda q: next(replies),
+                         lookup=_recorded_lookup, records=tempfile.mkdtemp(prefix="working-records-"))
+    run_id = runner.start({"drug_name": "x", "requested_aes": ["ototoxicity"]})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+    assert {k: v for k, v in handed.items() if k not in ("record", "run_id", "_records")} \
+        == runner.handover(run_id)

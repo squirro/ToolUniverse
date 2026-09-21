@@ -24,6 +24,7 @@ from typing import Any
 from temporalio.client import Client
 from temporalio.worker import Worker
 
+from . import skill_ontology_placing
 from .skill_process_store import Store
 from .skill_runner import normalised_executor
 from .skill_workflow import (
@@ -32,9 +33,11 @@ from .skill_workflow import (
     SkillWorkflow,
     absorb_step,
     bind_executor,
+    bind_lookup,
     bind_recorder,
     bind_records,
     execute_tool,
+    place_mapping,
     record_run,
 )
 from .skill_working_record import records_dir
@@ -54,6 +57,7 @@ def build_worker(client: Client, tooluniverse: Any, *, task_queue: str = TASK_QU
     """A worker whose activity calls tools through the agent's door."""
     bind_executor(normalised_executor(tooluniverse.run_one_function))
     bind_records(records_dir())
+    bind_lookup(lambda term: skill_ontology_placing.lookup(term))
     try:
         bind_recorder(Store.from_env())
     except RuntimeError:
@@ -64,7 +68,7 @@ def build_worker(client: Client, tooluniverse: Any, *, task_queue: str = TASK_QU
         client,
         task_queue=task_queue,
         workflows=[SkillWorkflow],
-        activities=[execute_tool, absorb_step, record_run],
+        activities=[execute_tool, absorb_step, place_mapping, record_run],
         activity_executor=ThreadPoolExecutor(MAX_ACTIVITIES),
         workflow_runner=WORKFLOW_RUNNER,
     )

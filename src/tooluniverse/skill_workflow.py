@@ -49,8 +49,10 @@ from .skill_runner import (
     checked,
     handover_of,
     judged,
+    mapping_problem,
     new_run,
     next_runnable,
+    placed_mapping,
     question_for,
     substitute,
 )
@@ -148,6 +150,30 @@ def absorb_step(step: StepToAbsorb) -> dict:
     """Extract and collect where the results are; hand back the facts, not the results."""
     return absorb_recorded(_record_of(step.run_id), step.tables, step.spec, step.calls,
                            step.facts)
+
+
+@dataclass
+class MappingToPlace:
+    spec: dict
+    outcome: dict
+
+
+_lookup: Callable[[str], dict] | None = None
+
+
+def bind_lookup(lookup: Callable[[str], dict] | None) -> None:
+    """Point the placing activity at an ontology lookup; unbound, every placing is unknown."""
+    global _lookup
+    _lookup = lookup
+
+
+PLACING_TIMEOUT = timedelta(seconds=300)    # eight ontologies, two requests each, per term
+
+
+@activity.defn(name="place_mapping")
+def place_mapping(mapping: MappingToPlace) -> dict:
+    """Each mapped term gets its placing from the ontology service; evidence, never a gate."""
+    return placed_mapping(mapping.spec, mapping.outcome, _lookup)
 
 
 RECORD_TIMEOUT = timedelta(seconds=30)
@@ -270,11 +296,21 @@ class SkillWorkflow:
         outcome = judged(outcome, wants, answer)
         outcome, problem = checked(spec, step["id"], wants, outcome, self._run["facts"],
                                    answered=answer is not None)
+        problem = problem or mapping_problem(spec, outcome, self._run["facts"])
         if problem:
             answer = await self._ask({**question, "problem": problem})
             outcome = judged(outcome, wants, answer)
             outcome, _ = checked(spec, step["id"], wants, outcome, self._run["facts"],
                                  answered=False)
+            if mapping_problem(spec, outcome, self._run["facts"]):
+                for name in spec.get("mapping") or {}:
+                    outcome["facts"].pop(name, None)
+                    outcome["unresolved"].append(name)
+        if spec.get("mapping"):
+            outcome = await workflow.execute_activity(
+                place_mapping, MappingToPlace(spec, outcome),
+                start_to_close_timeout=PLACING_TIMEOUT,
+                retry_policy=RetryPolicy(maximum_attempts=2))
         return outcome
 
     async def _ask(self, question: dict) -> dict | None:

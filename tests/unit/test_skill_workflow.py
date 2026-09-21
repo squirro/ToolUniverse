@@ -567,3 +567,25 @@ async def test_a_second_failure_leaves_the_fact_unresolved_and_the_run_finishes(
     assert bundle["unresolved"] and bundle["unresolved"][0]["fact"] == "prr_table"
     assert bundle["blocked"] and "rows_of" in bundle["blocked"][0]["reason"]
     assert bundle["steps_done"] == ["compute"]
+
+
+async def test_a_closed_gateway_strands_nothing_on_temporal_either():
+    gated = {"skill": "gated", "inputs": ["drug_name"], "optional_inputs": ["requested"],
+             "steps": [
+                 {"id": "counts",
+                  "calls": [{"tool": "count_reactions", "arguments": {"drug": "{drug_name}"}}]},
+                 {"id": "map_terms", "requires": ["counts"], "when": "requested",
+                  "calls": [{"tool": "map_terms", "arguments": {"terms": "{requested}"}}]},
+                 {"id": "signals", "requires": ["map_terms"],
+                  "calls": [{"tool": "signal", "arguments": {"drug": "{drug_name}"}}],
+                  "extract": {"prr": "data.prr"}}]}
+    responses = {"count_reactions": {"data": {}}, "map_terms": {"data": {}},
+                 "signal": {"data": {"prr": 2.5}}}
+
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        handed, calls = await _run(env, responses, gated, {"drug_name": "x"}, "run-gated")
+
+    assert [tool for tool, _ in calls] == ["count_reactions", "signal"]
+    assert handed["steps_skipped"] == [{"step": "map_terms", "gate": "requested"}]
+    assert {k: v for k, v in handed.items() if k not in ("record", "run_id", "_records")} \
+        == _in_memory(responses, gated, {"drug_name": "x"})

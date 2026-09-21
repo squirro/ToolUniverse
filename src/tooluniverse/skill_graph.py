@@ -201,6 +201,58 @@ def _expand_calls(step: dict, facts: dict) -> list[dict]:
     return expanded
 
 
+_PRODUCING_KEYS = ("extract", "collect", "combine", "compute", "derive")
+
+
+def _produces(step: dict, name: str) -> bool:
+    return (name in (step.get("produces") or []) or name in (step.get("judge") or [])
+            or any(name in (step.get(key) or {}) for key in _PRODUCING_KEYS))
+
+
+def _gate_is_closed(graph: dict, step: dict, done: set[str], facts: dict) -> bool:
+    """A gateway that will not open: its fact is false, or nothing is left that could set it."""
+    name = step.get("when")
+    if not name:
+        return False
+    if name in facts:
+        return not facts[name]
+    return all(s["id"] in done for s in graph["steps"] if _produces(s, name))
+
+
+def _settled(graph: dict, done: set[str], facts: dict) -> set[str]:
+    """`done`, plus every step behind a closed gateway whose requirements are met.
+
+    Closing one gate can meet another step's requirements, so this runs to a fixpoint.
+    """
+    done = set(done)
+    while True:
+        closed = {s["id"] for s in graph["steps"]
+                  if s["id"] not in done
+                  and all(dep in done for dep in s.get("requires", []))
+                  and _gate_is_closed(graph, s, done, facts)}
+        if not closed:
+            return done
+        done |= closed
+
+
+def skipped_gates(graph: dict, done: list[str], facts: dict) -> list[dict]:
+    """Steps that did not run because their gateway closed, each with the gate's name."""
+    ran = set(done or [])
+    settled = _settled(graph, ran, facts or {})
+    return [{"step": s["id"], "gate": s["when"]} for s in graph["steps"]
+            if s["id"] in settled and s["id"] not in ran and s.get("when")]
+
+
+def stalled_steps(graph: dict, done: list[str], facts: dict) -> list[dict]:
+    """Steps that never ran and were not skipped, each with the requirements it still waited for."""
+    facts = facts or {}
+    settled = _settled(graph, set(done or []) | {
+        s["id"] for s in graph["steps"] if _vacuous(s, facts)}, facts)
+    return [{"step": s["id"],
+             "waiting_for": [dep for dep in s.get("requires", []) if dep not in settled]}
+            for s in graph["steps"] if s["id"] not in settled]
+
+
 def next_step(graph: dict, done: list[str], facts: dict) -> dict | None:
     """The one step to run now, or None when the procedure is finished.
 
@@ -211,8 +263,8 @@ def next_step(graph: dict, done: list[str], facts: dict) -> dict | None:
     facts = facts or {}
     # A loop with nothing to iterate is complete without running, so the steps
     # that require it are not left waiting for a call that will never be made.
-    done_set = set(done or []) | {
-        s["id"] for s in graph["steps"] if _vacuous(s, facts)}
+    done_set = _settled(graph, set(done or []) | {
+        s["id"] for s in graph["steps"] if _vacuous(s, facts)}, facts)
     for step in graph["steps"]:
         if not _is_runnable(step, done_set, facts):
             continue

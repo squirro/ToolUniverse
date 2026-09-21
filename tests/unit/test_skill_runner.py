@@ -1929,3 +1929,104 @@ def test_a_second_failure_leaves_the_fact_unresolved_and_says_why():
     assert {u["fact"] for u in out["unresolved"]} == {"prr_table"}
     assert state["blocked"] and "rows_of" in state["blocked"][0]["reason"]
     assert len(state["questions"]) == 2
+
+
+# --- a gateway that closes must not strand what comes after it ----------------
+
+GATED = {
+    "skill": "gated", "inputs": ["drug_name"], "optional_inputs": ["requested"],
+    "steps": [
+        {"id": "counts",
+         "calls": [{"tool": "count_reactions", "arguments": {"drug": "{drug_name}"}}],
+         "extract": {"top_terms": "data.terms"}},
+        {"id": "map_terms", "requires": ["counts"], "when": "requested",
+         "calls": [{"tool": "map_terms", "arguments": {"terms": "{requested}"}}],
+         "extract": {"mapped": "data.mapped"}},
+        {"id": "signals", "requires": ["map_terms"],
+         "calls": [{"tool": "signal", "arguments": {"terms": "{top_terms}"}}],
+         "extract": {"prr": "data.prr"}},
+    ],
+}
+GATED_RESPONSES = {"count_reactions": {"data": {"terms": ["NAUSEA"]}},
+                   "map_terms": {"data": {"mapped": ["DEAFNESS"]}},
+                   "signal": {"data": {"prr": 2.5}}}
+
+
+def test_a_step_that_requires_a_skipped_gated_step_still_runs():
+    """A question that names no reaction skips the mapping; the signals must still be computed."""
+    runner = SkillRunner(GATED, execute=lambda tool, a: GATED_RESPONSES[tool])
+    run_id = runner.start({"drug_name": "x"})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    handed = runner.handover(run_id)
+
+    assert handed["steps_done"] == ["counts", "signals"]
+    assert handed["facts"]["prr"] == 2.5
+
+
+EARLY = {
+    "skill": "early", "inputs": ["drug_name"],
+    "steps": [
+        {"id": "after_gate", "requires": ["stratify"],
+         "calls": [{"tool": "summarise", "arguments": {"drug": "{drug_name}"}}]},
+        {"id": "signals",
+         "calls": [{"tool": "signal", "arguments": {"drug": "{drug_name}"}}],
+         "extract": {"rows": "data.rows"},
+         "derive": {"strong": {"from": "rows", "field": "prr", "op": ">=", "value": 5,
+                               "mode": "any"}}},
+        {"id": "stratify", "when": "strong",
+         "calls": [{"tool": "stratify", "arguments": {"drug": "{drug_name}"}}]},
+    ],
+}
+
+
+@pytest.mark.parametrize("prr, expected", [
+    (17.7, ["signal", "stratify", "summarise"]),
+    (1.1, ["signal", "summarise"]),
+])
+def test_a_gate_whose_fact_is_not_decided_yet_is_not_closed_early(prr, expected):
+    """Absent is not false: the step that derives the gate's fact has not run yet."""
+    called = []
+
+    def execute(tool, arguments):
+        called.append(tool)
+        return {"data": {"rows": [{"prr": prr}]}}
+
+    runner = SkillRunner(EARLY, execute=execute)
+    run_id = runner.start({"drug_name": "x"})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    assert called == expected
+
+
+def test_a_skipped_gated_step_is_handed_over_as_skipped_with_its_gate():
+    """Not done, not blocked: the report can say what did not run and why."""
+    runner = SkillRunner(GATED, execute=lambda tool, a: GATED_RESPONSES[tool])
+    run_id = runner.start({"drug_name": "x"})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    handed = runner.handover(run_id)
+
+    assert handed["steps_skipped"] == [{"step": "map_terms", "gate": "requested"}]
+    assert handed["blocked"] == []
+
+
+def test_a_step_that_could_never_start_is_named_with_what_it_waited_for():
+    """A run that stops early must not read as a run that finished."""
+    stuck = {"skill": "stuck", "inputs": ["drug_name"], "steps": [
+        {"id": "counts",
+         "calls": [{"tool": "count_reactions", "arguments": {"drug": "{drug_name}"}}]},
+        {"id": "signals", "requires": ["counts", "map_terms"],
+         "calls": [{"tool": "signal", "arguments": {"drug": "{drug_name}"}}]}]}
+    runner = SkillRunner(stuck, execute=lambda tool, a: GATED_RESPONSES[tool])
+    run_id = runner.start({"drug_name": "x"})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    handed = runner.handover(run_id)
+
+    assert handed["steps_done"] == ["counts"]
+    assert handed["stalled"] == [{"step": "signals", "waiting_for": ["map_terms"]}]

@@ -35,7 +35,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from .skill_graph import SkillGraphError, _fill, next_step
+from .skill_graph import SkillGraphError, _fill, next_step, skipped_gates, stalled_steps
 from .skill_working_record import WorkingRecord
 
 _OPS: dict[str, Callable[[Any, Any], bool]] = {
@@ -450,6 +450,7 @@ def handover_of(graph: dict, run: dict) -> dict:
         "skill": graph["skill"],
         "facts": run["facts"],
         "steps_done": run["done"],
+        "steps_skipped": skipped_gates(graph, run["done"] + run["skipped"], run["facts"]),
         "calls": run.get("calls", {}),
         # The author's judgement, with the data: what each step means and how the
         # report must read the evidence. Blind-judged 2026-09-03, the reports that
@@ -464,6 +465,8 @@ def handover_of(graph: dict, run: dict) -> dict:
     }
     if run.get("evidence"):
         handed["tables"] = run["evidence"]
+    if stalled := stalled_steps(graph, run["done"] + run["skipped"], run["facts"]):
+        handed["stalled"] = stalled
     return handed
 
 

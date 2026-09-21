@@ -32,6 +32,7 @@ from tooluniverse.skill_workflow import (  # noqa: E402
     bind_executor,
     bind_lookup,
     bind_records,
+    check_answer,
     execute_tool,
     keep_answered_evidence,
     place_mapping,
@@ -90,7 +91,8 @@ def _stub(responses, record=None):
         records.append(skel)
         return "https://data.swissrockets.com/skills/runs/" + skel["run_id"]
 
-    return [execute_tool, absorb_step, place_mapping, keep_answered_evidence], record_run, calls, records
+    return ([execute_tool, absorb_step, place_mapping, keep_answered_evidence, check_answer],
+            record_run, calls, records)
 
 
 async def _run(env, responses, process, inputs, run_id="run-1", before_result=None, record=None):
@@ -594,7 +596,56 @@ async def test_a_closed_gateway_strands_nothing_on_temporal_either():
         == _in_memory(responses, gated, {"drug_name": "x"})
 
 
-# --- an upstream failure inside a result is a failed call on this host too -------------------
+# --- a selection the code tool made is checked against the whole table, beside the record ----
+
+TRIALS = ([{"nct_id": f"NCT{n:04d}", "phase": "PHASE3", "status": "COMPLETED"} for n in range(3)]
+          + [{"nct_id": "NCT0100", "phase": "PHASE3", "status": "RECRUITING"}]
+          + [{"nct_id": f"NCT02{n:02d}", "phase": "PHASE2", "status": "COMPLETED"} for n in range(5)])
+SELECTING = {
+    "skill": "selection", "inputs": ["drug_name"], "tables": {"trial_rows": "evidence"},
+    "steps": [
+        {"id": "trials", "calls": [{"tool": "search_clinical_trials", "arguments": {"q": "{drug_name}"}}],
+         "collect": {"trial_rows": {"path": "data.studies", "flatten": True,
+                                    "fields": ["nct_id", "phase", "status"]}}},
+        {"id": "select", "requires": ["trials"],
+         "delegate": [{"tool": "OpenAI_Code_Interpreter",
+                       "arguments": {"task": "keep phase PHASE3 and status COMPLETED", "table": "trial_rows"}}],
+         "produces": ["selected"],
+         "check": {"selected": [{"selected_from": {"table": "trial_rows",
+                                                   "where": {"phase": "PHASE3", "status": "COMPLETED"}}}]}},
+    ],
+}
+
+
+async def test_a_selection_is_checked_against_the_evidence_table_without_the_rows_entering_the_history():
+    wanted = [r for r in TRIALS if r["phase"] == "PHASE3" and r["status"] == "COMPLETED"]
+    asked = []
+
+    async def answer_wrong_then_right(handle, env):
+        state = await _wait_for_question(handle)
+        asked.append(state["waiting_for"])
+        await handle.signal(SkillWorkflow.answer, {"selected": wanted[1:]})
+        state = await _wait_for_question(handle)
+        asked.append(state["waiting_for"])
+        await handle.signal(SkillWorkflow.answer, {"selected": wanted})
+
+    responses = {"search_clinical_trials": {"data": {"studies": TRIALS}}}
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        execute, record_activity, _, _ = _stub(responses)
+        async with Worker(env.client, task_queue=QUEUE, workflows=[SkillWorkflow],
+                          activities=[*execute, record_activity],
+                          activity_executor=ThreadPoolExecutor(4), workflow_runner=WORKFLOW_RUNNER):
+            handle = await env.client.start_workflow(
+                SkillWorkflow.run, SkillRunInput(skill="selection", process=SELECTING,
+                                                 inputs={"drug_name": "cisplatin"}),
+                id="run-select", task_queue=QUEUE)
+            await answer_wrong_then_right(handle, env)
+            handed = await handle.result()
+            history = await handle.fetch_history()
+
+    assert "dropped" in asked[1]["problem"] and "NCT0000" in asked[1]["problem"]
+    assert handed["facts"]["selected"] == wanted and "trial_rows" not in handed["facts"]
+    assert "NCT0201" not in history.to_json(), "the table's rows never entered the history"
 
 UPSTREAM = {"status": "error", "error": "Monarch answered HTTP 502 (Bad Gateway)", "upstream_status": 502,
             "retryable": True, "error_details": {"type": "ToolServerError", "retriable": True}}

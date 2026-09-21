@@ -24,6 +24,8 @@ def records_dir() -> Path:
 
 PREVIEW_ROWS = 2
 PREVIEW_CHARS = 160
+VALUE_LIST_MAX = 12         # more distinct values than this is free text, not a closed list
+VALUE_CHARS_MAX = 40        # a closed-list value is a code or a label, never a paragraph
 
 
 def _cut(value: Any) -> Any:
@@ -147,11 +149,35 @@ class WorkingRecord:
             db.close()
         return [json.loads(text) for (text,) in found]
 
+    def rows(self, name: str) -> list[dict]:
+        """A table's rows, whole -- for a server check, never for the question."""
+        return self._rows(name)
+
     def describe(self, name: str) -> dict:
-        """What a table holds, without its rows: the agent reads this before it fetches."""
+        """What a table holds, without its rows: the agent reads this before it fetches.
+
+        A column with few distinct values is a closed list (a phase, a status): its values
+        and their counts are listed, for reading -- the selection is the code tool's.
+        """
         rows = self._rows(name)
         columns = list(dict.fromkeys(column for row in rows for column in row))
-        return {"table": name, "rows": len(rows), "columns": columns,
+        values: dict[str, dict] = {}
+        for column in columns:
+            counts: dict = {}
+            for row in rows:
+                value = row.get(column)
+                if (isinstance(value, (int, bool)) or value is None
+                        or (isinstance(value, str) and len(value) <= VALUE_CHARS_MAX)):
+                    counts[value] = counts.get(value, 0) + 1
+                else:
+                    counts = {}          # free text or a structure: not a closed list
+                    break
+                if len(counts) > VALUE_LIST_MAX:
+                    counts = {}
+                    break
+            if counts and len(counts) < len(rows):
+                values[column] = {str(k): n for k, n in counts.items()}
+        return {"table": name, "rows": len(rows), "columns": columns, "values": values,
                 "preview": [{k: _cut(v) for k, v in row.items()}
                             for row in rows[:PREVIEW_ROWS]]}
 

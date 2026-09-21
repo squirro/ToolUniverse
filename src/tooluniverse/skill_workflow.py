@@ -48,6 +48,7 @@ from .skill_runner import (
     apply,
     asked,
     checked,
+    check_facts,
     handover_of,
     is_upstream_failure,
     judged,
@@ -59,6 +60,7 @@ from .skill_runner import (
     placed_mapping,
     question_for,
     substitute,
+    tables_checked,
     upstream_failure_text,
 )
 
@@ -160,6 +162,22 @@ def absorb_step(step: StepToAbsorb) -> dict:
     """Extract and collect where the results are; hand back the facts, not the results."""
     return absorb_recorded(_record_of(step.run_id), step.tables, step.spec, step.calls,
                            step.facts)
+
+
+@dataclass
+class AnswerToCheck:
+    run_id: str
+    rules: dict
+    produced: dict
+    facts: dict
+
+
+@activity.defn(name="check_answer")
+def check_answer(answer: AnswerToCheck) -> list:
+    """A check that reads an Evidence table runs beside the record; only the failures return,
+    so the table's rows stay out of the history."""
+    return check_facts(answer.rules, answer.produced, answer.facts,
+                       tables=_record_of(answer.run_id).rows)
 
 
 @dataclass
@@ -330,13 +348,15 @@ class SkillWorkflow:
         answer = await self._ask(question)
         outcome = judged(outcome, wants, answer)
         outcome, problem = checked(spec, step["id"], wants, outcome, self._run["facts"],
-                                   answered=answer is not None)
+                                   answered=answer is not None,
+                                   failures=await self._checked_beside_record(spec, wants, outcome))
         problem = problem or mapping_problem(spec, outcome, self._run["facts"])
         if problem:
             answer = await self._ask({**question, "problem": problem})
             outcome = judged(outcome, wants, answer)
             outcome, _ = checked(spec, step["id"], wants, outcome, self._run["facts"],
-                                 answered=False)
+                                 answered=False,
+                                 failures=await self._checked_beside_record(spec, wants, outcome))
             if mapping_problem(spec, outcome, self._run["facts"]):
                 for name in spec.get("mapping") or {}:
                     outcome["facts"].pop(name, None)
@@ -347,6 +367,19 @@ class SkillWorkflow:
                 start_to_close_timeout=PLACING_TIMEOUT,
                 retry_policy=RetryPolicy(maximum_attempts=2))
         return outcome
+
+    async def _checked_beside_record(self, spec: dict, wants: list[str], outcome: dict) -> list | None:
+        """The step's checks, run beside the Working Record when one reads an Evidence table;
+        None when no check needs the record, and `checked` runs them here."""
+        rules = spec.get("check") or {}
+        if not tables_checked(rules):
+            return None
+        produced = {n: outcome["facts"][n] for n in wants if n in outcome["facts"]}
+        return await workflow.execute_activity(
+            check_answer,
+            AnswerToCheck(workflow.info().workflow_id, rules, produced, self._run["facts"]),
+            start_to_close_timeout=CALL_TIMEOUT,
+            retry_policy=RetryPolicy(maximum_attempts=3))
 
     async def _ask(self, question: dict) -> dict | None:
         self._question, self._answer = question, None

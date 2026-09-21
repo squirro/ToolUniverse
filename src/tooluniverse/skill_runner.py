@@ -831,21 +831,64 @@ def _check_only_in(name: str, value: Any, facts: dict) -> str | None:
     return f"not in {name}: {misses}" if misses else None
 
 
+def _check_selected_from(rule: dict, value: Any, facts: dict) -> str | None:
+    """A selection the code tool made: every row from the table, every row meeting the
+    condition, and no row of the table that meets it left out. The first breach is named."""
+    table = facts.get(rule["table"])
+    if not isinstance(table, list):
+        return f"{rule['table']} is not a list of rows"
+    if not isinstance(value, list) or not all(isinstance(r, dict) for r in value):
+        return "not a list of rows"
+    where = rule.get("where") or {}
+    meets = lambda row: all(_same(row.get(k), v) for k, v in where.items())  # noqa: E731
+    pool = [r for r in table if isinstance(r, dict)]
+    for row in value:
+        hit = next((i for i, src in enumerate(pool)
+                    if all(k in row and _same(row[k], src[k]) for k in src)), None)
+        if hit is None:
+            return f"row not in {rule['table']}: {json.dumps(row, default=str)[:160]}"
+        pool.pop(hit)
+        if not meets(row):
+            off = {k: row.get(k) for k in where if not _same(row.get(k), where[k])}
+            return f"row does not meet {json.dumps(off, default=str)}: {json.dumps(row, default=str)[:160]}"
+    dropped = [r for r in pool if meets(r)]
+    if dropped:
+        return (f"{len(dropped)} row(s) that meet the condition were dropped, first: "
+                f"{json.dumps(dropped[0], default=str)[:160]}")
+    return None
+
+
 _CHECKS: dict[str, Callable[[Any, Any, dict], str | None]] = {
     "rows_of": _check_rows_of, "sorted_by": _check_sorted_by, "flag": _check_flag,
     "subset_of": _check_subset_of, "covers": _check_covers,
     "excludes": _check_excludes, "only": _check_only,
     "not_in": _check_not_in, "only_in": _check_only_in,
+    "selected_from": _check_selected_from,
 }
 
 
-def check_facts(rules: dict, produced: dict, facts: dict) -> list[dict]:
+def tables_checked(rules: dict | None) -> list[str]:
+    """The Evidence tables a step's checks read: the host loads them for the check alone."""
+    names = []
+    for spec in (rules or {}).values():
+        for rule in (spec if isinstance(spec, list) else [spec]):
+            if isinstance(rule, dict) and "selected_from" in rule:
+                names.append(rule["selected_from"]["table"])
+    return list(dict.fromkeys(names))
+
+
+def check_facts(rules: dict, produced: dict, facts: dict,
+                tables: Callable[[str], list] | None = None) -> list[dict]:
     """The checks a produced fact fails, as {fact, check, reason}. Pure.
 
     A name the answer did not supply is skipped: it is already unresolved. Rules
-    may name other produced facts; both are visible to a check.
+    may name other produced facts; both are visible to a check. A rule that reads an
+    Evidence table gets its rows from `tables`, for the check alone.
     """
     known = {**facts, **produced}
+    for name in tables_checked(rules):
+        if name not in known and tables is not None:
+            known[name] = tables(name)
     failures = []
     for name, spec in (rules or {}).items():
         if name not in produced:
@@ -878,17 +921,21 @@ def without_failed(outcome: dict, failures: list[dict], step_id: str) -> dict:
 
 
 def checked(spec: dict, step_id: str, wants: list[str], outcome: dict, facts: dict,
-            answered: bool) -> tuple[dict, str | None]:
+            answered: bool, tables: Callable[[str], list] | None = None,
+            failures: list[dict] | None = None) -> tuple[dict, str | None]:
     """Apply the step's checks to what the answer supplied.
 
     Returns the outcome and, when a re-ask is warranted, the problem to name in
     it; the host asks once more and calls again with `answered=False` to close.
+    A host that ran the checks elsewhere (an activity, so a table's rows stay out
+    of the history) passes their `failures` in.
     """
     rules = spec.get("check")
     if not rules:
         return outcome, None
     produced = {n: outcome["facts"][n] for n in wants if n in outcome["facts"]}
-    failures = check_facts(rules, produced, facts)
+    if failures is None:
+        failures = check_facts(rules, produced, facts, tables=tables)
     if not failures:
         return outcome, None
     if answered:
@@ -1082,7 +1129,7 @@ class SkillRunner:
         # A host that already names its runs (Temporal) passes the id in; the
         # in-memory host is the only one that mints its own.
         run_id = run_id or uuid.uuid4().hex
-        self._runs[run_id] = new_run(inputs)
+        self._runs[run_id] = {**new_run(inputs), "run_id": run_id}
         return {"run_id": run_id, "step": self._peek(run_id)}
 
     def state(self, run_id: str) -> dict:
@@ -1140,18 +1187,21 @@ class SkillRunner:
 
     def _answered(self, spec, step, wants, outcome, run, question) -> dict:
         """Ask, fold the answer in, check it; a failing check is asked once more."""
+        tables = (WorkingRecord(self.records, run["run_id"]).rows
+                  if self.records is not None and "run_id" in run else None)
         answer = self.ask(question) if self.ask else None
         asked(run, question, answer)
         outcome = judged(outcome, wants, answer)
         outcome, problem = checked(spec, step["id"], wants, outcome, run["facts"],
-                                   answered=answer is not None)
+                                   answered=answer is not None, tables=tables)
         problem = problem or mapping_problem(spec, outcome, run["facts"])
         if problem:
             retry = {**question, "problem": problem}
             answer = self.ask(retry)
             asked(run, retry, answer)
             outcome = judged(outcome, wants, answer)
-            outcome, _ = checked(spec, step["id"], wants, outcome, run["facts"], answered=False)
+            outcome, _ = checked(spec, step["id"], wants, outcome, run["facts"], answered=False,
+                                 tables=tables)
             if mapping_problem(spec, outcome, run["facts"]):
                 for name in spec.get("mapping") or {}:
                     outcome["facts"].pop(name, None)

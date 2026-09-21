@@ -16,6 +16,7 @@ _NUMBER = re.compile(r"(?<![\w.:/^])(\d{1,6}(?:\.\d{1,4})?)(?![\w^/]|\.\d)")
 _NUMBER_RECEIVED = re.compile(r"(?<![\w.:/^])(\d+(?:\.\d+)?)(?![\w^/]|\.\d)")
 _URL = re.compile(r"\(?https?://\S+\)?")
 _DOI = re.compile(r"\b10\.\d{4,9}/\S+")
+_DATE = re.compile(r"\b\d{4}-\d{2}(?:-\d{2})?\b")             # 2026-01-20 is a date, not three numbers
 _FOOTNOTE = re.compile(r"\[\^?\d+\^?\]:?")
 _CHIP = re.compile(r"<sub>.*?</sub>", re.S)                     # the chat's attachment-size chips
 _NUMBERING = re.compile(r"(?m)^\s*(?:#+\s*|[-*]\s*)?\d{1,2}[.)]\s")    # headings and list items
@@ -101,7 +102,7 @@ def check_report(draft: str, received: Any) -> list[dict]:
     """Every statement in the draft that what the agent received does not vouch for."""
     vouched = _vouched_numbers(received)
     prose = _FOOTNOTE.sub(" ", _DOI.sub(" ", _URL.sub(" ", draft or "")))
-    prose = _fold_thousands(_NUMBERING.sub("\n", _CHIP.sub(" ", prose)))
+    prose = _fold_thousands(_NUMBERING.sub("\n", _CHIP.sub(" ", _DATE.sub(" ", prose))))
     failures, seen = [], set()
     for match in _NUMBER.finditer(prose):
         number = match.group(1)

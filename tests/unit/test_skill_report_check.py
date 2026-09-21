@@ -90,6 +90,7 @@ def test_a_link_built_from_an_identifier_the_agent_received_passes():
 def test_the_numbering_of_the_report_itself_is_not_a_claim():
     """Flagged in a live report: "## 7. Integrated Assessment" and a size chip the chat adds."""
     draft = ("## 7. Integrated Assessment\n"
+             "Primary completion 2026-01-20; published 2026-07.\n"
              "1) Drug overview\n"
              "2. Labeled safety\n"
              "- code_interpreter_code.py <sub>(2.8 KB)</sub>\n"
@@ -116,3 +117,55 @@ def test_a_table_the_run_holds_less_of_than_the_source_must_be_stated_with_its_t
     assert failure["kind"] == "narrowing_not_stated"
     assert failure["text"] == "results.literature: 200 rows of 2078 (ototoxicity)"
     assert check_report(stated, NARROWED) == []
+
+
+# --- real reports: a live run of the production shape, and a web report -----------------
+
+FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
+
+
+def _received_from(trace: dict) -> dict:
+    """What the agent had in front of it, read off its trace: the hand-over, its own answers
+    to the run, and every row a fetch returned."""
+    import json
+    received = {"handover": {}, "fetched": [], "answers": []}
+    for action in trace["actions"]:
+        content = action.get("content")
+        content = content if isinstance(content, str) else json.dumps(content)
+        try:
+            body = json.loads(content)
+            out = body.get("output")
+            out = json.loads(out) if isinstance(out, str) else out
+        except (TypeError, ValueError):
+            continue
+        answer = (body.get("parameters") or {}).get("answer")
+        if answer:
+            received["answers"].append(answer)
+        if isinstance(out, dict) and out.get("status") == "finished":
+            received["handover"] = out.get("handover") or {}
+        elif isinstance(out, dict) and action.get("tool_name") == "fetch_run_data":
+            received["fetched"].extend(out.get("rows") or [])
+    return received
+
+
+def test_a_live_report_of_the_production_shape_is_flagged_only_for_what_is_real():
+    import json
+    trace = json.loads((FIXTURES / "live_run_cisplatin_2026-09-21.json").read_text())
+
+    failures = check_report(trace["answer"], _received_from(trace))
+
+    kinds = {f["kind"] for f in failures}
+    assert "unvouched_number" not in kinds, [f for f in failures if f["kind"] == "unvouched_number"]
+    # the run held 200 of thousands for each reaction and the report never said so
+    assert "narrowing_not_stated" in kinds
+    assert all("ontains" not in f["text"] for f in failures)
+
+
+def test_the_web_report_with_the_sourceless_prr_fails_on_that_number():
+    """Both judges called "a Canadian PRR of about 53.44" a number with no real source."""
+    import json
+    trace = json.loads((FIXTURES / "web_report_cisplatin_2026-09-19.json").read_text())
+
+    failures = check_report(trace["answer"], _received_from(trace))
+
+    assert "53.44" in {f["text"] for f in failures if f["kind"] == "unvouched_number"}

@@ -767,10 +767,27 @@ def _check_only(pattern: str, value: Any, facts: dict) -> str | None:
     return f"does not match {pattern}: {misses}" if misses else None
 
 
+def _check_not_in(name: str, value: Any, facts: dict) -> str | None:
+    """No item of the value is in the named list of terms (a judged mapping's `_terms`)."""
+    listed = facts.get(name) or []
+    hits = [v for v in (value if isinstance(value, list) else [value])
+            if any(_same(v, t) for t in listed)]
+    return f"in {name}: {hits}" if hits else None
+
+
+def _check_only_in(name: str, value: Any, facts: dict) -> str | None:
+    """Every item of the value is in the named list of terms."""
+    listed = facts.get(name) or []
+    misses = [v for v in (value if isinstance(value, list) else [value])
+              if not any(_same(v, t) for t in listed)]
+    return f"not in {name}: {misses}" if misses else None
+
+
 _CHECKS: dict[str, Callable[[Any, Any, dict], str | None]] = {
     "rows_of": _check_rows_of, "sorted_by": _check_sorted_by, "flag": _check_flag,
     "subset_of": _check_subset_of, "covers": _check_covers,
     "excludes": _check_excludes, "only": _check_only,
+    "not_in": _check_not_in, "only_in": _check_only_in,
 }
 
 

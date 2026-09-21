@@ -1,0 +1,4005 @@
+{
+"result": [
+{
+"term": "NAUSEA",
+"count": 30195
+},
+{
+"term": "DIARRHOEA",
+"count": 28014
+},
+{
+"term": "BLOOD GLUCOSE INCREASED",
+"count": 27177
+},
+{
+"term": "DRUG INEFFECTIVE",
+"count": 22500
+},
+{
+"term": "FATIGUE",
+"count": 21321
+},
+{
+"term": "LACTIC ACIDOSIS",
+"count": 20133
+},
+{
+"term": "VOMITING",
+"count": 19629
+},
+{
+"term": "ACUTE KIDNEY INJURY",
+"count": 18364
+},
+{
+"term": "WEIGHT DECREASED",
+"count": 17303
+},
+{
+"term": "DYSPNOEA",
+"count": 16778
+},
+{
+"term": "DIZZINESS",
+"count": 15723
+},
+{
+"term": "OFF LABEL USE",
+"count": 15401
+},
+{
+"term": "HEADACHE",
+"count": 15122
+},
+{
+"term": "PAIN",
+"count": 14148
+},
+{
+"term": "ASTHENIA",
+"count": 13387
+},
+{
+"term": "MALAISE",
+"count": 12787
+},
+{
+"term": "DECREASED APPETITE",
+"count": 11979
+},
+{
+"term": "FALL",
+"count": 11530
+},
+{
+"term": "ARTHRALGIA",
+"count": 10638
+},
+{
+"term": "DEATH",
+"count": 9233
+},
+{
+"term": "PAIN IN EXTREMITY",
+"count": 9194
+},
+{
+"term": "HYPOGLYCAEMIA",
+"count": 9151
+},
+{
+"term": "PNEUMONIA",
+"count": 9020
+},
+{
+"term": "PRURITUS",
+"count": 8721
+},
+{
+"term": "ABDOMINAL PAIN",
+"count": 8717
+},
+{
+"term": "COUGH",
+"count": 8509
+},
+{
+"term": "HYPOTENSION",
+"count": 8490
+},
+{
+"term": "RASH",
+"count": 8488
+},
+{
+"term": "TOXICITY TO VARIOUS AGENTS",
+"count": 8149
+},
+{
+"term": "CONSTIPATION",
+"count": 7830
+},
+{
+"term": "INJECTION SITE PAIN",
+"count": 7686
+},
+{
+"term": "DRUG INTERACTION",
+"count": 7592
+},
+{
+"term": "WEIGHT INCREASED",
+"count": 7586
+},
+{
+"term": "HYPERTENSION",
+"count": 7540
+},
+{
+"term": "ABDOMINAL PAIN UPPER",
+"count": 7518
+},
+{
+"term": "PYREXIA",
+"count": 7444
+},
+{
+"term": "RENAL FAILURE",
+"count": 7368
+},
+{
+"term": "CONDITION AGGRAVATED",
+"count": 7257
+},
+{
+"term": "METABOLIC ACIDOSIS",
+"count": 7091
+},
+{
+"term": "DEHYDRATION",
+"count": 7071
+},
+{
+"term": "BACK PAIN",
+"count": 6959
+},
+{
+"term": "BLOOD GLUCOSE DECREASED",
+"count": 6945
+},
+{
+"term": "ANXIETY",
+"count": 6684
+},
+{
+"term": "INSOMNIA",
+"count": 6611
+},
+{
+"term": "CONFUSIONAL STATE",
+"count": 6377
+},
+{
+"term": "URINARY TRACT INFECTION",
+"count": 6271
+},
+{
+"term": "DIABETES MELLITUS",
+"count": 6246
+},
+{
+"term": "ANAEMIA",
+"count": 6233
+},
+{
+"term": "FEELING ABNORMAL",
+"count": 6225
+},
+{
+"term": "ABDOMINAL DISCOMFORT",
+"count": 6191
+},
+{
+"term": "BLOOD PRESSURE INCREASED",
+"count": 6008
+},
+{
+"term": "CHEST PAIN",
+"count": 5997
+},
+{
+"term": "DEPRESSION",
+"count": 5979
+},
+{
+"term": "GAIT DISTURBANCE",
+"count": 5742
+},
+{
+"term": "SOMNOLENCE",
+"count": 5731
+},
+{
+"term": "MYOCARDIAL INFARCTION",
+"count": 5495
+},
+{
+"term": "INCORRECT DOSE ADMINISTERED",
+"count": 5470
+},
+{
+"term": "GLYCOSYLATED HAEMOGLOBIN INCREASED",
+"count": 5463
+},
+{
+"term": "MUSCLE SPASMS",
+"count": 5324
+},
+{
+"term": "PERIPHERAL SWELLING",
+"count": 5281
+},
+{
+"term": "NASOPHARYNGITIS",
+"count": 5045
+},
+{
+"term": "PRODUCT DOSE OMISSION ISSUE",
+"count": 4965
+},
+{
+"term": "CEREBROVASCULAR ACCIDENT",
+"count": 4939
+},
+{
+"term": "MYALGIA",
+"count": 4912
+},
+{
+"term": "TREMOR",
+"count": 4808
+},
+{
+"term": "HYPERKALAEMIA",
+"count": 4754
+},
+{
+"term": "ALOPECIA",
+"count": 4685
+},
+{
+"term": "CHRONIC KIDNEY DISEASE",
+"count": 4583
+},
+{
+"term": "HYPERHIDROSIS",
+"count": 4575
+},
+{
+"term": "OEDEMA PERIPHERAL",
+"count": 4524
+},
+{
+"term": "DIABETIC KETOACIDOSIS",
+"count": 4460
+},
+{
+"term": "HYPERGLYCAEMIA",
+"count": 4346
+},
+{
+"term": "DYSPEPSIA",
+"count": 4288
+},
+{
+"term": "OVERDOSE",
+"count": 4284
+},
+{
+"term": "DRUG DOSE OMISSION",
+"count": 4282
+},
+{
+"term": "COVID-19",
+"count": 4214
+},
+{
+"term": "RENAL FAILURE ACUTE",
+"count": 4140
+},
+{
+"term": "COMPLETED SUICIDE",
+"count": 4135
+},
+{
+"term": "MUSCULAR WEAKNESS",
+"count": 4068
+},
+{
+"term": "INAPPROPRIATE SCHEDULE OF PRODUCT ADMINISTRATION",
+"count": 4047
+},
+{
+"term": "HYPOAESTHESIA",
+"count": 4033
+},
+{
+"term": "PARAESTHESIA",
+"count": 4030
+},
+{
+"term": "ATRIAL FIBRILLATION",
+"count": 3999
+},
+{
+"term": "ABDOMINAL DISTENSION",
+"count": 3980
+},
+{
+"term": "MEMORY IMPAIRMENT",
+"count": 3953
+},
+{
+"term": "VISION BLURRED",
+"count": 3893
+},
+{
+"term": "DRUG HYPERSENSITIVITY",
+"count": 3888
+},
+{
+"term": "PRODUCT USE IN UNAPPROVED INDICATION",
+"count": 3854
+},
+{
+"term": "LOSS OF CONSCIOUSNESS",
+"count": 3815
+},
+{
+"term": "RENAL IMPAIRMENT",
+"count": 3809
+},
+{
+"term": "ERYTHEMA",
+"count": 3788
+},
+{
+"term": "PANCREATITIS",
+"count": 3748
+},
+{
+"term": "GENERAL PHYSICAL HEALTH DETERIORATION",
+"count": 3714
+},
+{
+"term": "DIABETES MELLITUS INADEQUATE CONTROL",
+"count": 3674
+},
+{
+"term": "VISUAL IMPAIRMENT",
+"count": 3635
+},
+{
+"term": "SYNCOPE",
+"count": 3634
+},
+{
+"term": "PRODUCT USE ISSUE",
+"count": 3497
+},
+{
+"term": "HYPERSENSITIVITY",
+"count": 3488
+},
+{
+"term": "URTICARIA",
+"count": 3486
+},
+{
+"term": "SEPSIS",
+"count": 3456
+},
+{
+"term": "JOINT SWELLING",
+"count": 3397
+},
+{
+"term": "INJECTION SITE HAEMORRHAGE",
+"count": 3396
+},
+{
+"term": "INFLUENZA",
+"count": 3384
+},
+{
+"term": "GASTROOESOPHAGEAL REFLUX DISEASE",
+"count": 3381
+},
+{
+"term": "PSORIASIS",
+"count": 3378
+},
+{
+"term": "ASTHMA",
+"count": 3359
+},
+{
+"term": "HEART RATE INCREASED",
+"count": 3350
+},
+{
+"term": "PALPITATIONS",
+"count": 3330
+},
+{
+"term": "BLOOD CREATININE INCREASED",
+"count": 3266
+},
+{
+"term": "CARDIAC ARREST",
+"count": 3127
+},
+{
+"term": "HAEMOGLOBIN DECREASED",
+"count": 3113
+},
+{
+"term": "FLUSHING",
+"count": 3092
+},
+{
+"term": "CARDIAC FAILURE CONGESTIVE",
+"count": 3061
+},
+{
+"term": "CHEST DISCOMFORT",
+"count": 3002
+},
+{
+"term": "GASTROINTESTINAL DISORDER",
+"count": 2939
+},
+{
+"term": "TYPE 2 DIABETES MELLITUS",
+"count": 2870
+},
+{
+"term": "CARDIAC FAILURE",
+"count": 2864
+},
+{
+"term": "CHILLS",
+"count": 2860
+},
+{
+"term": "SINUSITIS",
+"count": 2835
+},
+{
+"term": "NEUROPATHY PERIPHERAL",
+"count": 2831
+},
+{
+"term": "PRODUCT QUALITY ISSUE",
+"count": 2806
+},
+{
+"term": "BALANCE DISORDER",
+"count": 2798
+},
+{
+"term": "INFECTION",
+"count": 2794
+},
+{
+"term": "INTENTIONAL OVERDOSE",
+"count": 2789
+},
+{
+"term": "GASTROINTESTINAL HAEMORRHAGE",
+"count": 2749
+},
+{
+"term": "TACHYCARDIA",
+"count": 2744
+},
+{
+"term": "ARTHRITIS",
+"count": 2704
+},
+{
+"term": "WRONG TECHNIQUE IN PRODUCT USAGE PROCESS",
+"count": 2673
+},
+{
+"term": "PULMONARY EMBOLISM",
+"count": 2644
+},
+{
+"term": "CATARACT",
+"count": 2627
+},
+{
+"term": "DRY MOUTH",
+"count": 2600
+},
+{
+"term": "OROPHARYNGEAL PAIN",
+"count": 2583
+},
+{
+"term": "HYPONATRAEMIA",
+"count": 2565
+},
+{
+"term": "RHEUMATOID ARTHRITIS",
+"count": 2542
+},
+{
+"term": "BLOOD GLUCOSE ABNORMAL",
+"count": 2504
+},
+{
+"term": "CARDIAC DISORDER",
+"count": 2488
+},
+{
+"term": "INTENTIONAL PRODUCT USE ISSUE",
+"count": 2488
+},
+{
+"term": "CONTUSION",
+"count": 2486
+},
+{
+"term": "DYSPHAGIA",
+"count": 2468
+},
+{
+"term": "STRESS",
+"count": 2397
+},
+{
+"term": "BLADDER CANCER",
+"count": 2395
+},
+{
+"term": "BRONCHITIS",
+"count": 2389
+},
+{
+"term": "RESPIRATORY FAILURE",
+"count": 2383
+},
+{
+"term": "INJECTION SITE BRUISING",
+"count": 2379
+},
+{
+"term": "INTENTIONAL PRODUCT MISUSE",
+"count": 2362
+},
+{
+"term": "FLATULENCE",
+"count": 2346
+},
+{
+"term": "DRUG INTOLERANCE",
+"count": 2322
+},
+{
+"term": "DYSGEUSIA",
+"count": 2314
+},
+{
+"term": "SWELLING",
+"count": 2298
+},
+{
+"term": "BRADYCARDIA",
+"count": 2270
+},
+{
+"term": "WHEEZING",
+"count": 2247
+},
+{
+"term": "PLATELET COUNT DECREASED",
+"count": 2241
+},
+{
+"term": "PANCREATITIS ACUTE",
+"count": 2230
+},
+{
+"term": "SHOCK",
+"count": 2217
+},
+{
+"term": "ILLNESS",
+"count": 2172
+},
+{
+"term": "BLOOD PRESSURE DECREASED",
+"count": 2171
+},
+{
+"term": "UNDERDOSE",
+"count": 2165
+},
+{
+"term": "BLOOD CHOLESTEROL INCREASED",
+"count": 2151
+},
+{
+"term": "THROMBOCYTOPENIA",
+"count": 2146
+},
+{
+"term": "MUSCULOSKELETAL STIFFNESS",
+"count": 2106
+},
+{
+"term": "MOBILITY DECREASED",
+"count": 2092
+},
+{
+"term": "RHABDOMYOLYSIS",
+"count": 2090
+},
+{
+"term": "SLEEP DISORDER",
+"count": 2089
+},
+{
+"term": "HOT FLUSH",
+"count": 2063
+},
+{
+"term": "DRY SKIN",
+"count": 2039
+},
+{
+"term": "NEUTROPENIA",
+"count": 2030
+},
+{
+"term": "WHITE BLOOD CELL COUNT DECREASED",
+"count": 1992
+},
+{
+"term": "POLLAKIURIA",
+"count": 1990
+},
+{
+"term": "RHINORRHOEA",
+"count": 1986
+},
+{
+"term": "INJECTION SITE ERYTHEMA",
+"count": 1984
+},
+{
+"term": "OSTEOARTHRITIS",
+"count": 1981
+},
+{
+"term": "HEPATIC ENZYME INCREASED",
+"count": 1975
+},
+{
+"term": "CELLULITIS",
+"count": 1955
+},
+{
+"term": "OXYGEN SATURATION DECREASED",
+"count": 1947
+},
+{
+"term": "INJECTION SITE MASS",
+"count": 1935
+},
+{
+"term": "SUICIDE ATTEMPT",
+"count": 1924
+},
+{
+"term": "MIGRAINE",
+"count": 1914
+},
+{
+"term": "LETHARGY",
+"count": 1907
+},
+{
+"term": "EUGLYCAEMIC DIABETIC KETOACIDOSIS",
+"count": 1905
+},
+{
+"term": "MEDICATION ERROR",
+"count": 1902
+},
+{
+"term": "EPISTAXIS",
+"count": 1901
+},
+{
+"term": "MUSCULOSKELETAL PAIN",
+"count": 1878
+},
+{
+"term": "HYPOKALAEMIA",
+"count": 1874
+},
+{
+"term": "THROMBOSIS",
+"count": 1867
+},
+{
+"term": "PRODUCTIVE COUGH",
+"count": 1860
+},
+{
+"term": "NEPHROLITHIASIS",
+"count": 1857
+},
+{
+"term": "FEELING HOT",
+"count": 1845
+},
+{
+"term": "HOSPITALISATION",
+"count": 1824
+},
+{
+"term": "IMPAIRED GASTRIC EMPTYING",
+"count": 1811
+},
+{
+"term": "BLOOD GLUCOSE FLUCTUATION",
+"count": 1784
+},
+{
+"term": "SEIZURE",
+"count": 1778
+},
+{
+"term": "BURNING SENSATION",
+"count": 1777
+},
+{
+"term": "CHOLELITHIASIS",
+"count": 1776
+},
+{
+"term": "CORONARY ARTERY DISEASE",
+"count": 1765
+},
+{
+"term": "VERTIGO",
+"count": 1763
+},
+{
+"term": "ALANINE AMINOTRANSFERASE INCREASED",
+"count": 1748
+},
+{
+"term": "DISEASE PROGRESSION",
+"count": 1742
+},
+{
+"term": "PRODUCT DOSE OMISSION",
+"count": 1735
+},
+{
+"term": "SKIN EXFOLIATION",
+"count": 1714
+},
+{
+"term": "INFLUENZA LIKE ILLNESS",
+"count": 1712
+},
+{
+"term": "AGITATION",
+"count": 1711
+},
+{
+"term": "BLISTER",
+"count": 1707
+},
+{
+"term": "NECK PAIN",
+"count": 1699
+},
+{
+"term": "MATERNAL EXPOSURE DURING PREGNANCY",
+"count": 1689
+},
+{
+"term": "LOSS OF PERSONAL INDEPENDENCE IN DAILY ACTIVITIES",
+"count": 1686
+},
+{
+"term": "INJECTION SITE PRURITUS",
+"count": 1672
+},
+{
+"term": "LOWER RESPIRATORY TRACT INFECTION",
+"count": 1665
+},
+{
+"term": "THERAPEUTIC PRODUCT EFFECT INCOMPLETE",
+"count": 1664
+},
+{
+"term": "DYSPNOEA EXERTIONAL",
+"count": 1659
+},
+{
+"term": "CHRONIC OBSTRUCTIVE PULMONARY DISEASE",
+"count": 1656
+},
+{
+"term": "AMNESIA",
+"count": 1655
+},
+{
+"term": "ADVERSE DRUG REACTION",
+"count": 1652
+},
+{
+"term": "EXPOSURE DURING PREGNANCY",
+"count": 1650
+},
+{
+"term": "SWELLING FACE",
+"count": 1636
+},
+{
+"term": "HAEMORRHAGE",
+"count": 1633
+},
+{
+"term": "BLOOD PRESSURE SYSTOLIC INCREASED",
+"count": 1629
+},
+{
+"term": "DYSARTHRIA",
+"count": 1621
+},
+{
+"term": "DEEP VEIN THROMBOSIS",
+"count": 1614
+},
+{
+"term": "OEDEMA",
+"count": 1613
+},
+{
+"term": "COMA",
+"count": 1610
+},
+{
+"term": "NASAL CONGESTION",
+"count": 1604
+},
+{
+"term": "TREATMENT NONCOMPLIANCE",
+"count": 1601
+},
+{
+"term": "RENAL DISORDER",
+"count": 1599
+},
+{
+"term": "ARTHROPATHY",
+"count": 1595
+},
+{
+"term": "HALLUCINATION",
+"count": 1578
+},
+{
+"term": "FOETAL EXPOSURE DURING PREGNANCY",
+"count": 1567
+},
+{
+"term": "DYSURIA",
+"count": 1566
+},
+{
+"term": "ACUTE MYOCARDIAL INFARCTION",
+"count": 1551
+},
+{
+"term": "LUNG DISORDER",
+"count": 1548
+},
+{
+"term": "DYSPHONIA",
+"count": 1544
+},
+{
+"term": "C-REACTIVE PROTEIN INCREASED",
+"count": 1542
+},
+{
+"term": "HAEMATOCHEZIA",
+"count": 1534
+},
+{
+"term": "PLEURAL EFFUSION",
+"count": 1532
+},
+{
+"term": "SUICIDAL IDEATION",
+"count": 1509
+},
+{
+"term": "DISCOMFORT",
+"count": 1508
+},
+{
+"term": "PULMONARY OEDEMA",
+"count": 1499
+},
+{
+"term": "EMOTIONAL DISTRESS",
+"count": 1495
+},
+{
+"term": "ACCIDENTAL OVERDOSE",
+"count": 1494
+},
+{
+"term": "FLUID RETENTION",
+"count": 1485
+},
+{
+"term": "SEPTIC SHOCK",
+"count": 1482
+},
+{
+"term": "KETOACIDOSIS",
+"count": 1470
+},
+{
+"term": "MALIGNANT NEOPLASM PROGRESSION",
+"count": 1467
+},
+{
+"term": "DRUG EFFECT DECREASED",
+"count": 1465
+},
+{
+"term": "NERVOUSNESS",
+"count": 1462
+},
+{
+"term": "RASH PRURITIC",
+"count": 1449
+},
+{
+"term": "RECTAL HAEMORRHAGE",
+"count": 1449
+},
+{
+"term": "HAEMATURIA",
+"count": 1439
+},
+{
+"term": "HEPATIC STEATOSIS",
+"count": 1437
+},
+{
+"term": "INJURY",
+"count": 1426
+},
+{
+"term": "INFUSION RELATED REACTION",
+"count": 1424
+},
+{
+"term": "DEVICE ISSUE",
+"count": 1418
+},
+{
+"term": "EYE PAIN",
+"count": 1412
+},
+{
+"term": "ARRHYTHMIA",
+"count": 1408
+},
+{
+"term": "DEPRESSED MOOD",
+"count": 1407
+},
+{
+"term": "ANGINA PECTORIS",
+"count": 1402
+},
+{
+"term": "FUNGAL INFECTION",
+"count": 1399
+},
+{
+"term": "INAPPROPRIATE SCHEDULE OF DRUG ADMINISTRATION",
+"count": 1395
+},
+{
+"term": "ANGIOEDEMA",
+"count": 1386
+},
+{
+"term": "ASPARTATE AMINOTRANSFERASE INCREASED",
+"count": 1384
+},
+{
+"term": "PSORIATIC ARTHROPATHY",
+"count": 1383
+},
+{
+"term": "UPPER RESPIRATORY TRACT INFECTION",
+"count": 1362
+},
+{
+"term": "TREATMENT FAILURE",
+"count": 1360
+},
+{
+"term": "MULTIPLE ORGAN DYSFUNCTION SYNDROME",
+"count": 1351
+},
+{
+"term": "PANCYTOPENIA",
+"count": 1348
+},
+{
+"term": "INFLAMMATION",
+"count": 1347
+},
+{
+"term": "DRUG LEVEL INCREASED",
+"count": 1340
+},
+{
+"term": "DISTURBANCE IN ATTENTION",
+"count": 1337
+},
+{
+"term": "DISORIENTATION",
+"count": 1332
+},
+{
+"term": "WHITE BLOOD CELL COUNT INCREASED",
+"count": 1331
+},
+{
+"term": "RENAL INJURY",
+"count": 1330
+},
+{
+"term": "GAIT INABILITY",
+"count": 1328
+},
+{
+"term": "HYPOMAGNESAEMIA",
+"count": 1315
+},
+{
+"term": "SPEECH DISORDER",
+"count": 1315
+},
+{
+"term": "STOMATITIS",
+"count": 1304
+},
+{
+"term": "ERUCTATION",
+"count": 1302
+},
+{
+"term": "PRODUCT SUBSTITUTION ISSUE",
+"count": 1298
+},
+{
+"term": "CYSTITIS",
+"count": 1297
+},
+{
+"term": "HYPOTHYROIDISM",
+"count": 1295
+},
+{
+"term": "TRANSIENT ISCHAEMIC ATTACK",
+"count": 1292
+},
+{
+"term": "FEBRILE NEUTROPENIA",
+"count": 1287
+},
+{
+"term": "HERPES ZOSTER",
+"count": 1273
+},
+{
+"term": "CONTRAINDICATED PRODUCT ADMINISTERED",
+"count": 1241
+},
+{
+"term": "THERAPY INTERRUPTED",
+"count": 1238
+},
+{
+"term": "DEPRESSED LEVEL OF CONSCIOUSNESS",
+"count": 1237
+},
+{
+"term": "ADVERSE EVENT",
+"count": 1228
+},
+{
+"term": "BONE PAIN",
+"count": 1226
+},
+{
+"term": "DEVICE MALFUNCTION",
+"count": 1225
+},
+{
+"term": "HYPOPHAGIA",
+"count": 1221
+},
+{
+"term": "HEART RATE DECREASED",
+"count": 1214
+},
+{
+"term": "INJECTION SITE SWELLING",
+"count": 1214
+},
+{
+"term": "INJECTION SITE NODULE",
+"count": 1209
+},
+{
+"term": "UNEVALUABLE EVENT",
+"count": 1191
+},
+{
+"term": "SKIN DISCOLOURATION",
+"count": 1168
+},
+{
+"term": "DRUG-INDUCED LIVER INJURY",
+"count": 1157
+},
+{
+"term": "URINARY INCONTINENCE",
+"count": 1156
+},
+{
+"term": "CARDIO-RESPIRATORY ARREST",
+"count": 1155
+},
+{
+"term": "BLINDNESS",
+"count": 1153
+},
+{
+"term": "ELECTROCARDIOGRAM QT PROLONGED",
+"count": 1151
+},
+{
+"term": "HYPOXIA",
+"count": 1141
+},
+{
+"term": "NO ADVERSE EVENT",
+"count": 1140
+},
+{
+"term": "SWOLLEN TONGUE",
+"count": 1126
+},
+{
+"term": "OBESITY",
+"count": 1125
+},
+{
+"term": "BLOOD POTASSIUM DECREASED",
+"count": 1121
+},
+{
+"term": "SLEEP APNOEA SYNDROME",
+"count": 1120
+},
+{
+"term": "APHASIA",
+"count": 1117
+},
+{
+"term": "TUBULOINTERSTITIAL NEPHRITIS",
+"count": 1110
+},
+{
+"term": "COGNITIVE DISORDER",
+"count": 1106
+},
+{
+"term": "MENTAL STATUS CHANGES",
+"count": 1093
+},
+{
+"term": "ILL-DEFINED DISORDER",
+"count": 1086
+},
+{
+"term": "WOUND",
+"count": 1085
+},
+{
+"term": "URINARY RETENTION",
+"count": 1078
+},
+{
+"term": "BLOOD TRIGLYCERIDES INCREASED",
+"count": 1076
+},
+{
+"term": "TINNITUS",
+"count": 1075
+},
+{
+"term": "ANAPHYLACTIC REACTION",
+"count": 1073
+},
+{
+"term": "IRRITABILITY",
+"count": 1073
+},
+{
+"term": "THERAPY CESSATION",
+"count": 1057
+},
+{
+"term": "BLOOD CREATINE PHOSPHOKINASE INCREASED",
+"count": 1055
+},
+{
+"term": "SKIN ULCER",
+"count": 1046
+},
+{
+"term": "ANURIA",
+"count": 1042
+},
+{
+"term": "HEAD INJURY",
+"count": 1035
+},
+{
+"term": "NIGHT SWEATS",
+"count": 1034
+},
+{
+"term": "THROAT IRRITATION",
+"count": 1033
+},
+{
+"term": "END STAGE RENAL DISEASE",
+"count": 1028
+},
+{
+"term": "LIMB INJURY",
+"count": 1026
+},
+{
+"term": "DYSSTASIA",
+"count": 1025
+},
+{
+"term": "HYPOACUSIS",
+"count": 1021
+},
+{
+"term": "INTERNATIONAL NORMALISED RATIO INCREASED",
+"count": 1021
+},
+{
+"term": "LIVER DISORDER",
+"count": 1021
+},
+{
+"term": "GASTRITIS",
+"count": 1016
+},
+{
+"term": "BLOOD PRESSURE FLUCTUATION",
+"count": 1008
+},
+{
+"term": "UNRESPONSIVE TO STIMULI",
+"count": 1006
+},
+{
+"term": "OSTEOPOROSIS",
+"count": 1003
+},
+{
+"term": "DEVICE LEAKAGE",
+"count": 992
+},
+{
+"term": "EATING DISORDER",
+"count": 989
+},
+{
+"term": "THERAPEUTIC PRODUCT EFFECT DECREASED",
+"count": 987
+},
+{
+"term": "SURGERY",
+"count": 985
+},
+{
+"term": "DELIRIUM",
+"count": 984
+},
+{
+"term": "LIP SWELLING",
+"count": 982
+},
+{
+"term": "THERAPEUTIC RESPONSE UNEXPECTED",
+"count": 981
+},
+{
+"term": "DIVERTICULITIS",
+"count": 979
+},
+{
+"term": "IMPAIRED HEALING",
+"count": 978
+},
+{
+"term": "FEELING COLD",
+"count": 974
+},
+{
+"term": "HYPOTHERMIA",
+"count": 967
+},
+{
+"term": "LEUKOCYTOSIS",
+"count": 962
+},
+{
+"term": "THERAPEUTIC RESPONSE DECREASED",
+"count": 961
+},
+{
+"term": "INJECTION SITE REACTION",
+"count": 958
+},
+{
+"term": "LOCALISED INFECTION",
+"count": 953
+},
+{
+"term": "ROAD TRAFFIC ACCIDENT",
+"count": 953
+},
+{
+"term": "LIVER FUNCTION TEST ABNORMAL",
+"count": 940
+},
+{
+"term": "HAEMODIALYSIS",
+"count": 938
+},
+{
+"term": "VISUAL ACUITY REDUCED",
+"count": 937
+},
+{
+"term": "BLOOD POTASSIUM INCREASED",
+"count": 927
+},
+{
+"term": "INTERSTITIAL LUNG DISEASE",
+"count": 918
+},
+{
+"term": "RED BLOOD CELL COUNT DECREASED",
+"count": 917
+},
+{
+"term": "GASTRIC DISORDER",
+"count": 914
+},
+{
+"term": "PANCREATIC CARCINOMA",
+"count": 909
+},
+{
+"term": "PRESYNCOPE",
+"count": 898
+},
+{
+"term": "FREQUENT BOWEL MOVEMENTS",
+"count": 895
+},
+{
+"term": "MELAENA",
+"count": 893
+},
+{
+"term": "EYE DISORDER",
+"count": 889
+},
+{
+"term": "FIBROMYALGIA",
+"count": 889
+},
+{
+"term": "LIMB DISCOMFORT",
+"count": 889
+},
+{
+"term": "CEREBRAL HAEMORRHAGE",
+"count": 887
+},
+{
+"term": "PRODUCT STORAGE ERROR",
+"count": 886
+},
+{
+"term": "HAEMATEMESIS",
+"count": 885
+},
+{
+"term": "TASTE DISORDER",
+"count": 882
+},
+{
+"term": "HEPATIC CIRRHOSIS",
+"count": 876
+},
+{
+"term": "INTESTINAL OBSTRUCTION",
+"count": 876
+},
+{
+"term": "MENTAL DISORDER",
+"count": 876
+},
+{
+"term": "TACHYPNOEA",
+"count": 875
+},
+{
+"term": "BLOOD LACTIC ACID INCREASED",
+"count": 870
+},
+{
+"term": "DISEASE RECURRENCE",
+"count": 869
+},
+{
+"term": "HYPERLACTACIDAEMIA",
+"count": 869
+},
+{
+"term": "RESPIRATORY DISTRESS",
+"count": 869
+},
+{
+"term": "EXTRA DOSE ADMINISTERED",
+"count": 866
+},
+{
+"term": "INJECTION SITE EXTRAVASATION",
+"count": 865
+},
+{
+"term": "ENCEPHALOPATHY",
+"count": 862
+},
+{
+"term": "CIRCULATORY COLLAPSE",
+"count": 860
+},
+{
+"term": "THIRST",
+"count": 856
+},
+{
+"term": "DIABETIC NEUROPATHY",
+"count": 855
+},
+{
+"term": "EYE IRRITATION",
+"count": 854
+},
+{
+"term": "MOVEMENT DISORDER",
+"count": 854
+},
+{
+"term": "NIGHTMARE",
+"count": 854
+},
+{
+"term": "RASH ERYTHEMATOUS",
+"count": 852
+},
+{
+"term": "COLITIS",
+"count": 849
+},
+{
+"term": "GLOMERULAR FILTRATION RATE DECREASED",
+"count": 844
+},
+{
+"term": "NEOPLASM MALIGNANT",
+"count": 843
+},
+{
+"term": "HAEMOPTYSIS",
+"count": 841
+},
+{
+"term": "ECZEMA",
+"count": 839
+},
+{
+"term": "EYE SWELLING",
+"count": 836
+},
+{
+"term": "HEPATIC FAILURE",
+"count": 835
+},
+{
+"term": "BLOOD UREA INCREASED",
+"count": 834
+},
+{
+"term": "HYPERSOMNIA",
+"count": 834
+},
+{
+"term": "ACIDOSIS",
+"count": 831
+},
+{
+"term": "PEMPHIGOID",
+"count": 829
+},
+{
+"term": "NEEDLE ISSUE",
+"count": 828
+},
+{
+"term": "DYSKINESIA",
+"count": 826
+},
+{
+"term": "ACUTE RESPIRATORY FAILURE",
+"count": 823
+},
+{
+"term": "HAEMATOMA",
+"count": 823
+},
+{
+"term": "DRUG INEFFECTIVE FOR UNAPPROVED INDICATION",
+"count": 820
+},
+{
+"term": "BLOOD URINE PRESENT",
+"count": 812
+},
+{
+"term": "DRY EYE",
+"count": 812
+},
+{
+"term": "BLOOD SODIUM DECREASED",
+"count": 802
+},
+{
+"term": "HEMIPARESIS",
+"count": 802
+},
+{
+"term": "HYPOCALCAEMIA",
+"count": 800
+},
+{
+"term": "PALLOR",
+"count": 798
+},
+{
+"term": "PULMONARY FIBROSIS",
+"count": 796
+},
+{
+"term": "BREAST CANCER",
+"count": 795
+},
+{
+"term": "SINUS DISORDER",
+"count": 795
+},
+{
+"term": "INTERVERTEBRAL DISC PROTRUSION",
+"count": 792
+},
+{
+"term": "JAUNDICE",
+"count": 791
+},
+{
+"term": "CORONARY ARTERY OCCLUSION",
+"count": 790
+},
+{
+"term": "DRUG ABUSE",
+"count": 790
+},
+{
+"term": "SYNOVITIS",
+"count": 789
+},
+{
+"term": "RETCHING",
+"count": 787
+},
+{
+"term": "RESTLESSNESS",
+"count": 781
+},
+{
+"term": "HEART RATE IRREGULAR",
+"count": 779
+},
+{
+"term": "ERECTILE DYSFUNCTION",
+"count": 777
+},
+{
+"term": "AGGRESSION",
+"count": 775
+},
+{
+"term": "JOINT INJURY",
+"count": 771
+},
+{
+"term": "AGEUSIA",
+"count": 766
+},
+{
+"term": "WRONG TECHNIQUE IN DEVICE USAGE PROCESS",
+"count": 765
+},
+{
+"term": "INCREASED APPETITE",
+"count": 764
+},
+{
+"term": "HEPATITIS",
+"count": 761
+},
+{
+"term": "GASTROENTERITIS",
+"count": 760
+},
+{
+"term": "GOUT",
+"count": 758
+},
+{
+"term": "PRODUCT PRESCRIBING ERROR",
+"count": 758
+},
+{
+"term": "FAECES DISCOLOURED",
+"count": 757
+},
+{
+"term": "SKIN LESION",
+"count": 744
+},
+{
+"term": "BODY TEMPERATURE DECREASED",
+"count": 743
+},
+{
+"term": "HAEMATOCRIT DECREASED",
+"count": 739
+},
+{
+"term": "LIVER INJURY",
+"count": 738
+},
+{
+"term": "IRRITABLE BOWEL SYNDROME",
+"count": 736
+},
+{
+"term": "OBSTRUCTIVE AIRWAYS DISORDER",
+"count": 734
+},
+{
+"term": "VITAMIN B12 DEFICIENCY",
+"count": 733
+},
+{
+"term": "CARDIOGENIC SHOCK",
+"count": 732
+},
+{
+"term": "RENAL TUBULAR NECROSIS",
+"count": 732
+},
+{
+"term": "OCULAR HYPERAEMIA",
+"count": 730
+},
+{
+"term": "THERAPY NON-RESPONDER",
+"count": 730
+},
+{
+"term": "GAMMA-GLUTAMYLTRANSFERASE INCREASED",
+"count": 728
+},
+{
+"term": "ORTHOSTATIC HYPOTENSION",
+"count": 724
+},
+{
+"term": "SLEEP DISORDER DUE TO A GENERAL MEDICAL CONDITION",
+"count": 724
+},
+{
+"term": "UPPER GASTROINTESTINAL HAEMORRHAGE",
+"count": 722
+},
+{
+"term": "VIRAL INFECTION",
+"count": 719
+},
+{
+"term": "FEELING JITTERY",
+"count": 718
+},
+{
+"term": "HUNGER",
+"count": 718
+},
+{
+"term": "PNEUMONIA ASPIRATION",
+"count": 718
+},
+{
+"term": "LYMPHADENOPATHY",
+"count": 716
+},
+{
+"term": "BLOOD PRESSURE ABNORMAL",
+"count": 715
+},
+{
+"term": "SNEEZING",
+"count": 712
+},
+{
+"term": "RASH MACULAR",
+"count": 711
+},
+{
+"term": "STAPHYLOCOCCAL INFECTION",
+"count": 708
+},
+{
+"term": "SYSTEMIC LUPUS ERYTHEMATOSUS",
+"count": 707
+},
+{
+"term": "RESPIRATORY DISORDER",
+"count": 706
+},
+{
+"term": "GLAUCOMA",
+"count": 705
+},
+{
+"term": "SKIN BURNING SENSATION",
+"count": 704
+},
+{
+"term": "DIPLOPIA",
+"count": 701
+},
+{
+"term": "COLITIS ULCERATIVE",
+"count": 699
+},
+{
+"term": "LEUKOPENIA",
+"count": 698
+},
+{
+"term": "COLD SWEAT",
+"count": 697
+},
+{
+"term": "ALTERED STATE OF CONSCIOUSNESS",
+"count": 695
+},
+{
+"term": "NEURALGIA",
+"count": 695
+},
+{
+"term": "HIP FRACTURE",
+"count": 694
+},
+{
+"term": "LACRIMATION INCREASED",
+"count": 689
+},
+{
+"term": "DEMENTIA",
+"count": 688
+},
+{
+"term": "PANIC ATTACK",
+"count": 687
+},
+{
+"term": "EAR INFECTION",
+"count": 684
+},
+{
+"term": "ASCITES",
+"count": 683
+},
+{
+"term": "HYPERLIPIDAEMIA",
+"count": 683
+},
+{
+"term": "NEUTROPHIL COUNT DECREASED",
+"count": 680
+},
+{
+"term": "PRURITUS GENERALISED",
+"count": 678
+},
+{
+"term": "SKIN DISORDER",
+"count": 677
+},
+{
+"term": "SCIATICA",
+"count": 674
+},
+{
+"term": "BLOOD ALKALINE PHOSPHATASE INCREASED",
+"count": 671
+},
+{
+"term": "HYPOVOLAEMIA",
+"count": 671
+},
+{
+"term": "CONVULSION",
+"count": 668
+},
+{
+"term": "ISCHAEMIC STROKE",
+"count": 668
+},
+{
+"term": "GASTRIC ULCER",
+"count": 661
+},
+{
+"term": "CARDIOVASCULAR DISORDER",
+"count": 659
+},
+{
+"term": "HYPOGLYCAEMIC COMA",
+"count": 658
+},
+{
+"term": "POOR QUALITY SLEEP",
+"count": 654
+},
+{
+"term": "PROSTATE CANCER",
+"count": 653
+},
+{
+"term": "GLOSSODYNIA",
+"count": 650
+},
+{
+"term": "DRUG EFFECT INCOMPLETE",
+"count": 649
+},
+{
+"term": "PULMONARY HYPERTENSION",
+"count": 649
+},
+{
+"term": "ABDOMINAL PAIN LOWER",
+"count": 646
+},
+{
+"term": "ABNORMAL BEHAVIOUR",
+"count": 646
+},
+{
+"term": "CHROMATURIA",
+"count": 644
+},
+{
+"term": "ACCIDENTAL UNDERDOSE",
+"count": 643
+},
+{
+"term": "OSTEOMYELITIS",
+"count": 643
+},
+{
+"term": "PERICARDIAL EFFUSION",
+"count": 641
+},
+{
+"term": "FEEDING DISORDER",
+"count": 640
+},
+{
+"term": "MYOCARDIAL ISCHAEMIA",
+"count": 640
+},
+{
+"term": "POLYURIA",
+"count": 638
+},
+{
+"term": "MULTIPLE SCLEROSIS RELAPSE",
+"count": 636
+},
+{
+"term": "IMPAIRED WORK ABILITY",
+"count": 635
+},
+{
+"term": "RESPIRATORY TRACT INFECTION",
+"count": 634
+},
+{
+"term": "HAIR COLOUR CHANGES",
+"count": 632
+},
+{
+"term": "MENTAL IMPAIRMENT",
+"count": 632
+},
+{
+"term": "JOINT STIFFNESS",
+"count": 626
+},
+{
+"term": "KIDNEY INFECTION",
+"count": 626
+},
+{
+"term": "BLOOD PRESSURE DIASTOLIC DECREASED",
+"count": 624
+},
+{
+"term": "EAR PAIN",
+"count": 624
+},
+{
+"term": "EPILEPSY",
+"count": 623
+},
+{
+"term": "PREMATURE BABY",
+"count": 623
+},
+{
+"term": "ACCIDENTAL EXPOSURE TO PRODUCT",
+"count": 622
+},
+{
+"term": "BLOOD BILIRUBIN INCREASED",
+"count": 622
+},
+{
+"term": "LIVER FUNCTION TEST INCREASED",
+"count": 622
+},
+{
+"term": "EJECTION FRACTION DECREASED",
+"count": 621
+},
+{
+"term": "RESPIRATORY TRACT CONGESTION",
+"count": 621
+},
+{
+"term": "ANGER",
+"count": 619
+},
+{
+"term": "ORAL PAIN",
+"count": 618
+},
+{
+"term": "PERICARDITIS",
+"count": 616
+},
+{
+"term": "CEREBRAL INFARCTION",
+"count": 615
+},
+{
+"term": "INCORRECT DOSE ADMINISTERED BY DEVICE",
+"count": 612
+},
+{
+"term": "RIB FRACTURE",
+"count": 610
+},
+{
+"term": "MITRAL VALVE INCOMPETENCE",
+"count": 609
+},
+{
+"term": "TOOTHACHE",
+"count": 609
+},
+{
+"term": "EYE PRURITUS",
+"count": 607
+},
+{
+"term": "HYPOKINESIA",
+"count": 606
+},
+{
+"term": "ACNE",
+"count": 605
+},
+{
+"term": "MIDDLE INSOMNIA",
+"count": 604
+},
+{
+"term": "VENTRICULAR TACHYCARDIA",
+"count": 604
+},
+{
+"term": "BURSITIS",
+"count": 603
+},
+{
+"term": "GALLBLADDER DISORDER",
+"count": 603
+},
+{
+"term": "WRONG TECHNIQUE IN DRUG USAGE PROCESS",
+"count": 603
+},
+{
+"term": "COORDINATION ABNORMAL",
+"count": 602
+},
+{
+"term": "CRYING",
+"count": 601
+},
+{
+"term": "ARTERIOSCLEROSIS",
+"count": 599
+},
+{
+"term": "BLOOD IRON DECREASED",
+"count": 598
+},
+{
+"term": "INTENTIONAL DOSE OMISSION",
+"count": 598
+},
+{
+"term": "SINUS CONGESTION",
+"count": 597
+},
+{
+"term": "FULL BLOOD COUNT ABNORMAL",
+"count": 596
+},
+{
+"term": "DRUG ADMINISTRATION ERROR",
+"count": 594
+},
+{
+"term": "ANOREXIA",
+"count": 593
+},
+{
+"term": "HAEMORRHOIDS",
+"count": 592
+},
+{
+"term": "SUSPECTED SUICIDE",
+"count": 592
+},
+{
+"term": "JOINT RANGE OF MOTION DECREASED",
+"count": 591
+},
+{
+"term": "HEMIPLEGIA",
+"count": 590
+},
+{
+"term": "CROHN^S DISEASE",
+"count": 588
+},
+{
+"term": "PROTEINURIA",
+"count": 587
+},
+{
+"term": "SINUS TACHYCARDIA",
+"count": 583
+},
+{
+"term": "LABORATORY TEST ABNORMAL",
+"count": 582
+},
+{
+"term": "PAIN IN JAW",
+"count": 582
+},
+{
+"term": "EXPIRED PRODUCT ADMINISTERED",
+"count": 580
+},
+{
+"term": "WITHDRAWAL SYNDROME",
+"count": 580
+},
+{
+"term": "ABNORMAL DREAMS",
+"count": 579
+},
+{
+"term": "CARPAL TUNNEL SYNDROME",
+"count": 579
+},
+{
+"term": "FEAR",
+"count": 579
+},
+{
+"term": "HAIR TEXTURE ABNORMAL",
+"count": 579
+},
+{
+"term": "PROCEDURAL PAIN",
+"count": 579
+},
+{
+"term": "NOCTURIA",
+"count": 575
+},
+{
+"term": "NEPHROGENIC ANAEMIA",
+"count": 574
+},
+{
+"term": "HEPATOTOXICITY",
+"count": 573
+},
+{
+"term": "MULTI-ORGAN FAILURE",
+"count": 573
+},
+{
+"term": "HAEMODYNAMIC INSTABILITY",
+"count": 571
+},
+{
+"term": "IMPAIRED QUALITY OF LIFE",
+"count": 566
+},
+{
+"term": "HERNIA",
+"count": 565
+},
+{
+"term": "SKIN HAEMORRHAGE",
+"count": 565
+},
+{
+"term": "VAGINAL HAEMORRHAGE",
+"count": 565
+},
+{
+"term": "PSYCHOTIC DISORDER",
+"count": 564
+},
+{
+"term": "THROAT TIGHTNESS",
+"count": 564
+},
+{
+"term": "ELECTROLYTE IMBALANCE",
+"count": 562
+},
+{
+"term": "PRODUCT ODOUR ABNORMAL",
+"count": 562
+},
+{
+"term": "CARDIOMEGALY",
+"count": 561
+},
+{
+"term": "SOPOR",
+"count": 561
+},
+{
+"term": "EOSINOPHILIA",
+"count": 557
+},
+{
+"term": "HALLUCINATION, VISUAL",
+"count": 557
+},
+{
+"term": "INJECTION SITE RASH",
+"count": 557
+},
+{
+"term": "NODULE",
+"count": 557
+},
+{
+"term": "RASH GENERALISED",
+"count": 557
+},
+{
+"term": "GASTROENTERITIS VIRAL",
+"count": 556
+},
+{
+"term": "ABASIA",
+"count": 554
+},
+{
+"term": "METASTASES TO LIVER",
+"count": 553
+},
+{
+"term": "UROSEPSIS",
+"count": 553
+},
+{
+"term": "PSYCHOLOGICAL TRAUMA",
+"count": 552
+},
+{
+"term": "SENSORY LOSS",
+"count": 552
+},
+{
+"term": "COAGULOPATHY",
+"count": 550
+},
+{
+"term": "MUSCULOSKELETAL CHEST PAIN",
+"count": 549
+},
+{
+"term": "BACK INJURY",
+"count": 548
+},
+{
+"term": "EYE HAEMORRHAGE",
+"count": 548
+},
+{
+"term": "FOOT FRACTURE",
+"count": 548
+},
+{
+"term": "ANHEDONIA",
+"count": 546
+},
+{
+"term": "DEAFNESS",
+"count": 541
+},
+{
+"term": "RESTLESS LEGS SYNDROME",
+"count": 540
+},
+{
+"term": "CHOLECYSTITIS",
+"count": 538
+},
+{
+"term": "BASAL CELL CARCINOMA",
+"count": 537
+},
+{
+"term": "HEPATIC FUNCTION ABNORMAL",
+"count": 537
+},
+{
+"term": "INJECTION SITE URTICARIA",
+"count": 537
+},
+{
+"term": "CHOKING",
+"count": 533
+},
+{
+"term": "ARTERIOSCLEROSIS CORONARY ARTERY",
+"count": 532
+},
+{
+"term": "DRUG WITHDRAWAL SYNDROME",
+"count": 531
+},
+{
+"term": "SEASONAL ALLERGY",
+"count": 529
+},
+{
+"term": "CARDIOMYOPATHY",
+"count": 528
+},
+{
+"term": "MOOD ALTERED",
+"count": 528
+},
+{
+"term": "LIPASE INCREASED",
+"count": 526
+},
+{
+"term": "PULMONARY MASS",
+"count": 525
+},
+{
+"term": "HYPERCHOLESTEROLAEMIA",
+"count": 522
+},
+{
+"term": "DIABETIC METABOLIC DECOMPENSATION",
+"count": 521
+},
+{
+"term": "ARTERIAL OCCLUSIVE DISEASE",
+"count": 520
+},
+{
+"term": "BLOOD MAGNESIUM DECREASED",
+"count": 519
+},
+{
+"term": "DRUG DEPENDENCE",
+"count": 518
+},
+{
+"term": "FOURNIER^S GANGRENE",
+"count": 514
+},
+{
+"term": "LUNG NEOPLASM MALIGNANT",
+"count": 514
+},
+{
+"term": "BACK DISORDER",
+"count": 509
+},
+{
+"term": "DRUG LEVEL ABOVE THERAPEUTIC",
+"count": 508
+},
+{
+"term": "MOTOR DYSFUNCTION",
+"count": 507
+},
+{
+"term": "RESPIRATORY ARREST",
+"count": 506
+},
+{
+"term": "MYOPATHY",
+"count": 501
+},
+{
+"term": "CANDIDA INFECTION",
+"count": 499
+},
+{
+"term": "PNEUMONITIS",
+"count": 499
+},
+{
+"term": "VASCULITIS",
+"count": 497
+},
+{
+"term": "HAIR DISORDER",
+"count": 496
+},
+{
+"term": "UPPER LIMB FRACTURE",
+"count": 496
+},
+{
+"term": "LOCAL SWELLING",
+"count": 495
+},
+{
+"term": "TRANSAMINASES INCREASED",
+"count": 495
+},
+{
+"term": "PLASMA CELL MYELOMA",
+"count": 493
+},
+{
+"term": "BODY TEMPERATURE INCREASED",
+"count": 492
+},
+{
+"term": "CHOLESTASIS",
+"count": 491
+},
+{
+"term": "FEMUR FRACTURE",
+"count": 491
+},
+{
+"term": "DIABETIC RETINOPATHY",
+"count": 490
+},
+{
+"term": "ACUTE CORONARY SYNDROME",
+"count": 489
+},
+{
+"term": "RASH MACULO-PAPULAR",
+"count": 489
+},
+{
+"term": "ABNORMAL LOSS OF WEIGHT",
+"count": 486
+},
+{
+"term": "NEOPLASM PROGRESSION",
+"count": 486
+},
+{
+"term": "PRODUCT DOSE OMISSION IN ERROR",
+"count": 485
+},
+{
+"term": "MUSCLE TWITCHING",
+"count": 483
+},
+{
+"term": "FLANK PAIN",
+"count": 480
+},
+{
+"term": "PRODUCT ADMINISTRATION ERROR",
+"count": 480
+},
+{
+"term": "PHARYNGITIS",
+"count": 479
+},
+{
+"term": "BLOOD COUNT ABNORMAL",
+"count": 478
+},
+{
+"term": "MADAROSIS",
+"count": 478
+},
+{
+"term": "RALES",
+"count": 478
+},
+{
+"term": "MUCOSAL INFLAMMATION",
+"count": 477
+},
+{
+"term": "ROTATOR CUFF SYNDROME",
+"count": 477
+},
+{
+"term": "WEIGHT FLUCTUATION",
+"count": 476
+},
+{
+"term": "DIALYSIS",
+"count": 474
+},
+{
+"term": "GANGRENE",
+"count": 472
+},
+{
+"term": "MUSCULOSKELETAL DISCOMFORT",
+"count": 472
+},
+{
+"term": "MUSCLE ATROPHY",
+"count": 470
+},
+{
+"term": "NERVOUS SYSTEM DISORDER",
+"count": 470
+},
+{
+"term": "PHARMACEUTICAL PRODUCT COMPLAINT",
+"count": 469
+},
+{
+"term": "AFFECT LABILITY",
+"count": 467
+},
+{
+"term": "CARDIAC MURMUR",
+"count": 466
+},
+{
+"term": "ANKLE FRACTURE",
+"count": 463
+},
+{
+"term": "ABORTION SPONTANEOUS",
+"count": 462
+},
+{
+"term": "KNEE ARTHROPLASTY",
+"count": 462
+},
+{
+"term": "MULTIPLE SCLEROSIS",
+"count": 462
+},
+{
+"term": "POST PROCEDURAL COMPLICATION",
+"count": 460
+},
+{
+"term": "PRESCRIBED OVERDOSE",
+"count": 460
+},
+{
+"term": "TOOTH DISORDER",
+"count": 460
+},
+{
+"term": "THERAPEUTIC RESPONSE SHORTENED",
+"count": 459
+},
+{
+"term": "ABSCESS",
+"count": 456
+},
+{
+"term": "FULL BLOOD COUNT DECREASED",
+"count": 455
+},
+{
+"term": "LEFT VENTRICULAR DYSFUNCTION",
+"count": 454
+},
+{
+"term": "BODY HEIGHT DECREASED",
+"count": 453
+},
+{
+"term": "ULCER",
+"count": 452
+},
+{
+"term": "HIATUS HERNIA",
+"count": 451
+},
+{
+"term": "WOUND INFECTION",
+"count": 449
+},
+{
+"term": "ACUTE RESPIRATORY DISTRESS SYNDROME",
+"count": 448
+},
+{
+"term": "HYPERTENSIVE CRISIS",
+"count": 448
+},
+{
+"term": "PAIN OF SKIN",
+"count": 448
+},
+{
+"term": "RED BLOOD CELL SEDIMENTATION RATE INCREASED",
+"count": 448
+},
+{
+"term": "RENAL CYST",
+"count": 448
+},
+{
+"term": "PEMPHIGUS",
+"count": 447
+},
+{
+"term": "NEPHROPATHY",
+"count": 444
+},
+{
+"term": "PROSTATIC SPECIFIC ANTIGEN INCREASED",
+"count": 444
+},
+{
+"term": "SUBDURAL HAEMATOMA",
+"count": 443
+},
+{
+"term": "ECONOMIC PROBLEM",
+"count": 442
+},
+{
+"term": "MOOD SWINGS",
+"count": 442
+},
+{
+"term": "PERIPHERAL COLDNESS",
+"count": 442
+},
+{
+"term": "RESPIRATORY RATE INCREASED",
+"count": 442
+},
+{
+"term": "RASH PAPULAR",
+"count": 441
+},
+{
+"term": "HYPERCALCAEMIA",
+"count": 440
+},
+{
+"term": "IRON DEFICIENCY ANAEMIA",
+"count": 440
+},
+{
+"term": "SEDATION",
+"count": 440
+},
+{
+"term": "NEUTROPHIL COUNT INCREASED",
+"count": 438
+},
+{
+"term": "PULMONARY CONGESTION",
+"count": 438
+},
+{
+"term": "ANAL INCONTINENCE",
+"count": 437
+},
+{
+"term": "THYROID DISORDER",
+"count": 436
+},
+{
+"term": "OLIGURIA",
+"count": 435
+},
+{
+"term": "BRONCHIECTASIS",
+"count": 434
+},
+{
+"term": "BLINDNESS UNILATERAL",
+"count": 433
+},
+{
+"term": "MICTURITION URGENCY",
+"count": 433
+},
+{
+"term": "PRESCRIBED UNDERDOSE",
+"count": 432
+},
+{
+"term": "PARKINSONISM",
+"count": 431
+},
+{
+"term": "VENTRICULAR FIBRILLATION",
+"count": 431
+},
+{
+"term": "SPUTUM DISCOLOURED",
+"count": 430
+},
+{
+"term": "MUSCLE SPASTICITY",
+"count": 427
+},
+{
+"term": "INAPPROPRIATE ANTIDIURETIC HORMONE SECRETION",
+"count": 422
+},
+{
+"term": "PREMATURE DELIVERY",
+"count": 420
+},
+{
+"term": "EMOTIONAL DISORDER",
+"count": 419
+},
+{
+"term": "DRUG PRESCRIBING ERROR",
+"count": 418
+},
+{
+"term": "MASS",
+"count": 418
+},
+{
+"term": "HYPERTHYROIDISM",
+"count": 416
+},
+{
+"term": "DERMATITIS ATOPIC",
+"count": 415
+},
+{
+"term": "ELECTROCARDIOGRAM ABNORMAL",
+"count": 415
+},
+{
+"term": "TOOTH INFECTION",
+"count": 415
+},
+{
+"term": "CIRCUMSTANCE OR INFORMATION CAPABLE OF LEADING TO MEDICATION ERROR",
+"count": 414
+},
+{
+"term": "HALLUCINATION, AUDITORY",
+"count": 414
+},
+{
+"term": "URINE OUTPUT DECREASED",
+"count": 414
+},
+{
+"term": "COVID-19 PNEUMONIA",
+"count": 413
+},
+{
+"term": "TENDONITIS",
+"count": 412
+},
+{
+"term": "THINKING ABNORMAL",
+"count": 411
+},
+{
+"term": "ACTIVITIES OF DAILY LIVING IMPAIRED",
+"count": 410
+},
+{
+"term": "HEPATIC CYTOLYSIS",
+"count": 409
+},
+{
+"term": "INCORRECT DRUG ADMINISTRATION DURATION",
+"count": 409
+},
+{
+"term": "HYPOVOLAEMIC SHOCK",
+"count": 407
+},
+{
+"term": "PHOTOPHOBIA",
+"count": 406
+},
+{
+"term": "EXOSTOSIS",
+"count": 403
+},
+{
+"term": "ATRIOVENTRICULAR BLOCK",
+"count": 402
+},
+{
+"term": "HEAD DISCOMFORT",
+"count": 401
+},
+{
+"term": "DYSLIPIDAEMIA",
+"count": 400
+},
+{
+"term": "FOLLICULITIS",
+"count": 398
+},
+{
+"term": "GASTROINTESTINAL HYPOMOTILITY",
+"count": 398
+},
+{
+"term": "PHARYNGEAL OEDEMA",
+"count": 396
+},
+{
+"term": "HAND DEFORMITY",
+"count": 395
+},
+{
+"term": "SKIN IRRITATION",
+"count": 395
+},
+{
+"term": "BACTERIAL INFECTION",
+"count": 394
+},
+{
+"term": "HYPOAESTHESIA ORAL",
+"count": 393
+},
+{
+"term": "ANAPHYLACTIC SHOCK",
+"count": 390
+},
+{
+"term": "RHINITIS",
+"count": 388
+},
+{
+"term": "VITAMIN D DEFICIENCY",
+"count": 388
+},
+{
+"term": "LOWER LIMB FRACTURE",
+"count": 386
+},
+{
+"term": "DECREASED ACTIVITY",
+"count": 385
+},
+{
+"term": "LABELLED DRUG-DRUG INTERACTION MEDICATION ERROR",
+"count": 385
+},
+{
+"term": "PARKINSON^S DISEASE",
+"count": 385
+},
+{
+"term": "PAROSMIA",
+"count": 385
+},
+{
+"term": "SENSORY DISTURBANCE",
+"count": 385
+},
+{
+"term": "SCAR",
+"count": 384
+},
+{
+"term": "PHOTOSENSITIVITY REACTION",
+"count": 383
+},
+{
+"term": "SKIN FISSURES",
+"count": 383
+},
+{
+"term": "VENTRICULAR EXTRASYSTOLES",
+"count": 383
+},
+{
+"term": "DRUG ERUPTION",
+"count": 382
+},
+{
+"term": "RENAL PAIN",
+"count": 380
+},
+{
+"term": "SINUS BRADYCARDIA",
+"count": 380
+},
+{
+"term": "CYST",
+"count": 378
+},
+{
+"term": "MUSCLE TIGHTNESS",
+"count": 378
+},
+{
+"term": "LYMPHOCYTE COUNT DECREASED",
+"count": 376
+},
+{
+"term": "COLON CANCER",
+"count": 375
+},
+{
+"term": "INCORRECT PRODUCT ADMINISTRATION DURATION",
+"count": 373
+},
+{
+"term": "ATRIOVENTRICULAR BLOCK COMPLETE",
+"count": 372
+},
+{
+"term": "BONE DISORDER",
+"count": 372
+},
+{
+"term": "GENERALISED OEDEMA",
+"count": 372
+},
+{
+"term": "BLINDNESS TRANSIENT",
+"count": 371
+},
+{
+"term": "DELUSION",
+"count": 371
+},
+{
+"term": "GLUCOSE TOLERANCE IMPAIRED",
+"count": 371
+},
+{
+"term": "ONYCHOMYCOSIS",
+"count": 370
+},
+{
+"term": "PLATELET COUNT INCREASED",
+"count": 370
+},
+{
+"term": "POISONING",
+"count": 370
+},
+{
+"term": "HEPATOMEGALY",
+"count": 368
+},
+{
+"term": "SEROTONIN SYNDROME",
+"count": 368
+},
+{
+"term": "SPINAL FRACTURE",
+"count": 367
+},
+{
+"term": "TENDERNESS",
+"count": 367
+},
+{
+"term": "TRICUSPID VALVE INCOMPETENCE",
+"count": 367
+},
+{
+"term": "PRODUCT DISPENSING ERROR",
+"count": 365
+},
+{
+"term": "ATRIAL FLUTTER",
+"count": 364
+},
+{
+"term": "DRUG DOSE OMISSION BY DEVICE",
+"count": 363
+},
+{
+"term": "DRUG REACTION WITH EOSINOPHILIA AND SYSTEMIC SYMPTOMS",
+"count": 363
+},
+{
+"term": "PERSONALITY DISORDER",
+"count": 363
+},
+{
+"term": "MUSCULOSKELETAL DISORDER",
+"count": 362
+},
+{
+"term": "NERVE COMPRESSION",
+"count": 362
+},
+{
+"term": "EARLY SATIETY",
+"count": 360
+},
+{
+"term": "ILEUS",
+"count": 360
+},
+{
+"term": "MALNUTRITION",
+"count": 360
+},
+{
+"term": "INTERNAL HAEMORRHAGE",
+"count": 359
+},
+{
+"term": "MYOSITIS",
+"count": 359
+},
+{
+"term": "PYELONEPHRITIS",
+"count": 358
+},
+{
+"term": "DRUG DISPENSING ERROR",
+"count": 356
+},
+{
+"term": "ATELECTASIS",
+"count": 355
+},
+{
+"term": "GINGIVAL PAIN",
+"count": 355
+},
+{
+"term": "INCONTINENCE",
+"count": 355
+},
+{
+"term": "PRODUCT AVAILABILITY ISSUE",
+"count": 355
+},
+{
+"term": "APPETITE DISORDER",
+"count": 354
+},
+{
+"term": "NAIL DISORDER",
+"count": 353
+},
+{
+"term": "ORAL CANDIDIASIS",
+"count": 353
+},
+{
+"term": "ANGINA UNSTABLE",
+"count": 352
+},
+{
+"term": "NEUROLOGICAL SYMPTOM",
+"count": 352
+},
+{
+"term": "SKIN CANCER",
+"count": 352
+},
+{
+"term": "AGRANULOCYTOSIS",
+"count": 351
+},
+{
+"term": "INTERVERTEBRAL DISC DEGENERATION",
+"count": 351
+},
+{
+"term": "CLOSTRIDIUM DIFFICILE INFECTION",
+"count": 350
+},
+{
+"term": "PANCREATIC CARCINOMA METASTATIC",
+"count": 350
+},
+{
+"term": "PARAESTHESIA ORAL",
+"count": 350
+},
+{
+"term": "SPLENOMEGALY",
+"count": 350
+},
+{
+"term": "MOUTH ULCERATION",
+"count": 349
+},
+{
+"term": "NERVE INJURY",
+"count": 349
+},
+{
+"term": "INJURY ASSOCIATED WITH DEVICE",
+"count": 348
+},
+{
+"term": "PRODUCT PHYSICAL ISSUE",
+"count": 348
+},
+{
+"term": "INTENTIONAL DRUG MISUSE",
+"count": 347
+},
+{
+"term": "OVERWEIGHT",
+"count": 347
+},
+{
+"term": "SUPRAVENTRICULAR TACHYCARDIA",
+"count": 347
+},
+{
+"term": "C-REACTIVE PROTEIN ABNORMAL",
+"count": 345
+},
+{
+"term": "DIZZINESS POSTURAL",
+"count": 345
+},
+{
+"term": "PALMAR-PLANTAR ERYTHRODYSAESTHESIA SYNDROME",
+"count": 345
+},
+{
+"term": "ACUTE HEPATIC FAILURE",
+"count": 344
+},
+{
+"term": "SPINAL PAIN",
+"count": 344
+},
+{
+"term": "INTENTIONAL DEVICE MISUSE",
+"count": 343
+},
+{
+"term": "OSTEOPENIA",
+"count": 343
+},
+{
+"term": "SCHIZOPHRENIA",
+"count": 343
+},
+{
+"term": "LEFT VENTRICULAR HYPERTROPHY",
+"count": 342
+},
+{
+"term": "SKIN LACERATION",
+"count": 342
+},
+{
+"term": "FACE OEDEMA",
+"count": 341
+},
+{
+"term": "MALIGNANT MELANOMA",
+"count": 340
+},
+{
+"term": "APHONIA",
+"count": 339
+},
+{
+"term": "METASTASES TO BONE",
+"count": 339
+},
+{
+"term": "LIGAMENT SPRAIN",
+"count": 338
+},
+{
+"term": "GENERALISED TONIC-CLONIC SEIZURE",
+"count": 336
+},
+{
+"term": "PERIPHERAL VENOUS DISEASE",
+"count": 336
+},
+{
+"term": "BLOOD LACTATE DEHYDROGENASE INCREASED",
+"count": 335
+},
+{
+"term": "CHOLECYSTECTOMY",
+"count": 335
+},
+{
+"term": "INCORRECT PRODUCT STORAGE",
+"count": 335
+},
+{
+"term": "PRODUCT TASTE ABNORMAL",
+"count": 335
+},
+{
+"term": "TOE AMPUTATION",
+"count": 334
+},
+{
+"term": "TOOTH ABSCESS",
+"count": 334
+},
+{
+"term": "MYOCARDITIS",
+"count": 333
+},
+{
+"term": "SARS-COV-2 TEST POSITIVE",
+"count": 333
+},
+{
+"term": "BLOOD TEST ABNORMAL",
+"count": 331
+},
+{
+"term": "OESOPHAGITIS",
+"count": 330
+},
+{
+"term": "BLEPHAROSPASM",
+"count": 329
+},
+{
+"term": "ONYCHOMADESIS",
+"count": 328
+},
+{
+"term": "SPINAL OSTEOARTHRITIS",
+"count": 328
+},
+{
+"term": "SMALL INTESTINAL OBSTRUCTION",
+"count": 327
+},
+{
+"term": "DERMATITIS",
+"count": 326
+},
+{
+"term": "DUODENAL ULCER",
+"count": 326
+},
+{
+"term": "HELICOBACTER INFECTION",
+"count": 326
+},
+{
+"term": "INSURANCE ISSUE",
+"count": 326
+},
+{
+"term": "TROPONIN INCREASED",
+"count": 326
+},
+{
+"term": "GASTROINTESTINAL PAIN",
+"count": 324
+},
+{
+"term": "HAEMORRHAGE INTRACRANIAL",
+"count": 324
+},
+{
+"term": "HEPATOCELLULAR INJURY",
+"count": 324
+},
+{
+"term": "TARDIVE DYSKINESIA",
+"count": 323
+},
+{
+"term": "MUSCLE INJURY",
+"count": 322
+},
+{
+"term": "SLUGGISHNESS",
+"count": 322
+},
+{
+"term": "GRIP STRENGTH DECREASED",
+"count": 320
+},
+{
+"term": "PARALYSIS",
+"count": 319
+},
+{
+"term": "POLYP",
+"count": 319
+},
+{
+"term": "SUDDEN DEATH",
+"count": 319
+},
+{
+"term": "ADJUSTMENT DISORDER",
+"count": 318
+},
+{
+"term": "ANOSMIA",
+"count": 318
+},
+{
+"term": "BRAIN FOG",
+"count": 318
+},
+{
+"term": "HAEMOLYTIC ANAEMIA",
+"count": 317
+},
+{
+"term": "INJECTION SITE IRRITATION",
+"count": 317
+},
+{
+"term": "POLYNEUROPATHY",
+"count": 316
+},
+{
+"term": "SECRETION DISCHARGE",
+"count": 315
+},
+{
+"term": "CHOLECYSTITIS CHRONIC",
+"count": 314
+},
+{
+"term": "DISTRIBUTIVE SHOCK",
+"count": 314
+},
+{
+"term": "MUSCLE RIGIDITY",
+"count": 313
+},
+{
+"term": "TOOTH FRACTURE",
+"count": 313
+},
+{
+"term": "IMMUNODEFICIENCY",
+"count": 312
+},
+{
+"term": "ANION GAP INCREASED",
+"count": 308
+},
+{
+"term": "DEVICE DELIVERY SYSTEM ISSUE",
+"count": 307
+},
+{
+"term": "HYPERPARATHYROIDISM SECONDARY",
+"count": 307
+},
+{
+"term": "METASTASES TO LUNG",
+"count": 307
+},
+{
+"term": "PARANOIA",
+"count": 307
+},
+{
+"term": "BLOOD PRESSURE DIASTOLIC ABNORMAL",
+"count": 306
+},
+{
+"term": "SUBARACHNOID HAEMORRHAGE",
+"count": 306
+},
+{
+"term": "SALIVARY HYPERSECRETION",
+"count": 304
+},
+{
+"term": "EXERCISE TOLERANCE DECREASED",
+"count": 303
+},
+{
+"term": "NEPHROPATHY TOXIC",
+"count": 303
+},
+{
+"term": "CAROTID ARTERY THROMBOSIS",
+"count": 302
+},
+{
+"term": "INFUSION SITE PAIN",
+"count": 302
+},
+{
+"term": "INITIAL INSOMNIA",
+"count": 302
+},
+{
+"term": "LARGE INTESTINE POLYP",
+"count": 302
+},
+{
+"term": "LUNG INFECTION",
+"count": 302
+},
+{
+"term": "RETINAL DETACHMENT",
+"count": 302
+},
+{
+"term": "APATHY",
+"count": 301
+},
+{
+"term": "DIVERTICULUM",
+"count": 301
+},
+{
+"term": "CORONARY ARTERY STENOSIS",
+"count": 300
+},
+{
+"term": "POTENTIATING DRUG INTERACTION",
+"count": 300
+},
+{
+"term": "PULSELESS ELECTRICAL ACTIVITY",
+"count": 300
+},
+{
+"term": "BLOOD PRESSURE INADEQUATELY CONTROLLED",
+"count": 299
+},
+{
+"term": "ASPIRATION",
+"count": 298
+},
+{
+"term": "FORCED EXPIRATORY VOLUME DECREASED",
+"count": 298
+},
+{
+"term": "NEOPLASM",
+"count": 298
+},
+{
+"term": "LOWER GASTROINTESTINAL HAEMORRHAGE",
+"count": 297
+},
+{
+"term": "OSTEONECROSIS OF JAW",
+"count": 297
+},
+{
+"term": "CYANOSIS",
+"count": 295
+},
+{
+"term": "HAEMORRHAGIC STROKE",
+"count": 295
+},
+{
+"term": "SKIN INFECTION",
+"count": 295
+},
+{
+"term": "BUNDLE BRANCH BLOCK LEFT",
+"count": 294
+},
+{
+"term": "MANIA",
+"count": 294
+},
+{
+"term": "BLOOD BICARBONATE DECREASED",
+"count": 293
+},
+{
+"term": "EMPHYSEMA",
+"count": 293
+},
+{
+"term": "FOOT DEFORMITY",
+"count": 293
+},
+{
+"term": "SHOCK HAEMORRHAGIC",
+"count": 293
+},
+{
+"term": "ADVERSE REACTION",
+"count": 292
+},
+{
+"term": "ORAL HERPES",
+"count": 292
+},
+{
+"term": "BONE DENSITY DECREASED",
+"count": 291
+},
+{
+"term": "NEUROLOGIC NEGLECT SYNDROME",
+"count": 291
+},
+{
+"term": "POLYDIPSIA",
+"count": 291
+},
+{
+"term": "STOMACH DISCOMFORT",
+"count": 291
+},
+{
+"term": "BLOOD CALCIUM DECREASED",
+"count": 290
+},
+{
+"term": "INTENTIONAL SELF-INJURY",
+"count": 290
+},
+{
+"term": "DIABETIC FOOT",
+"count": 289
+},
+{
+"term": "LOW DENSITY LIPOPROTEIN INCREASED",
+"count": 289
+},
+{
+"term": "DEVICE DISLOCATION",
+"count": 288
+},
+{
+"term": "NORMOCHROMIC NORMOCYTIC ANAEMIA",
+"count": 288
+},
+{
+"term": "ADRENAL INSUFFICIENCY",
+"count": 287
+},
+{
+"term": "INJECTION SITE DISCOMFORT",
+"count": 287
+},
+{
+"term": "LARYNGITIS",
+"count": 287
+},
+{
+"term": "LIP DRY",
+"count": 287
+},
+{
+"term": "TENDON RUPTURE",
+"count": 287
+},
+{
+"term": "BLOOD THYROID STIMULATING HORMONE INCREASED",
+"count": 286
+},
+{
+"term": "HYPERTRIGLYCERIDAEMIA",
+"count": 286
+},
+{
+"term": "ATAXIA",
+"count": 285
+},
+{
+"term": "BEDRIDDEN",
+"count": 285
+},
+{
+"term": "EXTRAPYRAMIDAL DISORDER",
+"count": 285
+},
+{
+"term": "FINGER DEFORMITY",
+"count": 285
+},
+{
+"term": "STENT PLACEMENT",
+"count": 285
+},
+{
+"term": "ORAL DISCOMFORT",
+"count": 284
+},
+{
+"term": "DISABILITY",
+"count": 283
+},
+{
+"term": "ATRIOVENTRICULAR BLOCK FIRST DEGREE",
+"count": 282
+},
+{
+"term": "MACULAR DEGENERATION",
+"count": 282
+},
+{
+"term": "METABOLIC DISORDER",
+"count": 282
+},
+{
+"term": "REBOUND ACID HYPERSECRETION",
+"count": 281
+},
+{
+"term": "NEUROLEPTIC MALIGNANT SYNDROME",
+"count": 280
+},
+{
+"term": "POOR VENOUS ACCESS",
+"count": 280
+},
+{
+"term": "PULMONARY ALVEOLAR HAEMORRHAGE",
+"count": 280
+},
+{
+"term": "PRODUCT ADHESION ISSUE",
+"count": 279
+},
+{
+"term": "INABILITY TO AFFORD MEDICATION",
+"count": 278
+},
+{
+"term": "SKIN REACTION",
+"count": 278
+},
+{
+"term": "FLUID OVERLOAD",
+"count": 276
+},
+{
+"term": "MEDICATION RESIDUE PRESENT",
+"count": 276
+},
+{
+"term": "POISONING DELIBERATE",
+"count": 275
+},
+{
+"term": "APPLICATION SITE PAIN",
+"count": 274
+},
+{
+"term": "GINGIVAL BLEEDING",
+"count": 274
+},
+{
+"term": "SCAB",
+"count": 274
+},
+{
+"term": "SPINAL DISORDER",
+"count": 274
+},
+{
+"term": "BREATH SOUNDS ABNORMAL",
+"count": 273
+},
+{
+"term": "FRACTURE",
+"count": 273
+},
+{
+"term": "HICCUPS",
+"count": 273
+},
+{
+"term": "INJECTION SITE WARMTH",
+"count": 273
+},
+{
+"term": "RENAL FAILURE CHRONIC",
+"count": 273
+},
+{
+"term": "EYE INFECTION",
+"count": 272
+},
+{
+"term": "FAECES SOFT",
+"count": 272
+},
+{
+"term": "GLYCOSYLATED HAEMOGLOBIN DECREASED",
+"count": 272
+},
+{
+"term": "INTESTINAL ISCHAEMIA",
+"count": 272
+},
+{
+"term": "SCRATCH",
+"count": 272
+},
+{
+"term": "VITAMIN D DECREASED",
+"count": 272
+},
+{
+"term": "IMMUNE SYSTEM DISORDER",
+"count": 271
+},
+{
+"term": "GROIN PAIN",
+"count": 270
+},
+{
+"term": "LIVE BIRTH",
+"count": 268
+},
+{
+"term": "PSYCHOMOTOR HYPERACTIVITY",
+"count": 268
+},
+{
+"term": "FOOD CRAVING",
+"count": 267
+},
+{
+"term": "RED CELL DISTRIBUTION WIDTH INCREASED",
+"count": 267
+},
+{
+"term": "RENAL CANCER",
+"count": 267
+},
+{
+"term": "FACIAL PARALYSIS",
+"count": 266
+},
+{
+"term": "PERIPHERAL VASCULAR DISORDER",
+"count": 266
+},
+{
+"term": "STEVENS-JOHNSON SYNDROME",
+"count": 266
+},
+{
+"term": "BRAIN INJURY",
+"count": 265
+},
+{
+"term": "DECUBITUS ULCER",
+"count": 265
+},
+{
+"term": "INJECTION SITE HAEMATOMA",
+"count": 265
+},
+{
+"term": "PRE-EXISTING CONDITION IMPROVED",
+"count": 265
+},
+{
+"term": "IMPAIRED DRIVING ABILITY",
+"count": 263
+},
+{
+"term": "MULTIPLE FRACTURES",
+"count": 263
+},
+{
+"term": "BACTERAEMIA",
+"count": 262
+},
+{
+"term": "HYPOPHOSPHATAEMIA",
+"count": 262
+},
+{
+"term": "BUNDLE BRANCH BLOCK RIGHT",
+"count": 261
+},
+{
+"term": "DISSEMINATED INTRAVASCULAR COAGULATION",
+"count": 261
+},
+{
+"term": "DUODENAL ULCER PERFORATION",
+"count": 261
+},
+{
+"term": "FACET JOINT SYNDROME",
+"count": 261
+},
+{
+"term": "CHOLECYSTITIS ACUTE",
+"count": 260
+},
+{
+"term": "INJECTION SITE DISCOLOURATION",
+"count": 259
+},
+{
+"term": "VITAMIN B12 DECREASED",
+"count": 259
+},
+{
+"term": "FURUNCLE",
+"count": 258
+},
+{
+"term": "HYDRONEPHROSIS",
+"count": 258
+},
+{
+"term": "DERMATITIS CONTACT",
+"count": 257
+},
+{
+"term": "DEVICE BREAKAGE",
+"count": 257
+},
+{
+"term": "PNEUMOTHORAX",
+"count": 257
+},
+{
+"term": "PULMONARY THROMBOSIS",
+"count": 257
+},
+{
+"term": "BLOOD CHOLESTEROL ABNORMAL",
+"count": 256
+},
+{
+"term": "RESPIRATORY SYMPTOM",
+"count": 256
+},
+{
+"term": "VITREOUS FLOATERS",
+"count": 256
+},
+{
+"term": "DRUG EXPOSURE DURING PREGNANCY",
+"count": 255
+},
+{
+"term": "HAEMORRHAGIC ANAEMIA",
+"count": 255
+},
+{
+"term": "INCORRECT ROUTE OF PRODUCT ADMINISTRATION",
+"count": 255
+},
+{
+"term": "INSULIN RESISTANCE",
+"count": 255
+},
+{
+"term": "MULTIPLE ALLERGIES",
+"count": 255
+},
+{
+"term": "EXTRASYSTOLES",
+"count": 254
+},
+{
+"term": "HIGH DENSITY LIPOPROTEIN DECREASED",
+"count": 254
+},
+{
+"term": "BLOOD PRESSURE SYSTOLIC ABNORMAL",
+"count": 253
+},
+{
+"term": "CLOSTRIDIUM DIFFICILE COLITIS",
+"count": 253
+},
+{
+"term": "FACIAL PAIN",
+"count": 253
+},
+{
+"term": "WRIST FRACTURE",
+"count": 253
+},
+{
+"term": "APPLICATION SITE ERYTHEMA",
+"count": 252
+},
+{
+"term": "CONTINUOUS HAEMODIAFILTRATION",
+"count": 252
+},
+{
+"term": "DIARRHOEA HAEMORRHAGIC",
+"count": 252
+},
+{
+"term": "DRY THROAT",
+"count": 252
+},
+{
+"term": "ISCHAEMIC CARDIOMYOPATHY",
+"count": 252
+},
+{
+"term": "OSTEONECROSIS",
+"count": 252
+},
+{
+"term": "QUALITY OF LIFE DECREASED",
+"count": 252
+},
+{
+"term": "DIABETIC NEPHROPATHY",
+"count": 251
+},
+{
+"term": "HEPATIC ENCEPHALOPATHY",
+"count": 251
+},
+{
+"term": "ANTI-CYCLIC CITRULLINATED PEPTIDE ANTIBODY POSITIVE",
+"count": 250
+},
+{
+"term": "IMMUNE-MEDIATED MYOSITIS",
+"count": 250
+},
+{
+"term": "JOINT DISLOCATION",
+"count": 250
+},
+{
+"term": "PRODUCT USE COMPLAINT",
+"count": 250
+},
+{
+"term": "BREAST MASS",
+"count": 249
+},
+{
+"term": "TOXIC ENCEPHALOPATHY",
+"count": 249
+}
+],
+"note": "the source returned its limit of 1000 terms; more terms exist beyond this list"
+}

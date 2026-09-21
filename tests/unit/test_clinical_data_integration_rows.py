@@ -4,7 +4,9 @@ search is one query per flagged reaction.
 Rung 1 handed the writer three parallel lists (`signal_aes`, `prrs`, `prr_urls`) and
 one run mis-indexed two footnotes. A row cannot be mis-indexed.
 """
+import json
 import re
+from pathlib import Path
 
 import pytest
 
@@ -26,14 +28,27 @@ def _agent(question):
     """The agent's side of a run: it does the compute step's arithmetic, as the task asks."""
     if "prr_table" not in question["wants"]:
         return {name: ["stub"] for name in question["wants"]}
-    rows = question["calls"][0]["arguments"]["rows"]
+    arguments = question["calls"][0]["arguments"]
+    rows, indication = arguments["rows"], arguments["indication_terms"]
     table = [{**row, "flagged": row.get("prr") is not None and row["prr"] >= 2}
              for row in sorted(rows, key=lambda r: (r.get("prr") is None, -(r.get("prr") or 0)))]
     flagged = [row["term"] for row in table if row["flagged"]]
     return {"prr_table": table,
-            "flagged_aes": [t for t in flagged if not _INDICATION.search(t)],
-            "excluded_aes": [t for t in flagged if _INDICATION.search(t)],
+            "flagged_aes": [t for t in flagged if t not in indication],
+            "excluded_aes": [t for t in flagged if t in indication],
             "method": "computed without code"}
+
+
+RECORDED_LABELS = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "openfda"
+                              / "label_indications_2026-09-21.json").read_text())
+
+
+def _indication_mapping(question, indication):
+    """The agent reads the label's indication onto the FAERS terms the question offers."""
+    listed = question["choices"]["indication_meddra"]
+    return {"indication_meddra": [
+        {"of": "the labelled indication", "term": t, "reason": "the treated disease or its course",
+         "concept": ["disease", "treated"]} for t in indication if t in listed]}
 
 
 def _recorded_lookup(term):
@@ -54,13 +69,15 @@ def _mapping(question):
 
 
 def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERMS,
-           requested_aes=None):
+           requested_aes=None, indication=()):
     calls, asked = [], []
 
     def execute(tool, a):
         calls.append((tool, a))
         if tool == "DailyMed_search_spls":
             return {"data": [{"setid": "s1", "title": "LUTATHERA (lutetium Lu 177 dotatate)"}]}
+        if tool == "FDA_get_indications_by_drug_name":
+            return RECORDED_LABELS["metformin" if "metformin" in drug_name else "cisplatin"]
         if tool == "FAERS_count_reactions_by_drug_event":
             return {"result": [{"term": t} for t in terms]}
         if tool == "FAERS_calculate_disproportionality":
@@ -79,7 +96,11 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERM
 
     def agent(question):
         asked.append(question)
-        return _mapping(question) if "requested_meddra" in question["wants"] else _agent(question)
+        if "requested_meddra" in question["wants"]:
+            return _mapping(question)
+        if "indication_meddra" in question["wants"]:
+            return _indication_mapping(question, indication)
+        return _agent(question)
 
     runner = SkillRunner(graph or load_graph("clinical-data-integration"), execute=execute,
                          ask=agent, lookup=_recorded_lookup)
@@ -250,13 +271,60 @@ def test_the_literature_loop_skips_indication_terms_and_the_bundle_says_which():
     not spend a search on them, and `excluded` names them."""
     terms = ["NEUROENDOCRINE TUMOUR", "METASTASES TO LIVER", "MYELODYSPLASTIC SYNDROME", "NAUSEA"]
     prr = {"NEUROENDOCRINE TUMOUR": 393.4, "METASTASES TO LIVER": 21.4, "MYELODYSPLASTIC SYNDROME": 7.5, "NAUSEA": 1.1}
-    state, calls, _ = _drive(prr=prr, terms=terms)
+    state, calls, _ = _drive(prr=prr, terms=terms,
+                             indication=["NEUROENDOCRINE TUMOUR", "METASTASES TO LIVER"])
     facts = state["facts"]
     assert [r["term"] for r in facts["prr_table"] if r["flagged"]] == terms[:3]
     assert facts["flagged_aes"] == ["MYELODYSPLASTIC SYNDROME"]
     assert [a["query"] for tool, a in calls if tool == "PubMed_search_articles"] == [
         "lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME"]
     assert facts["excluded_aes"] == ["NEUROENDOCRINE TUMOUR", "METASTASES TO LIVER"]
+
+
+# --- the indication is the drug's own, judged from its label, not a fixed cancer pattern ---
+
+def test_a_flagged_cancer_term_of_a_non_cancer_drug_stays_a_signal_and_its_indication_is_set_aside():
+    """Live, every flagged term matching TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION was
+    called "reported disease" for every drug, and a diabetes drug kept its own disease as a signal.
+    The terms are from metformin's recorded FAERS list (ranks 3, 94, 356 of 1000)."""
+    terms = ["BLOOD GLUCOSE INCREASED", "NAUSEA", "PANCREATIC CARCINOMA", "DIABETES MELLITUS INADEQUATE CONTROL"]
+    prr = {"BLOOD GLUCOSE INCREASED": 3.1, "NAUSEA": 1.1, "PANCREATIC CARCINOMA": 2.4,
+           "DIABETES MELLITUS INADEQUATE CONTROL": 4.0}
+    state, calls, asked = _drive(prr=prr, terms=terms, drug_name="metformin",
+                                 indication=["BLOOD GLUCOSE INCREASED", "DIABETES MELLITUS INADEQUATE CONTROL"])
+    facts = state["facts"]
+
+    assert facts["flagged_aes"] == ["PANCREATIC CARCINOMA"]
+    assert facts["excluded_aes"] == ["DIABETES MELLITUS INADEQUATE CONTROL", "BLOOD GLUCOSE INCREASED"]
+    assert [(r["term"], "placing" in r) for r in facts["indication_meddra"]] == [
+        ("BLOOD GLUCOSE INCREASED", True), ("DIABETES MELLITUS INADEQUATE CONTROL", True)]
+    assert "glycemic control" in facts["indication_text"]
+    (question,) = [q for q in asked if "indication_meddra" in q["wants"]]
+    assert set(question["choices"]["indication_meddra"]) == set(terms)
+    assert [a["query"] for tool, a in calls if tool == "PubMed_search_articles"] == [
+        "lutetium Lu 177 dotatate AND PANCREATIC CARCINOMA"]
+
+
+def test_the_process_carries_no_fixed_disease_pattern_and_no_cancer_wording():
+    from tooluniverse.skill_graph import GRAPHS_DIR
+    source = (GRAPHS_DIR / "clinical-data-integration.yaml").read_text()
+    process = load_graph("clinical-data-integration")
+
+    assert "TUMOU?R" not in source and "oncology" not in source.lower()
+    assert "the inputs the question names" in process["report"]
+    assert "indication_meddra" in process["report"]
+    compute = next(s for s in process["steps"] if s["id"] == "compute")
+    assert compute["check"]["flagged_aes"][1] == {"not_in": "indication_meddra_terms"}
+    assert compute["check"]["excluded_aes"][1] == {"only_in": "indication_meddra_terms"}
+
+
+def test_covid_19_is_not_on_the_fixed_noise_list_of_either_process():
+    """For a vaccine or an antiviral it is the indication, which the judged step handles."""
+    for skill in ("clinical-data-integration", "adverse-event-detection"):
+        excluded = [t for s in load_graph(skill)["steps"]
+                    for rule in (s.get("extract") or {}).values() if isinstance(rule, dict)
+                    for t in rule.get("exclude", [])]
+        assert "COVID-19" not in excluded, skill
 
 
 # --- fetch wide: the source's maximum, and its total beside the rows ---------------

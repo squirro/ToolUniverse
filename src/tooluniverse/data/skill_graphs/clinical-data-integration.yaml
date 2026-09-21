@@ -23,7 +23,7 @@ inputs: [drug_name]
 # The numbers were right; the judgement the author wrote down never reached the
 # writer. It travels in the bundle now.
 report: >-
-  Lead with the events the question names, then the ranked signals. When the run
+  Lead with the inputs the question names, then the ranked signals. When the run
   holds `facts.requested_meddra`, show first how each requested word was read: one
   line per row with the word (`of`), the FAERS term, the agent's `reason`, and the
   placing — "placed under <under> (<ontology>)", "not placed" or "unknown". The
@@ -33,13 +33,14 @@ report: >-
   FAERS signal state the PRR, then classify it against the label: known and
   labelled, known but under-labelled, or a potential new signal. A PRR is a
   reporting signal, not causality: say so once, and name the biases (stimulated
-  reporting, indication, disease progression in an oncology cohort). Terms the
-  process excluded as nonspecific are listed under `excluded`, and reported-disease
-  terms the compute step set aside under `facts.excluded_aes`; mention that they
-  dominate raw report counts and were set aside, and never present them as
-  signals. A term that names the treated indication or its course (the tumour,
-  its metastases, progression) is reported disease, not a drug signal: say so
-  and do not rank it. Name the FAERS cohort (the brand name used). Take every PRR
+  reporting, the indication itself, disease progression). Terms the process
+  excluded as nonspecific are listed under `excluded`, and reported-disease terms
+  the compute step set aside under `facts.excluded_aes`: these are the terms
+  `facts.indication_meddra` reads as the drug's own indication or its course, judged
+  from the label's Indications section — list each with its `reason` and its
+  placing, say that they dominate raw report counts and were set aside, and never
+  present them as signals. A flagged term that is not the indication stays a
+  signal, whatever disease it names. Name the FAERS cohort (the brand name used). Take every PRR
   from its row in `facts.prr_table` and cite it with that row's `url`, one link
   per term — never one footnote for the whole table (`facts.signal_aes` lists the same terms; cite from the rows). Cite label numbers with the `source_url` of
   their result. Literature is the table `literature_rows`, one row per paper
@@ -74,6 +75,7 @@ optional_inputs: [requested_aes]
 tables:
   faers_term_rows: fact     # the mapping is checked against it
   requested_meddra: fact    # the mapping itself: shown in the report, row by row
+  indication_meddra: fact   # the drug's indication read onto FAERS terms: the compute step reads it
   prr_rows: fact            # the compute step reads it
   literature_rows: evidence # wide, and no step reads it
   trial_rows: evidence      # wide, and no step reads it
@@ -128,6 +130,13 @@ steps:
         arguments: {setid: "{setid}"}
       - tool: DailyMed_parse_drug_interactions
         arguments: {setid: "{setid}"}
+      - tool: FDA_get_indications_by_drug_name
+        arguments: {drug_name: "{drug_name}"}
+    extract:
+      # The label's own words for what the drug treats (recorded shape: results[].
+      # indications_and_usage[]). The indication step reads FAERS terms against this.
+      indication_text: "results.0.indications_and_usage.0"
+    produces: [indication_text]
     notes: >-
       A NOT_FOUND from the boxed-warning call is NORMAL — it means the drug has
       no boxed warning. Report that, do not treat it as a failure.
@@ -147,7 +156,7 @@ steps:
         limit: 12
         exclude: [ILL-DEFINED DISORDER, GENERAL PHYSICAL HEALTH DETERIORATION, ILLNESS,
                   LABORATORY TEST ABNORMAL, DISEASE PROGRESSION, MALIGNANT NEOPLASM PROGRESSION,
-                  DEATH, COVID-19, CONDITION AGGRAVATED, OFF LABEL USE, DRUG INEFFECTIVE,
+                  DEATH, CONDITION AGGRAVATED, OFF LABEL USE, DRUG INEFFECTIVE,
                   PRODUCT USE ISSUE, NO ADVERSE EVENT]
     collect:
       # The source's own vocabulary for this drug, whole: the list a requested word
@@ -312,9 +321,35 @@ steps:
       recency only; anything it surfaces that the tools did not is reported as
       web-sourced, never as a finding.
 
+  - id: indication_terms
+    label: "Phase 5b.2 — the drug's own indication, read onto the source's terms"
+    requires: [label, faers_counts]
+    calls: []
+    # The disease a drug treats, and its course, top the raw FAERS counts for that
+    # drug and are reported disease, not drug signals. Which terms those are is the
+    # drug's own: a fixed cancer pattern hid true cancer signals for other drugs and
+    # kept a diabetes drug's own disease among its signals. So the indication is
+    # judged from the label's Indications section, checked against the FAERS list,
+    # placed, and shown — the same judged mapping as `requested_terms`.
+    judge: [indication_meddra]
+    mapping:
+      indication_meddra: {of: indication_text, onto: {rows: faers_term_rows, field: term}}
+    produces: [indication_meddra]
+    notes: >-
+      Read `indication_text` (the label's Indications and Usage) and answer
+      `indication_meddra` as a list of rows, one per FAERS term in
+      `choices.indication_meddra` that names the treated disease, its stage, its
+      spread, or its course (progression, inadequate control, recurrence): {of: the
+      indication in a few words, term: the FAERS term copied exactly from the list,
+      reason: one sentence, concept: a list of two to four plain words naming the
+      disease for an ontology to place the term under}. Read the whole list. A
+      reaction that the disease can cause but that a drug can also cause (an
+      infection, a fracture) is NOT the indication; leave it in. An empty list is a
+      valid answer when no listed term is the indication.
+
   - id: compute
     label: "Phase 5c — ranked signal table (agent's arithmetic, server-checked)"
-    requires: [disproportionality]
+    requires: [disproportionality, indication_terms]
     # The sort, threshold and selection are the agent's (its code tool, or the model
     # itself — the runtime cannot tell, measured 2026-09-09: 3/3 exact without a
     # code call). The rows travel whole in the question, and the server refuses an
@@ -325,17 +360,19 @@ steps:
       - tool: OpenAI_Code_Interpreter
         arguments:
           task: >-
-            You receive `rows`: a list of {term, prr, url}. Do exactly this, nothing
-            more. (1) Sort the rows by prr, largest first; a row whose prr is null
-            or missing goes last. (2) Add a boolean field `flagged` to every row:
-            true when prr >= 2, else false (null is false). Keep term, prr and url
-            exactly as received; never retype a number or a term. This sorted list
-            is `prr_table`. (3) `flagged_aes` is the `term` of every flagged row, in
-            table order, EXCEPT terms that match the case-insensitive regular
-            expression TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION. (4)
-            `excluded_aes` is the list of flagged terms that regex set aside. (5)
-            `method` is one sentence: the code you ran, or "computed without code".
+            You receive `rows`: a list of {term, prr, url}, and `indication_terms`: a
+            list of terms (possibly empty). Do exactly this, nothing more. (1) Sort the
+            rows by prr, largest first; a row whose prr is null or missing goes last.
+            (2) Add a boolean field `flagged` to every row: true when prr >= 2, else
+            false (null is false). Keep term, prr and url exactly as received; never
+            retype a number or a term. This sorted list is `prr_table`. (3)
+            `flagged_aes` is the `term` of every flagged row, in table order, EXCEPT
+            the terms that are in `indication_terms` (compare exactly). (4)
+            `excluded_aes` is the list of flagged terms that are in `indication_terms`,
+            in table order. (5) `method` is one sentence: the code you ran, or
+            "computed without code".
           rows: "{prr_rows}"
+          indication_terms: "{indication_meddra_terms}"
     produces: [prr_table, flagged_aes, excluded_aes, method]
     check:
       prr_table:
@@ -344,18 +381,19 @@ steps:
         - flag: {field: flagged, from: prr, op: ">=", value: 2}
       flagged_aes:
         - subset_of: {rows: prr_table, field: term, where: flagged}
-        - excludes: "TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION"
+        - not_in: indication_meddra_terms
         - covers: {rows: prr_table, field: term, where: flagged, together_with: [excluded_aes]}
       excluded_aes:
         - subset_of: {rows: prr_table, field: term, where: flagged}
-        - only: "TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION"
+        - only_in: indication_meddra_terms
     notes: >-
       The signal table, largest PRR first, each row flagged at PRR >= 2 and carrying
       the query that produced it. Every PRR in the report is one of these rows.
       `flagged_aes` is the subset the literature loop searches: flagged terms that
-      are not the treated disease or its course; the terms set aside are in
-      `excluded_aes`. `method` says how the table was made; report it as the
-      agent's statement, not as evidence.
+      are not the drug's indication or its course; the terms set aside are in
+      `excluded_aes`, and `facts.indication_meddra` says why each one is the
+      indication. `method` says how the table was made; report it as the agent's
+      statement, not as evidence.
 
   - id: assessment
     label: "Phase 6 — integrated assessment (synthesis, no new tools)"

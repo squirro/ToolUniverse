@@ -244,3 +244,17 @@ def test_the_agent_asks_for_the_rows_most_relevant_to_its_own_words(tmp_path):
                          rank_by="cisplatin kidney injury magnesium", directory=tmp_path)
 
     assert out["rows"][0]["pmid"] == "2" and out["matched"] == 1
+
+
+@pytest.mark.asyncio
+async def test_an_input_name_the_process_does_not_declare_is_refused_with_the_declared_ones():
+    """Seen live: the agent invented `focus_adverse_events`, and nothing told it the name is not one."""
+    client = FakeClient(ScriptedHandle([_status("a", [])]))
+
+    out = await start(client, FakeStore(PROCESS), "demo",
+                      {"drug_name": "x", "requested_aes": None, "focus_adverse_events": ["y"]})
+
+    assert out["status"] == "schema_mismatch"
+    assert out["unknown_inputs"] == ["focus_adverse_events"]
+    assert out["required_inputs"] == ["drug_name"] and out["optional_inputs"] == ["requested_aes"]
+    assert client.started == []

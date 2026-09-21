@@ -90,6 +90,14 @@ async def start(client: Any, store: Any, skill: str, inputs: dict, *,
         return {"status": "error",
                 "error": f"the published process for {skill!r} collects {undeclared} without "
                          "declaring them under `tables:`; it cannot run until it is republished"}
+    declared = set(process.get("inputs", [])) | set(process.get("optional_inputs", []))
+    unknown = [name for name in (inputs or {}) if name not in declared]
+    if unknown:
+        return {"status": "schema_mismatch", "unknown_inputs": unknown,
+                "required_inputs": process.get("inputs", []),
+                "optional_inputs": process.get("optional_inputs", []),
+                "hint": "these are not inputs of this skill; use the declared names only, "
+                        "then call run_skill again"}
     missing = missing_inputs(process, inputs or {})
     if missing:
         return {"status": "schema_mismatch", "missing_inputs": missing,

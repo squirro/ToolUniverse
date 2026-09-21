@@ -154,7 +154,8 @@ async def test_start_carries_the_definition_and_its_hash_into_the_run():
     handle = ScriptedHandle([_status("a", []), _status("b", ["a"], remaining=1)])
     client = FakeClient(handle)
 
-    out = await start(client, FakeStore(PROCESS), "demo", {"drug_name": "x"})
+    out = await start(client, FakeStore(PROCESS), "demo",
+                      {"drug_name": "x", "requested_aes": None})
 
     inp, run_id, queue = client.started[0]
     assert inp.process == PROCESS and inp.definition_hash == "h" * 64
@@ -196,3 +197,36 @@ def test_a_fetch_for_a_run_that_does_not_exist_says_so_and_leaves_nothing_behind
 
     assert out["status"] == "unknown_run"
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.asyncio
+async def test_an_optional_input_left_undecided_stops_the_run_and_is_named():
+    """Absent is not an answer: the question may name what this input is for."""
+    client = FakeClient(ScriptedHandle([_status("a", [])]))
+
+    out = await start(client, FakeStore(PROCESS), "demo", {"drug_name": "x"})
+
+    assert out["status"] == "confirm_inputs"
+    assert out["undecided_inputs"] == ["requested_aes"]
+    assert client.started == []
+
+
+@pytest.mark.asyncio
+async def test_an_optional_input_declined_with_null_starts_the_run_without_it():
+    client = FakeClient(ScriptedHandle([_status("a", []), _status("b", ["a"], remaining=1)]))
+
+    out = await start(client, FakeStore(PROCESS), "demo",
+                      {"drug_name": "x", "requested_aes": None})
+
+    assert out["status"] == "running"
+    assert client.started[0][0].inputs == {"drug_name": "x"}
+
+
+@pytest.mark.asyncio
+async def test_an_optional_input_that_is_bound_reaches_the_run():
+    client = FakeClient(ScriptedHandle([_status("a", []), _status("b", ["a"], remaining=1)]))
+
+    await start(client, FakeStore(PROCESS), "demo",
+                {"drug_name": "x", "requested_aes": ["ototoxicity"]})
+
+    assert client.started[0][0].inputs == {"drug_name": "x", "requested_aes": ["ototoxicity"]}

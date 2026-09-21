@@ -1304,6 +1304,11 @@ class SMCP(FastMCP):
                 report failures/blocked/unresolved/excluded as gaps.
               - `schema_mismatch` → bind the `missing_inputs` from the question
                 and call run_skill again.
+              - `confirm_inputs` → the run did NOT start: `undecided_inputs` are
+                optional inputs you neither bound nor declined. Read the question
+                again. Bind each one the question names; pass each of the others
+                as null. Absent is not an answer — an input the question names
+                and you leave out changes what the run computes.
 
             Args:
                 skill: skill id with a published Skill Process, e.g.
@@ -1314,7 +1319,7 @@ class SMCP(FastMCP):
 
             Returns:
                 JSON with `status` in {running, waiting, finished, schema_mismatch,
-                error} and `run_id` — pass run_id to continue_skill.
+                confirm_inputs, error} and `run_id` — pass run_id to continue_skill.
             """
             try:
                 out = await start(await client(), Store.from_env(), skill, inputs or {})

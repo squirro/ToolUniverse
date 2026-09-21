@@ -92,8 +92,10 @@ REFERENCE for what each step means; they are not your plan. The server executes
 every step and every tool call itself.
 
 1. Bind the inputs from the question and call `run_skill(skill="{skill}",
-   inputs={{...}})`. If it answers `schema_mismatch`, bind the named inputs and
-   call again.
+   inputs={{...}})`. Give EVERY input a value or null: an optional input the
+   question names must be bound, and one it does not name is passed as null. If
+   it answers `schema_mismatch` or `confirm_inputs`, bind or decline the named
+   inputs and call again.
 2. While it answers `running` or `waiting`, call `continue_skill(run_id=...)`.
    `running` is progress — tell the user which phase is done. `waiting` carries a
    `question`: answer it with `continue_skill(run_id=..., answer={{...}})` — for a

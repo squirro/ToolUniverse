@@ -27,6 +27,11 @@ POLL_WINDOW = 40.0          # seconds a single tool call may wait
 POLL_INTERVAL = 1.0
 
 
+def undecided_inputs(process: dict, inputs: dict) -> list[str]:
+    """Optional names the agent neither bound nor declined with an explicit null."""
+    return [name for name in process.get("optional_inputs", []) if name not in inputs]
+
+
 def missing_inputs(process: dict, inputs: dict) -> list[str]:
     """Required names the agent did not bind — reported before any run starts."""
     return [name for name in process.get("inputs", []) if inputs.get(name) in (None, "")]
@@ -91,11 +96,17 @@ async def start(client: Any, store: Any, skill: str, inputs: dict, *,
                 "required_inputs": process.get("inputs", []),
                 "optional_inputs": process.get("optional_inputs", []),
                 "hint": "bind these from the question, then call run_skill again"}
+    undecided = undecided_inputs(process, inputs or {})
+    if undecided:
+        return {"status": "confirm_inputs", "undecided_inputs": undecided,
+                "hint": "read the question again: bind each of these if the question names "
+                        "it, or pass it as null to decline it, then call run_skill again"}
     from .skill_process_store import named_graph
 
     handle = await client.start_workflow(
         SkillWorkflow.run,
-        SkillRunInput(skill=skill, process=process, inputs=dict(inputs or {}),
+        SkillRunInput(skill=skill, process=process,
+                      inputs={k: v for k, v in (inputs or {}).items() if v is not None},
                       definition_iri=named_graph(skill),
                       definition_hash=prov.get("definition_hash", "")),
         id=run_id_for(skill), task_queue=task_queue or TASK_QUEUE)

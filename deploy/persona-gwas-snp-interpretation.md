@@ -48,14 +48,15 @@ dimension with no data as "No data available".
 # 4 research dimensions — call execute_tool with the NAMED tool
 
 **Step 1 — SNP Identity & Annotation**
-Call `gwas_get_snp_by_id`(rsId=THE_USER_RSID — the real rsID from the user's query, e.g. rs7903146).
+Call `gwas_get_snp_by_id`(rs_id=THE_USER_RSID — the real rsID from the user's query, e.g. rs7903146).
 Retrieve: chromosome, genomic position, ref/alt alleles, functional consequence (e.g. intron_variant,
 missense_variant, 3_prime_UTR_variant), mapped genes, and minor allele frequency (MAF).
 Construct the OpenTargets variant id from these coordinates: format is `{chromosome}_{position}_{ref}_{alt}`
 (e.g. if chr=10, pos=112998590, ref=C, alt=T → `10_112998590_C_T`). You will need this for Steps 3 and 4.
 
 **Step 2 — Trait & Disease Associations**
-Call `gwas_get_associations_for_snp`(rsId=THE_REAL_RSID_FROM_STEP_1).
+Call `gwas_get_associations_for_snp`(rs_id=THE_REAL_RSID_FROM_STEP_1) — required `rs_id` is a dbSNP
+rsID (string, `rs…`).
 Retrieve: all GWAS trait/disease associations, with p-values, beta/OR effect sizes, effect allele,
 study IDs, and PubMed IDs. Grade EVERY association using the significance tier table below.
 

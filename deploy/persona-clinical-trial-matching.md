@@ -90,9 +90,10 @@ Drug→target substitute: Phase 4 step 13.
     ChEMBL ID + description for top trial interventions from Phase 3.
 13. Drug → targets — `OpenTargets_get_associated_targets_by_drug_chemblId`(chemblId="<ChEMBL ID
     from step 12>") → target symbol + Ensembl ID, the same id shape §1b already carries; use it to
-    test whether an intervention actually hits the patient's altered gene. If no ChEMBL ID
-    resolved, call `ChEMBL_get_drug_mechanisms`(drug_name="<drug>") instead — it accepts a BARE
-    drug name with no resolution step, returning mechanism + target, but no Ensembl ID.
+    test whether an intervention actually hits the patient's altered gene. Alternative on
+    the same ID: `ChEMBL_get_drug_mechanisms`(drug_chembl_id="<ChEMBL ID from step 12>") → mechanism +
+    target, but no Ensembl ID. `drug_chembl_id` (a `CHEMBL…` molecule ID) is REQUIRED — a bare
+    `drug_name` is rejected, so step 12 must come first; if step 12 resolved no ID, skip this call.
 14. FDA indications — `FDA_get_indications_by_drug_name`(drug_name="<drug>", limit=5).
 15. Target info — `OpenTargets_get_target_id_description_by_name`(targetName="<gene>").
 16. PharmGKB — `PharmGKB_search_genes`(query="<gene_symbol>") for pharmacogenomic context.

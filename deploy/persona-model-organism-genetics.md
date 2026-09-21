@@ -63,7 +63,7 @@ symbol. You MUST resolve the native id FIRST via that organism's search tool, TH
 | Species | RESOLVE the native id with | THEN call (with the resolved id) |
 |---|---|---|
 | Mouse | `MGI_search_genes`(query=symbol) → `MGI:NNNNNNN` | `MGI_get_phenotypes`(gene_id="MGI:…") |
-| Fly | `FlyMine_search`(query=symbol) → `FBgn…` | `FlyBase_get_gene_disease_models`(gene_id="FBgn…") |
+| Fly | `FlyMine_search`(q=symbol) → `FBgn…` (required arg is `q`, a free-text string; NOT `query`) | `FlyBase_get_gene_disease_models`(gene_id="FBgn…") |
 | Worm | `Monarch_search_gene`(query=symbol) → `WB:WBGene…` | `WormBase_get_phenotypes`(gene_id="WBGene…") |
 | Zebrafish | `Monarch_search_gene`(query=symbol) → `ZFIN:ZDB-GENE-…` | `ZFIN_get_gene_phenotypes`(gene_id="ZFIN:ZDB-GENE-…") |
 | Yeast | `SGD_search`(query=symbol) → `SGD:S00…` | `SGD_get_phenotypes`(sgd_id="SGD:…") |
@@ -118,7 +118,7 @@ turns — still one report. Mark any dimension with no data as "No data availabl
     fly=7227, worm=6239, zebrafish=7955, yeast=559292, frog=8364. The yeast id `559292` is
     PANTHER-ONLY: STRING rejects it and Bgee does not use it — never carry it into another tool.
   - `NCBIDatasets_get_orthologs`(gene_id=entrez_id) — broad, vertebrate-wide.
-  - Fly only: `FlyMine_search`(query=human_symbol) finds distant orthologs automated tools miss;
+  - Fly only: `FlyMine_search`(q=human_symbol) finds distant orthologs automated tools miss;
     confirm with `FlyBase_get_gene_orthologs`(gene_id="FBgn…").
   - Cross-reference: `MonarchV3_get_associations`(subject="HGNC:NNNN", category="biolink:GeneHomologAssociation").
 - "No ortholog found by tools" is NOT "no ortholog exists" — sequence divergence ≠ functional
@@ -132,7 +132,8 @@ turns — still one report. Mark any dimension with no data as "No data availabl
 - Supplement (enrichment): `MonarchV3_get_associations`(subject="MGI:…", category="biolink:GeneToPhenotypicFeatureAssociation").
 
 **§3 Fly (FlyBase)**
-- Resolve: `FlyMine_search`(query=human_symbol) → `FBgn…`.
+- Resolve: `FlyMine_search`(q=human_symbol, facet_Category="Gene") → `FBgn…`. Required `q` is a free-text
+  string (gene symbol, protein or domain name); the tool declares no `query` argument.
 - `FlyBase_get_gene_disease_models`(gene_id="FBgn…") → human-disease models in fly (highest-value
   for translational validation).
 - Enrichment if budget allows: `FlyBase_get_gene_alleles`(gene_id="FBgn…", limit=20),

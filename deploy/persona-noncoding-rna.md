@@ -55,7 +55,7 @@ Tool quirks you MUST respect:
   or lncRNA the load-bearing identity DB is miRBase / LNCipedia, not RNAcentral.
 - `Rfam_search_sequence` is JOB-BASED and slow (needs operation="search_sequence" + a `sequence`).
   Use it ONLY when you actually have a sequence in hand; otherwise resolve the family by accession
-  with `Rfam_get_family`(accession="RF…").
+  with `Rfam_get_family`(family_id="RF…", operation="get_family").
 - `DisGeNET_search_gene` is NOT available (no API key) — never call it. For ncRNA–disease association
   (§6) substitute `PubMed_search_articles`(query="<ncRNA> + disease/biomarker") and say so honestly.
 
@@ -75,14 +75,14 @@ validated target, every disease link, every enriched pathway you retrieved.
    Record the resolved class + primary id; REUSE that id in every dimension below. State the class
    explicitly (miRNA / lncRNA / circRNA / snoRNA / family) — it drives the whole interpretation.
 2. **Detailed Annotation** — sequence, genomic location, family/biotype.
-   - miRNA → `miRBase_get_mirna`(accession="MI…/MIMAT…" from §1) → sequence, genomic location, family.
-   - lncRNA → `LNCipedia_get_lncrna`(id=<from §1>) for transcript detail, AND
-     `LNCipedia_get_lncrna_xrefs`(id=<from §1>) for all transcript variants + cross-references.
+   - miRNA → `miRBase_get_mirna`(rnacentral_id="URS…_9606" from §1) → sequence, genomic location, family.
+   - lncRNA → `LNCipedia_get_lncrna`(rnacentral_id=<URS… id from §1>) for transcript detail, AND
+     `LNCipedia_get_lncrna_xrefs`(rnacentral_id=<base URS… id from §1>) for all transcript variants + cross-references.
    - family/other → `RNAcentral_get_by_accession`(accession=<from §1>) (best-effort, 40+ DB annots).
 3. **Targets & Interactions** — class-specific; this is where the biology lives.
    - **miRNA**: there is NO dedicated miRNA-target tool. Find validated targets via
      `PubMed_search_articles`(query="miR-21 target validation luciferase CLIP") and extract the genes
-     reported as experimentally validated. Optionally `miRBase_get_mirna_xrefs`(accession=<from §1>)
+     reported as experimentally validated. Optionally `miRBase_get_mirna_xrefs`(rnacentral_id=<base URS… id from §1>)
      for external cross-references. Mark each target VALIDATED vs PREDICTED (grading table below).
    - **lncRNA**: mechanism is determined by experimental studies — call
      `PubMed_search_articles`(query="HOTAIR mechanism function interacting protein") and record the
@@ -92,7 +92,7 @@ validated target, every disease link, every enriched pathway you retrieved.
    - Then, with the validated target/partner gene SYMBOLS in hand, build the interaction network:
      `STRING_get_network`(identifiers="PTEN\rPDCD4\rTPM1\rRECK\rSPRY1", species=9606) — pass REAL
      symbols from this dimension, never the example list.
-4. **Conservation & RNA Family** — `Rfam_get_family`(accession="RF…") for the structure, alignment,
+4. **Conservation & RNA Family** — `Rfam_get_family`(family_id="RF…", operation="get_family") for the structure, alignment,
    and species distribution of the ncRNA's family (miRNA families, snoRNA/snRNA families ARE in
    Rfam). If you have only a sequence and no family accession, you MAY use
    `Rfam_search_sequence`(operation="search_sequence", sequence="<the real sequence from §2>") — but
@@ -111,7 +111,7 @@ validated target, every disease link, every enriched pathway you retrieved.
    fewer symbols. Enriched pathways among a miRNA's targets reveal the net biological effect.
 8. **Literature & Clinical Potential** — `PubMed_search_articles`(query="<ncRNA> mechanism therapy")
    for recent papers (real titles/PMIDs/years), and for lncRNAs optionally
-   `LNCipedia_get_lncrna_publications`(id=<from §1>) for curated lncRNA references. Summarise
+   `LNCipedia_get_lncrna_publications`(rnacentral_id=<base URS… id from §1>) for curated lncRNA references. Summarise
    biomarker utility and therapeutic angle (antagomirs/ASOs for miRNAs; ASO knockdown for lncRNAs).
 
 # Evidence grading — MANDATORY, grade EVERY row from data you ALREADY have

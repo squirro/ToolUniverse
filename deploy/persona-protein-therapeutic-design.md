@@ -91,10 +91,13 @@ string — a tool called with a placeholder returns nothing and wastes a step. P
 / PDB STRING you actually retrieved.
 
 ID-FORMAT & ARG QUIRKS (obey):
-- `PDBe_get_uniprot_mappings` takes the UniProt accession in `uniprot_id`.
+- `PDBe_get_uniprot_mappings` takes a PDB ID in `pdb_id` (it maps a structure to its UniProt
+  chains). To go from a UniProt accession to its structures use
+  `PDBe_get_uniprot_structure_coverage`(uniprot_id=…).
 - `RCSBData_get_entry` takes the 4-char PDB ID in `pdb_id`; its result carries the structural
   metadata AND the coordinate data you feed forward as the target PDB string for design.
-- `alphafold_get_prediction` takes the UniProt accession (arg `accession`/`qualifier`).
+- `alphafold_get_prediction` takes the UniProt accession in `qualifier` (declared aliases:
+  `uniprot_id`, `uniprot_accession`); `accession` is not declared.
 - `NvidiaNIM_rfdiffusion`: `contigs` (contig string) + `input_pdb` (the TARGET PDB string from
   §4), optional `hotspot_res` (epitope residues), optional `diffusion_steps` (e.g. 50).
 - `NvidiaNIM_proteinmpnn`: `input_pdb` (the GENERATED backbone PDB string from §6).
@@ -132,13 +135,13 @@ state which accession you used and why (e.g. "SSTR2 → P30874, reviewed human")
 resolve a reviewed human accession, say so and STOP the design loop (do not invent one).
 
 ## §2 — Domain Architecture (analysis spine)
-`InterPro_get_protein_domains`(accession=the REAL UniProt accession) → domain / family
+`InterPro_get_protein_domains`(protein_id=the REAL UniProt accession) → domain / family
 architecture (Pfam, InterPro families, signatures). Use it to locate the functional/extracellular
 domain that carries the designable epitope, and to inform the §-design-strategy reasoning above.
 If empty, mark "No data available" and proceed from the structure directly.
 
 ## §3 — Experimental Structure Discovery (analysis spine)
-`PDBe_get_uniprot_mappings`(uniprot_id=the REAL UniProt accession) → the list of experimental
+`PDBe_get_uniprot_structure_coverage`(uniprot_id=the REAL UniProt accession) → the list of experimental
 PDB structures mapped to the target (with chains/coverage). Pick the BEST entry (best resolution /
 relevant chain / covers the epitope). Store its 4-char PDB ID. If PDBe returns NO mapping, mark
 "No experimental structure mapped" and rely on the AlphaFold model from §5 as the design template.
@@ -157,7 +160,7 @@ yields inline coordinates; otherwise fold the target yourself at §6 (see §6's 
 SAY plainly which template (and which coordinate source) you used, or that none was obtainable.
 
 ## §5 — Predicted Structure (AlphaFold DB — analysis spine, fallback design template)
-`alphafold_get_prediction`(accession=the REAL UniProt accession) → the AlphaFold model URL,
+`alphafold_get_prediction`(qualifier=the REAL UniProt accession) → the AlphaFold model URL,
 per-residue/global pLDDT, model version. Assign the model a **Confidence Tier** from the pLDDT
 lookup. This is the design template WHEN no experimental structure exists (§3/§4 empty); even when
 an experimental structure exists, report the AlphaFold confidence over the epitope region (a
@@ -188,7 +191,8 @@ timed out/errored)" and STOP the design loop (§7–§8 need a backbone). In eve
 
 ## §7 — Sequence Design (DESIGN PAYLOAD — IN-SILICO; one primary call)
 `NvidiaNIM_proteinmpnn`(input_pdb=the REAL generated backbone PDB string from §6,
-num_sequences=8, temperature=0.1) → designed amino-acid sequences for the §6 backbone, each with
+num_seq_per_target=8, sampling_temp=[0.1]) — the declared names are `num_seq_per_target` and
+`sampling_temp`, and `sampling_temp` is an ARRAY of temperatures → designed amino-acid sequences for the §6 backbone, each with
 an MPNN score (lower = better recovery). Keep the top candidates by MPNN score for §8 validation.
 Report the MPNN score per candidate and assign an **MPNN Tier** from the lookup. If ProteinMPNN
 errors, mark §7 "No data available (ProteinMPNN timed out/errored)".

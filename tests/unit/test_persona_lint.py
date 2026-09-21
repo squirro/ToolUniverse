@@ -492,6 +492,15 @@ def test_a_shortened_call_name_resolves_to_the_registry_tool():
     assert [p.keyword for p in problems] == ["nope"], problems
 
 
+def test_a_call_whose_name_alone_is_in_code_marks_is_still_a_call():
+    """Most bodies close the code mark before the bracket: `Tool`(arg=...)."""
+    text = 'Call `PubMed_search_articles`(query="FOXO3", organism="human").'
+
+    problems = persona_lint.undeclared_keywords(text, PROPS)
+
+    assert [p.keyword for p in problems] == ["organism"]
+
+
 def test_a_positional_argument_is_not_read_as_a_keyword():
     text = 'Call `PubMed_search_articles(query="x", 10)`.'
 

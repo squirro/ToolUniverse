@@ -530,8 +530,9 @@ def absent_tools(
 # A call: an identifier followed by a parenthesised argument list. One level of nesting is
 # allowed because argument values contain parentheses -- filter="(a OR b)", size=len(x) --
 # and a flat pattern stops at the inner ")" and silently drops the rest of the call.
+# The code mark may close before the bracket: `Tool`(arg=...) is the commoner spelling.
 _CALL_SITE = re.compile(
-    r"\b([A-Za-z][A-Za-z0-9_]{2,})\s*\(((?:[^()]|\([^()]*\)){0,600}?)\)(?!\s*\()"
+    r"\b([A-Za-z][A-Za-z0-9_]{2,})`?\s*\(((?:[^()]|\([^()]*\)){0,600}?)\)(?!\s*\()"
 )
 # A keyword: `name=` not preceded by a comparison operator, and outside any quoted value.
 _KEYWORD = re.compile(r"(?<![=!<>])\b([A-Za-z_][A-Za-z0-9_]*)\s*=(?!=)")

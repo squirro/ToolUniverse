@@ -63,14 +63,14 @@ follow-up turns — still one report. Mark any section with no data as "No data 
 ## Phase 1 — Pathogen Taxonomy & Classification
 **Primary**: `BVBRC_search_taxonomy`(keyword="<pathogen name>") → species name, taxonomy ID,
 lineage, genome size.
-**Enrich**: if BVBRC is ambiguous, call `NCBIDatasets_suggest_taxonomy`(taxon_query="<name>")
+**Enrich**: if BVBRC is ambiguous, call `NCBIDatasets_suggest_taxonomy`(query="<name>")
 to confirm NCBI tax_id, then `UniProtTaxonomy_get_taxon`(taxon_id=<integer>) for lineage.
 **Knowledge transfer**: identify the closest relative with existing approved drugs — those drugs
 are your highest-priority repurposing candidates (SARS-CoV-1 inhibitor → SARS-CoV-2). Record
 the related pathogen name for Phase 4.
 
 ## Phase 2 — Protein/Target Identification
-**Primary**: `UniProt_search`(query="<pathogen name> reviewed:true", format="json") → Swiss-Prot
+**Primary**: `UniProt_search`(query="<pathogen name> reviewed:true") → Swiss-Prot
 proteins; extract UniProt accession, protein name, function annotation.
 Focus on: RNA/DNA polymerases, proteases, surface glycoproteins, capsid proteins — proteins
 that are (a) essential for replication, (b) surface-exposed, (c) conserved across strains.
@@ -98,13 +98,18 @@ Report pLDDT. pLDDT > 70 (active site > 90 preferred) = docking-ready.
 `ChEMBL_search_drugs`(query="<pathogen or related pathogen name>") → drug names, ChEMBL IDs,
 max clinical phase, mechanisms. Prioritize FDA-approved compounds.
 **FDA label confirmation** (for top 2–3 approved candidates):
-`FDA_get_drug_label_info_by_field_value`(field="indications_and_usage", value="<drug name>",
+`FDA_get_drug_label_info_by_field_value`(field="indications_and_usage", field_value="<drug name>",
 return_fields=["openfda","indications_and_usage","warnings"]) — targeted; avoids oversized
 responses from OpenFDA_search_drug_labels (use the latter only for broad label sweeps).
 **Broad-spectrum fallback** (if ChEMBL < 5 candidates):
-`OpenFDA_search_drug_labels`(query="antiviral" or "antibiotic" per pathogen type).
-**Docking** (only if Phase 3 pLDDT > 70):
-`get_diffdock_info`(protein=<structure>, ligand=<SMILES>) → score; < −8 kcal/mol = strong.
+`OpenFDA_search_drug_labels`(search="indications_and_usage:antiviral" or
+"indications_and_usage:antibacterial" per pathogen type) — the declared argument is `search` and
+it takes a Lucene `field:value` query, not a bare keyword.
+**Docking**: no docking tool is deployed in this image. `get_diffdock_info`(info_type="overview")
+declares only `info_type` ("overview", "installation", "usage", "documentation") and returns
+descriptive information about the DiffDock package — it accepts no structure or ligand and
+computes no score. Mark binding-pose questions "No data available" and reason from the Phase 3
+structure and the known binding-site annotation instead.
 **Identity fallback** (only if ChEMBL + FDA return < 3 candidates):
 `FDAGSRS_search_substances`(query="<drug>", limit=5) → UNII, class, `xrefs` (WHO-ATC, CAS);
 `FDA_get_mechanism_of_action_by_drug_name`(drug_name="<drug>") → label-stated mechanism.
@@ -147,7 +152,7 @@ Sum → composite /100. Top-scored targets anchor Phase 4.
 | NCBIDatasets_get_taxonomy | name= | tax_id= (integer) — get it from BVBRC/suggest first |
 | UniProt_search | name= | query= |
 | ChEMBL_search_targets | query=, target= | pref_name__contains= (substring) |
-| get_diffdock_info | protein_file= | protein= (sequence content) |
+| get_diffdock_info | protein=, ligand=, protein_file= | info_type= (documentation only; no docking) |
 | FDA_get_drug_label_info_by_field_value | — | always set return_fields (avoids oversized response) |
 
 # Citation format (mandatory)

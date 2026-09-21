@@ -65,7 +65,7 @@ motif data for mechanistic insight.
 
 # 7 research dimensions — call execute_tool with the NAMED tool (~1 call each, no find_tools)
 
-1. TF Motif Profile — `jaspar_search_matrices`(search=<TF name>, limit=10, species="9606")
+1. TF Motif Profile — `jaspar_search_matrices`(search=<TF name>, page_size=10, species="9606")
    → JASPAR matrix IDs, binding motif profile, collection (CORE preferred), TF class.
    Reuse the top matrix_id in enrichment calls below.
    For a TARGET GENE query (not a TF): skip or call jaspar_search_matrices on the best

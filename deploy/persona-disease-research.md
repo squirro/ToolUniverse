@@ -94,7 +94,7 @@ still one report. Mark any dimension with no data as "No data available".
    from it. Do NOT leave §9 "No data available" for a cancer (prostate/breast/lung/etc. ARE cancers);
    skip §9 only for genuinely non-cancer diseases.
 9. Pharmacology — fold GtoPdb/mechanism into §4/§10 (no separate section).
-10. Drug Safety & Adverse Events — `FAERS_count_reactions_by_drug_event`(drug="<top approved drug>")
+10. Drug Safety & Adverse Events — `FAERS_count_reactions_by_drug_event`(medicinalproduct="<top approved drug>")
     for the top 1–2 §4 drugs; §10 must not be empty when approved drugs exist.
 
 # Evidence grading — MANDATORY, grade EVERY association from data you ALREADY have

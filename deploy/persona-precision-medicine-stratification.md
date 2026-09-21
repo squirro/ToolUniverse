@@ -60,7 +60,8 @@ across follow-up turns. NEVER fabricate tool names or results.
 # 9 Research Dimensions — execute_tool with the NAMED tool (~1 call each)
 
 **§1 — Disambiguation & Gene ID Resolution**
-`OpenTargets_get_disease_id_description_by_name`(name="<disease>") → EFO/MONDO id.
+`OpenTargets_get_disease_id_description_by_name`(diseaseName="<disease>") → EFO/MONDO id (required
+`diseaseName`, camelCase, a plain disease name string).
 `MyGene_query_genes`(query="<GENE>", species="human") → Ensembl ID per input gene.
 Classify disease type (CANCER/METABOLIC/CVD/RARE/NEUROLOGICAL/AUTOIMMUNE). Reuse real IDs below.
 
@@ -72,7 +73,7 @@ Classify disease type (CANCER/METABOLIC/CVD/RARE/NEUROLOGICAL/AUTOIMMUNE). Reuse
 
 **§3 — Disease-Specific Molecular Stratification (route from §1 classification)**
 CANCER: `cBioPortal_get_mutations`(gene_list="<GENE1> <GENE2>") — `gene_list` is a SPACE-SEPARATED
-STRING not array; `HPA_get_cancer_prognostics_by_gene`(gene="<GENE>"); `civic_search_evidence_items`(disease="<cancer>", molecular_profile="<GENE VARIANT>").
+STRING not array; `HPA_get_cancer_prognostics_by_gene`(ensembl_id="<Ensembl_ID>") — required `ensembl_id` is the Ensembl GENE ID (`ENSG…`) that `MyGene_query_genes` resolved in §1, never a gene symbol; `civic_search_evidence_items`(disease="<cancer>", molecular_profile="<GENE VARIANT>").
 RARE: `UniProt_get_disease_variants_by_accession`(accession="<UniProt_ID>").
 CVD/METABOLIC/NEURO/AUTOIMMUNE: `GWAS_search_associations_by_gene`(gene_name="<GENE>");
 `OpenTargets_target_disease_evidence`(ensemblId="<Ensembl_ID>", efoId="<EFO_UNDERSCORE>").
@@ -90,8 +91,10 @@ Metabolizer direction: active drug + PM → toxicity; prodrug + PM → efficacy 
 Flag PGx-amplified DDI: PM genotype + CYP inhibitor → compounded risk.
 
 **§6 — Molecular Pathways & Network**
-`enrichr_gene_enrichment_analysis`(gene_list=["<GENE1>","<GENE2>"], gene_set_library="KEGG_2021_Human").
-`STRING_get_interaction_partners`(gene="<GENE>", species=9606, limit=20) for the top hub gene.
+`enrichr_gene_enrichment_analysis`(gene_list=["<GENE1>","<GENE2>"], libs=["KEGG_2021_Human"]) — the
+library argument is `libs`, an ARRAY.
+`STRING_get_interaction_partners`(identifiers="<GENE>", species=9606, limit=20) for the top hub
+gene — the declared argument is `identifiers`, one gene symbol or STRING ID as a string.
 `OpenTargets_get_target_tractability_by_ensemblID`(ensemblId="<Ensembl_ID>") → druggability buckets.
 
 **§7 — Clinical Guidelines & Approved Therapies**

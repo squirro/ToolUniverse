@@ -64,7 +64,7 @@ quantitative claims cite a TU tool.
 # 7 research dimensions — call execute_tool with the NAMED tool (≈1 call each)
 
 ## §1 Protein Identity & Function
-- `STRING_map_identifiers`(identifiers=["<gene_symbol>"], species=9606) — validate names,
+- `STRING_map_identifiers`(protein_ids=["<gene_symbol>"], species=9606) — validate names,
   obtain STRING protein IDs. Use these IDs downstream.
 - `UniProt_get_function_by_accession`(accession="<UniProt_AC>") — canonical function,
   domains, GO annotations, known quaternary structure.
@@ -84,7 +84,8 @@ quantitative claims cite a TU tool.
   page={"index":0,"size":50}) — curated experimental interactions, one row per evidence with
   a DETECTION METHOD (anti bait coip, pull down, ch-ip, nmr, bret) + PMID; cite those PMIDs.
   Throughput (low/high) is reported by no tool here — never state it.
-- `OmniPath_get_signaling_interactions`(proteins=["<GENE>"]) — directed, signed edges
+- `OmniPath_get_signaling_interactions`(partners="<GENE>") — the declared argument is
+  `partners`, a STRING (comma-separated for several) — directed, signed edges
   (stimulation / inhibition); upstream regulators and downstream effectors. Complements
   STRING (undirected).
 - `ChEMBL_search_targets`(target_synonym__icontains="<GENE>", organism="Homo sapiens") →
@@ -109,16 +110,22 @@ quantitative claims cite a TU tool.
   GPCR, ion channel, nuclear receptor, etc.).
 - `gnomad_get_gene_constraints`(gene_symbol="<GENE>") — pLI and oe_lof. pLI ≥0.9 →
   likely essential; oe_lof <0.35 → strongly constrained.
-- `civic_search_evidence_items`(gene="<GENE>") — CIViC clinical evidence (predictive,
+- `civic_search_evidence_items`(molecular_profile="<GENE>") — the tool declares no gene
+  argument; `molecular_profile` matches profile names by substring, so a bare symbol returns
+  that gene's variant profiles — CIViC clinical evidence (predictive,
   diagnostic, prognostic). Call for any cancer-relevant hub — do NOT skip oncogenes/TSGs.
 
 ## §6 Structural Context
-- `RCSBAdvSearch_search_structures`(protein_name="<GENE>", organism="Homo sapiens") —
-  PDB entries: co-crystal structures confirm physical binding. Cite 4-char PDB IDs.
+- `RCSBAdvSearch_search_structures`(polymer_description="<GENE>", organism="Homo sapiens") —
+  the protein goes in `polymer_description` (a contains-match on the entity description) or in
+  free-text `query`; `protein_name` is not declared. PDB entries: co-crystal structures confirm
+  physical binding. Cite 4-char PDB IDs.
 - `RCSBData_get_entry`(entry_id="<PDB_ID>") — resolution, method, biological assembly
   (oligomeric state), ligands. Use to confirm quaternary structure.
-- `SASBDB_search_entries`(protein_name="<GENE>") — SAXS/SANS solution structures; solution
-  MW distinguishes monomer from oligomer physiologically.
+- `SASBDB_get_entries_by_uniprot`(uniprot_id="<UniProt_AC>") — SAXS/SANS solution structures for
+  that protein; solution MW distinguishes monomer from oligomer physiologically.
+  `SASBDB_search_entries` declares only `molecular_type` and lists entry codes for a whole class,
+  so it cannot answer a per-protein question.
 
 ## §7 Binding Affinity & Kinetics
 No tool here covers PPI affinity or kinetics. Always mark this dimension:

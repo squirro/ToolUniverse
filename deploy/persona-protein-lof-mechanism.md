@@ -85,9 +85,11 @@ Reuse the resolved accession, the integer position, and ref_aa/alt_aa in EVERY l
 # 4 evidence layers — call execute_tool with the NAMED tool (≈1 call each, no find_tools)
 
 ## Layer 1 — AlphaMissense pathogenicity ("Is this variant damaging?")
-`AlphaMissense_get_variant_score`(uniprot_id="<accession>", position=<int>, ref_aa="<R>", alt_aa="<H>")
-→ a 0–1 pathogenicity score. (This tool takes an EXPLICIT position/ref/alt — it scores the one
-variant you asked for, no residue-sampling caveat applies.) If the score is benign (≤0.34), say so
+`AlphaMissense_get_variant_score`(uniprot_id="<accession>", variant="p.<R><position><H>")
+→ a 0–1 pathogenicity score. (The tool declares `uniprot_id` and `variant` only: the reference
+amino acid, position and alternate amino acid go together in `variant`, in protein notation
+("p.R123H" or "R123H"). It scores the one variant you asked for, no residue-sampling caveat
+applies.) If the score is benign (≤0.34), say so
 up front: the rest of the analysis becomes exploratory, since most benign variants have no clear LoF
 mechanism — still run the other layers but frame the conclusion as low-confidence.
 

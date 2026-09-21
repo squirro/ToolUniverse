@@ -159,29 +159,34 @@ the human germline reference repertoire an engineer would select from:
   `operation="search_genes"`.)
 - Apply the **Germline Functionality Grade** (table below) to each germline row from its IMGT
   functionality flag — never blank it when functionality is reported.
-- Depth: for a selected reference framework, `IMGT_get_gene_info`(gene_name="<real germline gene,
-  e.g. IGHV1-69>") for allele detail, and `IMGT_get_sequence`(accession="<real IMGT accession from
-  the gene info>", format="fasta") for the framework sequence to graft onto (retry these with the
+- Depth: for a selected reference framework, `IMGT_search_genes`(query="<real germline gene, e.g.
+  IGHV1-69>", gene_type="IGHV", species="Homo sapiens") for allele detail — `IMGT_get_gene_info`
+  declares only `operation` and returns IMGT database and nomenclature descriptions, so it cannot
+  look up one gene — and `IMGT_get_sequence`(accession="<real IMGT accession from the gene
+  record>", format="fasta") for the framework sequence to graft onto (retry these with the
   matching `operation` value only on a required-property error). Note: report germline NAMES even if a per-allele
   sequence call returns sparse SOAP data — the gene identity is the reusable humanization anchor.
 
 ## §5 — Immunogenicity Context (known epitopes ON the antigen)
 This is RETRIEVED epitope evidence, NOT a computed candidate immunogenicity score. Call
-`iedb_search_epitopes`(source_antigen_name="<antigen name>", limit=25) for experimentally
-characterized epitopes ON the antigen (epitope sequence, source organism, assay type). IEDB args
-follow the proven gated form: epitopes are keyed by `source_antigen_name` (the protein the epitope
-sits on), NOT `epitope_name` (which matches epitope *names*, not antigens). You may also add
-`organism_name="Homo sapiens"` to scope to the human protein.
+`iedb_search_epitopes`(filters={"parent_source_antigen_iri_search": "cs.{UNIPROT:<antigen
+accession>}"}, limit=25) for experimentally characterized epitopes ON the antigen (epitope
+sequence, source organism, assay type). This tool declares no antigen or organism argument: the
+antigen is a PostgREST column filter passed in `filters`, and that column holds IRIs, so pass the
+antigen's UniProt accession (resolve it with `UniProt_search`(query="<antigen name>") first). To
+scope by source organism instead, filter {"source_organism_iri_search": "cs.{NCBITaxon:9606}"}.
 - Apply the **Epitope Confidence Grade** (E1–E4, table below) to EVERY epitope row from its assay
   evidence type — never blank it when an assay result exists.
-- Depth: `iedb_search_bcell`(source_antigen_name="<antigen name>", limit=25) for B-cell (antibody-
-  target) epitopes — the surface determinants an antibody can bind. (`iedb_search_bcell`'s exact
-  arg schema is NOT in a gated reference — if `source_antigen_name` errors, retry with
-  `antigen_name`, then `find_tools("iedb b-cell epitope by antigen")` as a last resort; this is a
-  live-gate watch item.) `iedb_get_epitope_references`(epitope_id="<real IEDB numeric epitope ID
-  from the §5 hits>") for the supporting citation of a key epitope.
-- `iedb_search_mhc` is keyed on the MHC ALLELE (`mhc_restriction="<HLA allele>", mhc_class="<I or
-  II>"`), NOT the antigen. Call it ONLY if the user names a specific HLA allele to assess T-cell /
+- Depth: `iedb_search_bcell`(filters={"parent_source_antigen_name": "ilike.*<antigen name>*"},
+  limit=25) for B-cell (antibody-target) epitopes — the surface determinants an antibody can bind.
+  The B-cell rows carry the antigen as a single text column, so a case-insensitive contains filter
+  works here (the epitope search above needs the IRI form instead).
+  `iedb_get_epitope_references`(structure_id=<real IEDB numeric epitope structure ID from the §5
+  hits>) — the declared argument is `structure_id` (integer) — for the supporting citation of a
+  key epitope.
+- `iedb_search_mhc` is keyed on the MHC ALLELE, passed as column filters:
+  `filters={"mhc_restriction": "ilike.*<HLA allele>*", "mhc_class": "eq.II"}` — the tool declares
+  no allele or class argument of its own — NOT the antigen. Call it ONLY if the user names a specific HLA allele to assess T-cell /
   MHC-II restriction against; otherwise SKIP it and derive T-cell-risk context from the assay-typed
   epitopes already retrieved. Do NOT call `iedb_search_mhc` with an antigen name — it will not key
   on it.
@@ -199,7 +204,7 @@ maturation OR developability", limit=10) for engineering precedent (titles, PMID
 
 ## §7 — Bispecific / Second-Arm Context (CONDITIONAL — run ONLY if user asks about a bispecific)
 If the user asks about a bispecific or asks which partner antigen to pair: call
-`STRING_get_interaction_partners`(identifier="<antigen gene symbol>", species=9606) for the
+`STRING_get_interaction_partners`(identifiers="<antigen gene symbol>", species=9606) for the
 antigen's interaction network (candidate co-targets), and `STRING_get_enrichment`(identifiers=
 "<comma-separated partner gene symbols>", species=9606) for the pathway context of the partner set.
 Skip §7 entirely for a standard monospecific-antibody question.

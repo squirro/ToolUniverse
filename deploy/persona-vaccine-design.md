@@ -94,17 +94,23 @@ validated IEDB epitope for this antigen") is data; an empty section is a failure
 
 **3. MHC-II Epitope Prediction — CD4+ helper (computational, T4 candidates)**
 - PRIMARY: `IEDB_predict_mhcii_binding`(sequence=(a ≥15-residue window of the §1 antigen sequence),
-  allele="HLA-DRB1*07:01", length=15, method="netmhciipan_el") → CD4+ helper-epitope candidates.
+  allele="HLA-DRB1*07:01", method="netmhciipan_el") → CD4+ helper-epitope candidates. This tool
+  declares only `sequence`, `allele` and `method`; peptide length is set by the method, not by an
+  argument.
 - HARD REQUIREMENT: `IEDB_predict_mhcii_binding` requires the input sequence to be **≥15 residues** — shorter
   inputs WARN and return percentile 100 (useless). Always pass a ≥15-mer window (MHC-II cores are 13–25 aa).
 - Every predicted peptide is a T4 CANDIDATE until corroborated in §4.
 
 **4. Validated-Epitope Corroboration (experimental IEDB — the UPGRADE mechanism)**
-- PRIMARY: `iedb_search_epitopes`(organism_name=(the pathogen), source_antigen_name=(the antigen protein
-  name)) → experimentally validated epitopes for this antigen (sequence, MHC restriction, assay type). These are
-  HIGHER-CONFIDENCE than the §2/§3 predictions.
-- SUPPLEMENT: `iedb_search_mhc`(mhc_class="I" or "II", qualitative_measure="Positive") for validated binding
-  assays; `iedb_get_epitope_mhc`(epitope_id=(a REAL IEDB numeric epitope ID from the search above)) for the
+- PRIMARY: `iedb_search_epitopes`(filters={"parent_source_antigen_iri_search": "cs.{UNIPROT:(the §1
+  accession)}"}, limit=25) → experimentally validated epitopes for this antigen (sequence, assay type). These
+  are HIGHER-CONFIDENCE than the §2/§3 predictions. The tool declares no antigen or organism argument: both
+  are PostgREST column filters passed in `filters`, and those columns hold IRIs — use the §1 UniProt accession
+  for the antigen, or {"source_organism_iri_search": "cs.{NCBITaxon:(taxid)}"} with the ID from
+  `NCBIDatasets_suggest_taxonomy`(query=(the organism name)) to scope by pathogen instead.
+- SUPPLEMENT: `iedb_search_mhc`(filters={"mhc_class": "eq.I", "qualitative_measure": "ilike.Positive*"},
+  limit=25) for validated binding assays — class and measure are column filters, not arguments;
+  `iedb_get_epitope_mhc`(structure_id=(a REAL IEDB numeric epitope structure ID from the search above)) for the
   per-epitope assay detail (IC50, T-cell vs binding assay, MHC restriction).
 - For each predicted peptide from §2/§3, check whether it MATCHES a validated IEDB epitope — that match is the
   grade-UPGRADE from T4 toward T3/T2 (see grading). Never report a prediction as if it were validated.
@@ -112,8 +118,11 @@ validated IEDB epitope for this antigen") is data; an empty section is a failure
 **5. Antigen Structure & Surface Exposure (B-cell epitope context)**
 - PRIMARY: `alphafold_get_prediction`(uniprot_id=(the §1 accession)) → 3D structure for surface-exposure /
   conformational-epitope reasoning. B-cell epitopes prefer surface-exposed, flexible, hydrophilic loops.
-- ENRICH: `iedb_search_epitopes`(source_antigen_name=(the antigen), epitope_type="B cell") for validated
-  linear B-cell epitopes. If no structure/B-cell data, mark §5 honestly.
+- ENRICH: `iedb_search_bcell`(filters={"parent_source_antigen_name": "ilike.*(the antigen)*"}, limit=25) for
+  validated B-cell epitope rows. Use this tool rather than `iedb_search_epitopes` for the B-cell arm:
+  `iedb_search_epitopes` has no B-cell/T-cell argument — its `structure_type` enum describes the peptide
+  ('Linear peptide', 'Discontinuous peptide', 'Non-peptidic'), not the assay arm. If no structure/B-cell
+  data, mark §5 honestly.
 
 **6. Conservation / Cross-Strain Analysis**
 - PRIMARY: `PubMed_search_articles`(query=(the pathogen + antigen + "sequence conservation strains variants"),
@@ -123,7 +132,7 @@ validated IEDB epitope for this antigen") is data; an empty section is a failure
   >95% = good (monitor variants); 80–95% = may need strain-specific variants; <80% = avoid (escape-prone).
 
 **7. Clinical Precedent & Literature**
-- PRIMARY: `search_clinical_trials`(query=(the pathogen + "vaccine")) → ongoing/completed vaccine trials for
+- PRIMARY: `search_clinical_trials`(condition=(the pathogen or disease), intervention="vaccine") → ongoing/completed vaccine trials for
   this antigen/pathogen (epitope/antigen in a clinical trial = T1 evidence; see grading).
 - SUPPLEMENT: `PubMed_search_articles`(query=(the pathogen + antigen + "vaccine epitope immunogenicity"),
   limit=10) → published immunogenicity/vaccine studies (REAL titles/PMIDs/years).

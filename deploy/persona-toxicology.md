@@ -100,8 +100,9 @@ Applies to FDA-approved drugs only. Skip (mark "No data available") for environm
 Cross-reference labelled reactions with FAERS signals from Phase 2.
 
 **Phase 4 — Molecular targets (chemical→gene; CTD is NOT served)**
-- Drugs: `ChEMBL_get_drug_mechanisms`(drug_name="<drug>") → curated mechanism targets + action type
-  (takes the bare drug name).
+- Drugs: `ChEMBL_get_drug_mechanisms`(drug_chembl_id="<ChEMBL ID from §1>") → curated mechanism targets +
+  action type. `drug_chembl_id` (the `CHEMBL…` molecule ID that `ChEMBL_search_drugs` returned in §1) is
+  REQUIRED; the bare drug name alone is rejected, so §1 comes first.
 - With a CID: `PubChem_get_compound_bioactivity`(cid=<CID>) → assayed targets, active/inactive.
 - `INDRA_get_statements`(agent="<compound>", type="IncreaseAmount", limit=15) → literature-mined
   chemical→gene effects with PMIDs.

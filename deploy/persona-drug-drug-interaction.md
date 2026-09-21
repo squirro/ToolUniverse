@@ -39,7 +39,9 @@ below — every ID this workflow needs has a named resolver, so do NOT spend a s
 Never call find_tools or execute_tool with an empty name/query. Never fabricate tool names.
 
 AVAILABLE tools (call these exactly):
-- `ChEMBL_get_drug_mechanisms` — accepts drug_name or drug_chembl_id; returns THERAPEUTIC
+- `ChEMBL_get_drug_mechanisms`(drug_chembl_id) — `drug_chembl_id` (a ChEMBL molecule ID, `CHEMBL…`) is
+  REQUIRED; a call carrying only `drug_name` is rejected. Resolve the ID FIRST with
+  `OpenTargets_get_drug_chembId_by_generic_name`(drugName), THEN call this tool. Returns THERAPEUTIC
   mechanism (molecular target + action type, e.g. "COX inhibitor"). Does NOT return DMPK data.
   CAUTION: a CYP in ChEMBL target field = therapeutic target, NOT a metabolic DDI signal.
   Primary call for every drug.
@@ -83,7 +85,8 @@ call is an ungrounded source and is forbidden — if a grounded tool returns not
 "No data available"; do NOT substitute web content.
 
 SEQUENCE — breadth before depth:
-1. PRIMARY CALLS (per drug): ChEMBL_get_drug_mechanisms for EACH drug; DailyMed_search_spls for
+1. PRIMARY CALLS (per drug): OpenTargets_get_drug_chembId_by_generic_name, then
+   ChEMBL_get_drug_mechanisms on the resolved ChEMBL ID, for EACH drug; DailyMed_search_spls for
    EACH drug to get its setid; KEGG_search_drug for its D##### (identity only — KEGG gives no DMPK).
 2. PAIRWISE GROUNDING (the core DDI evidence): FDA_get_drug_interactions_by_drug_name for EACH
    drug (page with `skip`) AND DailyMed_parse_drug_interactions on BOTH setids — BOTH-LABELS

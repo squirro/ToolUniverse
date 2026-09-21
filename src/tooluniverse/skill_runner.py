@@ -840,7 +840,12 @@ def _check_selected_from(rule: dict, value: Any, facts: dict) -> str | None:
     if not isinstance(value, list) or not all(isinstance(r, dict) for r in value):
         return "not a list of rows"
     where = rule.get("where") or {}
-    meets = lambda row: all(_same(row.get(k), v) for k, v in where.items())  # noqa: E731
+
+    def holds(cell: Any, wanted: Any) -> bool:
+        # A list-valued cell (a trial's phases) meets the condition when it holds the value.
+        return any(_same(m, wanted) for m in cell) if isinstance(cell, list) else _same(cell, wanted)
+
+    meets = lambda row: all(holds(row.get(k), v) for k, v in where.items())  # noqa: E731
     pool = [r for r in table if isinstance(r, dict)]
     for row in value:
         hit = next((i for i, src in enumerate(pool)
@@ -849,7 +854,7 @@ def _check_selected_from(rule: dict, value: Any, facts: dict) -> str | None:
             return f"row not in {rule['table']}: {json.dumps(row, default=str)[:160]}"
         pool.pop(hit)
         if not meets(row):
-            off = {k: row.get(k) for k in where if not _same(row.get(k), where[k])}
+            off = {k: row.get(k) for k in where if not holds(row.get(k), where[k])}
             return f"row does not meet {json.dumps(off, default=str)}: {json.dumps(row, default=str)[:160]}"
     dropped = [r for r in pool if meets(r)]
     if dropped:

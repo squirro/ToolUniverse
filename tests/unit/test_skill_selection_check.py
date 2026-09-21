@@ -38,6 +38,28 @@ def test_the_description_lists_the_values_and_counts_of_columns_with_few_distinc
     assert "nct_id" not in described["values"] and "title" not in described["values"]
 
 
+REGISTRY = [                       # the registry's own shape, recorded live 2026-09-21: phase is a LIST
+    {"nct_id": "NCT00064077", "phase": ["PHASE3"], "status": "COMPLETED"},
+    {"nct_id": "NCT00002", "phase": ["PHASE2", "PHASE3"], "status": "COMPLETED"},
+    {"nct_id": "NCT00003", "phase": ["PHASE2"], "status": "COMPLETED"},
+    {"nct_id": "NCT00004", "phase": ["PHASE3"], "status": "RECRUITING"},
+    {"nct_id": "NCT00005", "phase": [], "status": "COMPLETED"},
+]
+
+
+def test_a_list_valued_column_is_described_by_its_elements_and_selected_by_membership():
+    """Live, every exact row was refused: the check compared ["PHASE3"] to "PHASE3"."""
+    record = WorkingRecord(tempfile.mkdtemp(prefix="working-records-"), "run-2")
+    record.put_table("trial_rows", REGISTRY)
+
+    assert record.describe("trial_rows")["values"]["phase"] == {"PHASE3": 3, "PHASE2": 2}
+    wanted = [REGISTRY[0], REGISTRY[1]]
+    rule = {"selected_from": {"table": "trial_rows", "where": {"phase": "PHASE3", "status": "COMPLETED"}}}
+    assert check_facts({"selected": [rule]}, {"selected": wanted}, {}, tables=lambda n: REGISTRY) == []
+    (failure,) = check_facts({"selected": [rule]}, {"selected": wanted[:1]}, {}, tables=lambda n: REGISTRY)
+    assert "dropped" in failure["reason"] and "NCT00002" in failure["reason"]
+
+
 # --- the check, over the whole table ---------------------------------------------------------
 
 def _rows(name):

@@ -28,6 +28,12 @@ VALUE_LIST_MAX = 12         # more distinct values than this is free text, not a
 VALUE_CHARS_MAX = 40        # a closed-list value is a code or a label, never a paragraph
 
 
+def _closed_list_value(value: Any) -> bool:
+    """A code or a label: something a closed list can hold, never a paragraph or a structure."""
+    return (isinstance(value, (int, bool)) or value is None
+            or (isinstance(value, str) and len(value) <= VALUE_CHARS_MAX))
+
+
 def _cut(value: Any) -> Any:
     text = value if isinstance(value, str) else json.dumps(value, default=str)
     return value if len(text) <= PREVIEW_CHARS else text[:PREVIEW_CHARS] + "…"
@@ -166,16 +172,18 @@ class WorkingRecord:
             counts: dict = {}
             for row in rows:
                 value = row.get(column)
-                if (isinstance(value, (int, bool)) or value is None
-                        or (isinstance(value, str) and len(value) <= VALUE_CHARS_MAX)):
-                    counts[value] = counts.get(value, 0) + 1
+                # A list-valued cell (a trial's phases) is a closed list too: each element counts.
+                members = value if isinstance(value, list) else [value]
+                if all(_closed_list_value(m) for m in members):
+                    for member in members:
+                        counts[member] = counts.get(member, 0) + 1
                 else:
                     counts = {}          # free text or a structure: not a closed list
                     break
                 if len(counts) > VALUE_LIST_MAX:
                     counts = {}
                     break
-            if counts and len(counts) < len(rows):
+            if counts and (len(counts) < len(rows) or any(isinstance(r.get(column), list) for r in rows)):
                 values[column] = {str(k): n for k, n in counts.items()}
         return {"table": name, "rows": len(rows), "columns": columns, "values": values,
                 "preview": [{k: _cut(v) for k, v in row.items()}

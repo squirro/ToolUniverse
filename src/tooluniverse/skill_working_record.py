@@ -205,8 +205,13 @@ class WorkingRecord:
         if rank_by:
             for row, source in zip(projected, chosen):
                 row["_score"] = round(scores[id(source)], 4)
+        reply = {**out, "returned": len(projected), "rows": projected}
         self._note_served(table, projected)
-        return {**out, "returned": len(projected), "rows": projected}
+        # The counts the reply carries are told to the agent too; a report may state them.
+        self._note_served(f"{table}.reply", [{k: reply[k] for k in ("total_rows", "matched",
+                                                                    "returned", "offset")
+                                              if k in reply}])
+        return reply
 
     def _note_served(self, table: str, rows: list[dict]) -> None:
         """What the agent was given, as it was given: the report is read against this."""

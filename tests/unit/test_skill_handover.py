@@ -195,3 +195,15 @@ def test_the_handover_carries_the_same_lines_of_discipline_for_every_skill(tmp_p
 
     assert isinstance(lines, list) and len(lines) == 5
     assert all(isinstance(line, str) and line for line in lines)
+
+
+def test_the_counts_a_fetch_reply_carries_count_as_received(tmp_path):
+    """Live, the agent wrote "420 matched" and the check refused the number it had been told."""
+    _, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
+    record = WorkingRecord(tmp_path, run_id)
+
+    reply = record.fetch("papers", columns=["pmid"], limit=1, rank_by="hearing loss dosing")
+    served = record.served()
+
+    assert reply["matched"] == 3
+    assert served["papers.reply"] == [{"total_rows": 3, "matched": 3, "returned": 1, "offset": 0}]

@@ -90,9 +90,10 @@ def _unstated_narrowing(draft: str, received: Any) -> list[dict]:
             if not isinstance(total, (int, float)) or total <= table.get("rows", 0):
                 continue
             if not re.search(rf"(?<!\d){int(total)}(?!\d)", plain):
-                where = f" ({item})" if item else ""
+                where = f", {item}" if item else ""
                 failures.append({"kind": "narrowing_not_stated",
-                                 "text": f"{table['table']}: {table['rows']} rows of {int(total)}{where}",
+                                 "text": f"{table['table']}{where}: the source holds {int(total)}; "
+                                         "say how many this run holds",
                                  "context": "the report must say how much the source holds and how "
                                             "much this run holds"})
     return failures

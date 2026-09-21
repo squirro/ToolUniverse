@@ -115,7 +115,7 @@ def test_a_table_the_run_holds_less_of_than_the_source_must_be_stated_with_its_t
     (failure,) = check_report(silent, NARROWED)
 
     assert failure["kind"] == "narrowing_not_stated"
-    assert failure["text"] == "results.literature: 200 rows of 2078 (ototoxicity)"
+    assert failure["text"] == "results.literature, ototoxicity: the source holds 2078; say how many this run holds"
     assert check_report(stated, NARROWED) == []
 
 

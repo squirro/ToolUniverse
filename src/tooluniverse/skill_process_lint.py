@@ -117,4 +117,12 @@ def violations(process: dict, entities: list[str] | None = None,
             if name not in PROSE_ARGUMENTS and isinstance(value, str) and _is_free_text(value):
                 found.append(Violation("free_text_argument", step["id"], field, value))
         found.extend(_narrowing(step, maxima or {}))
+        for name, rule in (step.get("collect") or {}).items():
+            lists = [f for f in (rule.get("fields") or []) if "[]" in f] \
+                if isinstance(rule, dict) else []
+            if len(lists) > 1:
+                found.append(Violation(
+                    "parallel_lists", step["id"], f"collect.{name}",
+                    f"{len(lists)} lists in one row ({', '.join(lists)}): collect the records "
+                    "as rows instead"))
     return found

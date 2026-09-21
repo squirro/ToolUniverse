@@ -35,11 +35,10 @@ report: >-
   its metastases, progression) is reported disease, not a drug signal: say so
   and do not rank it. Name the FAERS cohort (the brand name used). Take every PRR
   from its row in `facts.prr_table` and cite it with that row's `url`, one link
-  per term — never one footnote for the whole table (`facts.signal_aes`,
-  `facts.prrs` and `facts.prr_urls` are the same numbers as lists, kept for
-  comparison; cite from the rows). Cite label numbers with the `source_url` of
-  their result. Literature is one row per flagged reaction in
-  `facts.literature_rows`: present it per reaction, cited by PMID or DOI, and say
+  per term — never one footnote for the whole table (`facts.signal_aes` lists the same terms; cite from the rows). Cite label numbers with the `source_url` of
+  their result. Literature is the table `literature_rows`, one row per paper
+  with the reaction it was found for: read the rows you need with fetch_run_data,
+  present them per reaction, cite each paper by its own row's `url` or `doi`, and say
   when a reaction has no papers. Reported-disease terms were not searched; they
   are listed under `facts.excluded_aes` — say so. The signal table is the agent's
   answer to the compute step, checked by the server against the FAERS rows: cite
@@ -58,8 +57,6 @@ optional_inputs: [requested_aes]
 # What the agent gets whole (fact) and what it gets described and fetches from (evidence).
 # A table a later step reads must be a fact. The kind decides, never the size.
 tables:
-  prrs: fact
-  prr_urls: fact
   prr_rows: fact            # the compute step reads it
   literature_rows: evidence # wide, and no step reads it
 
@@ -150,18 +147,13 @@ steps:
       - tool: FAERS_calculate_disproportionality
         arguments: {drug_name: "{faers_name}", adverse_event: "{adverse_event}"}
     collect:
-      prrs: "data.metrics.PRR.value"   # one metrics object per call, so GATHER
-      # The stamped citation of each call, in the same order as signal_aes and
-      # prrs: the writer cites each PRR with its own query, not one footnote
-      # for the whole table (blind-judged 2026-09-03).
-      prr_urls: "source_url"
-      # The same three values as one row per reaction. Rung 1 handed the writer
-      # the lists and one run mis-indexed two footnotes; a row cannot drift. The
-      # lists stay beside the rows for this rung only, for comparison.
+      # One row per reaction: term, value and the link of its own query together. The
+      # parallel lists that stood beside the rows are gone — a reaction without a PRR
+      # dropped out of one list and not the other.
       prr_rows: {path: "", fields: ["$item as term", "data.metrics.PRR.value as prr", "source_url as url"]}
     derive:
-      strong_signal: {from: prrs, op: ">=", value: 5, mode: any}
-    produces: [prrs, prr_urls, prr_rows, strong_signal]
+      strong_signal: {from: prr_rows, field: prr, op: ">=", value: 5, mode: any}
+    produces: [prr_rows, strong_signal]
 
   - id: seriousness
     label: "Phase 2c — how seriously the events were reported"
@@ -230,11 +222,14 @@ steps:
         # `inn` from the label title, not `drug_name` as the agent bound it.
         arguments: {query: "{inn} AND {reaction}", limit: 10}
     collect:
-      literature_rows: {path: "", fields: ["$item as reaction", "data[].pmid as pmids", "data[].title as titles",
-                                           "data[].pub_year as years", "data[].doi_url as dois"]}
+      # One row for each paper. Parallel lists per reaction fell out of step at the first
+      # paper without a DOI, and a fetch could not narrow inside a cell.
+      literature_rows: {path: "data", flatten: true,
+                        fields: ["$item as reaction", "pmid", "title", "pub_year as year",
+                                 "journal", "article_type", "url", "doi_url as doi", "abstract"]}
     produces: [literature_rows]
     notes: >-
-      One row per flagged reaction: the papers found for the drug and that reaction.
+      One row per paper, each with the reaction it was found for and its own links.
       Real titles, PMIDs and years — meta-analyses before case reports. A reaction
       with no papers is a finding, not a failure.
 

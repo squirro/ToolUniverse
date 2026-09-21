@@ -4,6 +4,8 @@ search is one query per flagged reaction.
 Rung 1 handed the writer three parallel lists (`signal_aes`, `prrs`, `prr_urls`) and
 one run mis-indexed two footnotes. A row cannot be mis-indexed.
 """
+import re
+
 import pytest
 
 from tooluniverse.skill_graph import load_graph
@@ -15,6 +17,23 @@ PRR = {"MYELODYSPLASTIC SYNDROME": 7.5, "NAUSEA": 1.1, "RENAL IMPAIRMENT": 2.3}
 
 def _url(term):
     return f"https://api.fda.gov/drug/event.json?search={term.replace(' ', '+')}"
+
+
+_INDICATION = re.compile(r"TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION", re.I)
+
+
+def _agent(question):
+    """The agent's side of a run: it does the compute step's arithmetic, as the task asks."""
+    if "prr_table" not in question["wants"]:
+        return {name: ["stub"] for name in question["wants"]}
+    rows = question["calls"][0]["arguments"]["rows"]
+    table = [{**row, "flagged": row.get("prr") is not None and row["prr"] >= 2}
+             for row in sorted(rows, key=lambda r: (r.get("prr") is None, -(r.get("prr") or 0)))]
+    flagged = [row["term"] for row in table if row["flagged"]]
+    return {"prr_table": table,
+            "flagged_aes": [t for t in flagged if not _INDICATION.search(t)],
+            "excluded_aes": [t for t in flagged if _INDICATION.search(t)],
+            "method": "computed without code"}
 
 
 def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERMS):
@@ -34,7 +53,7 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERM
         return {}
 
     runner = SkillRunner(graph or load_graph("clinical-data-integration"), execute=execute,
-                         ask=lambda q: asked.append(q) or {n: ["stub"] for n in q["wants"]})
+                         ask=lambda q: asked.append(q) or _agent(q))
     run_id = runner.start({"drug_name": drug_name})["run_id"]
     for _ in range(100):
         if runner.advance(run_id)["finished"]:
@@ -53,15 +72,21 @@ def test_each_signal_row_carries_the_term_its_prr_its_flag_and_its_own_query_url
         {"term": "RENAL IMPAIRMENT", "prr": 2.3, "flagged": True, "url": _url("RENAL IMPAIRMENT")},
         {"term": "NAUSEA", "prr": 1.1, "flagged": False, "url": _url("NAUSEA")},
     ]
-    assert "compute" not in {q["step"] for q in asked}, "the table is arithmetic; nobody is asked"
+    compute = [q for q in asked if q["step"] == "compute"]
+    assert len(compute) == 1, "the agent does the arithmetic once; the check found nothing to re-ask"
+    assert "problem" not in compute[0]
 
 
-def test_the_three_lists_stay_in_the_bundle_for_this_rung():
+def test_the_signals_travel_as_rows_only_and_the_gateway_reads_the_rows():
+    """The parallel lists are gone: a reaction without a PRR dropped out of one list and
+    not the other. The rows carry term, value and link together."""
     state, _, _ = _drive()
     facts = state["facts"]
     assert facts["signal_aes"] == TERMS
-    assert facts["prrs"] == [7.5, 1.1, 2.3]
-    assert facts["prr_urls"] == [_url(t) for t in TERMS]
+    assert "prrs" not in facts and "prr_urls" not in facts
+    assert [(r["term"], r["prr"], r["url"]) for r in facts["prr_rows"]] == [
+        (t, PRR[t], _url(t)) for t in TERMS]
+    assert facts["strong_signal"] is True
 
 
 # --- literature as a loop --------------------------------------------------------
@@ -74,9 +99,11 @@ def test_the_literature_loop_fans_over_exactly_the_flagged_reactions():
     # myelodysplastic syndrome" found 0 papers; untagged, 12 (probed 2026-09-07).
     assert queries == ["lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME",
                        "lutetium Lu 177 dotatate AND RENAL IMPAIRMENT"]
-    rows = state["facts"]["literature_rows"]
-    assert [r["reaction"] for r in rows] == ["MYELODYSPLASTIC SYNDROME", "RENAL IMPAIRMENT"]
-    assert rows[0]["pmids"] == ["1"]
+    # One row for each paper, carrying its reaction and its own links: a paper without a
+    # DOI cannot shift the DOI of the next one.
+    assert state["facts"]["literature_rows"] == [
+        {"reaction": reaction, "pmid": "1", "title": "t", "year": 2024, "doi": "d"}
+        for reaction in ("MYELODYSPLASTIC SYNDROME", "RENAL IMPAIRMENT")]
 
 
 def test_no_flagged_reaction_means_no_literature_search():
@@ -172,4 +199,4 @@ def test_the_literature_loop_skips_indication_terms_and_the_bundle_says_which():
     assert facts["flagged_aes"] == ["MYELODYSPLASTIC SYNDROME"]
     assert [a["query"] for tool, a in calls if tool == "PubMed_search_articles"] == [
         "lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME"]
-    assert state["excluded"]["compute"] == {"flagged_aes": ["NEUROENDOCRINE TUMOUR", "METASTASES TO LIVER"]}
+    assert facts["excluded_aes"] == ["NEUROENDOCRINE TUMOUR", "METASTASES TO LIVER"]

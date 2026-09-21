@@ -142,3 +142,19 @@ def test_the_shipped_processes_break_the_rules_exactly_where_the_known_list_says
         for path in sorted(GRAPHS_DIR.glob("*.yaml"))}
 
     assert {skill: messages for skill, messages in found.items() if messages} == known_violations()
+
+
+def test_a_row_that_packs_several_lists_is_refused_because_they_fall_out_of_step():
+    """198 DOIs against 200 PMIDs: `collect` drops a missing value, and every later pair is wrong."""
+    packed = _process({"id": "literature", "calls": [], "collect": {"literature_rows": {
+        "path": "", "fields": ["$item as reaction", "data[].pmid as pmids", "data[].doi_url as dois"]}}},
+        tables={"literature_rows": "evidence"})
+    one_list = _process({"id": "phenotypes", "calls": [], "collect": {"disease_phenotypes": {
+        "path": "data", "fields": ["$item as orphacode", "phenotypes[].hpo_id as hpo_ids"]}}},
+        tables={"disease_phenotypes": "fact"})
+
+    (found,) = violations(packed)
+
+    assert (found.kind, found.step, found.field) == (
+        "parallel_lists", "literature", "collect.literature_rows")
+    assert violations(one_list) == []

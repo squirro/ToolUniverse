@@ -2030,3 +2030,43 @@ def test_a_step_that_could_never_start_is_named_with_what_it_waited_for():
 
     assert handed["steps_done"] == ["counts"]
     assert handed["stalled"] == [{"step": "signals", "waiting_for": ["map_terms"]}]
+
+
+# --- one row for each item: a missing value can never shift its neighbours ---------
+
+PAPERS = {
+    "skill": "papers", "inputs": ["reactions"], "tables": {"papers": "fact"},
+    "steps": [{"id": "literature", "for_each": "reactions", "as": "reaction",
+               "calls": [{"tool": "search_papers", "arguments": {"query": "{reaction}"}}],
+               "collect": {"papers": {"path": "data", "flatten": True, "fields": [
+                   "$item as reaction", "pmid", "title", "doi_url as doi"]}}}],
+}
+
+
+def test_fields_over_a_list_of_records_give_one_row_for_each_record():
+    """A paper without a DOI is a row without a `doi`: nothing after it moves up a place."""
+    found = {"DEAFNESS": [{"pmid": "1", "title": "A", "doi_url": "https://doi.org/a", "x": 0},
+                          {"pmid": "2", "title": "B"},
+                          {"pmid": "3", "title": "C", "doi_url": "https://doi.org/c"}],
+             "TINNITUS": [{"pmid": "4", "title": "D", "doi_url": "https://doi.org/d"}]}
+    runner = SkillRunner(PAPERS, execute=lambda tool, a: {"data": found[a["query"]]})
+    run_id = runner.start({"reactions": ["DEAFNESS", "TINNITUS"]})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    assert runner.handover(run_id)["facts"]["papers"] == [
+        {"reaction": "DEAFNESS", "pmid": "1", "title": "A", "doi": "https://doi.org/a"},
+        {"reaction": "DEAFNESS", "pmid": "2", "title": "B"},
+        {"reaction": "DEAFNESS", "pmid": "3", "title": "C", "doi": "https://doi.org/c"},
+        {"reaction": "TINNITUS", "pmid": "4", "title": "D", "doi": "https://doi.org/d"}]
+
+
+def test_an_answer_whose_rows_are_not_objects_is_refused_not_a_crash():
+    """A model can hand back strings where rows were asked for; the run must ask again, not die."""
+    from tooluniverse.skill_runner import check_facts
+
+    rules = {"prr_table": [{"flag": {"field": "flagged", "from": "prr", "op": ">=", "value": 2}}]}
+
+    (failure,) = check_facts(rules, {"prr_table": ["stub"]}, {})
+
+    assert failure["fact"] == "prr_table" and "not an object" in failure["reason"]

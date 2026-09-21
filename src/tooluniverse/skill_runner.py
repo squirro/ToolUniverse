@@ -627,7 +627,9 @@ def _check_sorted_by(rule: dict, value: Any, facts: dict) -> str | None:
 def _check_flag(rule: dict, value: Any, facts: dict) -> str | None:
     field, on, compare, threshold = rule["field"], rule["from"], _OPS[rule.get("op", ">=")], rule["value"]
     for row in value if isinstance(value, list) else []:
-        n = _num(row.get(on)) if isinstance(row, dict) else None
+        if not isinstance(row, dict):
+            return f"a row is not an object: {json.dumps(row, default=str)[:80]}"
+        n = _num(row.get(on))
         expected = n is not None and compare(n, threshold)
         if bool(row.get(field)) != expected:
             return f"{field}={row.get(field)} with {on}={row.get(on)} in {json.dumps(row, default=str)[:120]}"
@@ -791,7 +793,7 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
             found = _dig(payload, rule["path"])
             if found is None:
                 continue
-            if rule.get("fields") and isinstance(found, dict):
+            def row_of(record: dict, index: int = index) -> dict:
                 # Keep the few fields the run needs from a large payload, as one row.
                 # "$item" is the loop value this call was made for — a tool that does
                 # not echo its input (HPO's disease list) still yields a paired row.
@@ -805,16 +807,24 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
                         arg = src[len("$call."):]
                         value = (calls[index].get("arguments") or {}).get(arg) if calls and index < len(calls) else None
                     else:
-                        value = _dig(found, src)
+                        value = _dig(record, src)
                     if value is not None:
                         row[alias or src.split(".")[-1].rstrip("[]").lstrip("$")] = value
-                found = row
+                return row
+
+            if rule.get("fields") and isinstance(found, dict):
+                found = row_of(found)
+            elif (rule.get("fields") and isinstance(found, list)
+                  and all(isinstance(record, dict) for record in found)):
+                # One row for each record: a record that lacks a field is a row without
+                # it, so nothing after it moves up a place.
+                found = [row_of(record) for record in found]
             if rule.get("match"):
                 # The first item that matches, per call: an HPO lookup answers
                 # UPHENO:, MP:, then HP:, and only the HP id is a human phenotype.
-                items = found if isinstance(found, list) else [found]
-                found = next((i for i in items
-                              if isinstance(i, str) and re.search(rule["match"], i)),
+                candidates = found if isinstance(found, list) else [found]
+                found = next((c for c in candidates
+                              if isinstance(c, str) and re.search(rule["match"], c)),
                              None)
                 if found is None:
                     continue

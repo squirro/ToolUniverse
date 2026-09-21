@@ -89,13 +89,16 @@ def _unstated_narrowing(draft: str, received: Any) -> list[dict]:
         for item, total in totals.items():
             if not isinstance(total, (int, float)) or total <= table.get("rows", 0):
                 continue
+            # A loop's total is owed for the items the report discusses, not for every item.
+            if item and not re.search(r"(?<!\w)" + re.escape(item) + r"(?!\w)", draft or "", re.I):
+                continue
             if not re.search(rf"(?<!\d){int(total)}(?!\d)", plain):
                 where = f", {item}" if item else ""
                 failures.append({"kind": "narrowing_not_stated",
                                  "text": f"{table['table']}{where}: the source holds {int(total)}; "
                                          "say how many this run holds",
-                                 "context": "the report must say how much the source holds and how "
-                                            "much this run holds"})
+                                 "context": "the totals are in handover.tables[].source_total, "
+                                            "the rows held in handover.tables[].rows: state both"})
     return failures
 
 

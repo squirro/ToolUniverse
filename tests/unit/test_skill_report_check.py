@@ -109,8 +109,8 @@ NARROWED = {"handover": {"facts": {}, "tables": [
 
 def test_a_table_the_run_holds_less_of_than_the_source_must_be_stated_with_its_total():
     """Four live reports in a row said "5 abstracts read" and never "of 2,078"."""
-    silent = "Literature: the five most relevant abstracts were read."
-    stated = "Literature: PubMed holds 2,078 papers on ototoxicity; this run holds the 200 most relevant."
+    silent = "Literature on ototoxicity: the most relevant abstracts were read."
+    stated = "Literature on ototoxicity: PubMed holds 2,078 papers; this run holds 200 of them."
 
     (failure,) = check_report(silent, NARROWED)
 
@@ -169,3 +169,16 @@ def test_the_web_report_with_the_sourceless_prr_fails_on_that_number():
     failures = check_report(trace["answer"], _received_from(trace))
 
     assert "53.44" in {f["text"] for f in failures if f["kind"] == "unvouched_number"}
+
+
+def test_a_per_item_total_is_required_only_for_the_items_the_report_discusses():
+    """Live, a rule that asked for ten reactions' totals -- eight of them unasked -- was given up on."""
+    received = {"handover": {"facts": {}, "tables": [
+        {"table": "results.literature", "rows": 1935,
+         "source_total": {"ototoxicity": 2078, "ANAEMIA": 2464, "NEUTROPENIA": 5827}}]}}
+    draft = "Ototoxicity: PubMed holds 2,078 papers; this run holds 1,935 rows. Anaemia was not examined."
+
+    (failure,) = check_report(draft, received)
+
+    assert failure["text"].startswith("results.literature, ANAEMIA:")
+    assert "handover.tables" in failure["context"]

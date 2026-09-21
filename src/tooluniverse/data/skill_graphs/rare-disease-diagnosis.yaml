@@ -86,6 +86,24 @@ report: >-
   table. End with a Limitations section built from `failures`, `blocked` and
   `unresolved`, and from any symptom that resolved to no HP: id.
 
+# What the agent gets whole (fact) and what it gets described and fetches from (evidence).
+# A table a later step reads must be a fact. The kind decides, never the size.
+# Every table here is read by a later step or cited row by row in the report.
+tables:
+  hpo_ids: fact
+  term_counts: fact
+  hpo_hierarchy_calls: fact
+  orphanet_matches: fact
+  orphanet_codes: fact
+  disease_phenotypes: fact
+  disease_inheritance: fact
+  disease_prevalence: fact
+  orphanet_gene_rows: fact
+  genes: fact
+  mondo_ids: fact
+  opentargets_rows: fact
+  gene_rows: fact
+
 steps:
   - id: hypothesis
     label: "Phase 0 — clinical reasoning, before any tool call"

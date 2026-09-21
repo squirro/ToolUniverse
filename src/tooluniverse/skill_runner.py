@@ -32,9 +32,11 @@ import math
 import re
 import uuid
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from .skill_graph import SkillGraphError, _fill, next_step
+from .skill_working_record import WorkingRecord
 
 _OPS: dict[str, Callable[[Any, Any], bool]] = {
     ">=": lambda a, b: a >= b,
@@ -386,20 +388,22 @@ def _derive(spec: dict, facts: dict) -> bool | None:
 
 
 
-MAX_PAYLOAD = 12_000   # per payload in the bundle; raw results never ride the transcript
+MAX_PAYLOAD = 12_000   # per fact in a question's context; the question stays readable
 
 
 def new_run(inputs: dict) -> dict:
     """Fresh run state: the whole of it is (done, facts) plus what went wrong."""
     return {"facts": dict(inputs), "done": [], "failures": [], "blocked": [],
-            "skipped": [], "results": {}, "calls": {}, "calls_made": {},
+            "skipped": [], "calls": {}, "calls_made": {},
             "questions": [], "unresolved": [], "excluded": {}}
 
 
-def apply(run: dict, step_id: str, results: list, failures: list, outcome: dict,
+def apply(run: dict, step_id: str, failures: list, outcome: dict,
           calls: list[dict] | None = None) -> None:
-    """Record a finished step on the run. Pure over its arguments; mutates `run`."""
-    run["results"][step_id] = results
+    """Record a finished step on the run. Pure over its arguments; mutates `run`.
+
+    Results are not among them: they are in the Working Record.
+    """
     # The tools this step ran, retries included: the agent's own trace never
     # shows them, so the bundle carries the record itself.
     run["calls"][step_id] = [c["tool"] for c in (calls or [])]
@@ -414,16 +418,6 @@ def apply(run: dict, step_id: str, results: list, failures: list, outcome: dict,
         run["excluded"][step_id] = outcome["excluded"]
     run["unresolved"].extend({"step": step_id, "fact": name}
                              for name in outcome["unresolved"])
-
-
-def trim(results: list, cap: int) -> list:
-    """Cap each payload so the bundle stays sendable; say where the cut was."""
-    kept = []
-    for payload in results:
-        text = json.dumps(payload, default=str)
-        kept.append(payload if len(text) <= cap
-                    else {"truncated": True, "preview": text[:cap]})
-    return kept
 
 
 def next_runnable(graph: dict, run: dict) -> dict | None:
@@ -449,43 +443,12 @@ def next_runnable(graph: dict, run: dict) -> dict | None:
             run["blocked"].append({"step": blocked, "reason": str(exc)})
 
 
-STEP_RESULTS_BUDGET = 48_000     # four payload caps: a loop's results, not a loop's worth
-
-
-def _budgeted(results: list, cap: int, budget: int) -> list:
-    """A loop step's payloads, whole and in order, until the budget; then a count.
-
-    Live 2026-09-07 a bundle reached 716 KB — twenty-eight GTEx payloads were
-    288 KB of it — and the agent's turn died on the model's context window. A cap
-    per payload cannot bound a loop; the rows the loop collected are in facts.
-    """
-    kept, used = [], 0
-    for payload in trim(results, cap):
-        size = len(json.dumps(payload, default=str))
-        if kept and used + size > budget:
-            break
-        kept.append(payload)
-        used += size
-    if len(kept) < len(results):
-        kept.append({"omitted": len(results) - len(kept),
-                     "note": "loop results beyond the step budget; the rows this step collected are in facts"})
-    return kept
-
-
-def bundle_of(graph: dict, run: dict, cap: int) -> dict:
-    """Everything the report needs, handed over ONCE at the end.
-
-    The run kept every result — label text, the trial list, the papers — because
-    that is what the report is made of. Capping each payload keeps it sendable;
-    a loop step's results are also bounded as a whole.
-    """
-    loops = {s["id"] for s in graph["steps"] if s.get("for_each")}
-    return {
+def handover_of(graph: dict, run: dict) -> dict:
+    """What the agent is handed ONCE at the end: the facts, and a description of each table
+    that is too wide to hand over. Tool results are in the Working Record, fetched by table."""
+    handed = {
         "skill": graph["skill"],
         "facts": run["facts"],
-        "results": {step_id: (_budgeted(results, cap, STEP_RESULTS_BUDGET)
-                              if step_id in loops else trim(results, cap))
-                    for step_id, results in run["results"].items()},
         "steps_done": run["done"],
         "calls": run.get("calls", {}),
         # The author's judgement, with the data: what each step means and how the
@@ -499,6 +462,31 @@ def bundle_of(graph: dict, run: dict, cap: int) -> dict:
         "blocked": run["blocked"],
         "unresolved": run["unresolved"],
     }
+    if run.get("evidence"):
+        handed["tables"] = run["evidence"]
+    return handed
+
+
+def keep_evidence(record: WorkingRecord, tables: dict | None, outcome: dict) -> list[dict]:
+    """Move what the process declares an evidence table out of the facts, into the record."""
+    described = []
+    for name in [n for n in outcome["facts"] if (tables or {}).get(n) == "evidence"]:
+        record.put_table(name, outcome["facts"].pop(name))
+        described.append(record.describe(name))
+    return described
+
+
+def absorb_recorded(record: WorkingRecord, tables: dict | None, spec: dict,
+                    calls: list[dict], facts: dict) -> dict:
+    """`absorb` over the step's recorded results, so no result has to travel to the caller."""
+    results = record.results(spec["id"])
+    outcome = absorb(spec, results, facts, items=loop_items(spec, calls), calls=calls)
+    outcome["evidence"] = keep_evidence(record, tables, outcome)
+    if results:
+        outcome["evidence"].append(record.describe(f"results.{spec['id']}"))
+    repair = spec.get("repair")
+    outcome["resolved"] = resolved(spec, repair, results) if repair else True
+    return outcome
 
 
 def resolved(spec: dict, repair: dict, results: list) -> bool:
@@ -903,9 +891,12 @@ class SkillRunner:
     MAX_REPAIRS = 2
 
     def __init__(self, graph: dict, execute: Callable[[str, dict], Any],
-                 ask: Callable[[dict], list[str]] | None = None):
+                 ask: Callable[[dict], list[str]] | None = None,
+                 records: str | Path | None = None):
         self.graph = graph
         self.execute = execute
+        # Where each run's Working Record is kept; without it results stay in memory only.
+        self.records = records
         # `ask` puts the model back in the loop as an ORACLE, never as the
         # scheduler: the server decides a lookup failed, frames the question,
         # validates the answer by re-querying, and stops after MAX_REPAIRS.
@@ -929,8 +920,6 @@ class SkillRunner:
         run = self._runs[run_id]
         return next_step(self.graph, done=run["done"] + run["skipped"],
                          facts=run["facts"])
-
-    MAX_PAYLOAD = MAX_PAYLOAD
 
     def _repair(self, spec, step, repair, results, failures, run, made):
         """Ask for a better argument value and retry, at most MAX_REPAIRS times."""
@@ -969,8 +958,13 @@ class SkillRunner:
         })
         return results, failures
 
-    def bundle(self, run_id: str) -> dict:
-        return bundle_of(self.graph, self._runs[run_id], self.MAX_PAYLOAD)
+    def _keep_evidence(self, run_id: str, run: dict, outcome: dict) -> None:
+        if self.records is not None:
+            run.setdefault("evidence", []).extend(keep_evidence(
+                WorkingRecord(self.records, run_id), self.graph.get("tables"), outcome))
+
+    def handover(self, run_id: str) -> dict:
+        return handover_of(self.graph, self._runs[run_id])
 
     def _answered(self, spec, step, wants, outcome, run, question) -> dict:
         """Ask, fold the answer in, check it; a failing check is asked once more."""
@@ -1015,8 +1009,17 @@ class SkillRunner:
             results, failures = self._repair(
                 spec, step, repair, results, failures, run, made)
 
-        outcome = absorb(spec, results, run["facts"], items=loop_items(spec, step["calls"]),
-                         calls=step["calls"])
+        if self.records is not None:
+            record = WorkingRecord(self.records, run_id)
+            for n, (call, payload) in enumerate(zip(step["calls"], results)):
+                record.put_result(step["id"], n, call["tool"], call["arguments"], payload)
+            outcome = absorb_recorded(record, self.graph.get("tables"), spec, step["calls"],
+                                      run["facts"])
+            run.setdefault("evidence", []).extend(outcome.pop("evidence"))
+            outcome.pop("resolved")
+        else:
+            outcome = absorb(spec, results, run["facts"],
+                             items=loop_items(spec, step["calls"]), calls=step["calls"])
         delegated = spec.get("delegate") or []
         if delegated:
             # Web search and code live on the agent, not in the registry. The run
@@ -1046,7 +1049,8 @@ class SkillRunner:
                 notes=spec.get("notes"),
             )
             outcome = self._answered(spec, step, wants, outcome, run, question)
-        apply(run, step["id"], results, failures, outcome, calls=made)
+        self._keep_evidence(run_id, run, outcome)
+        apply(run, step["id"], failures, outcome, calls=made)
         # The caller sees an unknown as an explicit None; facts never hold one.
         extracted = {**outcome["facts"], **{n: None for n in outcome["undecided"]}}
         missed = [{"step": step["id"], "fact": name} for name in outcome["unresolved"]]

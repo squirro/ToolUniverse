@@ -44,6 +44,13 @@ class SkillGraphError(RuntimeError):
     """No graph for that skill, or the graph cannot be run with these facts."""
 
 
+def undeclared_tables(graph: dict) -> list[str]:
+    """Collected tables the process does not declare a fact table or an evidence table."""
+    declared = graph.get("tables") or {}
+    return [name for step in graph.get("steps", []) for name in (step.get("collect") or {})
+            if declared.get(name) not in ("fact", "evidence")]
+
+
 def load_graph(skill: str, graphs_dir: str | Path | None = None) -> dict:
     """Load the process graph for one skill."""
     directory = Path(graphs_dir) if graphs_dir else GRAPHS_DIR
@@ -56,6 +63,10 @@ def load_graph(skill: str, graphs_dir: str | Path | None = None) -> dict:
     graph = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(graph, dict) or not graph.get("steps"):
         raise SkillGraphError(f"graph for {skill!r} has no steps")
+    if undeclared := undeclared_tables(graph):
+        raise SkillGraphError(
+            f"graph for {skill!r} collects {undeclared} without declaring them under `tables:` "
+            "as `fact` (the agent gets it whole) or `evidence` (described, then fetched)")
     return graph
 
 
@@ -90,11 +101,14 @@ every step and every tool call itself.
    `judge`, each wanted name mapped to your decision; for a `delegate`, make the
    listed `calls` with your own tools (web search, code) and map each wanted name
    to what came back.
-3. When it answers `finished`, write the report from `bundle` and nothing else.
-   `bundle.report` is the author's instruction for how to read the evidence and
-   `bundle.notes` says what each step means: follow both. Every number comes from
-   `bundle.results` or `bundle.facts`; cite with the `source_url` in each result;
-   state `failures`, `blocked`, `unresolved` and `excluded` as gaps.
+3. When it answers `finished`, write the report from `handover` and nothing else.
+   `handover.report` is the author's instruction for how to read the evidence and
+   `handover.notes` says what each step means: follow both. `handover.facts` is
+   what you must cite, whole, each row with its own link. `handover.tables`
+   describes what is too wide to hand over; its preview is not the data — read
+   the rows you need with `fetch_run_data(run_id=..., table=..., columns=[...])`.
+   Every number comes from `handover.facts` or from rows you fetched; state
+   `failures`, `blocked`, `unresolved` and `excluded` as gaps.
 
 Do not call `execute_tool` for any step of this skill yourself.
 

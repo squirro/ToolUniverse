@@ -55,6 +55,14 @@ report: >-
 # this the run returns correct numbers that do not answer the question.
 optional_inputs: [requested_aes]
 
+# What the agent gets whole (fact) and what it gets described and fetches from (evidence).
+# A table a later step reads must be a fact. The kind decides, never the size.
+tables:
+  prrs: fact
+  prr_urls: fact
+  prr_rows: fact            # the compute step reads it
+  literature_rows: evidence # wide, and no step reads it
+
 steps:
   - id: identity
     label: "Phase 0 — drug identity and label handle"

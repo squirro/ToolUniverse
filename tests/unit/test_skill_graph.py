@@ -369,3 +369,47 @@ def test_rare_disease_diagnosis_carries_report_guidance_and_notes_on_every_step(
         assert needle in report, needle
     assert "no tool in this run returned it" not in report     # inheritance now comes from a row
     assert "supplied by the model" in report and "genes" not in report.split("supplied by the model")[0].rsplit(".", 1)[-1]
+
+
+def test_a_collected_table_the_process_does_not_declare_is_named():
+    """No silent default: the author says whether the agent gets a table whole or described."""
+    from tooluniverse.skill_graph import undeclared_tables
+
+    process = {"skill": "d", "inputs": [], "tables": {"prr_rows": "fact"}, "steps": [
+        {"id": "signals", "calls": [], "collect": {"prr_rows": {"path": "data.rows"}}},
+        {"id": "literature", "calls": [], "collect": {"papers": {"path": "data.articles"}}}]}
+
+    assert undeclared_tables(process) == ["papers"]
+
+
+def _shipped():
+    from tooluniverse.skill_graph import GRAPHS_DIR
+    return sorted(p.stem for p in GRAPHS_DIR.glob("*.yaml"))
+
+
+@pytest.mark.parametrize("skill", _shipped())
+def test_every_shipped_process_declares_each_table_it_collects(skill):
+    from tooluniverse.skill_graph import undeclared_tables
+
+    assert undeclared_tables(load_graph(skill)) == []
+
+
+def test_a_process_that_collects_an_undeclared_table_is_refused_by_name(tmp_path):
+    from tooluniverse.skill_graph import SkillGraphError
+
+    (tmp_path / "leaky.yaml").write_text(
+        "skill: leaky\ninputs: []\nsteps:\n"
+        "  - id: literature\n    calls: []\n"
+        "    collect:\n      papers: {path: data.articles}\n")
+
+    with pytest.raises(SkillGraphError, match="papers"):
+        load_graph("leaky", graphs_dir=tmp_path)
+
+
+def test_the_directive_tells_the_agent_to_write_from_the_handover_and_to_fetch_the_rest():
+    from tooluniverse.skill_graph import graph_directive
+
+    text = graph_directive("clinical-data-integration", server_runs=True)
+
+    assert "`handover`" in text and "fetch_run_data(" in text
+    assert "bundle" not in text

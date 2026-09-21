@@ -43,20 +43,19 @@ with workflow.unsafe.imports_passed_through():
     from .skill_ceilings import ceiling_for, source_of
 from .skill_run_record import skeleton, to_prov
 from .skill_runner import (
-        MAX_PAYLOAD,
-        absorb,
-        apply,
-        asked,
-        bundle_of,
-        checked,
-        judged,
-        loop_items,
-        new_run,
-        next_runnable,
-        question_for,
-        resolved,
-        substitute,
-    )
+    absorb_recorded,
+    apply,
+    asked,
+    checked,
+    handover_of,
+    judged,
+    new_run,
+    next_runnable,
+    question_for,
+    substitute,
+)
+
+from .skill_working_record import WorkingRecord
 
 TASK_QUEUE = "skills"
 
@@ -68,7 +67,6 @@ WORKFLOW_RUNNER = SandboxedWorkflowRunner(
     restrictions=SandboxRestrictions.default.with_passthrough_modules("tooluniverse"))
 CALL_TIMEOUT = timedelta(seconds=120)       # the Ensembl cold-path ceiling
 ORACLE_WAIT = timedelta(hours=1)            # then the step is blocked, not the run
-PAYLOAD_CAP = 1_000_000                     # Temporal's per-payload limit is 2 MB
 MAX_REPAIRS = 2
 
 
@@ -76,12 +74,27 @@ MAX_REPAIRS = 2
 class ToolCall:
     tool: str
     arguments: dict = field(default_factory=dict)
+    run_id: str = ""
+    step: str = ""
+    call_n: int = 0
+    attempt: int = 0
 
 
 @dataclass
 class ToolResult:
-    payload: Any = None
-    truncated: bool = False
+    """Where the result is, never the result: it stays in the Working Record."""
+    step: str = ""
+    call_n: int = 0
+    size: int = 0
+
+
+@dataclass
+class StepToAbsorb:
+    run_id: str
+    spec: dict
+    calls: list
+    facts: dict
+    tables: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -104,16 +117,37 @@ def bind_executor(execute: Callable[[str, dict], Any]) -> None:
     _executor = execute
 
 
+_records: str | None = None
+
+
+def bind_records(directory) -> None:
+    """Point the activities at the directory that holds the Working Records."""
+    global _records
+    _records = str(directory)
+
+
+def _record_of(run_id: str) -> WorkingRecord:
+    if _records is None:
+        raise RuntimeError("no records directory bound: call bind_records() at worker start")
+    return WorkingRecord(_records, run_id)
+
+
 @activity.defn(name="execute_tool")
 def execute_tool(call: ToolCall) -> ToolResult:
     if _executor is None:
         raise RuntimeError("no executor bound: call bind_executor() at worker start")
     payload = _executor(call.tool, call.arguments)
-    text = json.dumps(payload, default=str)
-    if len(text) > PAYLOAD_CAP:
-        return ToolResult(payload={"truncated": True, "preview": text[:PAYLOAD_CAP]},
-                          truncated=True)
-    return ToolResult(payload=payload)
+    _record_of(call.run_id).put_result(call.step, call.call_n, call.tool, call.arguments,
+                                       payload, attempt=call.attempt)
+    return ToolResult(step=call.step, call_n=call.call_n,
+                      size=len(json.dumps(payload, default=str)))
+
+
+@activity.defn(name="absorb_step")
+def absorb_step(step: StepToAbsorb) -> dict:
+    """Extract and collect where the results are; hand back the facts, not the results."""
+    return absorb_recorded(_record_of(step.run_id), step.tables, step.spec, step.calls,
+                           step.facts)
 
 
 RECORD_TIMEOUT = timedelta(seconds=30)
@@ -158,13 +192,13 @@ class SkillWorkflow:
             self._current = step
             spec = next(s for s in process["steps"] if s["id"] == step["id"])
             made = list(step["calls"])
-            results, failures = await self._calls(step["calls"])
-            repair = spec.get("repair")
-            if repair and not resolved(spec, repair, results):
-                results, failures = await self._repair(spec, step, repair, results,
+            failures = await self._calls(step["calls"])
+            outcome = await self._absorb(spec, step["calls"], run["facts"])
+            if spec.get("repair") and not outcome["resolved"]:
+                outcome, failures = await self._repair(spec, step, spec["repair"], outcome,
                                                        failures, made)
-            outcome = absorb(spec, results, run["facts"], items=loop_items(spec, step["calls"]),
-                             calls=step["calls"])
+            run.setdefault("evidence", []).extend(outcome.pop("evidence"))
+            outcome.pop("resolved")
             delegated = spec.get("delegate") or []
             if delegated:
                 # Web search and code live on the agent: the run pauses with the
@@ -188,12 +222,13 @@ class SkillWorkflow:
                 outcome = await self._answered(spec, step, wants, outcome, question_for(
                     step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
                     notes=spec.get("notes")))
-            apply(run, step["id"], results, failures, outcome, calls=made)
+            apply(run, step["id"], failures, outcome, calls=made)
         self._current = None
-        bundle = bundle_of(process, run, MAX_PAYLOAD)
-        bundle["record"] = await self._record(inp)
+        handover = handover_of(process, run)
+        handover["run_id"] = workflow.info().workflow_id
+        handover["record"] = await self._record(inp)
         self._finished = True
-        return bundle
+        return handover
 
     # -- the model's two holes: a question the caller reads, an answer it sends --
 
@@ -261,7 +296,15 @@ class SkillWorkflow:
 
     # -- the work: every call an activity, all at once, capped per source ---------
 
-    async def _calls(self, calls: list[dict]) -> tuple[list, list]:
+    async def _absorb(self, spec: dict, calls: list[dict], facts: dict) -> dict:
+        return await workflow.execute_activity(
+            absorb_step,
+            StepToAbsorb(workflow.info().workflow_id, spec, calls, facts,
+                         self._process.get("tables") or {}),
+            start_to_close_timeout=CALL_TIMEOUT,
+            retry_policy=RetryPolicy(maximum_attempts=3))
+
+    async def _calls(self, calls: list[dict], attempt: int = 0) -> list:
         """Run a step's calls concurrently and gather them in declared order.
 
         A loop's iterations are the same call with one value substituted, so they
@@ -271,18 +314,22 @@ class SkillWorkflow:
         """
         gates: dict[str, asyncio.Semaphore] = {}
 
-        async def one(call: dict):
+        run_id = workflow.info().workflow_id
+        step_id = (self._current or {}).get("id", "")
+
+        async def one(call_n: int, call: dict):
             source = source_of(call["tool"])
             gate = gates.setdefault(source, asyncio.Semaphore(ceiling_for(call["tool"])))
             async with gate:
-                out: ToolResult = await workflow.execute_activity(
-                    execute_tool, ToolCall(call["tool"], call["arguments"]),
+                return await workflow.execute_activity(
+                    execute_tool,
+                    ToolCall(call["tool"], call["arguments"], run_id, step_id, call_n, attempt),
                     start_to_close_timeout=CALL_TIMEOUT,
                     retry_policy=RetryPolicy(maximum_attempts=1))
-                return out.payload
 
-        settled = await asyncio.gather(*(one(c) for c in calls), return_exceptions=True)
-        results, failures = [], []
+        settled = await asyncio.gather(*(one(n, c) for n, c in enumerate(calls)),
+                                       return_exceptions=True)
+        failures = []
         for call, outcome in zip(calls, settled):
             if isinstance(outcome, BaseException):
                 # A broken tool must not end the procedure. The failure is in the
@@ -290,11 +337,9 @@ class SkillWorkflow:
                 cause = getattr(outcome, "cause", None) or outcome
                 failures.append({"tool": call["tool"], "arguments": call["arguments"],
                                  "error": f"{type(cause).__name__}: {cause}"})
-            else:
-                results.append(outcome)
-        return results, failures
+        return failures
 
-    async def _repair(self, spec, step, repair, results, failures, made):
+    async def _repair(self, spec, step, repair, outcome, failures, made):
         argument = repair["argument"]
         original = step["calls"][0]["arguments"].get(argument)
         answer = await self._ask(question_for(
@@ -302,18 +347,19 @@ class SkillWorkflow:
             tool=step["calls"][0]["tool"], argument=argument, value=original,
             problem=f"returned nothing for {original!r}"))
         suggestions = (answer or {}).get(argument) or []
-        for candidate in suggestions[:MAX_REPAIRS]:
+        for attempt, candidate in enumerate(suggestions[:MAX_REPAIRS], start=1):
             retry_calls = substitute(step["calls"], argument, candidate)
             made.extend(retry_calls)
-            retried, retry_failures = await self._calls(retry_calls)
-            if resolved(spec, repair, retried):
+            failures = await self._calls(retry_calls, attempt=attempt)
+            outcome = await self._absorb(spec, retry_calls,
+                                         {**self._run["facts"], argument: candidate})
+            if outcome["resolved"]:
                 self._run["facts"][argument] = candidate
-                return retried, retry_failures
-            results, failures = retried, retry_failures
+                return outcome, failures
         if answer is not None:
             self._run["blocked"].append({
                 "step": step["id"],
                 "reason": (f"{argument}={original!r} could not be resolved after "
                            f"{MAX_REPAIRS} suggested alternatives"),
             })
-        return results, failures
+        return outcome, failures

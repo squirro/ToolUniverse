@@ -9,6 +9,7 @@ one-hour ceiling costs nothing to test and no server is needed.
 """
 
 import sys
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -27,7 +28,10 @@ from tooluniverse.skill_workflow import (  # noqa: E402
     SkillRunInput,
     SkillWorkflow,
     ToolCall,
-    ToolResult,
+    absorb_step,
+    bind_executor,
+    bind_records,
+    execute_tool,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.asyncio]
@@ -61,18 +65,20 @@ OK = {
 
 
 def _stub(responses, record=None):
-    """Stubs under the real activities' names: tool -> payload, and the record sink."""
+    """The real tool activities over a bound executor (tool -> payload), and a record sink."""
     calls, records = [], []
 
-    @activity.defn(name="execute_tool")
-    def execute_tool(call: ToolCall) -> ToolResult:
-        calls.append((call.tool, call.arguments))
-        value = responses[call.tool]
+    def execute(tool, arguments):
+        calls.append((tool, arguments))
+        value = responses[tool]
         if callable(value):
-            value = value(call)
+            value = value(ToolCall(tool, arguments))
         if isinstance(value, Exception):
             raise ApplicationError(str(value), non_retryable=True)
-        return ToolResult(payload=value)
+        return value
+
+    bind_executor(execute)
+    bind_records(tempfile.mkdtemp(prefix="working-records-"))
 
     @activity.defn(name="record_run")
     def record_run(skel: dict) -> str:
@@ -81,13 +87,13 @@ def _stub(responses, record=None):
         records.append(skel)
         return "https://data.swissrockets.com/skills/runs/" + skel["run_id"]
 
-    return execute_tool, record_run, calls, records
+    return [execute_tool, absorb_step], record_run, calls, records
 
 
 async def _run(env, responses, process, inputs, run_id="run-1", before_result=None, record=None):
     execute, record_activity, calls, records = _stub(responses, record)
     async with Worker(env.client, task_queue=QUEUE, workflows=[SkillWorkflow],
-                      activities=[execute, record_activity],
+                      activities=[*execute, record_activity],
                       activity_executor=ThreadPoolExecutor(4),
                       workflow_runner=WORKFLOW_RUNNER):
         handle = await env.client.start_workflow(
@@ -102,11 +108,12 @@ async def _run(env, responses, process, inputs, run_id="run-1", before_result=No
 
 
 def _in_memory(responses, process, inputs):
-    runner = SkillRunner(process, execute=lambda tool, a: responses[tool])
+    runner = SkillRunner(process, execute=lambda tool, a: responses[tool],
+                         records=tempfile.mkdtemp(prefix="working-records-"))
     run_id = runner.start(inputs)["run_id"]
     while not runner.advance(run_id)["finished"]:
         pass
-    return runner.bundle(run_id)
+    return runner.handover(run_id)
 
 
 async def test_the_workflow_returns_the_bundle_the_in_memory_runner_returns():
@@ -115,7 +122,7 @@ async def test_the_workflow_returns_the_bundle_the_in_memory_runner_returns():
         bundle, calls = await _run(env, OK, GRAPH, {"drug_name": "cisplatin"})
 
     # record: the Run Record is written by the Temporal host only.
-    assert {k: v for k, v in bundle.items() if k not in ("record", "_records")} \
+    assert {k: v for k, v in bundle.items() if k not in ("record", "run_id", "_records")} \
         == _in_memory(OK, GRAPH, {"drug_name": "cisplatin"})
     assert [tool for tool, _ in calls] == ["resolve_drug", "disproportionality", "stratify"]
     assert bundle["facts"]["strong_signal"] is True
@@ -141,7 +148,7 @@ async def test_a_failing_tool_is_a_recorded_failure_and_the_run_goes_on():
     assert bundle["steps_done"] == ["resolve", "signals", "stratify", "report"]
     assert [f["tool"] for f in bundle["failures"]] == ["stratify"]
     assert "bot-blocked" in bundle["failures"][0]["error"]
-    assert bundle["results"]["stratify"] == []
+    assert "results" not in bundle
 
 
 async def test_a_step_that_cannot_be_built_is_blocked_not_fatal():
@@ -259,7 +266,7 @@ async def test_the_history_holds_the_process_the_answer_and_replays_deterministi
     stub, record_activity, _, _ = _stub({"orphanet": {"data": []}})
     async with await WorkflowEnvironment.start_time_skipping() as env:
         async with Worker(env.client, task_queue=QUEUE, workflows=[SkillWorkflow],
-                          activities=[stub, record_activity],
+                          activities=[*stub, record_activity],
                           activity_executor=ThreadPoolExecutor(2),
                           workflow_runner=WORKFLOW_RUNNER):
             handle = await env.client.start_workflow(
@@ -427,12 +434,13 @@ async def test_the_fan_out_changes_nothing_the_in_memory_runner_returns():
     async with await WorkflowEnvironment.start_time_skipping() as env:
         bundle, _ = await _run(env, responses, LOOP, {"terms": ["x", "y", "z"]})
 
-    sync = SkillRunner(LOOP, execute=lambda tool, a: {"data": {"term": a["term"]}})
+    sync = SkillRunner(LOOP, execute=lambda tool, a: {"data": {"term": a["term"]}},
+                       records=tempfile.mkdtemp(prefix="working-records-"))
     run_id = sync.start({"terms": ["x", "y", "z"]})["run_id"]
     while not sync.advance(run_id)["finished"]:
         pass
-    assert {k: v for k, v in bundle.items() if k not in ("record", "_records")} \
-        == sync.bundle(run_id)
+    assert {k: v for k, v in bundle.items() if k not in ("record", "run_id", "_records")} \
+        == sync.handover(run_id)
 
 
 async def test_a_delegated_step_is_handed_to_the_agent_whole_never_fanned_out():

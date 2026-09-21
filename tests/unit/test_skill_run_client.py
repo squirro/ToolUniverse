@@ -55,8 +55,8 @@ def test_missing_required_inputs_are_named_and_optional_ones_are_not():
 
 
 def test_the_three_shapes():
-    assert progress("r1", _status("a", [], finished=True), bundle={"skill": "demo"}) == {
-        "status": "finished", "run_id": "r1", "bundle": {"skill": "demo"}}
+    assert progress("r1", _status("a", [], finished=True), handover={"skill": "demo"}) == {
+        "status": "finished", "run_id": "r1", "handover": {"skill": "demo"}}
     question = {"kind": "judge", "step": "a", "wants": ["k"], "context": {}}
     assert progress("r1", _status("a", [], waiting=question)) == {
         "status": "waiting", "run_id": "r1", "question": question,
@@ -87,13 +87,13 @@ async def test_waiting_returns_at_once_when_the_run_asks_a_question():
 
 
 @pytest.mark.asyncio
-async def test_waiting_returns_the_bundle_when_the_run_finishes():
+async def test_waiting_returns_the_handover_when_the_run_finishes():
     handle = ScriptedHandle([_status("a", []), _status(None, ["a"], finished=True)],
                             result={"skill": "demo", "facts": {}})
 
     out = await wait_for_progress(handle, window=10, poll=0)
 
-    assert out["status"] == "finished" and out["bundle"]["skill"] == "demo"
+    assert out["status"] == "finished" and out["handover"]["skill"] == "demo"
 
 
 @pytest.mark.asyncio
@@ -161,3 +161,38 @@ async def test_start_carries_the_definition_and_its_hash_into_the_run():
     assert inp.definition_iri.endswith("/skills/demo") and run_id.startswith("skill-demo-")
     assert queue == "skills"
     assert out["status"] == "running" and out["step_id"] == "b"
+
+
+@pytest.mark.asyncio
+async def test_a_published_process_with_an_undeclared_table_does_not_start():
+    """The definition in GraphDB does not pass through the YAML loader; the rule still holds."""
+    leaky = {**PROCESS, "steps": PROCESS["steps"] + [
+        {"id": "literature", "calls": [], "collect": {"papers": {"path": "data.articles"}}}]}
+    client = FakeClient(ScriptedHandle([_status("a", [])]))
+
+    out = await start(client, FakeStore(leaky), "demo", {"drug_name": "x"})
+
+    assert out["status"] == "error" and "papers" in out["error"]
+    assert client.started == []
+
+
+def test_the_agent_fetches_rows_of_a_finished_run_by_its_run_id(tmp_path):
+    from tooluniverse.skill_run_client import fetch_run_data
+    from tooluniverse.skill_working_record import WorkingRecord
+
+    WorkingRecord(tmp_path, "skill-demo-1").put_table(
+        "papers", [{"pmid": "1", "title": "A"}, {"pmid": "2", "title": "B"}])
+
+    out = fetch_run_data("skill-demo-1", "papers", columns=["pmid"], limit=1, offset=1,
+                         directory=tmp_path)
+
+    assert out["status"] == "ok" and out["rows"] == [{"pmid": "2"}]
+
+
+def test_a_fetch_for_a_run_that_does_not_exist_says_so_and_leaves_nothing_behind(tmp_path):
+    from tooluniverse.skill_run_client import fetch_run_data
+
+    out = fetch_run_data("skill-demo-404", "papers", directory=tmp_path)
+
+    assert out["status"] == "unknown_run"
+    assert list(tmp_path.iterdir()) == []

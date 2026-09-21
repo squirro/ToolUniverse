@@ -177,3 +177,12 @@ def test_the_published_process_carries_its_commit_and_content_hash():
     # the hash is of the definition, not of the Turtle: same dict, same hash
     assert prov["definition_hash"] == provenance(
         Graph().parse(data=to_bbo(GRAPH, git_commit="other"), format="turtle"))["definition_hash"]
+
+
+def test_the_declared_tables_survive_the_round_trip():
+    """A declaration lost on the way to GraphDB would run a different process from the YAML."""
+    process = {**GRAPH, "tables": {"prr_rows": "fact", "papers": "evidence"}}
+
+    back = from_bbo(Graph().parse(data=to_bbo(process), format="turtle"))
+
+    assert back["tables"] == {"prr_rows": "fact", "papers": "evidence"}

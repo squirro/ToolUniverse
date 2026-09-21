@@ -420,30 +420,14 @@ def test_the_call_is_passed_in_the_shape_run_one_function_expects():
 # them over once at the end — so raw payloads never pass through the transcript
 # on the way, which is what makes this cheaper than the model relaying calls.
 
-def test_a_run_keeps_each_step_s_results_for_the_report():
-    runner = SkillRunner(GRAPH, execute=lambda t, a: {"data": {"id": "CHEMBL88"}})
-    run = runner.start({"drug_name": "cisplatin"})
-    runner.advance(run["run_id"])
-    bundle = runner.bundle(run["run_id"])
-    assert bundle["results"]["resolve"] == [{"data": {"id": "CHEMBL88"}}]
-
-
 def test_the_bundle_carries_the_facts_and_what_went_wrong():
     runner = SkillRunner(GRAPH, execute=lambda t, a: {"data": {"id": "CHEMBL88"}})
     run = runner.start({"drug_name": "cisplatin"})
     runner.advance(run["run_id"])
-    bundle = runner.bundle(run["run_id"])
+    bundle = runner.handover(run["run_id"])
     assert bundle["facts"]["chembl_id"] == "CHEMBL88"
     assert bundle["steps_done"] == ["resolve"]
     assert bundle["failures"] == [] and bundle["blocked"] == []
-
-
-def test_a_huge_payload_is_capped_so_the_bundle_stays_sendable():
-    runner = SkillRunner(GRAPH, execute=lambda t, a: {"data": {"id": "x" * 200_000}})
-    run = runner.start({"drug_name": "cisplatin"})
-    runner.advance(run["run_id"])
-    import json as _json
-    assert len(_json.dumps(runner.bundle(run["run_id"])["results"])) < 120_000
 
 
 # --- pulling a value out of a string, not just a path ------------------------
@@ -652,7 +636,7 @@ def test_the_bundle_carries_what_never_resolved():
     runner = SkillRunner(MISS_GRAPH, execute=lambda t, a: {"data": []})
     run = runner.start({"drug_name": "x"})
     runner.advance(run["run_id"])
-    assert runner.bundle(run["run_id"])["unresolved"] == [
+    assert runner.handover(run["run_id"])["unresolved"] == [
         {"step": "identity", "fact": "setid"}]
 
 
@@ -738,7 +722,7 @@ def test_substitute_replaces_the_argument_only_where_a_call_carries_it():
     assert calls[0]["arguments"]["drug_name"] == "lu 177", "the input is not mutated"
 
 
-from tooluniverse.skill_runner import apply, new_run, trim  # noqa: E402
+from tooluniverse.skill_runner import apply, new_run  # noqa: E402
 
 
 def test_apply_records_everything_a_step_leaves_on_the_run():
@@ -746,24 +730,14 @@ def test_apply_records_everything_a_step_leaves_on_the_run():
     outcome = {"facts": {"setid": "72d1"}, "unresolved": ["brand"],
                "blocked": [{"step": "identity", "reason": "r"}], "undecided": []}
 
-    apply(run, "identity", results=[{"data": 1}],
-          failures=[{"tool": "t", "error": "E"}], outcome=outcome)
+    apply(run, "identity", failures=[{"tool": "t", "error": "E"}], outcome=outcome)
 
     assert run["done"] == ["identity"]
-    assert run["results"] == {"identity": [{"data": 1}]}
+    assert "results" not in run, "results live in the Working Record, never on the run"
     assert run["facts"] == {"drug_name": "x", "setid": "72d1"}
     assert run["failures"] == [{"tool": "t", "error": "E"}]
     assert run["unresolved"] == [{"step": "identity", "fact": "brand"}]
     assert run["blocked"] == [{"step": "identity", "reason": "r"}]
-
-
-def test_trim_caps_each_payload_and_marks_the_cut():
-    small, big = {"a": 1}, {"a": "x" * 50}
-
-    out = trim([small, big], cap=20)
-
-    assert out[0] == small
-    assert out[1]["truncated"] is True and len(out[1]["preview"]) == 20
 
 
 def test_start_accepts_the_run_id_a_host_already_has():
@@ -1005,7 +979,7 @@ def test_the_bundle_says_which_tools_the_server_called_per_step():
     while not runner.advance(run_id)["finished"]:
         pass
 
-    calls = runner.bundle(run_id)["calls"]
+    calls = runner.handover(run_id)["calls"]
 
     assert calls == {"resolve": ["resolve_drug"], "signals": ["disproportionality"],
                      "stratify": ["stratify"], "report": []}
@@ -1029,7 +1003,7 @@ def test_the_bundle_carries_step_notes_and_the_report_guidance():
     while not runner.advance(run_id)["finished"]:
         pass
 
-    bundle = runner.bundle(run_id)
+    bundle = runner.handover(run_id)
 
     assert bundle["report"] == "Classify every signal against the label. Say which terms are nonspecific."
     assert bundle["notes"] == {"a": "A NOT_FOUND here is normal."}
@@ -1066,7 +1040,7 @@ def test_a_delegated_step_asks_the_agent_to_make_the_calls_and_takes_the_answer(
                       "calls": [{"tool": "exa_web_search",
                                  "arguments": {"query": "Lutathera safety"}}]}]
     assert runner.state(run_id)["facts"]["web_context"] == ["hit 1", "hit 2"]
-    assert out["finished"] and runner.bundle(run_id)["calls"] == {"web_context": ["exa_web_search"]}
+    assert out["finished"] and runner.handover(run_id)["calls"] == {"web_context": ["exa_web_search"]}
 
 
 def test_a_question_carries_the_steps_notes_so_the_agent_knows_what_shape_to_answer_in():
@@ -1349,7 +1323,7 @@ def test_the_run_keeps_every_call_with_its_arguments_per_step():
         {"tool": "FAERS_calculate_disproportionality", "arguments": {"drug": "x", "event": "rash"}},
         {"tool": "FAERS_calculate_disproportionality", "arguments": {"drug": "x", "event": "fever"}},
     ]}
-    assert runner.bundle(run_id)["calls"] == {"prr": ["FAERS_calculate_disproportionality"] * 2}
+    assert runner.handover(run_id)["calls"] == {"prr": ["FAERS_calculate_disproportionality"] * 2}
 
 
 def test_the_run_keeps_each_question_with_the_answer_it_got():
@@ -1427,37 +1401,6 @@ def test_overlap_and_grade_are_computed_by_the_server_without_a_question():
 # of which GTEx's twenty-eight payloads were 288 KB. A cap per payload cannot
 # bound a loop. Each step's results get a budget; the rows a loop collected are
 # in facts and are what the writer reads.
-
-def test_a_loop_steps_results_are_kept_whole_up_to_a_budget_then_counted():
-    from tooluniverse.skill_runner import STEP_RESULTS_BUDGET, bundle_of, new_run
-    graph = {"skill": "big", "inputs": ["genes"], "steps": [
-        {"id": "expression", "for_each": "genes", "as": "gene",
-         "calls": [{"tool": "GTEx", "arguments": {"gene": "{gene}"}}]}]}
-    run = new_run({"genes": list("abcdefghij")})
-    payload = {"data": {"x": "y" * 8_000}}                 # ~8 KB each
-    run["results"]["expression"] = [dict(payload, i=i) for i in range(10)]
-    run["done"] = ["expression"]
-
-    kept = bundle_of(graph, run, cap=12_000)["results"]["expression"]
-
-    whole = [p for p in kept if "omitted" not in p]
-    assert whole == run["results"]["expression"][:len(whole)]           # first ones, untouched
-    assert sum(len(json.dumps(p)) for p in whole) <= STEP_RESULTS_BUDGET
-    assert kept[-1] == {"omitted": 10 - len(whole),
-                        "note": "loop results beyond the step budget; the rows this step collected are in facts"}
-
-
-def test_a_single_call_steps_result_is_trimmed_as_before():
-    from tooluniverse.skill_runner import bundle_of, new_run
-    graph = {"skill": "one", "inputs": [], "steps": [{"id": "label", "calls": [{"tool": "t"}]}]}
-    run = new_run({})
-    run["results"]["label"] = [{"data": {"text": "z" * 30_000}}]
-    run["done"] = ["label"]
-
-    kept = bundle_of(graph, run, cap=12_000)["results"]["label"]
-
-    assert len(kept) == 1 and kept[0]["truncated"] is True and len(kept[0]["preview"]) == 12_000
-
 
 def test_a_question_stubs_facts_larger_than_a_payload_cap():
     from tooluniverse.skill_runner import question_for

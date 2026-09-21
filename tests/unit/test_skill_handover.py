@@ -1,0 +1,135 @@
+"""What a finished Skill Run hands to the agent, and what stays in the Working Record.
+
+Tool results go around the run's state: the Working Record keeps them whole, and the
+hand-over carries the facts and the tables the process declares (ADR-0017). The executor is
+injected, so these tests need no ToolUniverse and no network.
+"""
+
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+
+from tooluniverse.skill_runner import SkillRunner
+from tooluniverse.skill_working_record import WorkingRecord
+
+pytestmark = pytest.mark.unit
+
+PROCESS = {
+    "skill": "demo",
+    "inputs": ["drug_name"],
+    "steps": [
+        {"id": "resolve",
+         "calls": [{"tool": "resolve_drug", "arguments": {"name": "{drug_name}"}}],
+         "extract": {"chembl_id": "data.id"}},
+        {"id": "signals", "requires": ["resolve"],
+         "calls": [{"tool": "disproportionality",
+                    "arguments": {"chembl_id": "{chembl_id}"}}],
+         "collect": {"prr_rows": {"path": "data.rows", "flatten": True,
+                                  "fields": ["term", "prr", "url"]}}},
+    ],
+}
+
+RESPONSES = {
+    "resolve_drug": {"data": {"id": "CHEMBL88"}},
+    "disproportionality": {"data": {"rows": [
+        {"term": "DEAFNESS", "prr": 17.7, "url": "https://example.org/deafness"},
+        {"term": "NAUSEA", "prr": 1.2, "url": "https://example.org/nausea"}]}},
+}
+
+
+def _finished_run(tmp_path, process=PROCESS, responses=RESPONSES):
+    runner = SkillRunner(process, execute=lambda tool, arguments: responses[tool],
+                         records=tmp_path)
+    run_id = runner.start({"drug_name": "cisplatin"})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+    return runner, run_id
+
+
+def test_a_finished_run_keeps_every_tool_result_in_the_working_record_not_in_the_handover(tmp_path):
+    runner, run_id = _finished_run(tmp_path)
+
+    handover = runner.handover(run_id)
+    record = WorkingRecord(tmp_path, run_id)
+
+    assert "results" not in handover
+    assert handover["facts"]["chembl_id"] == "CHEMBL88"
+    assert record.results("resolve") == [RESPONSES["resolve_drug"]]
+    assert record.results("signals") == [RESPONSES["disproportionality"]]
+
+
+ABSTRACT = "Weekly dosing gave hearing loss in 57% of patients against 82% for three-weekly dosing. " * 6
+
+WITH_TABLES = {
+    **PROCESS,
+    "tables": {"prr_rows": "fact", "papers": "evidence"},
+    "steps": PROCESS["steps"] + [
+        {"id": "literature", "requires": ["signals"],
+         "calls": [{"tool": "search_papers", "arguments": {"query": "{drug_name}"}}],
+         "collect": {"papers": {"path": "data.articles", "flatten": True,
+                                "fields": ["pmid", "title", "abstract", "url"]}}},
+    ],
+}
+
+WITH_PAPERS = {
+    **RESPONSES,
+    "search_papers": {"data": {"articles": [
+        {"pmid": str(n), "title": f"Paper {n}", "abstract": ABSTRACT,
+         "url": f"https://pubmed.ncbi.nlm.nih.gov/{n}/"} for n in (101, 102, 103)]}},
+}
+
+
+def test_a_fact_table_arrives_whole_and_an_evidence_table_arrives_as_a_description(tmp_path):
+    runner, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
+
+    handover = runner.handover(run_id)
+
+    assert handover["facts"]["prr_rows"] == RESPONSES["disproportionality"]["data"]["rows"]
+    assert "papers" not in handover["facts"]
+    described = next(t for t in handover["tables"] if t["table"] == "papers")
+    assert described["rows"] == 3
+    assert described["columns"] == ["pmid", "title", "abstract", "url"]
+    assert ABSTRACT not in str(handover)
+
+
+def test_the_agent_fetches_the_rows_and_columns_it_asks_for(tmp_path):
+    _, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
+    record = WorkingRecord(tmp_path, run_id)
+
+    out = record.fetch("papers", columns=["pmid", "url"], limit=2, offset=1)
+
+    assert out["status"] == "ok"
+    assert out["total_rows"] == 3
+    assert out["rows"] == [
+        {"pmid": "102", "url": "https://pubmed.ncbi.nlm.nih.gov/102/"},
+        {"pmid": "103", "url": "https://pubmed.ncbi.nlm.nih.gov/103/"}]
+
+
+def test_a_fetch_that_names_what_does_not_exist_is_told_what_does(tmp_path):
+    _, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
+    record = WorkingRecord(tmp_path, run_id)
+
+    no_table = record.fetch("trials")
+    no_column = record.fetch("papers", columns=["pmid", "doi"])
+
+    assert no_table["status"] == "unknown_table"
+    assert no_table["tables"] == ["papers", "results.literature", "results.resolve",
+                                  "results.signals"]
+    assert no_column["status"] == "unknown_columns"
+    assert no_column["unknown"] == ["doi"]
+    assert no_column["columns"] == ["pmid", "title", "abstract", "url"]
+
+
+def test_what_a_step_fetched_and_did_not_collect_is_still_there_to_fetch(tmp_path):
+    """The label text, the trial list: not in front of the agent, and never out of its reach."""
+    runner, run_id = _finished_run(tmp_path)
+    record = WorkingRecord(tmp_path, run_id)
+
+    described = {t["table"]: t for t in runner.handover(run_id)["tables"]}
+    out = record.fetch("results.signals", columns=["term", "prr"])
+
+    assert described["results.signals"]["rows"] == 2
+    assert out["rows"] == [{"term": "DEAFNESS", "prr": 17.7}, {"term": "NAUSEA", "prr": 1.2}]

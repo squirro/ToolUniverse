@@ -1280,7 +1280,7 @@ class SMCP(FastMCP):
             and every tool call, extracts what the next step needs, and decides
             each gateway from real results. Your jobs are to bind the inputs from
             the question, answer the questions the run asks, and write the report
-            from the bundle at the end.
+            from the hand-over at the end.
 
             Loop: call this once; while the answer is `running` or `waiting`, call
             `continue_skill(run_id)`; when it is `finished`, write the report.
@@ -1293,12 +1293,15 @@ class SMCP(FastMCP):
                 to your decision; for kind "delegate", make the listed `calls`
                 with your own tools (web search, code interpreter) and map each
                 wanted name to what came back.
-              - `finished` → `bundle` {facts, results, calls, notes, report,
-                excluded, steps_done, failures, blocked, unresolved}. Write the
-                report as `bundle.report` instructs and read each step as
-                `bundle.notes` says. Every number comes from bundle.results or
-                bundle.facts; cite with each result's `source_url`; report
-                failures/blocked/unresolved/excluded as gaps.
+              - `finished` → `handover` {facts, tables, calls, notes, report,
+                excluded, steps_done, failures, blocked, unresolved, run_id}. Write
+                the report as `handover.report` instructs and read each step as
+                `handover.notes` says. `facts` holds what you must cite, whole, each
+                row with its own link. `tables` DESCRIBES what is too wide to hand
+                over — row count, columns, a two-row preview that is NOT the data:
+                read the rows you need with fetch_run_data(run_id, table, ...).
+                Every number comes from handover.facts or from rows you fetched;
+                report failures/blocked/unresolved/excluded as gaps.
               - `schema_mismatch` → bind the `missing_inputs` from the question
                 and call run_skill again.
 
@@ -1306,8 +1309,8 @@ class SMCP(FastMCP):
                 skill: skill id with a published Skill Process, e.g.
                     "clinical-data-integration", "rare-disease-diagnosis".
                 inputs: the process's declared inputs bound from the question,
-                    e.g. {"drug_name": "Lutathera", "requested_aes": ["renal
-                    impairment"]} or {"symptoms": ["hepatosplenomegaly", ...]}.
+                    each under its declared name, e.g. {"drug_name": "<the drug the
+                    question names>"} or {"symptoms": ["<each symptom>", ...]}.
 
             Returns:
                 JSON with `status` in {running, waiting, finished, schema_mismatch,
@@ -1336,6 +1339,37 @@ class SMCP(FastMCP):
             """
             try:
                 out = await resume(await client(), run_id, answer)
+            except Exception as exc:                       # noqa: BLE001
+                out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+            return json.dumps(out, ensure_ascii=False, default=str)
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
+        )
+        async def fetch_run_data(run_id: str, table: str, columns: list[str] | None = None,
+                                 limit: int | None = None, offset: int = 0) -> str:
+            """Read rows of one table of a finished Skill Run.
+
+            The hand-over of run_skill describes each table under `tables`; its preview
+            is not the data. Name the columns you need — a row can be large — and read
+            `total_rows` against `returned` to know how much you have seen.
+
+            Args:
+                run_id: the run_id that run_skill returned.
+                table: a table name from `handover.tables`, e.g. "results.<step id>".
+                columns: the columns to return; all of them when omitted.
+                limit: how many rows; all of them when omitted.
+                offset: the first row to return, counting from 0.
+
+            Returns:
+                JSON with `status` "ok" and `rows`, or a status that names what exists:
+                `unknown_table` (with `tables`), `unknown_columns` (with `columns`),
+                `unknown_run`.
+            """
+            from .skill_run_client import fetch_run_data as fetch
+
+            try:
+                out = fetch(run_id, table, columns, limit, offset)
             except Exception as exc:                       # noqa: BLE001
                 out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
             return json.dumps(out, ensure_ascii=False, default=str)

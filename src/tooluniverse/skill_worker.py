@@ -30,11 +30,14 @@ from .skill_workflow import (
     TASK_QUEUE,
     WORKFLOW_RUNNER,
     SkillWorkflow,
+    absorb_step,
     bind_executor,
     bind_recorder,
+    bind_records,
     execute_tool,
     record_run,
 )
+from .skill_working_record import records_dir
 
 log = logging.getLogger(__name__)
 
@@ -50,6 +53,7 @@ def configured() -> str | None:
 def build_worker(client: Client, tooluniverse: Any, *, task_queue: str = TASK_QUEUE) -> Worker:
     """A worker whose activity calls tools through the agent's door."""
     bind_executor(normalised_executor(tooluniverse.run_one_function))
+    bind_records(records_dir())
     try:
         bind_recorder(Store.from_env())
     except RuntimeError:
@@ -60,7 +64,7 @@ def build_worker(client: Client, tooluniverse: Any, *, task_queue: str = TASK_QU
         client,
         task_queue=task_queue,
         workflows=[SkillWorkflow],
-        activities=[execute_tool, record_run],
+        activities=[execute_tool, absorb_step, record_run],
         activity_executor=ThreadPoolExecutor(MAX_ACTIVITIES),
         workflow_runner=WORKFLOW_RUNNER,
     )

@@ -18,6 +18,7 @@ from temporalio.testing import WorkflowEnvironment
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from tooluniverse import skill_worker  # noqa: E402
+from tooluniverse.skill_working_record import WorkingRecord  # noqa: E402
 from tooluniverse.skill_workflow import SkillRunInput, SkillWorkflow  # noqa: E402
 
 pytestmark = pytest.mark.unit
@@ -48,7 +49,8 @@ def test_without_a_temporal_address_no_worker_starts(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_the_activity_reaches_the_registry_through_the_agents_door():
+async def test_the_activity_reaches_the_registry_through_the_agents_door(tmp_path, monkeypatch):
+    monkeypatch.setenv("SKILL_WORKING_RECORDS", str(tmp_path))
     registry = StubToolUniverse()
     async with await WorkflowEnvironment.start_time_skipping() as env:
         worker = skill_worker.build_worker(env.client, registry, task_queue="skills-test")
@@ -60,7 +62,7 @@ async def test_the_activity_reaches_the_registry_through_the_agents_door():
 
     assert registry.calls == [{"name": "MyGene_query_genes", "arguments": {"query": "GBA"}}]
     assert bundle["facts"]["symbol"] == "GBA", "the JSON string was decoded, as for the agent"
-    assert bundle["results"]["lookup"] == [{"hits": [{"symbol": "GBA"}]}]
+    assert WorkingRecord(tmp_path, "run-door").results("lookup") == [{"hits": [{"symbol": "GBA"}]}]
 
 
 @pytest.mark.asyncio

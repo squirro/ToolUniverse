@@ -4,7 +4,7 @@ The agent never sees Temporal. It calls `run_skill(skill, inputs)`, then
 `continue_skill(run_id, answer)` until the return says finished. Each return is
 one of three shapes:
 
-    {"status": "finished", "run_id", "bundle"}                 -> write the report
+    {"status": "finished", "run_id", "handover"}                 -> write the report
     {"status": "waiting",  "run_id", "question", ...}          -> answer it
     {"status": "running",  "run_id", "step_id", "step_label", "done", "remaining"}
 
@@ -36,10 +36,10 @@ def run_id_for(skill: str) -> str:
     return f"skill-{skill}-{uuid.uuid4().hex[:8]}"
 
 
-def progress(run_id: str, status: dict, bundle: dict | None = None) -> dict:
+def progress(run_id: str, status: dict, handover: dict | None = None) -> dict:
     """One of the three shapes, from a `status()` answer."""
     if status.get("finished"):
-        return {"status": "finished", "run_id": run_id, "bundle": bundle}
+        return {"status": "finished", "run_id": run_id, "handover": handover}
     base = {"run_id": run_id, "step_id": status.get("step_id"),
             "step_label": status.get("step_label"), "done": len(status.get("done") or [])}
     if status.get("waiting_for"):
@@ -57,7 +57,7 @@ async def wait_for_progress(handle: Any, *, window: float = POLL_WINDOW,
     while True:
         status = await handle.query(SkillWorkflow.status)
         if status.get("finished"):
-            return progress(handle.id, status, bundle=await handle.result())
+            return progress(handle.id, status, handover=await handle.result())
         if status.get("waiting_for"):
             return progress(handle.id, status)
         here = (status.get("step_id"), len(status.get("done") or []))
@@ -73,6 +73,7 @@ async def wait_for_progress(handle: Any, *, window: float = POLL_WINDOW,
 async def start(client: Any, store: Any, skill: str, inputs: dict, *,
                 task_queue: str | None = None) -> dict:
     """Load the process, validate the inputs, start the run, wait for the first tick."""
+    from .skill_graph import undeclared_tables
     from .skill_process_store import SkillProcessNotFound
     from .skill_workflow import TASK_QUEUE, SkillRunInput, SkillWorkflow
 
@@ -80,6 +81,10 @@ async def start(client: Any, store: Any, skill: str, inputs: dict, *,
         process, prov = store.load(skill)
     except SkillProcessNotFound as exc:
         return {"status": "error", "error": str(exc)}
+    if undeclared := undeclared_tables(process):
+        return {"status": "error",
+                "error": f"the published process for {skill!r} collects {undeclared} without "
+                         "declaring them under `tables:`; it cannot run until it is republished"}
     missing = missing_inputs(process, inputs or {})
     if missing:
         return {"status": "schema_mismatch", "missing_inputs": missing,
@@ -105,3 +110,16 @@ async def resume(client: Any, run_id: str, answer: dict | None = None) -> dict:
     if answer:
         await handle.signal(SkillWorkflow.answer, dict(answer))
     return await wait_for_progress(handle)
+
+
+def fetch_run_data(run_id: str, table: str, columns: list[str] | None = None,
+                   limit: int | None = None, offset: int = 0, *, directory=None) -> dict:
+    """Rows of one table of a run's Working Record, as the agent asks for them."""
+    from .skill_working_record import WorkingRecord, records_dir
+
+    record = WorkingRecord.existing(directory or records_dir(), run_id)
+    if record is None:
+        return {"status": "unknown_run", "run_id": run_id,
+                "hint": "use the run_id that run_skill returned; a record lives as long as "
+                        "the server that made it"}
+    return record.fetch(table, columns, limit, offset)

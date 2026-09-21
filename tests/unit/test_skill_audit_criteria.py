@@ -161,3 +161,27 @@ def test_the_preflight_fails_on_a_plugin_that_failed_to_load():
     log = ["... Failed to create plugin tool 'Openai Web Search': missing field ..."]
 
     assert any("Failed to create plugin tool" in f for f in preflight(AGENTS, GOOD_TURN, log_lines=log))
+
+
+def test_a_tool_called_in_any_of_the_per_tool_probe_turns_counts_as_present():
+    """One question cannot make an agent use six tools; the live probe asks for each by name."""
+    same = {**AGENTS, "modelled": {**AGENTS["modelled"], "extra_runtime_config": {"sqgpt_config_suffix": ".gpt45"}}}
+    turns = [{"actions": GOOD_TURN["actions"][:1]}, {"actions": GOOD_TURN["actions"][1:]}]
+
+    assert preflight(same, turns, log_lines=[]) == []
+
+
+def test_an_unreadable_genai_log_is_a_failure_not_a_pass():
+    same = {**AGENTS, "modelled": {**AGENTS["modelled"], "extra_runtime_config": {"sqgpt_config_suffix": ".gpt45"}}}
+
+    (failure,) = preflight(same, GOOD_TURN, log_lines=None)
+
+    assert "could not be read" in failure
+
+
+def test_the_limit_sentence_names_the_web_tool_families_the_arm_actually_has():
+    from skill_audit.criteria import web_arm_limit
+
+    assert "Exa and Perplexity;" in web_arm_limit(["exa_web_search", "Perplexity_web_Search_API"])
+    assert "Exa, Perplexity and OpenAI web search;" in web_arm_limit(["exa_web_answer", "perplexity_x", "openai_web_search"])
+    assert "internal document search" in web_arm_limit([])

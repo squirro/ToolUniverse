@@ -221,29 +221,50 @@ def _output_text(action: dict) -> str:
     return json.dumps(content, default=str)
 
 
-def preflight(agents: dict[str, dict], probe_turn: dict, log_lines: list[str]) -> list[str]:
+def web_arm_limit(tools: list[str]) -> str:
+    """The limit sentence for the report, from the web tools the arm actually has."""
+    families = []
+    for family, pattern in (("Exa", r"exa"), ("Perplexity", r"perplexity"), ("OpenAI web search", r"openai")):
+        if any(re.search(pattern, t, re.I) for t in tools):
+            families.append(family)
+    if not families:
+        named = "no web tool"
+    elif len(families) == 1:
+        named = families[0]
+    else:
+        named = ", ".join(families[:-1]) + " and " + families[-1]
+    return (f"Limit of the web arm: on sr-dev it has {named}; "
+            "it does not have the internal document search of the production web agent.")
+
+
+def preflight(agents: dict[str, dict], probe_turns: dict | list[dict],
+              log_lines: list[str] | None) -> list[str]:
     """Everything that must hold before the first run; an empty list means go.
 
     `agents`: {"web": agent, "modelled": agent} as the genai agents list returns them.
-    `probe_turn`: one live turn of the web agent, asked a question that needs every web tool.
-    `log_lines`: the genai service log since the probe.
+    `probe_turns`: live turns of the web agent -- one per enabled web tool, each asked by name,
+    since one question cannot make an agent use every tool; a single turn is accepted.
+    `log_lines`: the genai service log since the probes; None when it could not be read.
     """
     failures = []
     web, modelled = agents["web"], agents["modelled"]
     if model_of(web) != model_of(modelled):
         failures.append(f"model: {web.get('name')} runs {model_of(web)!r}, {modelled.get('name')} runs "
                         f"{model_of(modelled)!r}; the two agents must use the same model")
-    actions = probe_turn.get("actions") or []
-    called = {a.get("tool_name"): a for a in actions}
+    turns = [probe_turns] if isinstance(probe_turns, dict) else list(probe_turns)
+    actions = [a for turn in turns for a in (turn.get("actions") or [])]
+    called = {a.get("tool_name") for a in actions}
     for tool in web_tools_of(web):
         if tool not in called:
-            failures.append(f"web tool {tool}: enabled in the agent configuration but not called in the "
-                            "live turn -- a tool without its key is absent at run time and nobody sees it")
+            failures.append(f"web tool {tool}: enabled in the agent configuration but not called in a live "
+                            "turn that named it -- a tool without its key is absent at run time and nobody sees it")
     for action in actions:
         name = action.get("tool_name") or ""
         if _WEB_TOOL.search(name) and not _LINK.search(_output_text(action)):
             failures.append(f"web tool {name}: the call gave no link; its pages cannot be opened by a judge")
-    for line in log_lines:
+    if log_lines is None:
+        failures.append("genai log: could not be read, so a plugin that failed to load would go unseen")
+    for line in log_lines or []:
         if _PLUGIN_FAILED in line:
             failures.append(f"genai log: {line.strip()[:200]}")
     return failures
@@ -264,8 +285,9 @@ def main(argv: list[str] | None = None) -> int:
     pre.add_argument("--suffix", default="_SRDEV_CLOUD", help="the .env suffix of the cluster's settings")
     pre.add_argument("--web-agent", required=True)
     pre.add_argument("--modelled-agent", required=True)
-    pre.add_argument("--probe", default="Search the web for the FDA approval of sodium thiosulfate against "
-                                        "cisplatin ototoxicity and give the links you used.")
+    pre.add_argument("--probe", default="Use the tool {tool} to search the web for the FDA approval of sodium "
+                                        "thiosulfate against cisplatin ototoxicity, and give the links you used.",
+                     help="asked once per enabled web tool; {tool} is the tool's name")
     pre.add_argument("--log-cmd", default="ssh sr-dev-squirro-cloud 'sudo docker logs --since 30m "
                                           "squirro-service-genai 2>&1'")
     args = parser.parse_args(argv)
@@ -282,16 +304,23 @@ def main(argv: list[str] | None = None) -> int:
     agents = {"web": by_id[args.web_agent], "modelled": by_id[args.modelled_agent]}
     print(f"web agent {agents['web']['name']!r} runs {model_of(agents['web'])!r}; "
           f"modelled agent {agents['modelled']['name']!r} runs {model_of(agents['modelled'])!r}")
-    print(f"web tools enabled: {web_tools_of(agents['web'])}")
-    turn = SquirroChatClient(cluster, token, project).ask(args.web_agent, args.probe, timeout=600)
-    print(f"probe turn: error={turn.error} tools called={sorted(set(turn.calls))}")
+    tools = web_tools_of(agents["web"])
+    print(f"web tools enabled: {tools}")
+    client = SquirroChatClient(cluster, token, project)
+    turns = []
+    for tool in tools:
+        turn = client.ask(args.web_agent, args.probe.format(tool=tool), timeout=600)
+        print(f"probe for {tool}: error={turn.error} tools called={sorted(set(turn.calls))}")
+        turns.append({"actions": turn.actions})
     import shlex
     log = subprocess.run(shlex.split(args.log_cmd), capture_output=True, text=True, timeout=120)
-    failures = preflight(agents, {"actions": turn.actions}, log.stdout.splitlines())
+    log_lines = log.stdout.splitlines() if log.returncode == 0 and log.stdout.strip() else None
+    print(f"genai log: {'unreadable' if log_lines is None else f'{len(log_lines)} lines read'}")
+    failures = preflight(agents, turns, log_lines)
     for failure in failures:
         print("FAIL:", re.sub(r"[A-Za-z0-9_\-]{32,}", "REDACTED", failure))
     print("pre-flight:", "PASS" if not failures else f"{len(failures)} failures")
-    print(WEB_ARM_LIMIT)
+    print(web_arm_limit(tools))
     return 1 if failures else 0
 
 

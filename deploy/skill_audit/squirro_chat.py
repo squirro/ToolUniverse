@@ -12,9 +12,12 @@ result arrives as an `event: result` frame among a stream of others.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 import re
+import tempfile
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import requests
 
@@ -99,18 +102,24 @@ class SquirroChatClient:
             return Turn(error=f"http_{resp.status_code}",
                         http_status=resp.status_code)
 
-        result, error = parse_sse(resp.iter_lines(decode_unicode=True))
-        if result is None:
-            return Turn(error=error or "missing_result",
-                        http_status=resp.status_code)
-        actions = result.get("actions") or []
-        return Turn(
-            answer=result.get("answer") or "",
-            actions=actions,
-            calls=[a.get("tool_name") for a in actions if a.get("tool_name")],
-            error=error or None,
-            http_status=resp.status_code,
-        )
+        return turn_from(resp.iter_content(chunk_size=None), resp.status_code)
+
+
+def lines_of(chunks) -> Iterator[str]:
+    """The lines of a byte stream, split on newline ONLY.
+
+    `iter_lines(decode_unicode=True)` splits like `str.splitlines()`: on U+2028 and its
+    relatives too. One such character in a tool output cut the result frame mid-JSON, and a
+    turn the service had logged as a success read as a dead one.
+    """
+    pending = b""
+    for chunk in chunks:
+        pending += chunk
+        *whole, pending = pending.split(b"\n")
+        for line in whole:
+            yield line.rstrip(b"\r").decode("utf-8", errors="replace")
+    if pending:
+        yield pending.rstrip(b"\r").decode("utf-8", errors="replace")
 
 
 def parse_sse(lines) -> tuple[dict | None, str]:
@@ -154,6 +163,27 @@ def parse_sse(lines) -> tuple[dict | None, str]:
     return result, ""
 
 
+def turn_from(chunks, http_status: int, dump_dir: str | Path | None = None) -> Turn:
+    """One turn read off the wire. A stream with no result frame is kept, whole, on disk."""
+    raw = b"".join(chunks)
+    result, error = parse_sse(lines_of([raw]))
+    if result is None:
+        if error:
+            return Turn(error=error, http_status=http_status)
+        directory = Path(dump_dir) if dump_dir else Path(tempfile.gettempdir())
+        saved = directory / f"sse-missing-result-{uuid.uuid4().hex[:8]}.txt"
+        saved.write_bytes(raw)
+        return Turn(error=f"missing_result (raw stream: {saved})", http_status=http_status)
+    actions = result.get("actions") or []
+    return Turn(
+        answer=result.get("answer") or "",
+        actions=actions,
+        calls=[a.get("tool_name") for a in actions if a.get("tool_name")],
+        error=None,
+        http_status=http_status,
+    )
+
+
 STUDIO_PROXY_URL = "{cluster}/studio/genai_proxy/projects/{project}/streaming_chat"
 
 
@@ -185,10 +215,4 @@ class StudioProxyChatClient(SquirroChatClient):
             return Turn(error=f"request_error: {exc}")
         if not resp.ok:
             return Turn(error=f"http_{resp.status_code}", http_status=resp.status_code)
-        result, error = parse_sse(resp.iter_lines(decode_unicode=True))
-        if result is None:
-            return Turn(error=error or "missing_result", http_status=resp.status_code)
-        actions = result.get("actions") or []
-        return Turn(answer=result.get("answer") or "", actions=actions,
-                    calls=[a.get("tool_name") for a in actions if a.get("tool_name")],
-                    error=error or None, http_status=resp.status_code)
+        return turn_from(resp.iter_content(chunk_size=None), resp.status_code)

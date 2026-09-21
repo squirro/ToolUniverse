@@ -23,7 +23,13 @@ inputs: [drug_name]
 # The numbers were right; the judgement the author wrote down never reached the
 # writer. It travels in the bundle now.
 report: >-
-  Lead with the two events the question names, then the ranked signals. For every
+  Lead with the events the question names, then the ranked signals. When the run
+  holds `facts.requested_meddra`, show first how each requested word was read: one
+  line per row with the word (`of`), the FAERS term, the agent's `reason`, and the
+  placing — "placed under <under> (<ontology>)", "not placed" or "unknown". The
+  placing is evidence from an ontology, not a verdict: a term not placed under the
+  concept is reported with that doubt, never dropped silently. A requested word
+  with no row was not found in the source's terms for this drug: say so. For every
   FAERS signal state the PRR, then classify it against the label: known and
   labelled, known but under-labelled, or a potential new signal. A PRR is a
   reporting signal, not causality: say so once, and name the biases (stimulated
@@ -56,15 +62,18 @@ report: >-
   an empty CPIC result means no guideline exists, which is an answer. Web context
   is supplement, not a finding, and is cited as web. End with a Limitations
   section built from `failures`, `blocked`, `unresolved` and `excluded`.
-# Optional, and bound by the AGENT from the question: the reactions the user
-# actually asked about. "especially myelodysplastic syndrome and renal
-# impairment" — neither is in Lutathera's top twelve by report count, so without
-# this the run returns correct numbers that do not answer the question.
+# Optional, and bound by the AGENT from the question, IN THE QUESTION'S OWN WORDS: the
+# reactions the user actually asked about. A named reaction is rarely in the top
+# twelve by report count, so without this the run returns correct numbers that do
+# not answer the question. The words are read onto FAERS terms by the
+# `requested_terms` step, never sent to FAERS as they stand.
 optional_inputs: [requested_aes]
 
 # What the agent gets whole (fact) and what it gets described and fetches from (evidence).
 # A table a later step reads must be a fact. The kind decides, never the size.
 tables:
+  faers_term_rows: fact     # the mapping is checked against it
+  requested_meddra: fact    # the mapping itself: shown in the report, row by row
   prr_rows: fact            # the compute step reads it
   literature_rows: evidence # wide, and no step reads it
   trial_rows: evidence      # wide, and no step reads it
@@ -140,16 +149,51 @@ steps:
                   LABORATORY TEST ABNORMAL, DISEASE PROGRESSION, MALIGNANT NEOPLASM PROGRESSION,
                   DEATH, COVID-19, CONDITION AGGRAVATED, OFF LABEL USE, DRUG INEFFECTIVE,
                   PRODUCT USE ISSUE, NO ADVERSE EVENT]
-    combine:
-      signal_aes: {union: [requested_aes, top_aes], limit: 15}
-    produces: [top_aes, signal_aes]
+    collect:
+      # The source's own vocabulary for this drug, whole: the list a requested word
+      # is read onto, and the list the reading is checked against.
+      faers_term_rows: {path: "result", flatten: true, fields: ["term", "count"]}
+    produces: [top_aes, faers_term_rows]
     notes: >-
       FAERS drug names are case-strict; the term strings are carried forward
       exactly as returned.
 
+  - id: requested_terms
+    label: "Phase 2a.2 — the question's words, read onto the source's terms"
+    requires: [faers_counts]
+    when: requested_aes
+    calls: []
+    # The reading is the agent's judgement, and it is shown, not trusted: each term is
+    # checked against `faers_term_rows` (a term FAERS never coded for this drug is
+    # refused), then placed by an ontology under the concept the word names. Live, one
+    # word was read in the agent's head onto two terms of a different body system and
+    # both passed, because both were FAERS terms: the check proves membership, not
+    # meaning. The placing is the evidence for meaning; the report shows both.
+    judge: [requested_meddra]
+    mapping:
+      requested_meddra: {of: requested_aes, onto: {rows: faers_term_rows, field: term}}
+    produces: [requested_meddra]
+    notes: >-
+      Answer `requested_meddra` as a list of rows, one per FAERS term you read a
+      requested word onto: {of: the word as the question gave it, term: the FAERS
+      term copied exactly from `faers_term_rows`, reason: one sentence saying why
+      this term is that word, concept: two to four plain words that name the organ,
+      system or injury the word means, for an ontology to place the term under}.
+      A word may map onto several terms and a term may serve several words. Leave
+      a word out only when no listed term is that injury, and say so in the report.
+
+  - id: signal_terms
+    label: "Phase 2a.3 — the terms the disproportionality loop runs over"
+    requires: [faers_counts, requested_terms]
+    calls: []
+    combine:
+      # The mapped terms lead; the cap trims the frequency-ranked tail, never the ask.
+      signal_aes: {union: [requested_meddra_terms, top_aes], limit: 15}
+    produces: [signal_aes]
+
   - id: disproportionality
     label: "Phase 2b — disproportionality per reported term"
-    requires: [faers_counts]
+    requires: [signal_terms]
     for_each: signal_aes
     as: adverse_event
     calls:

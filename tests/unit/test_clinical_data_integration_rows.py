@@ -36,7 +36,25 @@ def _agent(question):
             "method": "computed without code"}
 
 
-def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERMS):
+def _recorded_lookup(term):
+    import json
+    from pathlib import Path
+    recorded = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "ols"
+                           / "placing_probe_2026-09-21.json").read_text())
+    return recorded.get(term, {})
+
+
+def _mapping(question):
+    """The agent reads the question's word onto the source's list: the closest term wins."""
+    (word,) = question["context"]["requested_aes"]
+    listed = [row["term"] for row in question["context"]["faers_term_rows"]]
+    chosen = [t for t in listed if "DEAF" in t or "HEARING" in t] or listed[:1]
+    return {"requested_meddra": [{"of": word, "term": t, "reason": "the injury the word names",
+                                  "concept": ["ear", "hearing", "vestibular"]} for t in chosen]}
+
+
+def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERMS,
+           requested_aes=None):
     calls, asked = [], []
 
     def execute(tool, a):
@@ -59,9 +77,14 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERM
                 {"NCT ID": "NCT2", "brief_title": "B", "overall_status": "TERMINATED"}]}}
         return {}
 
+    def agent(question):
+        asked.append(question)
+        return _mapping(question) if "requested_meddra" in question["wants"] else _agent(question)
+
     runner = SkillRunner(graph or load_graph("clinical-data-integration"), execute=execute,
-                         ask=lambda q: asked.append(q) or _agent(q))
-    run_id = runner.start({"drug_name": drug_name})["run_id"]
+                         ask=agent, lookup=_recorded_lookup)
+    inputs = {"drug_name": drug_name, **({"requested_aes": requested_aes} if requested_aes else {})}
+    run_id = runner.start(inputs)["run_id"]
     for _ in range(100):
         if runner.advance(run_id)["finished"]:
             break
@@ -94,6 +117,33 @@ def test_the_signals_travel_as_rows_only_and_the_gateway_reads_the_rows():
     assert [(r["term"], r["prr"], r["url"]) for r in facts["prr_rows"]] == [
         (t, PRR[t], _url(t)) for t in TERMS]
     assert facts["strong_signal"] is True
+
+
+# --- the question's words are read onto the source's terms, and the reading is shown ----
+
+def test_a_requested_reaction_is_mapped_onto_faers_terms_before_any_loop_sees_it():
+    """Live, the word the question used was sent to FAERS as it stood, and once read in the
+    agent's head onto DIZZINESS and FALL with nothing to show for it. The reading is now a
+    judged step: checked against the source's own list, placed by an ontology, handed over."""
+    terms = ["NAUSEA", "DEAFNESS", "FALL"]
+    prr = {"NAUSEA": 1.1, "DEAFNESS": 17.7, "FALL": 2.5}
+    state, calls, asked = _drive(prr=prr, terms=terms, requested_aes=["ototoxicity"])
+
+    looped = [a["adverse_event"] for tool, a in calls if tool == "FAERS_calculate_disproportionality"]
+    assert looped == ["DEAFNESS", "NAUSEA", "FALL"], "the mapped term leads; the word never reaches FAERS"
+    (mapping_question,) = [q for q in asked if "requested_meddra" in q["wants"]]
+    assert "term" in mapping_question["notes"] and "reason" in mapping_question["notes"]
+    (row,) = state["facts"]["requested_meddra"]
+    assert (row["of"], row["term"], row["placing"]) == ("ototoxicity", "DEAFNESS", "placed")
+    assert row["reason"] and row["under"]
+    assert state["facts"]["signal_aes"] == ["DEAFNESS", "NAUSEA", "FALL"]
+
+
+def test_without_a_requested_reaction_the_mapping_step_is_skipped_and_the_top_terms_drive_the_loop():
+    state, calls, asked = _drive()
+    assert [q for q in asked if "requested_meddra" in q["wants"]] == []
+    assert "requested_meddra" not in state["facts"]
+    assert state["facts"]["signal_aes"] == TERMS
 
 
 # --- literature as a loop --------------------------------------------------------

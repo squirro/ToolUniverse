@@ -479,6 +479,22 @@ def keep_evidence(record: WorkingRecord, tables: dict | None, outcome: dict) -> 
     return described
 
 
+def source_total(spec: dict, results: list, items: list | None) -> Any:
+    """How much the source holds for this step's calls, by the path the step declares.
+
+    One number for a single call, one per loop item for a loop; "unknown" when the step
+    declares no `total` or the source gave none. The reader sees the narrowing either way.
+    """
+    path = spec.get("total")
+    if not path:
+        return "unknown"
+    found = [_dig(payload, path) for payload in results]
+    if items and len(items) == len(found):
+        return {str(item): (total if total is not None else "unknown")
+                for item, total in zip(items, found)}
+    return found[0] if found and found[0] is not None else "unknown"
+
+
 def absorb_recorded(record: WorkingRecord, tables: dict | None, spec: dict,
                     calls: list[dict], facts: dict) -> dict:
     """`absorb` over the step's recorded results, so no result has to travel to the caller."""
@@ -486,7 +502,9 @@ def absorb_recorded(record: WorkingRecord, tables: dict | None, spec: dict,
     outcome = absorb(spec, results, facts, items=loop_items(spec, calls), calls=calls)
     outcome["evidence"] = keep_evidence(record, tables, outcome)
     if results:
-        outcome["evidence"].append(record.describe(f"results.{spec['id']}"))
+        described = record.describe(f"results.{spec['id']}")
+        described["source_total"] = source_total(spec, results, loop_items(spec, calls))
+        outcome["evidence"].append(described)
     repair = spec.get("repair")
     outcome["resolved"] = resolved(spec, repair, results) if repair else True
     return outcome

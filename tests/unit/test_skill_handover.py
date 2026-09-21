@@ -133,3 +133,40 @@ def test_what_a_step_fetched_and_did_not_collect_is_still_there_to_fetch(tmp_pat
 
     assert described["results.signals"]["rows"] == 2
     assert out["rows"] == [{"term": "DEAFNESS", "prr": 17.7}, {"term": "NAUSEA", "prr": 1.2}]
+
+
+# --- how much the source holds, beside how much the run holds ---------------------
+
+WIDE = {
+    "skill": "wide", "inputs": ["drug_name", "reactions"],
+    "steps": [
+        {"id": "trials", "total": "total_count",
+         "calls": [{"tool": "search_trials", "arguments": {"query": "{drug_name}"}}]},
+        {"id": "literature", "for_each": "reactions", "as": "reaction", "total": "total",
+         "calls": [{"tool": "search_papers", "arguments": {"query": "{reaction}"}}]},
+        {"id": "label",
+         "calls": [{"tool": "get_label", "arguments": {"drug": "{drug_name}"}}]},
+    ],
+}
+
+
+def test_a_table_description_says_how_much_the_source_holds_or_that_it_is_unknown(tmp_path):
+    """Ten trials of 866 read as "this drug has ten trials" until the total stood beside them."""
+    def execute(tool, arguments):
+        if tool == "search_trials":
+            return {"total_count": 866, "studies": [{"nct": "NCT1"}, {"nct": "NCT2"}]}
+        if tool == "search_papers":
+            return {"total": {"DEAFNESS": 4120, "TINNITUS": 77}[arguments["query"]],
+                    "data": [{"pmid": "1"}]}
+        return {"data": {"setid": "s1"}}
+
+    runner = SkillRunner(WIDE, execute=execute, records=tmp_path)
+    run_id = runner.start({"drug_name": "x", "reactions": ["DEAFNESS", "TINNITUS"]})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    described = {t["table"]: t for t in runner.handover(run_id)["tables"]}
+
+    assert (described["results.trials"]["rows"], described["results.trials"]["source_total"]) == (2, 866)
+    assert described["results.literature"]["source_total"] == {"DEAFNESS": 4120, "TINNITUS": 77}
+    assert described["results.label"]["source_total"] == "unknown"

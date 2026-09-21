@@ -55,7 +55,6 @@
       "literature: calls[1].arguments.query [free_text_argument] '{drug_name} pharmacovigilance adverse drug reaction'"
     ],
     "clinical-data-integration": [
-      "trials: calls[0].arguments.pageSize [source_default] 'pageSize is not set, the source allows 1000'",
       "web_context: delegate[0].arguments.query [free_text_argument] '{drug_name} myelodysplastic syndrome renal impairment safety'"
     ],
     "rare-disease-diagnosis": [

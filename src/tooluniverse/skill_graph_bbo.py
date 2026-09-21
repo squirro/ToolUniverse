@@ -158,6 +158,7 @@ _JSON_SPECS = {
     "delegate": SRP.delegateSpec,
     "check": SRP.checkSpec,
     "narrowed": SRP.narrowedBecause,
+    "total": SRP.sourceTotalPath,
 }
 
 

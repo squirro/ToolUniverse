@@ -197,3 +197,13 @@ def test_the_reason_for_a_narrowed_call_survives_the_round_trip():
     back = from_bbo(Graph().parse(data=to_bbo(process), format="turtle"))
 
     assert back["steps"][0]["narrowed"] == process["steps"][0]["narrowed"]
+
+
+def test_the_path_to_the_sources_total_survives_the_round_trip():
+    process = {"skill": "d", "inputs": ["drug_name"], "steps": [
+        {"id": "trials", "total": "total_count",
+         "calls": [{"tool": "search_clinical_trials", "arguments": {"query_term": "{drug_name}"}}]}]}
+
+    back = from_bbo(Graph().parse(data=to_bbo(process), format="turtle"))
+
+    assert back["steps"][0]["total"] == "total_count"

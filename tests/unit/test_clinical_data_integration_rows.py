@@ -49,7 +49,12 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERM
             ae = a["adverse_event"]
             return {"data": {"metrics": {"PRR": {"value": prr[ae]}}}, "source_url": _url(ae)}
         if tool == "PubMed_search_articles":
-            return {"data": [{"pmid": "1", "title": "t", "pub_year": 2024, "doi_url": "d"}]}
+            return {"total": 4120,
+                    "data": [{"pmid": "1", "title": "t", "pub_year": 2024, "doi_url": "d"}]}
+        if tool == "search_clinical_trials":
+            return {"data": {"total_count": 866, "studies": [
+                {"NCT ID": "NCT1", "brief_title": "A", "overall_status": "COMPLETED", "phase": "PHASE3"},
+                {"NCT ID": "NCT2", "brief_title": "B", "overall_status": "TERMINATED"}]}}
         return {}
 
     runner = SkillRunner(graph or load_graph("clinical-data-integration"), execute=execute,
@@ -200,3 +205,25 @@ def test_the_literature_loop_skips_indication_terms_and_the_bundle_says_which():
     assert [a["query"] for tool, a in calls if tool == "PubMed_search_articles"] == [
         "lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME"]
     assert facts["excluded_aes"] == ["NEUROENDOCRINE TUMOUR", "METASTASES TO LIVER"]
+
+
+# --- fetch wide: the source's maximum, and its total beside the rows ---------------
+
+def test_trials_are_asked_for_at_the_sources_maximum_and_kept_as_one_row_each():
+    """Four parallel lists cut at ten gave ten trials of 866, with nothing to say so."""
+    state, calls, _ = _drive()
+    (sent,) = [a for tool, a in calls if tool == "search_clinical_trials"]
+
+    assert sent["pageSize"] == 1000
+    assert state["facts"]["trial_rows"] == [
+        {"nct_id": "NCT1", "title": "A", "status": "COMPLETED", "phase": "PHASE3"},
+        {"nct_id": "NCT2", "title": "B", "status": "TERMINATED"}]
+    assert "nct_ids" not in state["facts"]
+
+
+def test_the_process_names_where_each_wide_source_reports_its_total():
+    process = load_graph("clinical-data-integration")
+    totals = {s["id"]: s.get("total") for s in process["steps"] if s["id"] in ("trials", "literature")}
+
+    assert totals == {"trials": "data.total_count", "literature": "total"}
+    assert process["tables"]["trial_rows"] == "evidence"

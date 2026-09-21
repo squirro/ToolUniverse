@@ -48,8 +48,11 @@ report: >-
   are listed under `facts.excluded_aes` — say so. The signal table is the agent's
   answer to the compute step, checked by the server against the FAERS rows: cite
   each PRR by its row's `url`, and never cite the step itself as code, a sandbox
-  or a file. Cite each trial as
-  https://clinicaltrials.gov/study/<NCT id>. Read pharmacogenomic findings as risk-narrowing;
+  or a file. Trials are the table `trial_rows`, one row per trial with its
+  phase and status: read the rows you need with fetch_run_data and cite each trial as
+  https://clinicaltrials.gov/study/<nct_id>. Each table's description gives
+  `source_total` beside `rows`: wherever the run holds less than the source, say so
+  ("the 200 most relevant of 4,120"). Read pharmacogenomic findings as risk-narrowing;
   an empty CPIC result means no guideline exists, which is an answer. Web context
   is supplement, not a finding, and is cited as web. End with a Limitations
   section built from `failures`, `blocked`, `unresolved` and `excluded`.
@@ -64,6 +67,7 @@ optional_inputs: [requested_aes]
 tables:
   prr_rows: fact            # the compute step reads it
   literature_rows: evidence # wide, and no step reads it
+  trial_rows: evidence      # wide, and no step reads it
 
 steps:
   - id: identity
@@ -195,13 +199,16 @@ steps:
     requires: [identity]
     calls:
       - tool: search_clinical_trials
-        arguments: {query_term: "{drug_name}"}
-    extract:
-      nct_ids: {path: "data.studies[].NCT ID", limit: 10}
-      trial_titles: {path: "data.studies[].brief_title", limit: 10}
-      trial_phases: {path: "data.studies[].phase", limit: 10}
-      trial_status: {path: "data.studies[].overall_status", limit: 10}
-    produces: [nct_ids, trial_titles, trial_phases, trial_status]
+        # The source's own maximum. Unset, the default returned ten trials of 866 and
+        # nothing said so.
+        arguments: {query_term: "{drug_name}", pageSize: 1000}
+    total: "data.total_count"
+    collect:
+      # One row for each trial, not four lists cut at ten.
+      trial_rows: {path: "data.studies", flatten: true,
+                   fields: ["NCT ID as nct_id", "brief_title as title",
+                            "overall_status as status", "phase", "condition"]}
+    produces: [trial_rows]
     notes: >-
       Simple single-drug queries work best here; multi-word queries often return
       nothing. Cite trials by NCT id.
@@ -225,7 +232,13 @@ steps:
         # "adverse events" query drew does not return. The brand name stays OUT: it
         # maps to the element and brings that noise back (1,126 PSMA papers) — hence
         # `inn` from the label title, not `drug_name` as the agent bound it.
-        arguments: {query: "{inn} AND {reaction}", limit: 10}
+        # PubMed's own relevance order: unset, it answers newest first, and "the first
+        # papers" were the newest, not the ones that answer the question.
+        arguments: {query: "{inn} AND {reaction}", limit: 200, sort: "relevance"}
+    total: "total"
+    narrowed: >-
+      200 is the most this tool documents for one call; the source's total for each
+      reaction is recorded beside the rows, and the report states it.
     collect:
       # One row for each paper. Parallel lists per reaction fell out of step at the first
       # paper without a DOI, and a fetch could not narrow inside a cell.

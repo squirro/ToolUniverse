@@ -55,8 +55,11 @@ def test_missing_required_inputs_are_named_and_optional_ones_are_not():
 
 
 def test_the_three_shapes():
-    assert progress("r1", _status("a", [], finished=True), handover={"skill": "demo"}) == {
-        "status": "finished", "run_id": "r1", "handover": {"skill": "demo"}}
+    finished = progress("r1", _status("a", [], finished=True), handover={"skill": "demo"})
+    assert finished["status"] == "finished" and finished["handover"] == {"skill": "demo"}
+    # Live, the agent read the rule in three places and answered the user without handing
+    # in the draft. The reply it acts on says what comes next, in the reply itself.
+    assert "submit_report(run_id=\"r1\"" in finished["next"] and "before you answer" in finished["next"]
     question = {"kind": "judge", "step": "a", "wants": ["k"], "context": {}}
     assert progress("r1", _status("a", [], waiting=question)) == {
         "status": "waiting", "run_id": "r1", "question": question,

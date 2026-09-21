@@ -132,12 +132,7 @@ class NICEWebScrapingTool(BaseTool):
 
             try:
                 data = json.loads(script_tag.string)
-                documents = (
-                    data.get("props", {})
-                    .get("pageProps", {})
-                    .get("results", {})
-                    .get("documents", [])
-                )
+                search = data.get("props", {}).get("pageProps", {}).get("results")
             except (json.JSONDecodeError, KeyError) as e:
                 return {
                     "status": "error",
@@ -145,11 +140,23 @@ class NICEWebScrapingTool(BaseTool):
                     "source": "NICE",
                 }
 
-            if not documents:
+            if not isinstance(search, dict) or search.get("failed"):
+                detail = search.get("errorMessage") if isinstance(search, dict) else None
                 return {
                     "status": "error",
-                    "error": "No NICE guidelines found",
-                    "suggestion": "Try different search terms or check if the NICE website is accessible",
+                    "error": f"NICE search did not return results: {detail or 'results object missing from page'}",
+                    "source": "NICE",
+                }
+
+            documents = search.get("documents") or []
+            if not documents:
+                # NICE answered and holds nothing for this query.
+                if search.get("resultCount") == 0:
+                    return []
+                return {
+                    "status": "error",
+                    "error": "NICE reported results but the page listed none",
+                    "source": "NICE",
                 }
 
             # Process the documents
@@ -228,8 +235,8 @@ class NICEWebScrapingTool(BaseTool):
             if not results:
                 return {
                     "status": "error",
-                    "error": "No NICE guidelines found",
-                    "suggestion": "Try different search terms or check if the NICE website is accessible",
+                    "error": "NICE listed results but none could be parsed",
+                    "source": "NICE",
                 }
 
             return results
@@ -1825,6 +1832,19 @@ class GINGuidelinesTool(BaseTool):
             soup = BeautifulSoup(response.content, "html.parser")
             articles = soup.find_all("article")
 
+            # The listing header states the count; a page without it carries no answer.
+            counted = re.search(r"(\d[\d,]*)\s+results?\s+found", soup.get_text(" "))
+            if not articles:
+                if counted and counted.group(1) == "0":
+                    return []
+                return {
+                    "status": "error",
+                    "error": "GIN returned a page without a result listing; retry",
+                    "source": "GIN",
+                    "search_url": f"{self.search_url}?q={query}",
+                    "retryable": True,
+                }
+
             guidelines = []
             for article in articles[:limit]:
                 try:
@@ -1855,15 +1875,14 @@ class GINGuidelinesTool(BaseTool):
                 except Exception:
                     continue
 
-            return (
-                guidelines
-                if guidelines
-                else {
-                    "error": "No guidelines found for query",
-                    "source": "GIN",
-                    "search_url": f"{self.search_url}?q={query}",
-                }
-            )
+            if guidelines:
+                return guidelines
+            return {
+                "status": "error",
+                "error": "GIN listed results but none could be parsed",
+                "source": "GIN",
+                "search_url": f"{self.search_url}?q={query}",
+            }
 
         except requests.exceptions.RequestException as e:
             return {

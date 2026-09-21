@@ -7,10 +7,21 @@
 # conditions here, so skipping is a property of the graph rather than a judgement
 # the agent makes while holding 14k characters of instructions.
 #
-# Facts the agent feeds back: chembl_id, top_aes, strong_signal, comparator.
+# Facts the agent feeds back: chembl_id, top_aes, requested_meddra, strong_signal, comparator.
 
 skill: adverse-event-detection
 inputs: [drug_name]
+# Optional, bound by the AGENT from the question, in the question's own words: the
+# reactions the user asked about by name. They are read onto FAERS terms by the
+# `requested_terms` step, never sent to FAERS as they stand.
+optional_inputs: [requested_aes]
+
+# What the agent gets whole. A table a later step reads must be a fact.
+tables:
+  faers_term_rows: fact     # the source's vocabulary for this drug; the reading is checked against it
+  requested_meddra: fact    # the reading itself: shown in the report, row by row
+  prr_rows: fact            # the grading reads it
+  graded_rows: fact         # the signal table the report cites from
 
 steps:
   - id: resolve_drug
@@ -18,10 +29,12 @@ steps:
     calls:
       - tool: OpenTargets_get_drug_chembId_by_generic_name
         arguments: {drugName: "{drug_name}"}
+    # The first hit is the drug (recorded: aspirin -> CHEMBL25, then salts and neighbours).
+    extract: {chembl_id: "data.search.hits.0.id"}
     produces: [chembl_id]
     notes: >-
-      Carry the ChEMBL ID into every later step. If nothing resolves, the subject
-      is probably not a drug — say so and stop rather than running the rest.
+      The ChEMBL ID is carried into every later step. If nothing resolves, the subject
+      is probably not a drug — say so rather than reading the rest as a drug's profile.
 
   - id: indications
     label: "Phase 0 — approved indications and clinical stage"
@@ -29,40 +42,97 @@ steps:
     calls:
       - tool: OpenTargets_get_drug_indications_by_chemblId
         arguments: {chemblId: "{chembl_id}"}
-    produces: [indications]
 
-  - id: ae_profile
-    label: "Phase 1 — FAERS adverse-event profile (breadth)"
+  - id: reaction_terms
+    label: "Phase 1 — the reactions FAERS coded for this drug (breadth)"
     requires: [resolve_drug]
     calls:
       - tool: FAERS_count_reactions_by_drug_event
         arguments: {medicinalproduct: "{drug_name}"}
+    collect:
+      # The source's own vocabulary for this drug, whole: what a requested word is read
+      # onto, and what the reading is checked against.
+      faers_term_rows: {path: "result", flatten: true, fields: ["term", "count"]}
+    extract:
+      # Coding noise and outcomes, not reactions: they top every raw FAERS count and
+      # carry no clinical information. Excluded before the cap; `excluded` says so.
+      top_aes:
+        path: "result[].term"
+        limit: 20
+        exclude: [ILL-DEFINED DISORDER, GENERAL PHYSICAL HEALTH DETERIORATION, ILLNESS,
+                  LABORATORY TEST ABNORMAL, DISEASE PROGRESSION, MALIGNANT NEOPLASM PROGRESSION,
+                  DEATH, COVID-19, CONDITION AGGRAVATED, OFF LABEL USE, DRUG INEFFECTIVE,
+                  PRODUCT USE ISSUE, NO ADVERSE EVENT]
+    produces: [faers_term_rows, top_aes]
+    notes: >-
+      These counts use MedDRA Lowest Level Terms; the disproportionality step uses
+      Preferred Terms, so the numbers will differ. The terms are carried forward
+      exactly as returned.
+
+  - id: requested_terms
+    label: "Phase 1b — the question's words, read onto the source's terms"
+    requires: [reaction_terms]
+    when: requested_aes
+    calls: []
+    # The reading is the agent's judgement, shown and not trusted: each term is checked
+    # against `faers_term_rows`, then placed by an ontology under the concept the word
+    # names. The check proves membership, not meaning; the placing is the evidence for
+    # meaning; the report shows both.
+    judge: [requested_meddra]
+    mapping:
+      requested_meddra: {of: requested_aes, onto: {rows: faers_term_rows, field: term}}
+    produces: [requested_meddra]
+    notes: >-
+      Answer `requested_meddra` as a list of rows, one per FAERS term you read a
+      requested word onto: {of: the word as the question gave it, term: the FAERS
+      term copied exactly from `faers_term_rows`, reason: one sentence saying why
+      this term is that word, concept: two to four plain words that name the organ,
+      system or injury the word means, for an ontology to place the term under}.
+      A word may map onto several terms and a term may serve several words. Leave
+      a word out only when no listed term is that injury, and say so in the report.
+
+  - id: signal_terms
+    label: "Phase 1c — the reactions the disproportionality loop runs over"
+    requires: [reaction_terms, requested_terms]
+    calls: []
+    combine:
+      # The mapped terms lead; the cap trims the frequency-ranked tail, never the ask.
+      signal_aes: {union: [requested_meddra_terms, top_aes], limit: 20}
+    produces: [signal_aes]
+
+  - id: ae_profile
+    label: "Phase 1d — how seriously the events were reported"
+    requires: [resolve_drug]
+    calls:
       - tool: FAERS_count_seriousness_by_drug_event
         arguments: {medicinalproduct: "{drug_name}"}
       - tool: FAERS_count_outcomes_by_drug_event
         arguments: {medicinalproduct: "{drug_name}"}
       - tool: FAERS_count_death_related_by_drug
         arguments: {medicinalproduct: "{drug_name}"}
-    produces: [top_aes]
-    notes: >-
-      These counts use MedDRA Lowest Level Terms; the next step uses Preferred
-      Terms, so the numbers will differ. Disproportionality is the primary metric.
-      Select the top 15-20 reactions and carry them as top_aes.
+    notes: Seriousness, outcomes and deaths as reported; disproportionality is the primary metric.
 
   - id: disproportionality
     label: "Phase 2 — disproportionality per reaction (PRIMARY SIGNAL METRIC)"
-    requires: [ae_profile]
-    for_each: top_aes
+    requires: [signal_terms]
+    for_each: signal_aes
     as: adverse_event
     calls:
       - tool: FAERS_calculate_disproportionality
         arguments: {drug_name: "{drug_name}", adverse_event: "{adverse_event}"}
-    produces: [signals, strong_signal, strong_aes]
+    collect:
+      # One row per reaction: term, value and the link of its own query together.
+      prr_rows: {path: "", fields: ["$item as term", "data.metrics.PRR.value as prr", "source_url as url"]}
+    derive:
+      strong_signal: {from: prr_rows, field: prr, op: ">=", value: 5, mode: any}
+    compute:
+      # The server grades: PRR >= 5 is strong. The graded table keeps every row.
+      graded_rows: {op: flag, rows: prr_rows, field: prr, threshold: 5}
+      strong_aes: {op: pluck, rows: graded_rows, field: term, where: flagged}
+    produces: [prr_rows, graded_rows, strong_signal, strong_aes]
     notes: >-
-      One call per reaction is emitted for you — run them all.
-      Grade each row: PRR >= 5 strong, >= 2 moderate, > 1 weak, else none. Set
-      strong_signal true if any row grades strong, and strong_aes to the
-      reactions that did.
+      Grade each row from its PRR: >= 5 strong (the `flagged` rows), >= 2 moderate,
+      > 1 weak, else none. Cite every PRR from its row's `url`.
 
   - id: stratify
     label: "Phase 2b — stratify the strong signals"
@@ -90,7 +160,6 @@ steps:
         arguments: {drug_name: "{drug_name}"}
       - tool: FDA_get_contraindications_by_drug_name
         arguments: {drug_name: "{drug_name}"}
-    produces: [label_warnings]
     notes: >-
       `{"error": {"code": "NOT_FOUND"}}` is a normal answer here — record
       "Not present in label" and carry on.
@@ -140,6 +209,9 @@ steps:
         arguments: {query: "{drug_name} adverse events safety", limit: 15}
       - tool: EuropePMC_search_articles
         arguments: {query: "{drug_name} pharmacovigilance adverse drug reaction", limit: 10}
+    narrowed: >-
+      Literature is context for the score, not where the signals come from; the few
+      most relevant papers are read, and the source exposes no total to state.
     notes: Real titles with PMIDs or DOIs and years — not trial listings.
 
   - id: report
@@ -147,6 +219,12 @@ steps:
     requires: [disproportionality, label_safety, literature]
     calls: []
     notes: >-
-      Score from data already in hand, out of 100: disproportionality 35, serious
-      AE burden 30, label warnings 25, literature 10. Never leave it blank when
-      the data exists. Every footnote needs a real https link.
+      When the run holds `facts.requested_meddra`, show first how each requested word
+      was read: one line per row with the word (`of`), the FAERS term, the `reason`,
+      and the placing — "placed under <under> (<ontology>)", "not placed" or "unknown".
+      The placing is evidence from an ontology, not a verdict; a term not placed is
+      reported with that doubt, never dropped. A requested word with no row was not
+      among the source's terms for this drug: say so. Then score from data already
+      in hand, out of 100: disproportionality 35, serious AE burden 30, label
+      warnings 25, literature 10. Never leave it blank when the data exists. Every
+      footnote needs a real https link.

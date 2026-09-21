@@ -51,26 +51,10 @@
   "known_violations": {
     "adverse-event-detection": [
       "literature: calls[0].arguments.query [free_text_argument] '{drug_name} adverse events safety'",
-      "literature: calls[1].arguments.limit [narrowed_without_reason] 'limit=10, the source allows 1000'",
       "literature: calls[1].arguments.query [free_text_argument] '{drug_name} pharmacovigilance adverse drug reaction'"
     ],
     "clinical-data-integration": [
       "web_context: delegate[0].arguments.query [free_text_argument] '{drug_name} myelodysplastic syndrome renal impairment safety'"
-    ],
-    "rare-disease-diagnosis": [
-      "(process): report [named_entity] 'Hurler'",
-      "(process): report [named_entity] 'IDS'",
-      "(process): report [named_entity] 'IDUA'",
-      "(process): report [named_entity] 'MPS II'",
-      "(process): report [named_entity] 'gangliosidoses'",
-      "(process): report [named_entity] 'mucopolysaccharidoses'",
-      "differential_all: notes [named_entity] 'developmental delay'",
-      "differential_discriminating: notes [named_entity] 'coarse facies'",
-      "differential_discriminating: notes [named_entity] 'hepatosplenomegaly'",
-      "differential_discriminating: notes [named_entity] 'storage disorders'",
-      "disease_inheritance: notes [named_entity] 'Hurler'",
-      "disease_inheritance: notes [named_entity] 'MPS II'",
-      "literature: calls[0].arguments.limit [narrowed_without_reason] 'limit=10, the source allows 1000'"
     ]
   }
 }

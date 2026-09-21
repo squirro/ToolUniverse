@@ -45,13 +45,11 @@ report: >-
   keyword search; weight the HPO route as primary when the two disagree. Name
   the features of the case the leading candidate leaves unexplained. The third
   answer — the tests that discriminate the top candidates — must be concrete:
-  when the top two are in the same disease family (two mucopolysaccharidoses,
-  two gangliosidoses), name the enzyme or gene pair that separates them from
-  their rows in `facts.orphanet_gene_rows` (for example IDUA for Hurler against
-  IDS for MPS II) and say that the enzyme assay or the gene test decides. State
-  the inheritance and age of onset that separate them from their rows in
-  `facts.disease_inheritance` (X-linked MPS II against autosomal recessive
-  Hurler). A clinical sign that no row carries, if you add one, is labelled
+  when the top two are in the same disease family, name the enzyme or gene pair
+  that separates them from their rows in `facts.orphanet_gene_rows` and say that
+  the enzyme assay or the gene test decides. State the inheritance and age of
+  onset that separate them from their rows in `facts.disease_inheritance`. A
+  clinical sign that no row carries, if you add one, is labelled
   clinical reasoning. The values
   `working_hypothesis`, `discriminating_features`, `discriminating_hpo_ids` and
   `top_candidate` in `facts` were supplied by the model when the run asked for
@@ -206,9 +204,8 @@ steps:
     extract: {strict_candidates: {path: "result"}}
     produces: [strict_candidates]
     notes: >-
-      A SHORT list here is normal, not a failure — common terms like developmental
-      delay are annotated on thousands of diseases, so the strict intersection
-      starves. Do not stop here.
+      A SHORT list here is normal, not a failure — a common phenotype is annotated
+      on thousands of diseases, so the strict intersection starves. Do not stop here.
 
   - id: differential_discriminating
     label: "Phase 2b — the same query on the DISCRIMINATING phenotypes only"
@@ -219,9 +216,9 @@ steps:
     extract: {decisive_candidates: {path: "result"}}
     produces: [decisive_candidates]
     notes: >-
-      This is the call that surfaces the clinically decisive differential — coarse
-      facies plus hepatosplenomegaly returns the storage disorders, where the full
-      term set returns almost nothing. Both 2a and 2b are required.
+      This is the call that surfaces the clinically decisive differential — the
+      two discriminating phenotypes together return the disease family, where the
+      full term set returns almost nothing. Both 2a and 2b are required.
 
   - id: resolve_candidates
     label: "Phase 2b' — an Orphanet entry for each decisive candidate"
@@ -274,8 +271,8 @@ steps:
     produces: [disease_inheritance]
     notes: >-
       One call per resolved candidate. Inheritance and onset are what separate
-      siblings the phenotypes cannot (X-linked MPS II against autosomal recessive
-      Hurler); cite them from these rows.
+      siblings of one disease family that the phenotypes cannot; cite them from
+      these rows.
 
   - id: disease_prevalence
     label: "Phase 2b.4 — how common each candidate is, from Orphanet"
@@ -313,6 +310,9 @@ steps:
     calls:
       - tool: EuropePMC_search_articles
         arguments: {query: "{top_candidate}", limit: 10}
+    narrowed: >-
+      Literature is context for the report, not where genes come from; the few most
+      relevant papers are read, and the source exposes no total to state.
     notes: >-
       Recent papers on the top candidate, cited by PMID. Literature is context
       for the report; it is not where genes come from.

@@ -182,3 +182,24 @@ def test_a_per_item_total_is_required_only_for_the_items_the_report_discusses():
 
     assert failure["text"].startswith("results.literature, ANAEMIA:")
     assert "handover.tables" in failure["context"]
+
+
+# --- a judged mapping is shown -------------------------------------------------------
+
+MAPPED = {"handover": {"facts": {
+    "requested_meddra": [
+        {"of": "ototoxicity", "term": "DEAFNESS", "reason": "the ototoxic injury", "placing": "placed"},
+        {"of": "ototoxicity", "term": "FALL", "reason": "may follow from dizziness", "placing": "not placed"}]},
+    "mappings": ["requested_meddra"], "tables": []}}
+
+
+def test_a_judged_mapping_the_report_does_not_show_is_a_failure_naming_the_hidden_terms():
+    """The reader judges the mapping; a term mapped and not shown cannot be judged."""
+    hidden = "Ototoxicity shows a strong signal (PRR 54.77), read as DEAFNESS in FAERS."
+    shown = ("Ototoxicity, read as: DEAFNESS (placed: the ototoxic injury); FALL (not placed: "
+             "may follow from dizziness).")
+
+    (failure,) = [f for f in check_report(hidden, MAPPED) if f["kind"] == "mapping_not_shown"]
+
+    assert failure["text"] == "requested_meddra: FALL"
+    assert [f for f in check_report(shown, MAPPED) if f["kind"] == "mapping_not_shown"] == []

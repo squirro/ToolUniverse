@@ -102,6 +102,21 @@ def _unstated_narrowing(draft: str, received: Any) -> list[dict]:
     return failures
 
 
+def _unshown_mappings(draft: str, received: Any) -> list[dict]:
+    """A mapped term the report never names: the reader cannot judge a mapping it does not see."""
+    handover = received.get("handover") if isinstance(received, dict) else None
+    handover = handover or {}
+    failures = []
+    for name in handover.get("mappings") or []:
+        for row in (handover.get("facts") or {}).get(name) or []:
+            term = str(row.get("term", ""))
+            if term and not re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", draft or "", re.I):
+                failures.append({"kind": "mapping_not_shown", "text": f"{name}: {term}",
+                                 "context": f"show how {row.get('of', 'the question')!r} was read: "
+                                            "each term with its reason and its placing"})
+    return failures
+
+
 def check_report(draft: str, received: Any) -> list[dict]:
     """Every statement in the draft that what the agent received does not vouch for."""
     vouched = _vouched_numbers(received)
@@ -116,4 +131,5 @@ def check_report(draft: str, received: Any) -> list[dict]:
         start, end = max(0, match.start() - 50), min(len(prose), match.end() + 50)
         failures.append({"kind": "unvouched_number", "text": number,
                          "context": " ".join(prose[start:end].split())})
-    return failures + _unvouched_links(draft, received) + _unstated_narrowing(draft, received)
+    return (failures + _unvouched_links(draft, received) + _unstated_narrowing(draft, received)
+            + _unshown_mappings(draft, received))

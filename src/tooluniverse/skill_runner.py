@@ -481,6 +481,10 @@ def handover_of(graph: dict, run: dict) -> dict:
     }
     if run.get("evidence"):
         handed["tables"] = run["evidence"]
+    mappings = [name for step in graph["steps"] for name in (step.get("mapping") or {})
+                if name in run["facts"]]
+    if mappings:
+        handed["mappings"] = mappings
     if stalled := stalled_steps(graph, run["done"] + run["skipped"], run["facts"]):
         handed["stalled"] = stalled
     return handed

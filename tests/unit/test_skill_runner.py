@@ -2134,3 +2134,14 @@ def test_a_mapped_term_that_is_not_in_the_sources_list_is_refused_and_asked_agai
 
     assert "HEARING DAMAGE" in asked[1]["problem"]
     assert [r["term"] for r in runner.handover(run_id)["facts"]["requested_meddra"]] == ["DEAFNESS", "FALL"]
+
+
+def test_the_handover_names_which_facts_are_judged_mappings():
+    """The report check needs to know which tables must be shown to the reader."""
+    runner = SkillRunner(MAPPED, execute=lambda tool, a: FAERS_TERMS, ask=lambda q: ANSWER,
+                         lookup=_recorded_lookup)
+    run_id = runner.start({"drug_name": "x", "requested_aes": ["ototoxicity"]})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    assert runner.handover(run_id)["mappings"] == ["requested_meddra"]

@@ -144,13 +144,14 @@ if grep -qE '^TEMPORAL_ADDRESS=.+' "$(dirname "$0")/.env" 2>/dev/null; then
       exit 1
     fi
   done
+  # Every optional input is bound or declined: an absent one is answered confirm_inputs.
   echo "[2c] tools/call run_skill → clinical-data-integration / Lutathera …"
   RUN_RESP=$(curl -fsS -X POST "$URL" \
                 -H "$HDR_TYPE" -H "Accept: $ACCEPT" -H "$HDR_SESSION" \
                 -d '{"jsonrpc":"2.0","id":4,"method":"tools/call",
                      "params":{"name":"run_skill",
                                "arguments":{"skill":"clinical-data-integration",
-                                            "inputs":{"drug_name":"Lutathera"}}}}')
+                                            "inputs":{"drug_name":"Lutathera","requested_aes":null}}}}')
   RUN_JSON=$(echo "$RUN_RESP" | sse_payload)
   RUN_TEXT=$(echo "$RUN_JSON" | jq -r '.result.content[0].text // ""')
   RUN_STATUS=$(echo "$RUN_TEXT" | jq -r '.status // "none"')

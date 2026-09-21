@@ -5,6 +5,8 @@ from .http_utils import request_with_retry
 import xml.etree.ElementTree as ET
 import re
 
+EUROPEPMC_PAGE_MAX = 1000      # measured 2026-09-21: pageSize 2000 answers errCode 404 in a 200 body
+
 
 def _normalize_pmcid(pmcid: str | None) -> tuple[str | None, str | None]:
     """
@@ -375,15 +377,22 @@ class EuropePMCTool(BaseTool):
             enrich_missing_abstract=enrich_missing_abstract,
             extract_terms_from_fulltext=extract_terms_from_fulltext,
         )
-        return {
-            "status": "success",
-            "data": articles,
-            "metadata": {
-                "count": len(articles),
-                "query": query,
-                "source": "Europe PMC",
-            },
-        }
+        metadata = {"count": len(articles), "query": query, "source": "Europe PMC",
+                    "total": getattr(self, "_last_hit_count", None)}
+        if len(articles) == 1 and articles[0].get("error"):
+            # A failure of the source must not look like an answer.
+            return {"status": "error", "error": articles[0]["error"],
+                    "retryable": articles[0].get("retryable", False), "data": [], "metadata": metadata}
+        return {"status": "success", "data": articles, "metadata": metadata}
+
+    @staticmethod
+    def _error_item(error: str, *, retryable: bool, reason: str | None = None) -> dict:
+        item = {"title": "Error", "abstract": None, "authors": [], "journal": None, "year": None,
+                "doi": None, "url": None, "citations": 0, "open_access": False, "keywords": [],
+                "source": "Europe PMC", "error": error, "retryable": retryable}
+        if reason is not None:
+            item["reason"] = reason
+        return item
 
     def _local_name(self, tag: str) -> str:
         return tag.rsplit("}", 1)[-1] if "}" in tag else tag
@@ -452,91 +461,54 @@ class EuropePMCTool(BaseTool):
         enrich_missing_abstract: bool = False,
         extract_terms_from_fulltext: list | None = None,
     ):
-        # First try core mode to get abstracts
-        core_params = {
-            "query": query,
-            "resultType": "core",
-            "pageSize": limit,
-            "format": "json",
-        }
-        core_response = request_with_retry(
-            self.session,
-            "GET",
-            self.base_url,
-            params=core_params,
-            timeout=20,
-            max_attempts=3,
-        )
-
-        # Then try lite mode to get journal information
-        lite_params = {
-            "query": query,
-            "resultType": "lite",
-            "pageSize": limit,
-            "format": "json",
-        }
-        lite_response = request_with_retry(
-            self.session,
-            "GET",
-            self.base_url,
-            params=lite_params,
-            timeout=20,
-            max_attempts=3,
-        )
-
-        if core_response.status_code != 200:
-            return [
-                {
-                    "title": "Error",
-                    "abstract": None,
-                    "authors": [],
-                    "journal": None,
-                    "year": None,
-                    "doi": None,
-                    "url": None,
-                    "citations": 0,
-                    "open_access": False,
-                    "keywords": [],
-                    "source": "Europe PMC",
-                    "error": f"Europe PMC API error {core_response.status_code}",
-                    "reason": core_response.reason,
-                    "retryable": core_response.status_code
-                    in (408, 429, 500, 502, 503, 504),
-                }
-            ]
-
-        # Get core mode results
-        try:
-            core_payload = core_response.json()
-        except ValueError:
-            return [
-                {
-                    "title": "Error",
-                    "abstract": None,
-                    "authors": [],
-                    "journal": None,
-                    "year": None,
-                    "doi": None,
-                    "url": None,
-                    "citations": 0,
-                    "open_access": False,
-                    "keywords": [],
-                    "source": "Europe PMC",
-                    "error": "Europe PMC returned invalid JSON",
-                    "retryable": True,
-                }
-            ]
-
-        core_results = core_payload.get("resultList", {}).get("result", [])
-        lite_results = []
-
-        # If lite mode also succeeds, get journal information
-        if lite_response.status_code == 200:
+        # Europe PMC serves at most EUROPEPMC_PAGE_MAX results per request and answers a
+        # larger pageSize with HTTP 200 and an errCode body; a wider limit pages with the
+        # cursor it returns. Core mode carries the abstracts, lite mode the journal.
+        limit = int(limit)
+        page_size = max(1, min(limit, EUROPEPMC_PAGE_MAX))
+        core_results, lite_results = [], []
+        cursor = "*"
+        self._last_hit_count = None
+        while len(core_results) < limit:
+            core_response = request_with_retry(
+                self.session, "GET", self.base_url,
+                params={"query": query, "resultType": "core", "pageSize": page_size,
+                        "format": "json", "cursorMark": cursor},
+                timeout=20, max_attempts=3,
+            )
+            lite_response = request_with_retry(
+                self.session, "GET", self.base_url,
+                params={"query": query, "resultType": "lite", "pageSize": page_size,
+                        "format": "json", "cursorMark": cursor},
+                timeout=20, max_attempts=3,
+            )
+            if core_response.status_code != 200:
+                return [self._error_item(f"Europe PMC API error {core_response.status_code}",
+                                         reason=core_response.reason,
+                                         retryable=core_response.status_code in (408, 429, 500, 502, 503, 504))]
             try:
-                lite_payload = lite_response.json()
+                core_payload = core_response.json()
             except ValueError:
-                lite_payload = {}
-            lite_results = lite_payload.get("resultList", {}).get("result", [])
+                return [self._error_item("Europe PMC returned invalid JSON", retryable=True)]
+            if "errCode" in core_payload:
+                # The service refuses inside a 200: read as success, this was "no literature".
+                return [self._error_item(
+                    f"Europe PMC error {core_payload.get('errCode')}: {core_payload.get('errMsg')}",
+                    retryable=False)]
+            if self._last_hit_count is None:
+                self._last_hit_count = core_payload.get("hitCount")
+            page = core_payload.get("resultList", {}).get("result", [])
+            core_results.extend(page)
+            if lite_response.status_code == 200:
+                try:
+                    lite_payload = lite_response.json()
+                except ValueError:
+                    lite_payload = {}
+                lite_results.extend(lite_payload.get("resultList", {}).get("result", []))
+            cursor = core_payload.get("nextCursorMark")
+            if not page or not cursor:
+                break
+        core_results = core_results[:limit]
 
         # Create ID to record mapping
         lite_map = {rec.get("id"): rec for rec in lite_results}

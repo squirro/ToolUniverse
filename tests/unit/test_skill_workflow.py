@@ -33,6 +33,7 @@ from tooluniverse.skill_workflow import (  # noqa: E402
     bind_lookup,
     bind_records,
     execute_tool,
+    keep_answered_evidence,
     place_mapping,
 )
 
@@ -89,7 +90,7 @@ def _stub(responses, record=None):
         records.append(skel)
         return "https://data.swissrockets.com/skills/runs/" + skel["run_id"]
 
-    return [execute_tool, absorb_step, place_mapping], record_run, calls, records
+    return [execute_tool, absorb_step, place_mapping, keep_answered_evidence], record_run, calls, records
 
 
 async def _run(env, responses, process, inputs, run_id="run-1", before_result=None, record=None):
@@ -591,6 +592,62 @@ async def test_a_closed_gateway_strands_nothing_on_temporal_either():
     assert handed["steps_skipped"] == [{"step": "map_terms", "gate": "requested"}]
     assert {k: v for k, v in handed.items() if k not in ("record", "run_id", "_records")} \
         == _in_memory(responses, gated, {"drug_name": "x"})
+
+
+# --- a delegated loop: one call per query the agent wrote; its answer is an evidence table ---
+
+SEARCHED = {
+    "skill": "searched", "inputs": ["drug_name"],
+    "tables": {"web_rows": "evidence"},
+    "steps": [
+        {"id": "web_queries", "calls": [], "judge": ["web_queries"], "produces": ["web_queries"]},
+        {"id": "web_search", "requires": ["web_queries"], "for_each": "web_queries", "as": "query",
+         "delegate": [{"tool": "exa_web_search", "arguments": {"action": "search", "query": "{query}"}}],
+         "produces": ["web_rows"]},
+    ],
+}
+QUERIES = ["cisplatin ototoxicity published PRR", "cisplatin nephrotoxicity incidence"]
+PAGES = [{"query": q, "title": f"page {n}", "url": f"https://example.org/{n}", "content": "x" * 3000}
+         for q in QUERIES for n in range(3)]
+
+
+async def test_a_delegated_loop_asks_one_call_per_query_and_keeps_the_pages_as_evidence_on_temporal():
+    """The runner already does both; the host that serves composed no loop for a delegate and
+    left a judged evidence table in the facts, whole, instead of in the Working Record."""
+    seen = []
+
+    async def answer_twice(handle, env):
+        state = await _wait_for_question(handle)
+        seen.append(state["waiting_for"])
+        await handle.signal(SkillWorkflow.answer, {"web_queries": QUERIES})
+        state = await _wait_for_question(handle)
+        seen.append(state["waiting_for"])
+        await handle.signal(SkillWorkflow.answer, {"web_rows": PAGES})
+
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        handed, _ = await _run(env, {}, SEARCHED, {"drug_name": "cisplatin"}, "run-searched",
+                               before_result=answer_twice)
+
+    assert [c["arguments"]["query"] for c in seen[1]["calls"]] == QUERIES
+    assert seen[1]["kind"] == "delegate" and seen[1]["wants"] == ["web_rows"]
+    assert "web_rows" not in handed["facts"]
+    (described,) = [t for t in handed["tables"] if t["table"] == "web_rows"]
+    assert described["rows"] == 6 and "url" in described["columns"]
+    assert handed["unresolved"] == [] and handed["blocked"] == []
+
+    answers = iter([{"web_queries": QUERIES}, {"web_rows": PAGES}])
+    runner = SkillRunner(SEARCHED, execute=lambda tool, a: {}, ask=lambda q: next(answers),
+                         records=tempfile.mkdtemp(prefix="working-records-"))
+    run_id = runner.start({"drug_name": "cisplatin"})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    def columns_as_sets(handover):
+        # Temporal's payload converter sorts dict keys; the agent's row keys carry no order.
+        return {**handover, "tables": [{**t, "columns": sorted(t["columns"])} for t in handover["tables"]]}
+
+    assert columns_as_sets({k: v for k, v in handed.items() if k not in ("record", "run_id", "_records")}) \
+        == columns_as_sets(runner.handover(run_id))
 
 
 # --- a judged mapping: checked against the source's list, placed by an ontology ---------

@@ -37,6 +37,7 @@ from .skill_workflow import (
     bind_recorder,
     bind_records,
     execute_tool,
+    keep_answered_evidence,
     place_mapping,
     record_run,
 )
@@ -68,7 +69,7 @@ def build_worker(client: Client, tooluniverse: Any, *, task_queue: str = TASK_QU
         client,
         task_queue=task_queue,
         workflows=[SkillWorkflow],
-        activities=[execute_tool, absorb_step, place_mapping, record_run],
+        activities=[execute_tool, absorb_step, place_mapping, keep_answered_evidence, record_run],
         activity_executor=ThreadPoolExecutor(MAX_ACTIVITIES),
         workflow_runner=WORKFLOW_RUNNER,
     )

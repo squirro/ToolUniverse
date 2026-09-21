@@ -208,6 +208,15 @@ def _expand_calls(step: dict, facts: dict) -> list[dict]:
     return expanded
 
 
+def delegated_calls(step: dict, facts: dict) -> list[dict]:
+    """The calls the agent makes itself for this step -- one per item when the step loops.
+
+    Composed exactly like the server's own calls, so a loop over the queries the agent
+    wrote gives one search call per query, each argument filled and nothing else added.
+    """
+    return _expand_calls({**step, "calls": step.get("delegate") or []}, facts)
+
+
 _PRODUCING_KEYS = ("extract", "collect", "combine", "compute", "derive")
 
 

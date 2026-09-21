@@ -35,7 +35,14 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from .skill_graph import SkillGraphError, _fill, next_step, skipped_gates, stalled_steps
+from .skill_graph import (
+    SkillGraphError,
+    _fill,
+    delegated_calls,
+    next_step,
+    skipped_gates,
+    stalled_steps,
+)
 from .skill_ontology_placing import place
 from .skill_working_record import WorkingRecord
 
@@ -1156,8 +1163,7 @@ class SkillRunner:
             # back the named facts — same pause as a judgement, results on record.
             wanted = spec.get("produces") or []
             try:
-                calls = [{"tool": c["tool"], "arguments": _fill(c.get("arguments", {}), run["facts"])}
-                         for c in delegated]
+                calls = delegated_calls(spec, run["facts"])
             except SkillGraphError as exc:
                 run["blocked"].append({"step": step["id"], "reason": str(exc)})
                 outcome = judged(outcome, wanted, None)

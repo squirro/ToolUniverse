@@ -24,6 +24,7 @@ from tooluniverse.skill_workflow import (  # noqa: E402
     bind_executor,
     bind_records,
     execute_tool,
+    keep_answered_evidence,
 )
 from tooluniverse.skill_working_record import WorkingRecord  # noqa: E402
 
@@ -66,7 +67,7 @@ async def test_a_result_larger_than_temporal_allows_goes_through_and_stays_out_o
 
     async with await WorkflowEnvironment.start_time_skipping() as env:
         async with Worker(env.client, task_queue=QUEUE, workflows=[SkillWorkflow],
-                          activities=[execute_tool, absorb_step, _record_run],
+                          activities=[execute_tool, absorb_step, keep_answered_evidence, _record_run],
                           activity_executor=ThreadPoolExecutor(4),
                           workflow_runner=WORKFLOW_RUNNER):
             handle = await env.client.start_workflow(

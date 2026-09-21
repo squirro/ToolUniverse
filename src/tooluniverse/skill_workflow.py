@@ -39,7 +39,7 @@ from temporalio.worker.workflow_sandbox import (
 )
 
 with workflow.unsafe.imports_passed_through():
-    from .skill_graph import SkillGraphError, fill
+    from .skill_graph import SkillGraphError, delegated_calls
     from .skill_ceilings import ceiling_for, source_of
 from .skill_run_record import skeleton, to_prov
 from .skill_runner import (
@@ -49,6 +49,7 @@ from .skill_runner import (
     checked,
     handover_of,
     judged,
+    keep_evidence,
     mapping_choices,
     mapping_problem,
     new_run,
@@ -154,6 +155,22 @@ def absorb_step(step: StepToAbsorb) -> dict:
 
 
 @dataclass
+class AnsweredToKeep:
+    run_id: str
+    tables: dict
+    outcome: dict
+
+
+@activity.defn(name="keep_answered_evidence")
+def keep_answered_evidence(answered: AnsweredToKeep) -> dict:
+    """An evidence table the agent answered (a delegated search's pages) goes to the record,
+    described, instead of travelling whole in the facts -- as a collected one does."""
+    outcome = {**answered.outcome, "facts": dict(answered.outcome["facts"])}
+    described = keep_evidence(_record_of(answered.run_id), answered.tables, outcome)
+    return {"outcome": outcome, "evidence": described}
+
+
+@dataclass
 class MappingToPlace:
     spec: dict
     outcome: dict
@@ -232,8 +249,7 @@ class SkillWorkflow:
                 # calls composed, the agent makes them, the answer is on record.
                 wanted = spec.get("produces") or []
                 try:
-                    calls = [{"tool": c["tool"], "arguments": fill(c.get("arguments", {}), run["facts"])}
-                             for c in delegated]
+                    calls = delegated_calls(spec, run["facts"])
                 except SkillGraphError as exc:
                     run["blocked"].append({"step": step["id"], "reason": str(exc)})
                     outcome = judged(outcome, wanted, None)
@@ -250,6 +266,15 @@ class SkillWorkflow:
                     step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
                     notes=spec.get("notes"),
                     choices=mapping_choices(spec, {**run["facts"], **outcome["facts"]})))
+            tables = self._process.get("tables") or {}
+            if any(tables.get(name) == "evidence" for name in outcome["facts"]):
+                kept = await workflow.execute_activity(
+                    keep_answered_evidence,
+                    AnsweredToKeep(workflow.info().workflow_id, tables, outcome),
+                    start_to_close_timeout=CALL_TIMEOUT,
+                    retry_policy=RetryPolicy(maximum_attempts=3))
+                outcome = kept["outcome"]
+                run.setdefault("evidence", []).extend(kept["evidence"])
             apply(run, step["id"], failures, outcome, calls=made)
         self._current = None
         handover = handover_of(process, run)

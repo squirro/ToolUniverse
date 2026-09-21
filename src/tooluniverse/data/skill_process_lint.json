@@ -52,9 +52,6 @@
     "adverse-event-detection": [
       "literature: calls[0].arguments.query [free_text_argument] '{drug_name} adverse events safety'",
       "literature: calls[1].arguments.query [free_text_argument] '{drug_name} pharmacovigilance adverse drug reaction'"
-    ],
-    "clinical-data-integration": [
-      "web_context: delegate[0].arguments.query [free_text_argument] '{drug_name} myelodysplastic syndrome renal impairment safety'"
     ]
   }
 }

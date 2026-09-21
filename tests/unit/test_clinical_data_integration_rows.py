@@ -24,8 +24,21 @@ def _url(term):
 _INDICATION = re.compile(r"TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION", re.I)
 
 
-def _agent(question):
+RECORDED_SEARCH = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "web"
+                              / "exa_search_2026-09-21.json").read_text())
+
+
+def _agent(question, web_pages=RECORDED_SEARCH["results"]):
     """The agent's side of a run: it does the compute step's arithmetic, as the task asks."""
+    if "web_queries" in question["wants"]:
+        # One query per subject, in the agent's own words -- the process holds no query text.
+        return {"web_queries": [f"{subject} published risk estimate" for subject in question["context"]["web_subjects"]]}
+    if "web_rows" in question["wants"]:
+        # The agent runs each composed call and answers one row per page the tool returned.
+        return {"web_rows": [
+            {"query": call["arguments"]["query"], "title": page["title"], "url": page["url"],
+             "source": page.get("author"), "date": page.get("publishedDate"), "content": page["text"]}
+            for call in question["calls"] for page in web_pages]}
     if "prr_table" not in question["wants"]:
         return {name: ["stub"] for name in question["wants"]}
     arguments = question["calls"][0]["arguments"]
@@ -69,7 +82,7 @@ def _mapping(question):
 
 
 def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERMS,
-           requested_aes=None, indication=()):
+           requested_aes=None, indication=(), web_pages=RECORDED_SEARCH["results"], records=None):
     calls, asked = [], []
 
     def execute(tool, a):
@@ -100,10 +113,10 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERM
             return _mapping(question)
         if "indication_meddra" in question["wants"]:
             return _indication_mapping(question, indication)
-        return _agent(question)
+        return _agent(question, web_pages)
 
     runner = SkillRunner(graph or load_graph("clinical-data-integration"), execute=execute,
-                         ask=agent, lookup=_recorded_lookup)
+                         ask=agent, lookup=_recorded_lookup, records=records)
     inputs = {"drug_name": drug_name, **({"requested_aes": requested_aes} if requested_aes else {})}
     run_id = runner.start(inputs)["run_id"]
     for _ in range(100):
@@ -111,7 +124,9 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERM
             break
     else:
         raise AssertionError("the run did not finish")
-    return runner.state(run_id), calls, asked
+    state = runner.state(run_id)
+    state["handover"], state["records"], state["run_id"] = runner.handover(run_id), records, run_id
+    return state, calls, asked
 
 
 # --- rows, not lists ------------------------------------------------------------
@@ -325,6 +340,69 @@ def test_covid_19_is_not_on_the_fixed_noise_list_of_either_process():
                     for rule in (s.get("extract") or {}).values() if isinstance(rule, dict)
                     for t in rule.get("exclude", [])]
         assert "COVID-19" not in excluded, skill
+
+
+# --- web search inside the process: the agent writes the queries, the pages become rows ------
+
+def test_the_agents_queries_reach_the_delegated_calls_unchanged_one_per_subject():
+    """The process held one test question's words as its web query, for every drug. Now the
+    agent writes one query per subject -- here no input is named, so only the signals."""
+    import tempfile
+    state, _, asked = _drive(records=tempfile.mkdtemp(prefix="working-records-"))
+
+    (queries,) = [q for q in asked if "web_queries" in q["wants"]]
+    assert queries["context"]["web_subjects"] == ["MYELODYSPLASTIC SYNDROME", "RENAL IMPAIRMENT"]
+    written = state["facts"]["web_queries"]
+    assert written == ["MYELODYSPLASTIC SYNDROME published risk estimate",
+                       "RENAL IMPAIRMENT published risk estimate"]
+    (search,) = [q for q in asked if "web_rows" in q["wants"]]
+    assert search["kind"] == "delegate"
+    assert [c["arguments"]["query"] for c in search["calls"]] == written
+    assert {c["tool"] for c in search["calls"]} == {"exa_web_search"}
+
+
+def test_a_requested_word_gets_its_own_query_beside_the_signals():
+    import tempfile
+    state, _, _ = _drive(terms=["NAUSEA", "DEAFNESS", "FALL"],
+                         prr={"NAUSEA": 1.1, "DEAFNESS": 17.7, "FALL": 2.5},
+                         requested_aes=["ototoxicity"], records=tempfile.mkdtemp(prefix="working-records-"))
+
+    assert state["facts"]["web_subjects"] == ["ototoxicity", "DEAFNESS", "FALL"]
+
+
+def test_each_page_of_a_recorded_search_result_is_one_row_of_the_web_evidence_table():
+    import tempfile
+    from tooluniverse.skill_working_record import WorkingRecord
+    records = tempfile.mkdtemp(prefix="working-records-")
+    state, _, _ = _drive(records=records)
+
+    (described,) = [t for t in state["handover"]["tables"] if t["table"] == "web_rows"]
+    assert described["rows"] == 6, "two queries, three recorded pages each"
+    assert set(described["columns"]) >= {"query", "title", "url", "source", "date", "content"}
+    assert "web_rows" not in state["handover"]["facts"], "evidence is fetched, not handed whole"
+    fetched = WorkingRecord(records, state["run_id"]).fetch("web_rows", limit=2, rank_by="otoprotection strategies")
+    assert fetched["rows"][0]["url"].startswith("https://")
+
+
+def test_an_empty_search_result_is_a_table_with_no_rows_not_a_failure():
+    import tempfile
+    state, _, _ = _drive(web_pages=[], records=tempfile.mkdtemp(prefix="working-records-"))
+
+    (described,) = [t for t in state["handover"]["tables"] if t["table"] == "web_rows"]
+    assert described["rows"] == 0
+    assert state["handover"]["failures"] == [] and state["handover"]["blocked"] == []
+    assert [u for u in state["handover"]["unresolved"] if u["fact"] == "web_rows"] == []
+    assert "web_search" in state["handover"]["steps_done"]
+
+
+def test_the_process_holds_no_query_text_and_no_loose_web_fact():
+    process = load_graph("clinical-data-integration")
+    assert not any(s["id"] == "web_context" for s in process["steps"])
+    search = next(s for s in process["steps"] if s["id"] == "web_search")
+    assert search["for_each"] == "web_queries" and search["as"] == "query"
+    assert search["delegate"][0]["arguments"]["query"] == "{query}"
+    assert process["tables"]["web_rows"] == "evidence"
+    assert "web_rows" in process["report"] and "web_context" not in process["report"]
 
 
 # --- fetch wide: the source's maximum, and its total beside the rows ---------------

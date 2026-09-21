@@ -60,9 +60,16 @@ report: >-
   https://clinicaltrials.gov/study/<nct_id>. Each table's description gives
   `source_total` beside `rows`: wherever the run holds less than the source, say so
   ("the 200 most relevant of 4,120"). Read pharmacogenomic findings as risk-narrowing;
-  an empty CPIC result means no guideline exists, which is an answer. Web context
-  is supplement, not a finding, and is cited as web. End with a Limitations
-  section built from `failures`, `blocked`, `unresolved` and `excluded`.
+  an empty CPIC result means no guideline exists, which is an answer. The web pages
+  are the table `web_rows`, one row per page with the query it answered: read them
+  with fetch_run_data(rank_by=<the subject>, limit=<how many you will read>) as you
+  read the literature, and cite a page by its own row's `url`. Where a page gives a
+  number for a quantity this run computed (a reporting ratio, an incidence), give
+  both numbers, each with its period and its source, and never merge them: a web
+  number is that page's number. A page is context and recency, never a finding of
+  this run. When `web_rows` holds no rows, or none for a subject, say that the web
+  step found nothing for it. End with a Limitations section built from `failures`,
+  `blocked`, `unresolved` and `excluded`.
 # Optional, and bound by the AGENT from the question, IN THE QUESTION'S OWN WORDS: the
 # reactions the user actually asked about. A named reaction is rarely in the top
 # twelve by report count, so without this the run returns correct numbers that do
@@ -79,6 +86,7 @@ tables:
   prr_rows: fact            # the compute step reads it
   literature_rows: evidence # wide, and no step reads it
   trial_rows: evidence      # wide, and no step reads it
+  web_rows: evidence        # the pages the agent's searches returned, one row each
 
 steps:
   - id: identity
@@ -307,19 +315,45 @@ steps:
       Real titles, PMIDs and years — meta-analyses before case reports. A reaction
       with no papers is a finding, not a failure.
 
-  - id: web_context
-    label: "Phase 5b — web context (agent's own search; supplement, not a finding)"
-    requires: [literature]
-    # The agent's web tools are not in the registry: the run pauses and the agent
-    # makes this call itself. Placed after the grounded phases on purpose.
+  - id: web_queries
+    label: "Phase 5b — the web queries, written by the agent for this question"
+    requires: [requested_terms, compute]
+    calls: []
+    # The process holds no query text: the one it held was its first test question's
+    # words, searched for every drug. The subjects are the run's own -- the words the
+    # question named and the signals the run computed -- and the agent writes one
+    # query for each, in the words that will find a published value or a review.
+    combine:
+      web_subjects: {union: [requested_aes, flagged_aes]}
+    judge: [web_queries]
+    produces: [web_subjects, web_queries]
+    notes: >-
+      Answer `web_queries` as a list of search strings, one for each entry of
+      `web_subjects`, in that order: for a word the question named, a query that
+      finds what is published about this drug and that word; for a computed signal,
+      a query that looks for a published value of the same quantity (a reporting
+      ratio, an incidence, a meta-analysis) for this drug and that term. Name the
+      drug in every query. No query for anything else.
+
+  - id: web_search
+    label: "Phase 5b.1 — the pages, one row each (agent's own search tool)"
+    requires: [web_queries]
+    for_each: web_queries
+    as: query
+    # The agent's web tool is not in the registry: the run composes one call per
+    # query and the agent makes them. The pages come back as rows of an evidence
+    # table, read later with the ranked fetch like the literature.
     delegate:
       - tool: exa_web_search
-        arguments: {query: "{drug_name} myelodysplastic syndrome renal impairment safety"}
-    produces: [web_context]
+        arguments: {action: "search", query: "{query}", contents: true}
+    produces: [web_rows]
     notes: >-
-      Return the results as a list of {title, url, snippet}. Web is context and
-      recency only; anything it surfaces that the tools did not is reported as
-      web-sourced, never as a finding.
+      Run every composed call as given, with your web search tool. Answer
+      `web_rows` as a list of rows, one per page returned, each {query: the query it
+      answered, title, url, source: the site or author, date: the publication date
+      if given, content: the page text or summary the tool gave}. Copy titles, links
+      and dates as returned. An empty list is the right answer when the searches
+      found nothing; say so in the report.
 
   - id: indication_terms
     label: "Phase 5b.2 — the drug's own indication, read onto the source's terms"
@@ -397,7 +431,7 @@ steps:
 
   - id: assessment
     label: "Phase 6 — integrated assessment (synthesis, no new tools)"
-    requires: [label, disproportionality, pharmacogenomics, trials, literature, web_context, compute]
+    requires: [label, disproportionality, pharmacogenomics, trials, literature, web_search, compute]
     calls: []
     notes: >-
       Classify every notable FAERS signal against the label: known and labeled,

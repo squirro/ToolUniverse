@@ -1,0 +1,30 @@
+{
+ "query": "otoprotection cisplatin FDA approval",
+ "results": [
+  {
+   "id": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2019/018057s089lbl.pdf",
+   "title": "label",
+   "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2019/018057s089lbl.pdf",
+   "author": "fda/cder",
+   "text": "_______________________________________________________________________________________________________________________________________ _______________________________________________________________________________________________________________________________________\n\nHIGHLIGHTS OF PRESCRIBING INFORMATION \nThese highlights do not include all the information needed to use \nCISPLATIN INJECTION s"
+  },
+  {
+   "id": "https://www.mdpi.com/1424-8247/18/10/1543",
+   "title": "From Ototoxicity to Otoprotection: Mechanism and Protective Strategies in Cisplatin Therapy",
+   "url": "https://www.mdpi.com/1424-8247/18/10/1543",
+   "publishedDate": "2025-10-14T16:17:45.000Z",
+   "text": "From Ototoxicity to Otoprotection: Mechanism and Protective Strategies in Cisplatin Therapy\n\nNext Article in Journal\n\nThe Effects and Mechanisms of Ti-Fu-Kang Decoction in Alleviating Central Fatigue: Insights from Network Pharmacology and Metabolomics\n\nNext Article in Special Issue\n\nAssociation Between DPPs-4 Inhibitors and Bullous Pemphigoid: Reporting Odds Ratio Analysis Using EudraVigilance Da",
+   "image": "https://pub.mdpi-res.com/pharmaceuticals/pharmaceuticals-18-01543/article_deploy/html/images/pharmaceuticals-18-01543-g001-550.jpg?1769419894",
+   "favicon": "https://pub.mdpi-res.com/img/mask-icon-128.svg?c1c7eca266cd7013?1778040678"
+  },
+  {
+   "id": "https://fda.report/DailyMed/a440f077-46f6-4688-a209-65bce38d1c92",
+   "title": "Cisplatin DailyMed Drug Label - FDA.report",
+   "url": "https://fda.report/DailyMed/a440f077-46f6-4688-a209-65bce38d1c92",
+   "publishedDate": "2022-08-30T00:00:00.000Z",
+   "author": "Teva Parenteral Medicines, Inc.",
+   "text": "Cisplatin DailyMed Drug Label - FDA.report\n\n# Cisplatin\n\nDrug label information. FDA.report displays public Structured Product Labeling data from DailyMed and legacy FDA.report DailyMed cache rows. This page is not medical advice, prescribing advice, or a substitute for the official label reviewed by a qualified healthcare professional. Labeling can change; when a current hydrated DailyMed SPL rec",
+   "image": "https://fda.report/DailyMed/a440f077-46f6-4688-a209-65bce38d1c92/image/image-2.jpg"
+  }
+ ]
+}

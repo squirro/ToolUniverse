@@ -1,4 +1,5 @@
 <!--
+Triggers: proteomics dataset, mass spectrometry data, public proteomics, protein abundance data
 Ported from ToolUniverse skill `tooluniverse-proteomics-data-retrieval`. Research-safe
 domain (public proteomics-dataset discovery — descriptive repository search over
 MassIVE / ProteomeXchange / PRIDE, no safety content). Re-maps the skill's report-FILE
@@ -187,7 +188,7 @@ quality metrics, accessions, or instrument names.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool used. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool call + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Subject} with the actual protein / gene / disease / organism / accession searched. The
@@ -217,4 +218,4 @@ Per top dataset, add a brief block: summary, why it fits (or doesn't), instrumen
 ## 7. Recommendations
 Best dataset for the stated purpose; alternatives; integration / platform / batch-effect caveats;
 LFQ vs TMT vs DIA reuse notes.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

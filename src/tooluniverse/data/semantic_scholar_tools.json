@@ -192,7 +192,7 @@
   {
     "type": "SemanticScholarPDFSnippetsTool",
     "name": "SemanticScholar_get_pdf_snippets",
-    "description": "Fetch a paper's open-access PDF from Semantic Scholar and return bounded text snippets around provided terms. Uses markitdown to convert PDF to markdown. Useful when key details (methods, experimental parameters) are in the full text rather than abstract.",
+    "description": "Fetch a paper's open-access PDF from Semantic Scholar and return bounded text snippets around provided terms. Names a paper, it does not search for one: besides `terms` you must supply either `paper_id` or `open_access_pdf_url`, or the call is rejected. Use SemanticScholar_search_papers first to obtain an id. Uses markitdown to convert PDF to markdown. Useful when key details (methods, experimental parameters) are in the full text rather than abstract.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -237,6 +237,15 @@
         "terms"
       ]
     },
+    "test_examples": [
+      {
+        "paper_id": "DOI:10.1038/s41586-020-2649-2",
+        "terms": [
+          "array"
+        ],
+        "max_snippets_per_term": 2
+      }
+    ],
     "return_schema": {
       "type": "object",
       "properties": {

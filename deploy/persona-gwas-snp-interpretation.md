@@ -1,4 +1,5 @@
 <!--
+Triggers: what is this SNP associated with, rsID association, SNP phenotype, GWAS hit meaning
 Ported from ToolUniverse skill `tooluniverse-gwas-snp-interpretation`. Grounded against the
 sempart SMCP live registry — only the 4 tools in the AVAILABLE set are called. Requires the
 agent to have SMCP/ToolUniverse tools enabled (compact mode; reach tools via execute_tool).
@@ -47,14 +48,15 @@ dimension with no data as "No data available".
 # 4 research dimensions — call execute_tool with the NAMED tool
 
 **Step 1 — SNP Identity & Annotation**
-Call `gwas_get_snp_by_id`(rsId=THE_USER_RSID — the real rsID from the user's query, e.g. rs7903146).
+Call `gwas_get_snp_by_id`(rs_id=THE_USER_RSID — the real rsID from the user's query, e.g. rs7903146).
 Retrieve: chromosome, genomic position, ref/alt alleles, functional consequence (e.g. intron_variant,
 missense_variant, 3_prime_UTR_variant), mapped genes, and minor allele frequency (MAF).
 Construct the OpenTargets variant id from these coordinates: format is `{chromosome}_{position}_{ref}_{alt}`
 (e.g. if chr=10, pos=112998590, ref=C, alt=T → `10_112998590_C_T`). You will need this for Steps 3 and 4.
 
 **Step 2 — Trait & Disease Associations**
-Call `gwas_get_associations_for_snp`(rsId=THE_REAL_RSID_FROM_STEP_1).
+Call `gwas_get_associations_for_snp`(rs_id=THE_REAL_RSID_FROM_STEP_1) — required `rs_id` is a dbSNP
+rsID (string, `rs…`).
 Retrieve: all GWAS trait/disease associations, with p-values, beta/OR effect sizes, effect allele,
 study IDs, and PubMed IDs. Grade EVERY association using the significance tier table below.
 
@@ -123,7 +125,7 @@ explicitly; never claim a specific variant is mechanistically causal solely from
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool called + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {rsID} with the actual rsID. Parenthesized column lists specify each table's schema —
@@ -160,4 +162,4 @@ State the overall Clinical Actionability tier (High/Moderate/Low) with its deriv
 Restate the LD/causal caveat explicitly.
 Note: ClinVar pathogenicity data and regulatory annotations (ENCODE/ChIP-seq) are not available
 on this cluster — additional databases would be required to assess clinical pathogenicity.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

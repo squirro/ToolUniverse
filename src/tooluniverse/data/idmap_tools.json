@@ -103,7 +103,7 @@
     "type": "OpenTarget",
     "test_examples": [
       {
-        "efoId": "EFO_0000685"
+        "efoId": "MONDO_0008383"
       }
     ],
     "return_schema": {

@@ -100,6 +100,26 @@ def get_user_cache_dir() -> str:
     return os.path.join(home_dir, ".cache", "tooluniverse")
 
 
+def resolve_writable_path(path: str, base: str) -> str:
+    """
+    Absolute destination for a caller-supplied output path.
+
+    A relative path resolves under ``base``, not the process working directory.
+    The deployed image runs as a non-root uid whose working directory is owned
+    by root, so a tool defaulting to ``./something`` fails there while working
+    perfectly in a developer checkout -- and the caller choosing the path is
+    usually a model, which cannot know the container's layout.
+
+    An absolute path is the caller naming a real location and is honoured
+    exactly. ``base`` is the caller's to choose: an ephemeral download belongs
+    somewhere different from a graph the next run wants to reuse.
+    """
+    path = os.path.expandvars(os.path.expanduser(path))
+    if os.path.isabs(path):
+        return path
+    return os.path.normpath(os.path.join(base, path))
+
+
 def yaml_to_dict(yaml_file_path):
     """
     Convert a YAML file to a dictionary.

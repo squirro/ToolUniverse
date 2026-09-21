@@ -54,7 +54,12 @@ class OpenAIRETool(BaseTool):
         params = {
             "format": "json",
             "size": max(1, min(max_results, 100)),
-            "query": query,
+            # OpenAIRE has no `query` field and answers 400 to it; the failure
+            # was then returned inside a success envelope and read as an empty
+            # result. `keywords` is the general search field (1.16M hits for
+            # "machine learning"); `title` also works but would narrow every
+            # search to title matches only.
+            "keywords": query,
         }
         try:
             resp = requests.get(endpoint, params=params, timeout=20)

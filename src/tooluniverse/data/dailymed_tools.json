@@ -124,7 +124,7 @@
     },
     "test_examples": [
       {
-        "setid": "030d9bca-a934-6ef9-e063-6394a90a8277",
+        "setid": "86841382-4229-4e03-958e-3ac22639efd4",
         "format": "xml"
       }
     ],
@@ -233,7 +233,7 @@
   {
     "type": "DailyMedSPLParserTool",
     "name": "DailyMed_parse_adverse_reactions",
-    "description": "Parse adverse reactions section from SPL XML into structured table format. Returns AE frequencies, severity, and descriptions. Example: setid='030d9bca-a934-6ef9-e063-6394a90a8277' extracts headache 10%, GI upset 5%.",
+    "description": "Parse adverse reactions section from SPL XML into structured table format. Returns AE frequencies, severity, and descriptions. Example: setid='86841382-4229-4e03-958e-3ac22639efd4' extracts headache 10%, GI upset 5%.",
     "parameter": {
       "type": "object",
       "required": [],
@@ -269,7 +269,7 @@
     },
     "test_examples": [
       {
-        "setid": "030d9bca-a934-6ef9-e063-6394a90a8277"
+        "setid": "86841382-4229-4e03-958e-3ac22639efd4"
       }
     ]
   },
@@ -312,7 +312,7 @@
     },
     "test_examples": [
       {
-        "setid": "030d9bca-a934-6ef9-e063-6394a90a8277"
+        "setid": "86841382-4229-4e03-958e-3ac22639efd4"
       }
     ]
   },
@@ -355,7 +355,7 @@
     },
     "test_examples": [
       {
-        "setid": "030d9bca-a934-6ef9-e063-6394a90a8277"
+        "setid": "86841382-4229-4e03-958e-3ac22639efd4"
       }
     ]
   },
@@ -398,7 +398,7 @@
     },
     "test_examples": [
       {
-        "setid": "030d9bca-a934-6ef9-e063-6394a90a8277"
+        "setid": "86841382-4229-4e03-958e-3ac22639efd4"
       }
     ]
   },
@@ -441,7 +441,7 @@
     },
     "test_examples": [
       {
-        "setid": "030d9bca-a934-6ef9-e063-6394a90a8277"
+        "setid": "86841382-4229-4e03-958e-3ac22639efd4"
       }
     ]
   }

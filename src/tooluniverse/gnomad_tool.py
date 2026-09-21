@@ -6,10 +6,18 @@ population genetics data, variant frequencies, and gene constraint metrics
 using GraphQL.
 """
 
+import re
 import requests
 from typing import Dict, Any
 from .base_tool import BaseTool
 from .tool_registry import register_tool
+
+# What gnomAD's variant_search accepts: rsID, chrom-pos-ref-alt, ClinGen allele id.
+_VARIANT_QUERY = re.compile(
+    r"^(rs\d+|(chr)?[0-9]{1,2}[-:]\d+[-:][ACGT]+[-:][ACGT]+"
+    r"|(chr)?[XYM][-:]\d+[-:][ACGT]+[-:][ACGT]+|CA\d+)$",
+    re.IGNORECASE,
+)
 
 
 class gnomADGraphQLTool(BaseTool):
@@ -52,6 +60,15 @@ class gnomADGraphQLTool(BaseTool):
                 first = errors[0] if isinstance(errors, list) and errors else None
                 msg = first.get("message") if isinstance(first, dict) else None
                 msg = msg or "gnomAD GraphQL query returned errors"
+                # "Variant not found" / "Gene not found" arrive as GraphQL errors
+                # at HTTP 200. They are answers, not failures.
+                if msg.lower().rstrip(".").endswith("not found"):
+                    return {
+                        "status": "success",
+                        "data": None,
+                        "note": msg,
+                        "url": getattr(response, "url", self.endpoint_url),
+                    }
                 return {
                     "status": "error",
                     "error": msg,
@@ -62,15 +79,9 @@ class gnomADGraphQLTool(BaseTool):
                 }
 
             data = result.get("data")
-            if not data or all(not v for v in data.values()):
-                return {
-                    "status": "error",
-                    "error": "No data returned from gnomAD API",
-                    "url": getattr(response, "url", self.endpoint_url),
-                    "status_code": status_code,
-                    "data": None,
-                }
-
+            # An all-null or all-empty payload is gnomAD answering honestly:
+            # it does not hold the variant. Reporting that as an error told
+            # the agent the service broke and invited a pointless retry.
             return {
                 "status": "success",
                 "data": data,
@@ -127,6 +138,9 @@ class gnomADGraphQLQueryTool(gnomADGraphQLTool):
         self.default_variables = fields_cfg.get("default_variables", {}) or {}
 
     def run(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        refusal = self._refuse_unusable_variant_query(arguments or {})
+        if refusal:
+            return refusal
         # Merge defaults + map argument names to GraphQL variables
         variables: Dict[str, Any] = dict(self.default_variables)
         for k, v in (arguments or {}).items():
@@ -134,6 +148,32 @@ class gnomADGraphQLQueryTool(gnomADGraphQLTool):
                 continue
             variables[self.variable_map.get(k, k)] = v
         return super().run(variables)
+
+    def _refuse_unusable_variant_query(self, arguments: Dict[str, Any]):
+        """gnomAD's variant_search answers free text with HTTP 500.
+
+        The agent guesses HGVS or "GENE c.123A>G" anyway, so the contract is
+        enforced here: only the forms the search accepts are sent. Keyed on the
+        schema, not the tool name, so gene search (where "BRCA1" is a fine
+        query) is untouched.
+        """
+        if "variant_search" not in self.query_schema:
+            return None
+        query = arguments.get("query")
+        if not isinstance(query, str) or _VARIANT_QUERY.match(query.strip()):
+            return None
+        return {
+            "status": "error",
+            "error": (
+                f"gnomAD variant search does not accept {query!r}. Use an rsID "
+                "(rs7412), a variant ID (19-44908822-C-T) or a ClinGen allele "
+                "ID (CA123). For an HGVS or gene-level description, resolve the "
+                "variant to one of those forms first."
+            ),
+            "url": self.endpoint_url,
+            "status_code": None,
+            "data": None,
+        }
 
 
 @register_tool("gnomADGetGeneConstraints")

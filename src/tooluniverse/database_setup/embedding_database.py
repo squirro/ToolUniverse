@@ -15,7 +15,7 @@ from ..database_setup.provider_resolver import (
     resolve_provider as _resolve_provider,
     resolve_model as _resolve_model,
 )
-from ..utils import get_user_cache_dir
+from ..utils import get_user_cache_dir, resolve_writable_path
 
 # ---------------------------
 # Misc helpers
@@ -79,9 +79,13 @@ class EmbeddingDatabase(BaseTool):
         self.logger = get_logger("EmbeddingDatabase")
 
         storage_config = tool_config.get("configs", {}).get("storage_config", {})
+        # The shipped config sets "./data/embeddings", and the served image runs
+        # as a non-root uid whose working directory belongs to root -- so a
+        # relative dir resolves into the cache directory instead of the CWD.
+        # An absolute one is the deployment's own choice and is kept.
         self.data_dir = Path(
-            storage_config.get(
-                "data_dir", os.path.join(get_user_cache_dir(), "embeddings")
+            resolve_writable_path(
+                storage_config.get("data_dir", "embeddings"), get_user_cache_dir()
             )
         )
         self.faiss_index_type = storage_config.get("faiss_index_type", "IndexFlatIP")

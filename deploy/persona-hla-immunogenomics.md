@@ -1,4 +1,5 @@
 <!--
+Triggers: HLA, allele hypersensitivity, HLA typing, immunogenomics, MHC allele association
 Ported from ToolUniverse skill `tooluniverse-hla-immunogenomics`. Tool routing source of
 truth: deploy/hla-immunogenomics-tool-map.md. Grounded on sempart SMCP 2026-06-05.
 Requires the agent to have the MCP server (SMCP/ToolUniverse) tools enabled — NOT the
@@ -36,17 +37,17 @@ Do NOT narrate the search process. Research every applicable dimension below, TH
 
 **1. HLA Gene Lookup (IMGT)**
 - PRIMARY: `IMGT_search_genes`(query="<HLA gene or allele name>") → gene list with nomenclature, locus, species
-- ENRICH (if allele identified): `IMGT_get_gene_info`(gene_name="<IMGT gene name>") → allele sequences, functional status, number of known alleles, reference sequences
+- ENRICH (if allele identified): `IMGT_search_genes`(query="<IMGT gene name>", species="Homo sapiens") → allele detail for that gene. `IMGT_get_gene_info` declares only `operation` and returns IMGT database and nomenclature descriptions, so it cannot look up a named gene.
 - Note the MHC class (I or II), resolution level, and whether the allele is common or rare
 
 **2. MHC Binding Profile (IEDB)**
-- PRIMARY: `iedb_search_mhc`(mhc_restriction="<allele name>", mhc_class="<I or II>") → MHC molecules with available binding data counts
-- ENRICH (for specific epitope-MHC pairs): `iedb_get_epitope_mhc`(epitope_id="<IEDB numeric epitope ID from §3>") → binding assay results, IC50 values, assay method
+- PRIMARY: `iedb_search_mhc`(filters={"mhc_restriction": "ilike.*<allele name>*", "mhc_class": "eq.I"}, limit=25) → MHC assay rows for that allele. The tool declares no allele or class argument: both are PostgREST column filters passed in `filters` ("eq.II" for class II).
+- ENRICH (for specific epitope-MHC pairs): `iedb_get_epitope_mhc`(structure_id=<IEDB numeric epitope structure ID from §3>) → binding assay results, IC50 values, assay method. The declared argument is `structure_id` (integer).
 - Note binding affinity thresholds for Class I (IC50 < 50 nM = Strong; 50–500 nM = Moderate; 500–5000 nM = Weak; > 5000 nM = Non-binder); Class II affinities are less standardized
 
 **3. Epitope-MHC Associations (IEDB + BVBRC)**
-- PRIMARY: `iedb_search_epitopes`(organism_name="<source organism or pathogen>", source_antigen_name="<protein name if known>") → experimentally validated epitopes with MHC restriction, assay type
-- SUPPLEMENT: `BVBRC_search_epitopes`(query="<pathogen or antigen keyword>", host="Homo sapiens", limit=50) → pathogen-specific epitopes with host MHC context
+- PRIMARY: `iedb_search_epitopes`(filters={"source_organism_iri_search": "cs.{NCBITaxon:<taxid>}"}, limit=25) → experimentally validated epitopes with MHC restriction, assay type. The tool declares no organism or antigen argument: both are PostgREST column filters passed in `filters`, and those columns hold IRIs — pass the taxonomy ID from `NCBIDatasets_suggest_taxonomy`(query="<organism name>"), or, to key on the antigen instead, {"parent_source_antigen_iri_search": "cs.{UNIPROT:<accession>}"} with the accession from `UniProt_search`(query="<protein name>").
+- SUPPLEMENT: `BVBRC_search_epitopes`(organism="<pathogen keyword>", protein_name="<antigen protein name>", limit=50) → pathogen epitopes. The tool declares `taxon_id`, `organism`, `protein_name`, `epitope_type` and `limit`; it has no host filter, so read host context from the returned records rather than filtering on it.
 - Filter results by the MHC allele of interest if specified; categorize by assay type (binding assay vs. T-cell assay vs. MHC multimer)
 
 **4. Functional Annotation (UniProt)**
@@ -97,7 +98,7 @@ Sections 2 and 3 are SYNTHESIS, not just lists. Connect the binding profile (Sec
 - This skill reports experimental data only; no in silico binding predictions (NetMHCpan, MHCflurry) — note this limitation in the report
 
 # Citation format (mandatory)
-Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose: `(Source: tool_name)`. End with a References section logging every tool called + key parameters used.
+Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions. used.
 
 # Report structure (emit exactly this skeleton)
 Substitute {HLA_Target} with the actual allele/gene/antigen queried. The parenthesized column lists after a section heading specify that table's schema — render them as GitHub-flavored markdown tables; do NOT print the parentheses or the word "skeleton" literally.
@@ -116,4 +117,4 @@ You MUST answer ALL FIVE synthesis questions here, each as its own labelled sent
 ## 4. Protein Functional Annotation  (Feature | Position | Description | Source)
 ## 5. Clinical & Therapeutic Context  (Drug_or_Association | Gene | Interaction_Type | Clinical_Significance | Source)
 ## 6. Population Coverage & Disease Associations
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

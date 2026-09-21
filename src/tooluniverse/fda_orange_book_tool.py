@@ -1,11 +1,47 @@
 # fda_orange_book_tool.py
 
+import os
 import requests
 from typing import Dict, Any, List
 from .base_tool import BaseTool
 from .tool_registry import register_tool
 
+
+def openfda_get(url: str, params: dict, timeout: int = 30):
+    """GET openFDA with ``FDA_API_KEY`` attached when one is configured.
+
+    Anonymous callers share 1,000 requests/day per IP; the key buys 120,000.
+    Exhausting the anonymous bucket returns HTTP 429, which is indistinguishable
+    to an agent from the tool being broken. Omitted entirely when unset, so the
+    key never reaches the query as the string "None".
+    """
+    api_key = os.getenv("FDA_API_KEY")
+    if api_key:
+        params = {**params, "api_key": api_key}
+    return requests.get(url, params=params, timeout=timeout)
+
 FDA_BASE_URL = "https://api.fda.gov"
+
+
+def _application_number_term(application_number) -> str:
+    """openFDA stores the type prefix ("NDA202379"); a bare number matches nothing."""
+    number = str(application_number).strip()
+    if number.isdigit():
+        forms = " ".join(f'"{prefix}{number}"' for prefix in ("NDA", "ANDA", "BLA"))
+        return f"application_number:({forms})"
+    return f'application_number:"{number}"'
+
+
+def _is_no_match(response) -> bool:
+    """openFDA answers a search with no matches as HTTP 404 with code NOT_FOUND."""
+    if response.status_code != 404:
+        return False
+    try:
+        body = response.json()
+    except ValueError:
+        return False
+    error = body.get("error") if isinstance(body, dict) else None
+    return isinstance(error, dict) and error.get("code") == "NOT_FOUND"
 
 
 @register_tool("FDAOrangeBookTool")
@@ -84,7 +120,7 @@ class FDAOrangeBookTool(BaseTool):
 
             if arguments.get("application_number"):
                 search_terms.append(
-                    f'application_number:"{arguments["application_number"]}"'
+                    _application_number_term(arguments["application_number"])
                 )
 
             if not search_terms:
@@ -99,7 +135,9 @@ class FDAOrangeBookTool(BaseTool):
             url = f"{FDA_BASE_URL}/drug/drugsfda.json"
             params = {"search": search_query, "limit": min(limit, 100)}
 
-            response = requests.get(url, params=params, timeout=30)
+            response = openfda_get(url, params, timeout=30)
+            if _is_no_match(response):
+                return {"status": "success", "drugs": [], "count": 0, "total": 0}
             response.raise_for_status()
 
             data = response.json()
@@ -158,7 +196,7 @@ class FDAOrangeBookTool(BaseTool):
             url = f"{FDA_BASE_URL}/drug/drugsfda.json"
             params = {"search": f'application_number:"{app_number}"', "limit": 1}
 
-            response = requests.get(url, params=params, timeout=30)
+            response = openfda_get(url, params, timeout=30)
             response.raise_for_status()
 
             data = response.json()
@@ -244,7 +282,11 @@ class FDAOrangeBookTool(BaseTool):
 
             drugs = search_result.get("drugs", [])
             if not drugs:
-                return {"status": "error", "error": "No drugs found matching criteria"}
+                return {
+                    "status": "success",
+                    "drugs": [],
+                    "note": "No drugs found matching criteria",
+                }
 
             # Note: Drugs@FDA API doesn't include full patent details
             # Full patent info requires Orange Book data download
@@ -278,7 +320,11 @@ class FDAOrangeBookTool(BaseTool):
 
             drugs = search_result.get("drugs", [])
             if not drugs:
-                return {"status": "error", "error": "No drugs found matching criteria"}
+                return {
+                    "status": "success",
+                    "drugs": [],
+                    "note": "No drugs found matching criteria",
+                }
 
             # Note: Drugs@FDA API has limited exclusivity data
             # Full exclusivity details in Orange Book data files

@@ -28,6 +28,7 @@ import copy
 import inspect
 import json
 import random
+import re
 import string
 import os
 import time
@@ -756,8 +757,52 @@ class ToolUniverse:
         return list(self.tool_files.keys())
 
     def _get_api_key(self, key_name: str):
-        """Get API key from environment variables."""
-        return os.getenv(key_name)
+        """Get API key from environment variables, without the env-file's prose.
+
+        A shell strips `KEY=value  # note`; Docker's `--env-file` does not --
+        everything after the first `=` is the value, and a comment is only a
+        comment on its own line. Twelve variables in the deployed .env carry an
+        inline comment, which breaks two ways: a real key arrives corrupted (a
+        valid UMLS key was rejected until the comment was stripped), and a
+        key-less line like `KEY=   # get one at ...` looks *set* to the
+        availability check, then goes out as an HTTP header and fails header
+        validation with a message naming nothing anyone can act on.
+
+        Only a `#` that begins a comment is treated as one -- preceded by
+        whitespace or at the start -- so a credential containing a literal hash
+        survives intact.
+        """
+        raw = os.getenv(key_name)
+        if raw is None:
+            return None
+        value = re.split(r"(?:^|\s)#", raw, maxsplit=1)[0]
+        return value.strip().strip('"').strip("'") or None
+
+    def _tool_unavailable_message(self, function_name: str) -> str:
+        """Why this tool cannot be called, in terms the caller can act on.
+
+        A "required API key" that is really a package-presence flag must not be
+        reported as a credential: there is nothing to obtain, and an agent that
+        follows the instruction sets the variable, satisfies the gate, and fails
+        further in. When the tool declares `required_packages`, say that instead.
+        """
+        missing_keys = getattr(self, "_excluded_api_key_tools", {}).get(function_name)
+        packages = getattr(self, "_excluded_tool_packages", {}).get(function_name)
+        if missing_keys and packages:
+            names = ", ".join(packages)
+            return (
+                f"Tool '{function_name}' needs the Python package(s) {names}, "
+                f"which are not installed in this environment. This is not a "
+                f"credential -- install them, e.g. `pip install {packages[0].replace('_', '-')}`, "
+                f"and retry."
+            )
+        if missing_keys:
+            return (
+                f"Tool '{function_name}' requires API key(s) not set: "
+                f"{', '.join(missing_keys)}. "
+                "Set them as environment variables and retry."
+            )
+        return f"Tool '{function_name}' not found even after loading tools"
 
     def _check_api_key_requirements(self, tool_config):
         """
@@ -961,13 +1006,33 @@ class ToolUniverse:
                 categories = tool_type
         self.logger.debug(f"Number of tools before load tools: {len(self.all_tools)}")
 
-        # Full reload (no include_tools): clear existing tools so repeated calls
-        # don't accumulate duplicates before deduplication runs.
-        if include_tools is None and tools_file is None:
+        # Clear only on a genuine full reload -- no selection of any kind -- so
+        # that repeated bare calls don't accumulate duplicates.
+        #
+        # Naming a subset used to clear too, which made a partial load destructive:
+        # the registry was emptied and refilled from that subset alone, so every
+        # other tool was evicted. ToolUniverse keeps ONE registry per process and
+        # SMCP serves every MCP client from it, so this removed all ~2,261 tools
+        # for every client until the container restarted, while the server kept
+        # answering 200 and its healthcheck stayed green (DSR-634).
+        #
+        # ea01ffad fixed the ComposeTool that reached this, but the hazard was
+        # never in ComposeTool -- it is here, and output_hook.py still calls
+        # load_tools with a bare category list. Requiring the absence of a
+        # selection removes the whole class, rather than one caller at a time.
+        # Duplicates remain impossible either way: _filter_and_deduplicate_tools
+        # runs on every path.
+        selection_given = (
+            include_tools is not None
+            or tools_file is not None
+            or categories is not None
+        )
+        if not selection_given:
             self.all_tools = []
             self.all_tool_dict = {}
             self.tool_category_dicts = {}
             self._excluded_api_key_tools = {}
+        self._excluded_tool_packages = {}
 
         # Handle tools_file parameter (alternative to include_tools)
         if tools_file:
@@ -1294,6 +1359,15 @@ class ToolUniverse:
                 if not all_keys_available:
                     all_missing_keys.update(missing_keys)
                     self._excluded_api_key_tools[tool_name] = list(missing_keys)
+                    # Some "keys" are really package-presence flags (e.g.
+                    # CELLXGENE_CENSUS_PACKAGE_INSTALLED). Keep the packages the
+                    # tool declares so the error can name the actual remedy
+                    # instead of telling the caller to set a credential that
+                    # does not exist.
+                    if each.get("required_packages"):
+                        self._excluded_tool_packages[tool_name] = list(
+                            each["required_packages"]
+                        )
                     self.logger.debug(
                         f"Skipping tool '{tool_name}' due to missing API keys: {', '.join(missing_keys)}"
                     )
@@ -3155,15 +3229,7 @@ class ToolUniverse:
                             validate,
                         )
                     else:
-                        _missing_keys = self._excluded_api_key_tools.get(function_name)
-                        if _missing_keys:
-                            error_msg = (
-                                f"Tool '{function_name}' requires API key(s) not set: "
-                                f"{', '.join(_missing_keys)}. "
-                                "Set them as environment variables and retry."
-                            )
-                        else:
-                            error_msg = f"Tool '{function_name}' not found even after loading tools"
+                        error_msg = self._tool_unavailable_message(function_name)
                         return self._create_dual_format_error(
                             ToolUnavailableError(
                                 error_msg,
@@ -3337,17 +3403,7 @@ class ToolUniverse:
                         validate,
                     )
                 else:
-                    _missing_keys = self._excluded_api_key_tools.get(function_name)
-                    if _missing_keys:
-                        error_msg = (
-                            f"Tool '{function_name}' requires API key(s) not set: "
-                            f"{', '.join(_missing_keys)}. "
-                            "Set them as environment variables and retry."
-                        )
-                    else:
-                        error_msg = (
-                            f"Tool '{function_name}' not found even after loading tools"
-                        )
+                    error_msg = self._tool_unavailable_message(function_name)
                     return self._create_dual_format_error(
                         ToolUnavailableError(
                             error_msg,
@@ -3855,16 +3911,8 @@ class ToolUniverse:
 
             # Check again after loading
             if function_name not in self.all_tool_dict:
-                missing_keys = self._excluded_api_key_tools.get(function_name)
-                if missing_keys:
-                    return ToolUnavailableError(
-                        f"Tool '{function_name}' requires API key(s) not set: "
-                        f"{', '.join(missing_keys)}. "
-                        "Set them as environment variables and retry.",
-                        retriable=False,
-                    )
                 return ToolUnavailableError(
-                    f"Tool '{function_name}' not found even after loading tools",
+                    self._tool_unavailable_message(function_name),
                     retriable=False,
                 )
 

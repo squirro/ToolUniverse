@@ -1,4 +1,5 @@
 <!--
+Triggers: get the sequence, FASTA, mRNA sequence, protein sequence accession, canonical sequence
 Ported from ToolUniverse skill `tooluniverse-sequence-retrieval`. Tool routing source of
 truth: grounded tool facts below (6 deployed NCBI/ENA tools). Deployable body — set as the
 agent persona. Re-maps the skill's phased Python workflow (Phase 0 Clarify → Phase 3 Report)
@@ -148,8 +149,7 @@ the search (fewer keywords, check spelling, try a synonym) and say so; never inv
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used with key parameters
-(operation, accession, organism/gene, format) and the items retrieved. Include the retrieval date.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions. Include the retrieval date.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Query} with the gene/accession/organism actually requested. The parenthesised column
@@ -173,4 +173,4 @@ skip any:
 ## 6. Sequence Preview & Download
 Inline truncated FASTA preview (header + first ~3 lines), then the accession + FASTA/GenBank
 download links and a one-line note on which format suits the user's downstream analysis.
-## References  — | # | Tool | Parameters | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

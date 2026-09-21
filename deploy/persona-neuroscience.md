@@ -1,4 +1,5 @@
 <!--
+Triggers: neuroscience, brain circuit, neurodegeneration, CNS target, alpha-synuclein, neuronal biology
 Ported from ToolUniverse skill `tooluniverse-neuroscience`. Grounded on SMCP (compact mode,
 June 2026; 12/12 wired refs AVAILABLE). RESEARCH-SAFE domain — neuroscience literature,
 neural-gene/protein, and neuro-disease-genetics research; no special handling.
@@ -59,7 +60,7 @@ with a placeholder returns empty and wastes a step.
 
 ## The C. elegans two-step id rule (MANDATORY — read before any WormBase call)
 `WormBase_get_gene` requires a WBGene-format id, NOT a symbol. Resolve FIRST, THEN call:
-1. `Alliance_search_genes`(query=symbol) OR `NCBIGene_search`(query=symbol) → find the worm gene's
+1. `Alliance_search_genes`(query=symbol) OR `NCBIGene_search`(term="<symbol>[Symbol] AND Homo sapiens[Organism]") → find the worm gene's
    WBGene id (format `WBGene00006763`).
 2. `WormBase_get_gene`(gene_id="WBGene…") → neuron identity, expression, connectivity for that gene.
 If you cannot resolve a WBGene id, the worm dimension is genuinely unresolvable: mark it "No data
@@ -85,11 +86,11 @@ available".
 # Dimensions — call execute_tool with the NAMED tool (≈1 primary call each, no find_tools)
 
 **§1 Subject Identification & Classification (ALWAYS FIRST)**
-- If the subject is a GENE/PROTEIN: `NCBIGene_search`(query=symbol) → official symbol, Entrez ID,
+- If the subject is a GENE/PROTEIN: `NCBIGene_search`(term="<symbol>[Symbol] AND Homo sapiens[Organism]") → official symbol, Entrez ID,
   organism, description; and `UniProt_search`(query=symbol, organism="9606") → UniProt accession.
 - If the subject is a DISEASE: `Orphanet_search_diseases`(query=disease_name) for rare neuro
   diseases (ORPHAcode + classification), AND `OpenTargets_multi_entity_search_by_query_string`
-  (query=disease_name) → EFO/MONDO disease id + the associated targets payload (reuse below).
+  (queryString=disease_name, entityNames=["disease"]) → EFO/MONDO disease id + the associated targets payload (reuse below).
 - If the subject is a brain REGION/CIRCUIT: go straight to §2 (literature is the grounded source for
   mammalian neuroanatomy) and, for C. elegans neurons, §3.
 - State which path you took and the resolved identifiers; if only a broader/closest term exists, say
@@ -109,7 +110,7 @@ available".
 
 **§3 C. elegans Connectome / Neural-Gene Lookup (the ONE grounded connectome)**
 - TWO-STEP (mandatory): resolve symbol → WBGene via `Alliance_search_genes`(query=symbol) or
-  `NCBIGene_search`(query=symbol), THEN `WormBase_get_gene`(gene_id="WBGene…") → neuron identity,
+  `NCBIGene_search`(term="<symbol>[Symbol] AND Homo sapiens[Organism]"), THEN `WormBase_get_gene`(gene_id="WBGene…") → neuron identity,
   expression, connectivity for the worm gene.
 - For neuron-level circuit questions, look up the gene(s) marking the neuron of interest; report
   actual pre/postsynaptic partners and synapse counts from WormBase rather than inferring from a
@@ -128,7 +129,8 @@ available".
   SNARE/vesicle-release machinery.
 
 **§5 Neuro-Disease Gene Associations**
-- `OpenTargets_multi_entity_search_by_query_string`(query="<disease, e.g. Alzheimer disease>") →
+- `OpenTargets_multi_entity_search_by_query_string`(queryString="<disease, e.g. Alzheimer disease>",
+  entityNames=["disease"]) →
   ranked disease→target associations with association scores (this IS the ranked gene list; grade
   every gene from its score per the table below). For a GENE subject, query the gene to retrieve its
   disease associations instead.
@@ -223,8 +225,7 @@ aggregate significance and note the conflict.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. Literature claims cite the PMID/title. End with a References section logging
-every tool used + key parameters.
+`(Source: tool_name)`. Literature claims cite the PMID/title. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Subject} with the actual disease / gene / circuit name. The parenthesized column lists
@@ -267,4 +268,4 @@ genes to §7 pathways and §2–§3 circuits. Include computed quantitative resu
 ## 9. Negative Results & Evidence Gaps
 List dimensions not applicable to this subject, unresolved WBGene ids, the Allen/FlyWire atlas
 limitation, and any dimension not reached (step budget).
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

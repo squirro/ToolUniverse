@@ -173,7 +173,19 @@ class EBISearchRESTTool(BaseTool):
             # Sometimes domain info is the root object itself
             return data
         elif extract_path == "fields":
-            # Fields can be in 'fields' key or 'domain.fields'
+            # What EBI Search actually returns is `domains` (plural, a LIST) whose
+            # entries carry `fieldInfos` -- not `fields`. Checking only the two
+            # shapes below meant this returned [] for every domain, whichever one
+            # was asked for. A container domain such as `ensembl` legitimately has
+            # no fieldInfos at all; its leaf `ensembl_gene` has 109.
+            domains = data.get("domains")
+            if isinstance(domains, list):
+                infos = []
+                for domain in domains:
+                    if isinstance(domain, dict):
+                        infos.extend(domain.get("fieldInfos") or [])
+                if infos:
+                    return infos
             if "fields" in data:
                 return data["fields"]
             if "domain" in data and "fields" in data["domain"]:

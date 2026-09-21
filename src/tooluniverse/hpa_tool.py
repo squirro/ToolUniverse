@@ -1115,9 +1115,19 @@ class HPAGetRnaExpressionByTissueTool(HPAJsonApiTool):
         # Get RNA tissue expression data
         rna_data = data.get("RNA tissue specific nTPM", {})
         if not isinstance(rna_data, dict):
+            # HPA populates this field only for genes ENRICHED in particular
+            # tissues, so a null is a finding about the gene, not a gap in the
+            # database. Saying "no data available" sends the caller to look for
+            # another source for something HPA has already answered.
             return {
                 "status": "error",
-                "error": "No RNA tissue expression data available for this gene",
+                "error": (
+                    f"HPA reports no tissue-specific RNA expression for "
+                    f"{ensembl_id}: the gene is not enriched in any tissue, "
+                    f"which usually means it is expressed broadly rather than "
+                    f"that data is missing. Use HPA_get_rna_expression_by_source "
+                    f"for its expression across all tissues."
+                ),
             }
 
         expression_results = {}

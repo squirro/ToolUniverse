@@ -1,4 +1,5 @@
 <!--
+Triggers: shRNA screen, dropout screen, essentiality screen, screen hit nomination, functional genomics hits
 Ported from ToolUniverse skill `tooluniverse-functional-genomics-screens`. RESEARCH-SAFE
 functional-genomics target-discovery skill (CRISPR-KO / CRISPRi / shRNA screen-hit
 interpretation, essentiality ranking, hit prioritization) — descriptive target-ID research,
@@ -100,8 +101,9 @@ BFs, or Chronos scores.
 ## §2  Pathway & Network Enrichment — do the top hits cluster, or are they scattered (noise)?
 PRIMARY: `ReactomeAnalysis_pathway_enrichment`(identifiers="<top hit SYMBOLS, space-separated, e.g.
 TP53 BRCA1 EGFR>") → Reactome FDR-ranked pathways (rank by FDR; reproduce the LITERAL pathway label).
-ALSO: `STRING_functional_enrichment`(identifiers="<top hit symbols, newline / carriage-return
-separated>", species=9606) → GO / KEGG term enrichment with member genes + adjusted p.
+ALSO: `STRING_functional_enrichment`(protein_ids=["<symbol>", "<symbol>", "<symbol>"], species=9606)
+→ GO / KEGG term enrichment with member genes + adjusted p. The declared argument is
+`protein_ids`, an ARRAY of symbols (3 or more recommended), not a separator-joined string.
 Clustering in coherent pathways/terms = real biology; scattered singletons = suspect technical noise.
 
 ## §3  Essentiality — is the hit context-specific (good target) or broadly essential (housekeeping)?
@@ -192,8 +194,7 @@ prefer the actual DepMap datum when present, note the proxy when it is not.
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
 `(Source: tool_name)`. Screen statistics taken from the user's input are cited
-`[Source: user-supplied screen output]`. End with a References section logging every tool used +
-key parameters.
+`[Source: user-supplied screen output]`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Screen} with the screen name / phenotype the user gave (e.g. "MTAP-deletion synthetic-
@@ -221,4 +222,4 @@ skip any:
 List the DepMap coverage limitation (which hits fell back to the gnomAD proxy), any screen
 statistics that were "Not provided", the assumed-as-input raw-screen compute, and every "No data
 available" dimension with its reason. Never fabricate to fill a gap.
-## 10. References  — | # | Tool | Parameters | Section | Items Retrieved |
+## 10. References  — numbered footnote definitions only, each `[^n^]: [description](url)`

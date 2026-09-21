@@ -5,6 +5,9 @@ This tool provides access to the MetaboLights database, the largest repository
 of metabolomics experiments and raw data.
 """
 
+import fnmatch
+import json
+
 import requests
 from typing import Any, Dict
 from .base_tool import BaseTool
@@ -206,9 +209,138 @@ class MetaboLightsRESTTool(BaseTool):
                 "error": f"Failed to extract files from study endpoint: {str(e)}",
             }
 
+    # --- DSR-643: two public routes, reached without a token -------------------
+    #
+    # `/data-files` answers 401 and `/samples` answers 400, and the wrapper turned
+    # both into an empty list reported as success -- so a credential failure and a
+    # route that does not exist both read as "this study has no data". The public
+    # `/files` listing carries the same information and needs no token, which is
+    # what these two methods use.
+
+    def _public_file_listing(self, study_id: str) -> Dict[str, Any]:
+        """The study's public file listing, or an error that says which failure it was.
+
+        `/files` is public. `/data-files` is not, and answers 401 -- which is a
+        private or non-existent study, not an empty one, and must not be reported
+        as data.
+        """
+        url = f"{self.base_url}/studies/{study_id}/files"
+        response = self.session.get(url, timeout=self.timeout)
+        if response.status_code == 401:
+            return {
+                "status": "error",
+                "error": (
+                    f"MetaboLights study {study_id} is not public (HTTP 401). "
+                    "This is a restricted or non-existent study, not an empty one."
+                ),
+                "url": url,
+                "transport_status": "unauthorized",
+            }
+        response.raise_for_status()
+        payload = response.json()
+        entries = payload.get("study") if isinstance(payload, dict) else None
+        return {"status": "success", "entries": entries or [], "url": url}
+
+    def _samples_from_isatab(self, study_id: str) -> Dict[str, Any]:
+        """Sample table for a study, read from its ISA-Tab sample sheet.
+
+        There is no `/samples` endpoint. That path falls through to the file
+        reader, which is why it answers 400 saying "The file samples is not a
+        valid TSV or CSV file". The sample sheet is a real file in the listing,
+        conventionally `s_<STUDY>.txt`, and the name is read from the listing
+        rather than guessed so a study naming it differently still resolves.
+        """
+        listing = self._public_file_listing(study_id)
+        if listing["status"] != "success":
+            return listing
+
+        sheets = [
+            str(e.get("file"))
+            for e in listing["entries"]
+            if str(e.get("file", "")).startswith("s_")
+        ]
+        if not sheets:
+            return {
+                "status": "success",
+                "data": [],
+                "url": listing["url"],
+                "count": 0,
+                "transport_status": "no_data",
+                "transport_note": (
+                    "The study listing carries no ISA-Tab sample sheet (no s_* file), "
+                    "so this study genuinely publishes no sample table."
+                ),
+            }
+
+        url = f"{self.base_url}/studies/{study_id}/{sheets[0]}"
+        response = self.session.get(url, timeout=self.timeout)
+        response.raise_for_status()
+        # `strict=False`: the sheet is tab-separated text rendered into JSON and
+        # carries raw control characters that a strict parser rejects.
+        sheet = json.loads(response.text, strict=False)
+        rows = ((sheet.get("data") or {}).get("rows")) or []
+        return {
+            "status": "success",
+            "data": rows,
+            "url": url,
+            "count": len(rows),
+            "sample_sheet": sheets[0],
+        }
+
+    def _data_files_from_listing(self, study_id: str,
+                                 arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Data files for a study, filtered from the public listing.
+
+        `/data-files` does the filtering server-side and requires a token. The
+        same records are in the public `/files` listing, so the glob is applied
+        here instead and the tool keeps its declared parameters.
+        """
+        listing = self._public_file_listing(study_id)
+        if listing["status"] != "success":
+            return listing
+
+        patterns = [
+            arguments[key]
+            for key in ("search_pattern", "file_match", "folder_match")
+            if arguments.get(key)
+        ]
+        matched = [
+            entry for entry in listing["entries"]
+            if not patterns
+            or any(fnmatch.fnmatch(str(entry.get("file", "")), str(p))
+                   for p in patterns)
+        ]
+        result = {
+            "status": "success",
+            "data": matched,
+            "url": listing["url"],
+            "count": len(matched),
+            "total_available": len(listing["entries"]),
+        }
+        if patterns and not matched:
+            result["transport_status"] = "no_data"
+            result["transport_note"] = (
+                f"{len(listing['entries'])} files are published for {study_id}, "
+                f"none matching {patterns}."
+            )
+        return result
+
     def run(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the MetaboLights API call"""
         tool_name = self.tool_config.get("name", "")
+
+        # Both of these reach a route that needs no token; see the methods above.
+        try:
+            if tool_name == "metabolights_get_study_samples":
+                return self._samples_from_isatab(arguments.get("study_id", ""))
+            if tool_name == "metabolights_get_study_data_files":
+                return self._data_files_from_listing(
+                    arguments.get("study_id", ""), arguments)
+        except Exception as exc:
+            return {
+                "status": "error",
+                "error": f"{tool_name} failed: {type(exc).__name__}: {exc}",
+            }
 
         try:
             url = self._build_url(arguments)

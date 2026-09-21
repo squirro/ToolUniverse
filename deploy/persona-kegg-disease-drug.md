@@ -1,4 +1,5 @@
 <!--
+Triggers: KEGG, KEGG pathway for a disease, drugs mapped to pathways, disease pathway map
 Ported from ToolUniverse skill `tooluniverse-kegg-disease-drug`. Grounded on sempart SMCP
 (live registry 2026-06-05). All 12 KEGG tools are available; no substitutions required.
 Requires the agent to have the MCP server (SMCP/ToolUniverse) tools enabled — NOT the default
@@ -69,8 +70,10 @@ Retrieve the complete list of curated genes for the disease from KEGG.
 - `KEGG_get_disease_genes`(disease_id="<H##### from Phase 1>") → all KEGG-curated gene entries for
   the disease, with KEGG gene IDs (hsa:####) and gene symbols.
   If the user supplied an external gene ID (NCBI Entrez, UniProt), convert first:
-  `KEGG_convert_ids`(source_db="ncbi-geneid" or "up", target_db="hsa", ids=["<external_id>"]) to
-  get the KEGG hsa:#### ID before querying.
+  `kegg_find_genes`(keyword="<gene symbol>", organism="hsa") to get the KEGG hsa:#### ID before
+  querying. `KEGG_convert_ids` runs the other way only: it declares `kegg_id` plus `target_db`
+  and maps a KEGG ID to an external database, as in
+  `KEGG_convert_ids`(kegg_id="hsa:7157", target_db="uniprot").
 
 ## Phase 3: Drug Search
 Find KEGG drugs targeting the disease or its genes.
@@ -94,9 +97,10 @@ Explore disease-gene-drug network triangles and variant annotations.
 - Step 5c: `KEGG_search_variant`(keyword="<disease or key gene>") → variant entries (e.g. driver
   mutations, pharmacogenomic variants). For any confirmed variant, call
   `KEGG_get_variant`(variant_id="<variant id from 5c>") → clinical significance and linked drugs.
-- Cross-linking: `KEGG_link_entries`(target_db="pathway", source_db_or_ids="hsa:<gene_id>") to find
-  all KEGG pathways containing a gene; or `KEGG_link_entries`(target_db="hsa",
-  source_db_or_ids="path:hsa#####") to find all genes in a pathway. Use for pathway adjacency only
+- Cross-linking: `KEGG_link_entries`(source="hsa:<gene_id>", target="pathway") to find all KEGG
+  pathways containing a gene; or `KEGG_link_entries`(source="path:hsa#####", target="hsa") to find
+  all genes in a pathway. The declared arguments are `source` (one KEGG entry ID) and `target`
+  (the database to link into). Use for pathway adjacency only
   after primary calls are complete.
 
 # Evidence grading — MANDATORY, grade EVERY row from data already in hand
@@ -150,8 +154,7 @@ corresponding ToolUniverse skills and cannot be satisfied in this report.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the exact KEGG tool called. Lists: `- finding [Source: tool_name]`.
-Prose: `(Source: tool_name)`. End with a References section logging every tool used with key
-parameters.
+Prose: `(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Disease} with the actual disease/query name. The parenthesized column lists after a
@@ -178,4 +181,4 @@ skip any:
 ## 4. Network Triangles        (network_id | disease | gene | drug | relationship_type | Source)
 ## 5. Variant Annotations      (variant_id | gene | clinical_significance | linked_drug | Grade | Source)
 ## 6. Pathway Links            (pathway_id | pathway_name | linked_genes | linked_drugs | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

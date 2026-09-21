@@ -49,6 +49,7 @@ from .skill_runner import (
     checked,
     handover_of,
     judged,
+    mapping_choices,
     mapping_problem,
     new_run,
     next_runnable,
@@ -247,7 +248,8 @@ class SkillWorkflow:
             if wants:
                 outcome = await self._answered(spec, step, wants, outcome, question_for(
                     step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
-                    notes=spec.get("notes")))
+                    notes=spec.get("notes"),
+                    choices=mapping_choices(spec, {**run["facts"], **outcome["facts"]})))
             apply(run, step["id"], failures, outcome, calls=made)
         self._current = None
         handover = handover_of(process, run)

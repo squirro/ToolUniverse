@@ -85,11 +85,14 @@ steps:
     notes: >-
       Answer `requested_meddra` as a list of rows, one per FAERS term you read a
       requested word onto: {of: the word as the question gave it, term: the FAERS
-      term copied exactly from `faers_term_rows`, reason: one sentence saying why
-      this term is that word, concept: two to four plain words that name the organ,
+      term copied exactly from the list in `choices.requested_meddra` (the source's
+      own terms for this drug, whole), reason: one sentence saying why this term is
+      that word, concept: a list of two to four plain words that name the organ,
       system or injury the word means, for an ontology to place the term under}.
-      A word may map onto several terms and a term may serve several words. Leave
-      a word out only when no listed term is that injury, and say so in the report.
+      Read the whole list before you answer; the terms you want are often far down
+      it. A word may map onto several terms and a term may serve several words.
+      Leave a word out only when no listed term is that injury, and say so in the
+      report.
 
   - id: signal_terms
     label: "Phase 1c — the reactions the disproportionality loop runs over"

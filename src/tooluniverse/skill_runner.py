@@ -496,6 +496,14 @@ def handover_of(graph: dict, run: dict) -> dict:
 # FALL and both were accepted because both are FAERS terms. So the mapping is a fact table the
 # report must show, each row with the agent's reason and a placing from an ontology.
 
+def mapping_choices(spec: dict, facts: dict) -> dict | None:
+    """The source's terms a mapping may use, whole: the agent copies from this list, so it
+    travels in the question even when the rows it comes from are too wide to show."""
+    choices = {name: _picked(rule["onto"], facts) for name, rule in (spec.get("mapping") or {}).items()}
+    choices = {name: terms for name, terms in choices.items() if terms}
+    return choices or None
+
+
 def mapping_problem(spec: dict, outcome: dict, facts: dict) -> str | None:
     """A mapped term the source does not list, or a row without the shape asked for."""
     for name, rule in (spec.get("mapping") or {}).items():
@@ -1151,6 +1159,7 @@ class SkillRunner:
             question = question_for(
                 step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
                 notes=spec.get("notes"),
+                choices=mapping_choices(spec, {**run["facts"], **outcome["facts"]}),
             )
             outcome = self._answered(spec, step, wants, outcome, run, question)
         self._keep_evidence(run_id, run, outcome)

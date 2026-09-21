@@ -2136,6 +2136,26 @@ def test_a_mapped_term_that_is_not_in_the_sources_list_is_refused_and_asked_agai
     assert [r["term"] for r in runner.handover(run_id)["facts"]["requested_meddra"]] == ["DEAFNESS", "FALL"]
 
 
+def test_the_mapping_question_carries_the_sources_whole_term_list_past_the_payload_cap():
+    """Live, the list grew to 1000 terms (55 KB) and the question showed it as "omitted":
+    the agent was asked to copy terms exactly from a list it could not see."""
+    terms = [f"REACTION TERM {n}" for n in range(1000)]
+    wide = {"result": [{"term": t, "count": 1000 - n} for n, t in enumerate(terms)]}
+    asked = []
+    reply = {"requested_meddra": [{"of": "ototoxicity", "term": "REACTION TERM 500",
+                                   "reason": "r", "concept": ["ear"]}]}
+    runner = SkillRunner(MAPPED, execute=lambda tool, a: wide,
+                         ask=lambda q: asked.append(q) or reply, lookup=_recorded_lookup)
+    run_id = runner.start({"drug_name": "x", "requested_aes": ["ototoxicity"]})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    (question,) = asked
+    assert "omitted" in question["context"]["faers_term_rows"], "the rows stay under the cap"
+    assert question["choices"] == {"requested_meddra": terms}
+    assert runner.handover(run_id)["facts"]["requested_meddra_terms"] == ["REACTION TERM 500"]
+
+
 def test_the_handover_names_which_facts_are_judged_mappings():
     """The report check needs to know which tables must be shown to the reader."""
     runner = SkillRunner(MAPPED, execute=lambda tool, a: FAERS_TERMS, ask=lambda q: ANSWER,

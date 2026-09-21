@@ -5,6 +5,8 @@ import urllib.parse
 from .base_tool import BaseTool
 from .tool_registry import register_tool
 
+COUNT_PAGE_WITH_KEY = 1000      # the widest count page openFDA serves; needs an api_key
+
 # ---- Helper: human readable -> openFDA code mapping ----
 HUMAN_TO_FDA_MAP = {
     "fulfillexpeditecriteria": {"Yes": "1", "No": "2"},
@@ -110,7 +112,16 @@ class FDADrugAdverseEventTool(BaseTool):
         reaction_filter = arguments.get("reactionmeddraverse")
 
         response = self._search(arguments)
-        return self._post_process(response, reaction_filter=reaction_filter)
+        out = {"result": self._post_process(response, reaction_filter=reaction_filter)}
+        limit = self._page_limit()
+        if limit and isinstance(response, list) and len(response) >= limit:
+            # A full page is evidence of a cut, not of the end of the distribution.
+            out["note"] = (f"the source returned its limit of {limit} terms; "
+                           "more terms exist beyond this list")
+        return out
+
+    def _page_limit(self):
+        return COUNT_PAGE_WITH_KEY if self.api_key else None
 
     def validate_enum_arguments(self, arguments):
         """Validate that enum-based arguments match the allowed values"""
@@ -200,9 +211,12 @@ class FDADrugAdverseEventTool(BaseTool):
         search_query = "+AND+".join(search_parts)
         search_encoded = urllib.parse.quote(search_query, safe='+:"')
 
-        # Build URL
+        # Build URL. openFDA counts the top 100 terms unless told otherwise, and
+        # allows more only with a key; the widest page it serves is 1000.
+        limit = self._page_limit()
         if self.api_key:
-            url = f"{self.endpoint_url}?api_key={self.api_key}&search={search_encoded}&count={self.count_field}"
+            url = (f"{self.endpoint_url}?api_key={self.api_key}&search={search_encoded}"
+                   f"&count={self.count_field}&limit={limit}")
         else:
             url = (
                 f"{self.endpoint_url}?search={search_encoded}&count={self.count_field}"

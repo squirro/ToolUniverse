@@ -47,6 +47,14 @@ def test_a_placed_term_names_the_ontology_term_and_the_ancestor_that_placed_it()
     assert "ear" in verdict["under"].lower()
 
 
+def test_a_concept_given_as_one_phrase_is_read_as_words_not_letters():
+    """Live, the agent wrote `concept: "kidney failure"`; iterated as letters, any ancestor
+    with an "l" in it placed the term, and RENAL FAILURE came back "placed under All"."""
+    assert place(RECORDED["ACUTE KIDNEY INJURY"], "kidney injury")["placing"] == "placed"
+    assert "kidney" in place(RECORDED["ACUTE KIDNEY INJURY"], "kidney injury")["under"].lower()
+    assert place(RECORDED["FALL"], "kidney failure")["placing"] == "not placed"
+
+
 def test_a_service_failure_reads_as_unknown_and_says_so():
     verdict = place({"hp": {"error": "HTTPError: 503"}, "snomed": {"error": "HTTPError: 503"}}, EAR)
 

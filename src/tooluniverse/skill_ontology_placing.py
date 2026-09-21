@@ -10,6 +10,7 @@ The pure half works on recorded responses; the live half fetches them.
 from __future__ import annotations
 
 import json
+import re
 import urllib.parse
 import urllib.request
 from typing import Any
@@ -18,7 +19,16 @@ ONTOLOGIES = ("hp", "mondo", "efo", "snomed", "mesh", "ncit", "chebi", "go")
 OLS = "https://www.ebi.ac.uk/ols4/api"
 
 
-def place(responses: dict[str, dict], concept: list[str]) -> dict:
+_WORD = re.compile(r"[a-z]+")
+
+
+def _words_of(concept: Any) -> list[str]:
+    """The concept as words, whether the agent wrote a list or one phrase."""
+    parts = [concept] if isinstance(concept, str) else list(concept or [])
+    return [w for part in parts for w in _WORD.findall(str(part).lower())]
+
+
+def place(responses: dict[str, dict], concept: Any) -> dict:
     """The verdict for one term from its recorded OLS responses, one entry per ontology.
 
     `concept`: words that name the branch the user meant (for ototoxicity: ear, hearing,
@@ -26,7 +36,7 @@ def place(responses: dict[str, dict], concept: list[str]) -> dict:
     one of them; not placed when an ontology knows the term but no ancestor does; unknown
     when no ontology knows it or the service failed.
     """
-    words = [w.lower() for w in concept]
+    words = _words_of(concept)
     known, errors = [], []
     for ontology, response in responses.items():
         if "error" in response:

@@ -107,9 +107,11 @@ have (mark the rest "No data available"). Never fabricate tool names, scores, or
 - `cBioPortal_get_mutations` uses `study_id="ccle_broad_2019"` (the default CCLE study) and
   `gene_list` as a **comma-separated STRING** ("KRAS,TP53,SMAD4"), NOT a Python list.
 - `OpenTargets_get_associated_drugs_by_target_ensemblID` needs an **Ensembl ID** — resolve the
-  gene with `MyGene_query_genes(query="<symbol>")` FIRST, then pass `ensemblId="ENSG…", size=10`.
+  gene with `MyGene_query_genes(query="<symbol>")` FIRST, then pass `ensemblId="ENSG…"`. It
+  declares no result-count argument, so rank the returned drugs yourself.
 - `DGIdb_get_drug_gene_interactions` uses `genes=["<symbol>", …]` (a LIST).
-- `STRING_get_network` uses `protein_ids=["<symbol>", …]` (a LIST) and `species=9606`.
+- `STRING_get_network` uses `identifiers="<symbol>"` (a STRING; join several symbols with a
+  carriage return, "SYM1\rSYM2") and `species=9606`.
 
 # OUTPUT CONTRACT (this replaces the skill's report-file / notebook workflow)
 Do NOT narrate the search process. Profile every applicable dimension below, THEN emit ONE
@@ -194,9 +196,10 @@ sample="<tissue or cell>") → combination synergy (positive ZIP = synergy; cyto
 ## §6  Druggable Targets
 PRIMARY: `DGIdb_get_drug_gene_interactions`(genes=["<symbol>", …]) → existing drugs + interaction
 types for the target(s). ENRICHMENT: resolve the gene with `MyGene_query_genes`(query="<symbol>")
-→ Ensembl ID, then `OpenTargets_get_associated_drugs_by_target_ensemblID`(ensemblId="ENSG…",
-size=10) → ranked drugs against the target; and `STRING_get_network`(protein_ids=["<symbol>", …],
-species=9606) → interaction neighbours for mechanistic context.
+→ Ensembl ID, then `OpenTargets_get_associated_drugs_by_target_ensemblID`(ensemblId="ENSG…")
+→ drugs against the target (no result-count argument; rank them yourself); and
+`STRING_get_network`(identifiers="<symbol>", species=9606) → interaction neighbours for
+mechanistic context.
 
 ## §7  Gene Dependency (CRISPR) — BEST-EFFORT, never load-bearing
 `DepMap_search_genes`(query="<symbol>") to validate the gene, then

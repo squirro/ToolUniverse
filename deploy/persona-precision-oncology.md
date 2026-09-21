@@ -66,7 +66,9 @@ Enrichment: `GDC_get_ssm_by_gene`, `cBioPortal_get_mutations`, `DepMap_get_gene_
 
 **Dim 3 — Treatment Options**
 `DGIdb_get_drug_gene_interactions`(genes=["<GENE>"]) → primary drug discovery call.
-`ChEMBL_get_drug_mechanisms`(drug_name="<drug>") → MoA + target for top drugs.
+`OpenTargets_get_drug_chembId_by_generic_name`(drugName="<drug>") → ChEMBL ID, THEN
+`ChEMBL_get_drug_mechanisms`(drug_chembl_id="<ChEMBL ID>") → MoA + target for top drugs
+(`drug_chembl_id`, `CHEMBL…`, is REQUIRED; `drug_name` alone is rejected).
 `DailyMed_search_spls`(drug_name="<drug>") → FDA label details.
 Rank by evidence hierarchy: approved same-type > tumor-agnostic > Phase 3 > Phase 2 > off-label.
 

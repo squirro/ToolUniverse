@@ -98,7 +98,7 @@ across follow-up turns — still one report.
 
 # 7 research dimensions — call execute_tool with the NAMED tool (~1 call each, no find_tools)
 
-1. TF Binding Motifs (JASPAR) — `jaspar_search_matrices`(search=THE_TF, tax_id=9606). Returns the
+1. TF Binding Motifs (JASPAR) — `jaspar_search_matrices`(search=THE_TF, species="9606"). Returns the
    matrices for the TF: matrix_id (versioned, e.g. "MA0139.1"), name (TF symbol), collection
    (CORE = high-quality non-redundant; CNE; POLII), version, sequence-logo URL. Pick the CORE
    matrix (highest version) as the primary motif.
@@ -108,11 +108,13 @@ across follow-up turns — still one report.
    If no anchor TF is in the query, mark §1 "No data available".
 
 2. TF ChIP-seq Binding Evidence (ENCODE) — `ENCODE_search_experiments`(assay_title="TF ChIP-seq",
-   target=THE_TF, biosample_term_name=THE_BIOSAMPLE if a cell type was given, limit=10). Returns
-   experiment metadata (accession ENCSR…, biosample, target, status). This is the EXPERIMENTAL
-   binding evidence that validates the §1 motif. `assay_title` must be the ENCODE controlled
-   vocabulary "TF ChIP-seq" EXACTLY (not "ChIP-seq"). If no result for the specific biosample,
-   retry once WITHOUT `biosample_term_name`. Document a TF with no ENCODE ChIP-seq as a negative
+   target=THE_TF, organism="Homo sapiens", limit=10). Returns experiment metadata (accession
+   ENCSR…, biosample, target, status). This is the EXPERIMENTAL binding evidence that validates
+   the §1 motif. `assay_title` must be the ENCODE controlled vocabulary "TF ChIP-seq" EXACTLY
+   (not "ChIP-seq"). The tool declares no biosample filter (only `assay_title`, `target`,
+   `organism`, `status`, `limit`), so it returns the experiments for that TF across cell types —
+   read the biosample field of each returned record and keep the cell type the user asked for,
+   raising `limit` if it is not among the first hits. Document a TF with no ENCODE ChIP-seq as a negative
    result. ENRICHMENT: `ENCODE_get_experiment`(accession="ENCSR…") for file links / full metadata.
 
 3. Chromatin Accessibility (ENCODE) — `ENCODE_search_chromatin_accessibility`
@@ -132,8 +134,9 @@ across follow-up turns — still one report.
    (annotation_type="candidate Cis-Regulatory Elements", biosample_term_name=THE_BIOSAMPLE,
    limit=10). Returns ENCODE cCRE and ChromHMM annotation datasets available for the cell type
    (the registry-level complement to the per-region §6 lookup). Also surface available biosamples
-   when the user is exploring: `ENCODE_search_biosamples`(term_name=THE_BIOSAMPLE,
-   biosample_type="cell line"|"tissue"|"primary cell", limit=10).
+   when the user is exploring: `ENCODE_search_biosamples`(biosample_type="cell line"|"tissue"|
+   "primary cell", organism="Homo sapiens", limit=10). This tool declares no name filter either —
+   match THE_BIOSAMPLE against the returned accessions and descriptions.
 
 6. cCRE Annotation for a Region (UCSC) — `UCSC_get_encode_cCREs`(chrom="chr8", start=37966000,
    end=37967000) — GRCh38, chrom format "chr8". Returns the cCREs overlapping the region with

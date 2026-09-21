@@ -66,10 +66,11 @@ State the chosen framing in Executive Summary item (1).
 # 8 research dimensions — PRIMARY calls (breadth first, one per dimension)
 
 ## D0. Entity disambiguation (required first)
-- Drug ChEMBL ID: `OpenTargets_get_drug_chembId_by_generic_name`(drug_name="<drug>")
+- Drug ChEMBL ID: `OpenTargets_get_drug_chembId_by_generic_name`(drugName="<drug>")
 - Drug PubChem CID: `PubChem_get_CID_by_compound_name`(compound_name="<drug>")
 - Target Ensembl: `OpenTargets_get_target_id_description_by_name`(targetName="<gene>")
-- Disease EFO/MONDO: `OpenTargets_get_disease_id_description_by_name`(disease_name="<disease>")
+- Disease EFO/MONDO: `OpenTargets_get_disease_id_description_by_name`(diseaseName="<disease>")
+  (required `diseaseName`, camelCase, a plain disease name string)
 CRITICAL: OpenTargets efoId uses UNDERSCORE form (`MONDO_0008315`, `EFO_0001663`).
 NEVER pass `MONDO:0008315` (colon form) — silently returns `{}`.
 
@@ -80,7 +81,7 @@ Missing secondaries: `DGIdb_get_drug_gene_interactions`(gene="<primary target>")
 
 ## D2. Disease node — disease-associated genes
 `OpenTargets_get_associated_targets_by_disease_efoId`(efoId="<UNDERSCORE id>") → ranked genes.
-`GWAS_search_associations_by_gene`(gene="<top gene>") for top 2–3 disease genes.
+`GWAS_search_associations_by_gene`(gene_name="<top gene>") for top 2–3 disease genes.
 
 ## D3. Network edge — C-T bioactivity
 `ChEMBL_search_targets`(target_synonym__icontains="<gene symbol>", organism="Homo sapiens") → `target_chembl_id`, then `ChEMBL_get_target_activities`(target_chembl_id="<CHEMBL id>", limit=25) → IC50/Ki/Kd. ChEMBL does NOT take an Ensembl ID, and the param is `target_chembl_id`, not `target_id`. ALWAYS read `standard_units` — values mix nM and µM. Cite only real returned values; never fabricate constants.
@@ -92,8 +93,9 @@ Missing secondaries: `DGIdb_get_drug_gene_interactions`(gene="<primary target>")
 
 ## D5. Pathway & functional enrichment
 `ReactomeAnalysis_pathway_enrichment`(identifiers="<space-separated HGNC symbols>", projection=true).
-`STRING_functional_enrichment`(identifiers="<genes>", species=9606).
-Fallback: `enrichr_gene_enrichment_analysis`(gene_list=["<genes>"], libraries=["KEGG_2021_Human","Reactome_2022"]).
+`STRING_functional_enrichment`(protein_ids=["<g1>","<g2>","<g3>"], species=9606) — the declared
+argument is `protein_ids`, an ARRAY of symbols (3 or more for a meaningful result).
+Fallback: `enrichr_gene_enrichment_analysis`(gene_list=["<g1>","<g2>"], libs=["KEGG_2021_Human","Reactome_2022"]) — the library argument is `libs` (array).
 
 ## D6. Repurposing predictions
 `OpenTargets_get_associated_drugs_by_target_ensemblID`(ensemblId="<top disease gene>") → drugs on disease genes.
@@ -107,14 +109,16 @@ Fallback: `enrichr_gene_enrichment_analysis`(gene_list=["<genes>"], libraries=["
 `OpenTargets_get_drug_adverse_events_by_chemblId`(chemblId="<ID>") → OT AEs.
 `OpenTargets_get_target_safety_profile_by_ensemblID`(ensemblId="<ID>") → target safety.
 `gnomad_get_gene_constraints`(gene_symbol="<gene>") → LOEUF top 1–2 targets (< 0.35 = constrained).
-`FAERS_calculate_disproportionality`(drug="<drug>", event="<real MedDRA PT>") — only with a real term.
+`FAERS_calculate_disproportionality`(drug="<drug>", adverse_event="<real MedDRA PT>") — the declared
+argument is `adverse_event` (alias `reaction`); `event` is not declared. Only with a real term.
 
 ## D8. Druggability, tractability & clinical evidence
 `OpenTargets_get_target_tractability_by_ensemblID`(ensemblId="<ID>") → tractability buckets; DERIVE the tier (no served tool returns a TDL class — never label a tier "Pharos"): `Approved Drug` or maxClinicalStage=APPROVAL → T1; `Advanced Clinical`/`Phase 1 Clinical`/`High-Quality Ligand`/`Structure with Ligand` → T2; pocket-only (`Druggable Family`) → T3; none true → T4.
 `DGIdb_get_gene_druggability`(gene_name="<gene>") → druggable tier. `OpenTargets_get_target_classes_by_ensemblID`(ensemblId="<ID>") → target class.
 `search_clinical_trials`(condition="<disease>", intervention="<drug>") → trials.
 `PubMed_search_articles`(query="<drug> <disease> network pharmacology") AND `EuropePMC_search_articles`(query="<drug> <disease> polypharmacology") — §8 MUST have REAL papers (titles/PMIDs/years).
-`PharmGKB_get_drug_details`(drug_name="<drug>") → PGx.
+`PharmGKB_search_drugs`(query="<drug>") → PharmGKB Chemical ID, then
+`PharmGKB_get_drug_details`(drug_id="PA…") → PGx. The details tool takes only the PharmGKB ID.
 
 # Network Pharmacology Score — compute from retrieved data, never leave blank
 | Component | Max | Rule |

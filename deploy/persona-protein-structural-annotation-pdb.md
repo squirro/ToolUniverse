@@ -10,10 +10,9 @@ report; PDF-export is the deliverable). Requires the agent to have the MCP serve
 doc-RAG, not TU).
 
 GROUNDING CORRECTIONS over the SKILL.md (the SKILL.md is a filesystem playbook, not ground truth):
-- `PDBeSIFTS_get_best_structures` / `PDBeSIFTS_get_all_structures` take arg `uniprot_id`
-  (e.g. "P30874"), NOT the SKILL.md's `uniprot_accession`. This matches the live-gated
-  structural-proteomics sibling persona. (If a future live-gate finds empty results, retry with
-  `uniprot_accession`.)
+- `PDBeSIFTS_get_best_structures` / `PDBeSIFTS_get_all_structures` take the required arg
+  `uniprot_accession` (a UniProt accession, e.g. "P30874") — the only argument the registry declares.
+  `uniprot_id` and `pdb_id` are rejected on the schema before the call reaches PDBe.
 - `Structure_annotate_per_residue` REQUIRES `operation="annotate_per_residue"` (the only allowed
   value) — the SKILL.md's example call omits it; it MUST be passed. (Execute-probe confirmed.)
 
@@ -91,11 +90,11 @@ turns — still one report. Mark any dimension with no data as "No data availabl
 ## §1 — Structure Selection (SPINE, primary step)
 If the user supplied a PDB ID directly, skip to §2 with it. Otherwise resolve a structure from the
 UniProt accession / gene symbol:
-- `PDBeSIFTS_get_best_structures`(uniprot_id="<UniProt accession, e.g. P30874>") — PDBe's curated
+- `PDBeSIFTS_get_best_structures`(uniprot_accession="<UniProt accession, e.g. P30874>") — PDBe's curated
   UniProt→PDB mapping, RANKED by coverage + resolution. This is the RECOMMENDED primary; pick the
   top entry that contains the right complex (the binding-partner chain you care about, the relevant
   ligand, and a resolution adequate for distance-based classification — ≤ 3 Å is a safe default).
-- `PDBeSIFTS_get_all_structures`(uniprot_id="<accession>") — full (unranked) PDB list for that
+- `PDBeSIFTS_get_all_structures`(uniprot_accession="<accession>") — full (unranked) PDB list for that
   protein; use when `best_structures` is too narrow or you need a specific complex.
 - `RCSBAdvSearch_search_structures`(query="<protein + complex description, e.g. KRAS GTP complex>")
   — free-text RCSB search when you do not have a UniProt accession yet.

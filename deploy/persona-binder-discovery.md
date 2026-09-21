@@ -106,13 +106,16 @@ across follow-up turns — still one report. Mark any dimension with no data as 
 ## §1 — Target Identity & Classification (ALWAYS FIRST)
 **Step 1a**: `UniProt_search`(query="<target name>", organism="human") → UniProt accession +
 canonical sequence + protein name. Store the accession.
-**Step 1b**: `MyGene_query_genes`(q="<gene symbol>", species="human") → Ensembl gene ID
+**Step 1b**: `MyGene_query_genes`(query="<gene symbol>", species="human") → Ensembl gene ID
 (ENSG…). Store it for the OpenTargets calls.
-**Step 1c**: `ChEMBL_search_targets`(query="<target name>", organism="Homo sapiens") → ChEMBL
+**Step 1c**: `ChEMBL_search_targets`(target_synonym__icontains="<gene symbol>", organism="Homo sapiens") →
+ChEMBL — a GENE SYMBOL belongs in `target_synonym__icontains`; for a free-text protein NAME use
+`pref_name__icontains`. The tool declares no `query` argument. Returns the ChEMBL
 target ID (CHEMBL…). Store it for the activity calls.
 Enrichment: `OpenTargets_get_target_classes_by_ensemblID`(ensemblId="<ENSG…>") → target class
 (use it to confirm the binding-site reasoning above);
-`InterPro_get_protein_domains`(accession="<UniProt>") → domain architecture.
+`InterPro_get_protein_domains`(protein_id="<UniProt accession>") → domain architecture. The
+declared argument is `protein_id` and it takes a UniProt accession.
 
 ## §2 — Druggability & Tractability
 - `OpenTargets_get_target_tractability_by_ensemblID`(ensemblId="<ENSG…>") → small-molecule /
@@ -140,14 +143,16 @@ Run these in priority order; ChEMBL is the primary, the rest are corroboration/c
    accession: every uniprot route returns an empty `affinities` list, EGFR included.
    `BindingDB_get_ligands_by_pdb` is the only BindingDB route that returns rows.
 3. `GtoPdb_search_ligands`(...) → IUPHAR pharmacology-curated ligands (especially GPCRs/channels).
-4. `PubChem_search_assays_by_target_gene`(gene="<gene symbol>") → HTS BioAssay screens that may
+4. `PubChem_search_assays_by_target_gene`(gene_symbol="<gene symbol>") → HTS BioAssay screens that may
    surface novel scaffolds not in ChEMBL.
 Identify chemical probes & approved/clinical drugs among the hits; note recurring scaffolds (SAR).
 
 ## §5 — Structure & Binding Sites
 - `ChEMBL_search_binding_sites`(target_chembl_id="<CHEMBL target ID>") → annotated binding sites.
-- `PDB_search_similar_structures`(query="<UniProt accession>", type="sequence") → experimental
-  PDB entries for the target.
+- `PDB_search_similar_structures`(query="<target protein name>", search_type="text") →
+  experimental PDB entries for the target. The declared argument is `search_type`; its value
+  decides what `query` must hold — "text" a name or keyword, "sequence" an amino-acid sequence,
+  "structure" a PDB ID. A UniProt accession fits none of them.
 - `get_protein_metadata_by_pdb_id`(pdb_id="<real PDB ID>") → resolution, method, chains.
 - `get_binding_affinity_by_pdb_id`(pdb_id="<real PDB ID>") → co-crystallized ligand affinities.
 - Enrichment: `get_ligand_smiles_by_chem_comp_id`(chem_comp_id="<real ligand 3-letter code>") →

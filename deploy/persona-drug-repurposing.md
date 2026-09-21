@@ -48,10 +48,12 @@ State the chosen strategy in Executive Summary item (1).
 
 ## D1. Candidate identification
 **(a) Compound-based**: `ChEMBL_search_drugs`(query="<drug>") → phase + ChEMBL ID.
-`ChEMBL_get_drug_mechanisms`(drug_name="<drug>") → primary target(s) + MoA.
+THEN `ChEMBL_get_drug_mechanisms`(drug_chembl_id="<ChEMBL ID from ChEMBL_search_drugs>") → primary
+target(s) + MoA. `drug_chembl_id` (`CHEMBL…`) is REQUIRED; `drug_name` alone is rejected.
 `DGIdb_get_drug_gene_interactions`(gene="<target symbol>") → other drugs on same target.
 **(b) Target-based**: `DGIdb_get_drug_gene_interactions`(gene="<gene symbol>") → drug list.
-Then `ChEMBL_search_drugs` + `ChEMBL_get_drug_mechanisms`(drug_name="<drug>") per hit.
+Then `ChEMBL_search_drugs`(query="<drug>") → ChEMBL ID, THEN
+`ChEMBL_get_drug_mechanisms`(drug_chembl_id="<ChEMBL ID>") per hit.
 **(c) Disease-driven**: `EuropePMC_search_articles`(query="<disease> target repurposing") +
 `PubMed_search_articles`(query="<disease> therapeutic target") → extract gene symbols →
 run (b) per gene.

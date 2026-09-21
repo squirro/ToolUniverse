@@ -34,17 +34,23 @@ If budget runs low: emit what you have, mark missing sections "No data available
 ## Phase 0 — Notation normalization (always first)
 Accept: HGVS coding (`NM_000546.6:c.524G>A`), HGVS protein (`NP_000537.3:p.Arg175His`),
 gene + protein change (`TP53 R175H`), genomic (`chr17:7674220:G:A` hg38), rsID.
-Expand shorthand to full three-letter notation for ProtVar ("TP53 R175H" → "TP53 Arg175His").
+ProtVar does NOT take a gene symbol or three-letter notation: for a gene + protein change, FIRST
+resolve the UniProt accession with `UniProt_search(query="gene:<SYMBOL> AND organism_id:9606 AND reviewed:true", fields=["accession"])`
+(`fields` is an ARRAY), THEN pass `"<accession> <single-letter change>"` (form `P04637 R175H`).
 Carry the UniProt `accession` and 1-based `position` resolved in Phase 1 into every later call.
 
 ## Phase 1 — ProtVar protein-level annotation (always run)
-1. `ProtVar_map_variant` — pass `hgvs`, `genomic` (chr:pos:ref:alt), or `protein_variant`
-   (GENE pAA#AA three-letter); extract `accession` (UniProt ID) and `position`.
+1. `ProtVar_map_variant(variant)` — ONE required string argument, `variant`, in one of three formats:
+   `"<UniProt accession> <single-letter change>"` (form `P04637 R175H`), a dbSNP rsID (`rs…`), or
+   genomic `chr:pos:ref:alt` (GRCh38). It declares no other argument (no HGVS, genomic or
+   protein-variant keyword). Extract `accession` (UniProt ID), `position`, and `genomic_coordinates.pos`.
 2. `ProtVar_get_function(accession, position)` — conservation score, domain membership,
    PTM sites, active/binding site flags, secondary structure.
    Key signals: `active_site`/`binding_site`=True → mechanistically critical regardless of AF;
    high `conservation_score` raises pathogenicity prior; loop < helix/sheet constraint.
-3. `ProtVar_get_population(accession, position)` — per-ancestry AF from ProtVar's gnomAD
+3. `ProtVar_get_population(accession, position, genomic_location)` — all three REQUIRED;
+   `genomic_location` is the INTEGER GRCh38 coordinate (`genomic_coordinates.pos`) from step 1, so
+   step 1 comes first — per-ancestry AF from ProtVar's gnomAD
    aggregation. Cross-check with Phase 2 for completeness.
 
 ## Phase 2 — Population frequency (gnomAD; always run)
@@ -55,7 +61,9 @@ Absence from gnomAD is informative (ultra-rare) but does not independently estab
 pathogenicity.
 
 ## Phase 3 — Deleteriousness scoring (CADD always; OpenCRAVAT for missense enrichment)
-`CADD_get_variant_score(chrom, pos, ref, alt, version="GRCh38")` — chrom WITHOUT "chr" prefix.
+`CADD_get_variant_score(chrom, pos, ref, alt, version="GRCh38-v1.7")` — chrom WITHOUT "chr" prefix;
+`pos` is an integer. `version` is an enum: `GRCh38-v1.7`, `GRCh37-v1.7`, `GRCh38-v1.6`, `GRCh37-v1.6`
+(a bare `GRCh38` is rejected).
 PHRED ≥ 30 = top 0.1% most deleterious; ≥ 20 = top 1–10%; < 10 supports benign.
 
 `OpenCRAVAT_annotate_variant(chrom, pos, ref_base, alt_base, annotators)` — chrom
@@ -73,7 +81,8 @@ Expert-panel classifications override computational predictions; single-submitte
 limited weight. Fallback: OpenCRAVAT `annotators="clinvar"` when search returns empty.
 
 ## Phase 5 — Gene-disease validity (ClinGen; always run)
-`ClinGen_search_gene_validity(gene_symbol, disease_label)` → curated gene-disease evidence.
+`ClinGen_search_gene_validity(gene)` — ONE required argument, `gene` (an HGNC gene symbol string); the
+tool takes no disease argument, so filter by disease in the result → curated gene-disease evidence.
 Classifications strongest → weakest: Definitive → Strong → Moderate → Limited → Disputed → Refuted.
 CRITICAL: Disputed/Refuted gene-disease → flag ANY ClinVar P/LP classification; clinical
 relevance is uncertain independent of variant evidence. State ClinGen class BEFORE interpreting

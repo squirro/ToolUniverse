@@ -88,7 +88,7 @@ PRIMARY: `enrichr_gene_enrichment_analysis`(gene_list=[top hit symbols], libs=["
 ALSO: `ReactomeAnalysis_pathway_enrichment`(identifiers="<top hit SYMBOLS, newline-separated>")
 → Reactome FDR-ranked pathways (rank by effect-size/FDR; reproduce the LITERAL pathway label).
 Clustering in coherent pathways = real biology; scattered singletons = suspect technical noise.
-Keyword fallback for one pathway of interest: `kegg_search_pathway`(query="<keyword>") then
+Keyword fallback for one pathway of interest: `kegg_search_pathway`(keyword="<keyword>") then
 `kegg_get_pathway_info`(pathway_id="<hsaNNNNN id from search>").
 
 ## §3  Public-Essentiality Cross-Check — is the hit context-specific or broadly essential?
@@ -102,11 +102,14 @@ literature is the better CONTEXT-SPECIFIC candidate. State the DepMap substituti
 ## §4  Druggability / Tractability — is this hit a viable drug target?
 PRIMARY: `DGIdb_get_drug_gene_interactions`(genes=["<symbol>", …]) → existing drugs, interaction
 types, sources. AND `DGIdb_get_gene_druggability`(genes=["<symbol>", …]) → druggability category.
-Structural druggability: `ChEMBL_search_targets`(query="<symbol>") → ChEMBL target id + class.
+Structural druggability: `ChEMBL_search_targets`(target_synonym__icontains="<symbol>",
+organism="Homo sapiens") → ChEMBL target id + class. A GENE SYMBOL belongs in
+`target_synonym__icontains`; ChEMBL keeps symbols as component synonyms, and the tool declares
+no `query` argument.
 Existing compounds ⇒ tractable / repurposing-ready; clinically-actionable category ⇒ priority.
 
 ## §5  Interaction Neighbourhood — does the hit sit in a coherent functional module?
-PRIMARY: `STRING_get_network`(identifiers=["<top hit symbols>"], species=9606) → protein-protein
+PRIMARY: `STRING_get_network`(identifiers="<SYM1>\r<SYM2>", species=9606) → protein-protein
 interaction edges & confidence. A hit tightly connected to other hits / to a known complex
 strengthens the biological call; an isolated node is weaker. Use to corroborate §2 clustering.
 
@@ -118,8 +121,12 @@ driver of the screened phenotype, not an artefact.
 ## §7  Cancer & Variant Context (for resistance / oncology screens)
 If the screen is a cancer dependency / drug-resistance screen, you MUST populate this:
 `COSMIC_get_mutations_by_gene`(gene="<symbol>") → somatic mutation landscape.
-`cBioPortal_get_mutations`(gene="<symbol>", …) → mutations in specific cancer cohorts.
-`civic_search_evidence_items`(gene="<symbol>") → clinical evidence for resistance/sensitivity.
+`cBioPortal_get_mutations`(study_id="<study, e.g. brca_tcga>", gene_list="<SYM1>,<SYM2>") →
+mutations in a specific cancer cohort. Both arguments are required; `gene_list` is a
+comma-separated STRING and there is no gene-only form.
+`civic_search_evidence_items`(molecular_profile="<symbol>") → clinical evidence for
+resistance/sensitivity. The tool declares no gene argument; `molecular_profile` matches profile
+names by substring, so a bare symbol returns that gene's variant profiles.
 `ClinVar_search_variants`(gene="<symbol>") → known pathogenic variants.
 For genuinely non-oncology screens, mark "Not applicable (non-cancer screen)".
 

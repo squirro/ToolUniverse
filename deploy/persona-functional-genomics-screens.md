@@ -101,8 +101,9 @@ BFs, or Chronos scores.
 ## §2  Pathway & Network Enrichment — do the top hits cluster, or are they scattered (noise)?
 PRIMARY: `ReactomeAnalysis_pathway_enrichment`(identifiers="<top hit SYMBOLS, space-separated, e.g.
 TP53 BRCA1 EGFR>") → Reactome FDR-ranked pathways (rank by FDR; reproduce the LITERAL pathway label).
-ALSO: `STRING_functional_enrichment`(identifiers="<top hit symbols, newline / carriage-return
-separated>", species=9606) → GO / KEGG term enrichment with member genes + adjusted p.
+ALSO: `STRING_functional_enrichment`(protein_ids=["<symbol>", "<symbol>", "<symbol>"], species=9606)
+→ GO / KEGG term enrichment with member genes + adjusted p. The declared argument is
+`protein_ids`, an ARRAY of symbols (3 or more recommended), not a separator-joined string.
 Clustering in coherent pathways/terms = real biology; scattered singletons = suspect technical noise.
 
 ## §3  Essentiality — is the hit context-specific (good target) or broadly essential (housekeeping)?

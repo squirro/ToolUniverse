@@ -40,11 +40,13 @@ Examples below use "type 2 diabetes" / rs7903146 / TCF7L2 as a running illustrat
 substitute the user's actual trait and resolved IDs throughout.
 
 ## Step 1 — Trait → GWAS studies (2 parallel calls)
-- `gwas_get_studies_for_trait`(trait="type 2 diabetes") — GWAS Catalog study list
+- `gwas_get_studies_for_trait`(disease_trait="type 2 diabetes") — GWAS Catalog study list. The tool
+  needs ONE of `disease_trait` (trait name, free text), `efo_id` (e.g. `EFO_0001645`), `efo_uri`, or
+  `efo_trait` (exact EFO label); it declares no `trait` argument.
 - `OpenTargets_search_gwas_studies_by_disease`(disease_name="type 2 diabetes") — Open Targets study list
 
 Report: study count, largest N, ancestries represented.
-Note: `gwas_search_studies`(query="type 2 diabetes") is an alternative if
+Note: `gwas_search_studies`(disease_trait="type 2 diabetes") is an alternative if
 `gwas_get_studies_for_trait` returns nothing.
 
 ## Step 2 — Studies → genome-wide-significant associations
@@ -56,34 +58,41 @@ For GWAS Catalog use:
   higher-confidence hits.
 
 For a specific study accession from Step 1:
-- `gwas_get_associations_for_study`(study_id="GCST001234") — use REAL accession from Step 1.
+- `gwas_get_associations_for_study`(accession_id="GCST001234") — required `accession_id` is a GWAS
+  Catalog study accession (string, `GCST…`); use the REAL accession from Step 1, so Step 1 comes first.
 
 Report: total associations, top 20 by p-value, mapped genes.
 
 ## Step 3 — Variants → SNP annotation
 For top lead SNPs (rsIDs from Step 2, e.g. rs7903146):
-- `gwas_get_snp_by_id`(snp_id="rs7903146") — allele frequency, functional consequence, genomic context
+- `gwas_get_snp_by_id`(rs_id="rs7903146") — allele frequency, functional consequence, genomic context
 
 For variant-level Open Targets annotation (resolves OT variant IDs from rsIDs):
-- `OpenTargets_get_variant_info`(variant_id="rs7903146") — also returns population frequencies and
-  consequence type. Use the returned OT variant ID (format: chr_pos_ref_alt) for Step 4.
+- `OpenTargets_get_variant_info`(variantId="10_112998590_C_T") — the declared argument is
+  `variantId` and it takes the Open Targets variant ID (chr_pos_ref_alt), never an rsID.
+  Resolve the rsID first with `OpenTargets_multi_entity_search_by_query_string`
+  (queryString="rs7903146", entityNames=["variant"]). Also returns population frequencies and
+  consequence type. Reuse the same OT variant ID for Step 4.
 
-Note: `gwas_get_variants_for_trait`(trait="type 2 diabetes", p_value_threshold=5e-8) is an
-alternative bulk pull with server-side p-value filtering. Check returned p-values — the API
-sometimes returns pre-filtered data and the client filter may double-apply, yielding fewer
-hits than expected.
+Note: `gwas_get_variants_for_trait`(trait="type 2 diabetes", size=100) is an alternative bulk
+pull. It declares no p-value argument, so it returns the catalogued variants for the trait
+unfiltered; apply the p < 5×10⁻⁸ cut yourself to the returned p-values, and raise `size` if
+too few significant hits remain.
 
 Report: functional consequence, MAF, nearest gene (positional only — treat as a weak prior).
 
 ## Step 4 — Fine-mapping: credible sets and L2G scores
 This is the most important step. For REAL Open Targets study accessions from Step 1:
-- `OpenTargets_get_study_credible_sets`(study_id="GCST001234") — use the REAL study ID. Returns
+- `OpenTargets_get_study_credible_sets`(studyIds=["GCST001234"]) — required `studyIds` is an ARRAY of
+  Open Targets study IDs from Step 1's `OpenTargets_search_gwas_studies_by_disease` result (a bare
+  string is rejected); use the REAL study ID. Returns
   credible sets with posterior inclusion probabilities (PIP) and L2G gene scores for each locus.
-- `OpenTargets_get_credible_set_detail`(credible_set_id="…") — per-locus detail when you need
-  full PIP distribution for a credible set; use the ID returned by the previous call.
+- `OpenTargets_get_credible_set_detail`(studyLocusId="…") — the declared argument is
+  `studyLocusId`, the 32-character credible-set hash returned by the previous call. Gives the
+  full PIP distribution for that credible set.
 
 For a specific variant's credible-set membership:
-- `OpenTargets_get_variant_credible_sets`(variant_id="10_112998590_C_T") — example OT variant ID
+- `OpenTargets_get_variant_credible_sets`(variantId="10_112998590_C_T") — example OT variant ID
   format (chr_pos_ref_alt); use the ID returned by `OpenTargets_get_variant_info` in Step 3,
   NOT an rsID directly.
 
@@ -97,7 +106,8 @@ Report: per-locus top L2G gene + score, credible-set size, PIP of top variant.
 For the top candidate genes from Steps 2 & 4:
 - `gwas_get_snps_for_gene`(gene_symbol="TCF7L2") — all GWAS-Catalog SNPs mapped to this gene.
   Parameter is `gene_symbol`, NOT `mapped_gene`.
-- `gwas_search_snps`(query="gene symbol or rsID") — broader search when a direct ID is unavailable.
+- `gwas_search_snps`(mapped_gene="TCF7L2") — broader search by gene; the tool declares only
+  `mapped_gene` and `rs_id` (plus paging), so search by one or the other, not free text.
 - `gwas_search_associations`(query="gene symbol") — cross-trait associations for pleiotropy check.
 
 Report: SNP count per gene, any pleiotropic trait associations.

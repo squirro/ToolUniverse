@@ -69,7 +69,8 @@ TMB-high benefit — check every mutation list for these before scoring.
 # 8 research dimensions — one execute_tool call each (primary pass)
 
 ## §1  Cancer context — resolve IDs
-`OpenTargets_get_disease_id_description_by_name`(disease_name="<cancer type>")
+`OpenTargets_get_disease_id_description_by_name`(diseaseName="<cancer type>") — required
+`diseaseName` (camelCase; a plain disease name string; `disease_name` is rejected)
 → capture EFO/MONDO ID for use in §8. State a caveat if only a broader term is found.
 
 ## §2  TMB & MSI classification — deterministic from input
@@ -79,9 +80,11 @@ Check `fda_pharmacogenomic_biomarkers`(drug_name="pembrolizumab") to confirm cur
 FDA TMB-H and MSI-H approval thresholds. Also call for `nivolumab` if it is the candidate ICI.
 
 ## §3  PD-L1 / immune checkpoint expression
-`HPA_get_cancer_prognostics_by_gene`(gene_name="CD274") — mandatory.
+FIRST `MyGene_query_genes`(query="CD274", species="human") → Ensembl gene ID, THEN
+`HPA_get_cancer_prognostics_by_gene`(ensembl_id="<ENSG… from MyGene>") — mandatory. Required
+`ensembl_id` is an Ensembl GENE ID (`ENSG…`); a gene symbol or `gene_name` is rejected.
 Classify: High ≥ 50%, Positive 1–49%, Negative < 1%.
-Budget permitting: repeat for PDCD1, CTLA4, CD8A to classify immune phenotype
+Budget permitting: repeat (same two-call order) for PDCD1, CTLA4, CD8A to classify immune phenotype
 (Hot = T-cell inflamed / Cold = immune desert / Excluded / Suppressed).
 
 ## §4  Mutation annotation — sensitivity & resistance
@@ -92,12 +95,15 @@ Bonuses/penalties from the score table below apply here. For user-supplied rsIDs
 ## §5  Neoantigen & epitope evidence
 Estimate neoantigen burden: missense_count × 0.3 + frameshift_count × 1.5
 POLE/POLD1 mutations indicate ultra-high neoantigen load (apply +10 / +5 bonus above).
-`iedb_search_epitopes`(antigen_name="<top mutated gene protein, e.g. TP53>") — call once for
-the most clinically prominent mutated gene; flag "epitope data limited" if no results.
+`iedb_search_epitopes`(filters={"parent_source_antigen_iri_search": "cs.{UNIPROT:<accession>}"},
+limit=25) — call once for the most clinically prominent mutated gene, resolving its UniProt
+accession first with `UniProt_search`(query="<gene> human"). The tool declares no antigen
+argument: the antigen is a PostgREST column filter passed in `filters`, and that column holds
+IRIs. Flag "epitope data limited" if no results.
 
 ## §6  Pathway enrichment (resistance / immune evasion)
 `enrichr_gene_enrichment_analysis`(gene_list=["<gene symbols from §4>"],
-  gene_set_library="KEGG_2021_Human")
+  libs=["KEGG_2021_Human"]) — the library argument is `libs`, an ARRAY.
 Prioritise pathways: IFN-γ signalling, antigen presentation (MHC-I), WNT/β-catenin, PI3K/AKT/
 mTOR, MAPK — activation of cold/suppressive pathways raises resistance risk.
 

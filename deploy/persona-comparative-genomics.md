@@ -113,7 +113,8 @@ it as such, never fabricate one.
 
 ## §4 Functional Annotation Comparison (UniProt GO terms per species)
 - `UniProt_search`(query="gene:<SYMBOL> AND organism_id:9606 AND reviewed:true",
-  fields="accession,gene_names,go_id,go_p,go_f,go_c") — human Swiss-Prot accession + GO terms.
+  fields=["accession","gene_names","go_id","go_p","go_f","go_c"]) — `fields` is an ARRAY of field names
+  (a comma-separated string is rejected) — human Swiss-Prot accession + GO terms.
   Repeat per ortholog species using the species taxon (mouse 10090, rat 10116, zebrafish 7955, fly
   7227, worm 6239, yeast 4932). If `reviewed:true` returns empty for a species, retry without it
   (that organism may have only TrEMBL entries).

@@ -91,8 +91,9 @@ organism="Homo sapiens") → target_chembl_id; then
 `ChEMBL_get_target_activities`(target_chembl_id="<id>") → all ligands with affinities.
 **BindingDB** (optional): `BindingDB_get_targets_by_compound`(smiles="<real SMILES>") or
 `BindingDB_get_ligands_by_uniprot`(uniprot_id="<UniProt>"); if it times out, fall back to ChEMBL.
-**For approved drugs**: `ChEMBL_get_drug_mechanisms`(drug_name="<name>") → mechanism of action,
-target name.
+**For approved drugs**: `ChEMBL_get_drug_mechanisms`(drug_chembl_id="<ChEMBL ID>") → mechanism of action,
+target name. `drug_chembl_id` (the compound's `CHEMBL…` molecule ID, already resolved for the
+compound-centric call above) is REQUIRED; `drug_name` alone is rejected.
 
 Grade EVERY activity row by pchembl_value using this table (MANDATORY — never leave the Potency
 column blank when a pchembl_value exists):

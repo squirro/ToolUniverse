@@ -88,7 +88,8 @@ is a failure.
 8. Chemical–Protein Interactions — `PubChem_get_compound_bioactivity`(cid=<CID>) → protein targets
    assayed against THIS chemical, with active/inactive outcomes. Then `INDRA_get_statements`(agent=
    "<chemical>", limit=15) → literature-mined chemical→gene effects with PMIDs. For a drug with a
-   ChEMBL ID, `ChEMBL_get_drug_mechanisms`(drug_name="<drug>") → curated mechanism targets. Add
+   ChEMBL ID, `ChEMBL_get_drug_mechanisms`(drug_chembl_id="<ChEMBL ID>") → curated mechanism targets
+   (`drug_chembl_id`, a `CHEMBL…` molecule ID, is REQUIRED; `drug_name` alone is rejected). Add
    `DGIdb_get_drug_gene_interactions`(genes=["<key gene>"]) for druggability context on a key target.
 9. Structural Alerts — `ChEMBL_search_compound_structural_alerts`(molecule_chembl_id="<ChEMBL ID>")
    → PAINS/Brenk/Glaxo alerts; with a SMILES but no ChEMBL ID use `DrugProps_pains_filter`(smiles=

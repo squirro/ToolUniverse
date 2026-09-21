@@ -116,7 +116,7 @@ available". You do NOT have a filesystem; emit coordinates/pLDDT arrays as in-re
    complex.
 
 5. **Experimental Structure Benchmark (RCSB).** Call
-   `RCSBAdvSearch_search_structures`(query="<the REAL protein/gene name>", limit=10) to find
+   `RCSBAdvSearch_search_structures`(query="<the REAL protein/gene name>", rows=10) to find
    experimental
    structures. Pick the best (highest-resolution X-ray, or best Cryo-EM), then call
    `RCSBData_get_entry`(pdb_id="<the REAL 4-char PDB ID of that best hit>") for method,

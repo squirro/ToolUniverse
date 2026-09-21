@@ -92,7 +92,8 @@ Note: parameter is `ensemblId` with lowercase 'd'.
   EFO_ underscore id was recovered. If HTTP 400, fall back to DGIdb result.
 - `OpenTargets_get_drug_mechanisms_of_action_by_chemblId(chemblId="CHEMBL…")` — for top 3–5
   drugs. `mechanismsOfAction` carries both mechanism AND target — never leave these blank
-  for an approved drug. Also use `ChEMBL_search_drugs` / `ChEMBL_get_drug_mechanisms` if OT
+  for an approved drug. Also use `ChEMBL_search_drugs(query="<drug>")` /
+  `ChEMBL_get_drug_mechanisms(drug_chembl_id="CHEMBL…")` (required: the same ChEMBL ID) if OT
   MoA returns nothing.
 
 **Phase 5 — Trials & literature** (2 calls)

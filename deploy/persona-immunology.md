@@ -119,15 +119,19 @@ For interaction enrichment: `intact_get_interaction_network`(identifier="<UniPro
   NOTE: intact_get_interaction_network requires UniProt ACCESSION (e.g. "P05231"), not gene symbol.
 
 **§3. Epitope & Immune Repertoire**
-B-cell epitopes: `iedb_search_bcell`(filters={"object.source_organism.organism_name": "<pathogen or self-antigen>"}, limit=20)
+B-cell epitopes: `iedb_search_bcell`(filters={"source_organism_name": "ilike.*<pathogen or self-antigen>*"}, limit=20)
+  `filters` maps a PostgREST column to a filter EXPRESSION ("ilike.*text*", "eq.value") — a bare value is rejected.
 T-cell assays: `iedb_search_tcell_assays`(sequence_contains="<epitope peptide if known>",
-  filters={"object.source_molecule.molecule_name": "<antigen>"}, limit=20)
-MHC binding: `iedb_search_mhc`(filters={"object.source_molecule.molecule_name": "<antigen>"}, limit=20)
+  filters={"parent_source_antigen_name": "ilike.*<antigen>*"}, limit=20)
+MHC binding: `iedb_search_mhc`(filters={"parent_source_antigen_name": "ilike.*<antigen>*"}, limit=20)
+  For an allele-keyed search use {"mhc_restriction": "ilike.*<HLA allele>*", "mhc_class": "eq.II"}.
 Epitope detail (top 1–3 epitope IDs from above): `iedb_get_epitope_antigens`(structure_id=<id>)
   and `iedb_get_epitope_mhc`(structure_id=<id>)
 TCR sequences (if T-cell disease): `iedb_search_tcr_sequences`(filters={...}, limit=20)
 BCR sequences (if antibody-mediated): `iedb_search_bcr_sequences`(filters={...}, limit=20)
-IMGT gene usage: `IMGT_search_genes`(gene_name="IGHV") then `IMGT_get_gene_info`(gene_name="<gene>")
+IMGT gene usage: `IMGT_search_genes`(gene_type="IGHV", species="Homo sapiens") then
+  `IMGT_search_genes`(query="<gene>") for one gene. `IMGT_get_gene_info` declares only `operation`
+  and returns IMGT database and nomenclature descriptions, so it cannot look up a named gene.
 
 **§4. Therapeutic Antibodies (TheraSAbDab)**
 First: `TheraSAbDab_search_by_target`(target="<antigen name>") — all mAbs for this target.
@@ -138,8 +142,9 @@ Do NOT call `search_therapeutics` — it is NOT available; use TheraSAbDab tools
 
 **§5. Structural Biology (SAbDab)**
 `SAbDab_search_structures`(query="<antigen or drug name>") returns a browse URL only — note it.
-For known PDB IDs: `SAbDab_get_structure`(pdb_id="<id>") + `SAbDab_get_summary`(pdb_id="<id>")
-  for CDR loop details, paratope residues, resolution, and chain assignments.
+For known PDB IDs: `SAbDab_get_structure`(pdb_id="<id>") for CDR loop details, paratope residues,
+  resolution, and chain assignments. `SAbDab_get_summary` declares only `operation` and returns
+  database-level content and access information, not a per-structure record.
 Interpret: VH/VL = specificity; Fc = effector function; CDR-H3 = primary contact loop.
 
 **§6. Pathways & Signaling**

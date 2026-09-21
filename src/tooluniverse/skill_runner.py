@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Any
 
 from .skill_graph import SkillGraphError, _fill, next_step, skipped_gates, stalled_steps
+from .skill_ontology_placing import place
 from .skill_working_record import WorkingRecord
 
 _OPS: dict[str, Callable[[Any, Any], bool]] = {
@@ -483,6 +484,51 @@ def handover_of(graph: dict, run: dict) -> dict:
     if stalled := stalled_steps(graph, run["done"] + run["skipped"], run["facts"]):
         handed["stalled"] = stalled
     return handed
+
+
+# --- mapping: the user's words onto the source's own vocabulary, judged, checked, placed ----
+#
+# The check proves membership, not meaning: live, "ototoxicity" was mapped onto DIZZINESS and
+# FALL and both were accepted because both are FAERS terms. So the mapping is a fact table the
+# report must show, each row with the agent's reason and a placing from an ontology.
+
+def mapping_problem(spec: dict, outcome: dict, facts: dict) -> str | None:
+    """A mapped term the source does not list, or a row without the shape asked for."""
+    for name, rule in (spec.get("mapping") or {}).items():
+        rows = outcome["facts"].get(name)
+        if rows is None:
+            continue
+        if not isinstance(rows, list) or not all(isinstance(r, dict) and "term" in r for r in rows):
+            return (f"{name} must be a list of rows {{of, term, reason, concept}}, one per mapped "
+                    f"term; got {json.dumps(rows, default=str)[:120]}")
+        allowed = _picked(rule["onto"], {**facts, **outcome["facts"]})
+        if allowed is None:
+            return f"{rule['onto']['rows']} is not a list of rows"
+        stray = [r["term"] for r in rows if not any(_same(r["term"], a) for a in allowed)]
+        if stray:
+            return (f"{name}: not in {rule['onto']['rows']}.{rule['onto']['field']}: {stray} -- "
+                    "copy each term exactly as the source lists it, or leave it out")
+    return None
+
+
+def placed_mapping(spec: dict, outcome: dict, lookup: Callable[[str], dict] | None) -> dict:
+    """Each mapped row gets its placing; the flat list of terms is kept for the steps that loop."""
+    facts = dict(outcome["facts"])
+    for name in (spec.get("mapping") or {}):
+        rows = facts.get(name)
+        if not isinstance(rows, list):
+            continue
+        placed = []
+        for row in rows:
+            verdict = (place(lookup(row["term"]), row.get("concept") or []) if lookup
+                       else {"placing": "unknown", "ontology": None, "term": None,
+                             "label": None, "under": None})
+            placed.append({**row, **{k: verdict.get(k) for k in
+                                     ("placing", "ontology", "under")},
+                           "ontology_term": verdict.get("term"), "ontology_label": verdict.get("label")})
+        facts[name] = placed
+        facts[f"{name}_terms"] = list(dict.fromkeys(r["term"] for r in placed))
+    return {**outcome, "facts": facts}
 
 
 def keep_evidence(record: WorkingRecord, tables: dict | None, outcome: dict) -> list[dict]:
@@ -938,9 +984,12 @@ class SkillRunner:
 
     def __init__(self, graph: dict, execute: Callable[[str, dict], Any],
                  ask: Callable[[dict], list[str]] | None = None,
-                 records: str | Path | None = None):
+                 records: str | Path | None = None,
+                 lookup: Callable[[str], dict] | None = None):
         self.graph = graph
         self.execute = execute
+        # Where a mapped term sits in an ontology; injected so tests read recorded responses.
+        self.lookup = lookup
         # Where each run's Working Record is kept; without it results stay in memory only.
         self.records = records
         # `ask` puts the model back in the loop as an ORACLE, never as the
@@ -1019,13 +1068,18 @@ class SkillRunner:
         outcome = judged(outcome, wants, answer)
         outcome, problem = checked(spec, step["id"], wants, outcome, run["facts"],
                                    answered=answer is not None)
+        problem = problem or mapping_problem(spec, outcome, run["facts"])
         if problem:
             retry = {**question, "problem": problem}
             answer = self.ask(retry)
             asked(run, retry, answer)
             outcome = judged(outcome, wants, answer)
             outcome, _ = checked(spec, step["id"], wants, outcome, run["facts"], answered=False)
-        return outcome
+            if mapping_problem(spec, outcome, run["facts"]):
+                for name in spec.get("mapping") or {}:
+                    outcome["facts"].pop(name, None)
+                    outcome["unresolved"].append(name)
+        return placed_mapping(spec, outcome, self.lookup)
 
     def _peek_safe(self, run_id: str):
         return next_runnable(self.graph, self._runs[run_id])

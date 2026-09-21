@@ -1,0 +1,566 @@
+{
+ "DEAFNESS": {
+  "hp": {
+   "search": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000365",
+     "obo_id": "HP:0000365",
+     "label": "Hearing impairment",
+     "ontology_name": "hp"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000001",
+     "label": "All"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000118",
+     "label": "Phenotypic abnormality"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000364",
+     "label": "Hearing abnormality"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000598",
+     "label": "Abnormality of the ear"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0031704",
+     "label": "Abnormal ear physiology"
+    }
+   ]
+  },
+  "snomed": {
+   "search": [],
+   "ancestors": []
+  }
+ },
+ "TINNITUS": {
+  "hp": {
+   "search": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000360",
+     "obo_id": "HP:0000360",
+     "label": "Tinnitus",
+     "ontology_name": "hp"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000001",
+     "label": "All"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000118",
+     "label": "Phenotypic abnormality"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000364",
+     "label": "Hearing abnormality"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000598",
+     "label": "Abnormality of the ear"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0031704",
+     "label": "Abnormal ear physiology"
+    }
+   ]
+  },
+  "snomed": {
+   "search": [
+    {
+     "iri": "http://snomed.info/id/60862001",
+     "obo_id": "SNOMED:60862001",
+     "label": "Tinnitus",
+     "ontology_name": "snomed"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://snomed.info/id/118228005",
+     "label": "Functional finding"
+    },
+    {
+     "iri": "http://snomed.info/id/118230007",
+     "label": "Hearing finding"
+    },
+    {
+     "iri": "http://snomed.info/id/118236001",
+     "label": "Ear and auditory finding"
+    },
+    {
+     "iri": "http://snomed.info/id/138875005",
+     "label": "SNOMED CT Concept"
+    },
+    {
+     "iri": "http://snomed.info/id/247234006",
+     "label": "Ear finding"
+    },
+    {
+     "iri": "http://snomed.info/id/297268004",
+     "label": "Ear, nose and throat finding"
+    },
+    {
+     "iri": "http://snomed.info/id/298364001",
+     "label": "Finding of head region"
+    },
+    {
+     "iri": "http://snomed.info/id/404684003",
+     "label": "Clinical finding"
+    },
+    {
+     "iri": "http://snomed.info/id/406122000",
+     "label": "Head finding"
+    }
+   ]
+  }
+ },
+ "HYPOACUSIS": {
+  "hp": {
+   "search": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000365",
+     "obo_id": "HP:0000365",
+     "label": "Hearing impairment",
+     "ontology_name": "hp"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000001",
+     "label": "All"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000118",
+     "label": "Phenotypic abnormality"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000364",
+     "label": "Hearing abnormality"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000598",
+     "label": "Abnormality of the ear"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0031704",
+     "label": "Abnormal ear physiology"
+    }
+   ]
+  },
+  "snomed": {
+   "search": [],
+   "ancestors": []
+  }
+ },
+ "DIZZINESS": {
+  "hp": {
+   "search": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0002321",
+     "obo_id": "HP:0002321",
+     "label": "Vertigo",
+     "ontology_name": "hp"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000001",
+     "label": "All"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000118",
+     "label": "Phenotypic abnormality"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000598",
+     "label": "Abnormality of the ear"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0001751",
+     "label": "Abnormal vestibular function"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0011389",
+     "label": "Functional abnormality of the inner ear"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0031704",
+     "label": "Abnormal ear physiology"
+    }
+   ]
+  },
+  "snomed": {
+   "search": [
+    {
+     "iri": "http://snomed.info/id/404640003",
+     "obo_id": "SNOMED:404640003",
+     "label": "Dizziness",
+     "ontology_name": "snomed"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://snomed.info/id/102957003",
+     "label": "Neurological finding"
+    },
+    {
+     "iri": "http://snomed.info/id/138875005",
+     "label": "SNOMED CT Concept"
+    },
+    {
+     "iri": "http://snomed.info/id/404684003",
+     "label": "Clinical finding"
+    }
+   ]
+  }
+ },
+ "FALL": {
+  "hp": {
+   "search": [],
+   "ancestors": []
+  },
+  "snomed": {
+   "search": [
+    {
+     "iri": "http://snomed.info/id/1912002",
+     "obo_id": "SNOMED:1912002",
+     "label": "Fall",
+     "ontology_name": "snomed"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://snomed.info/id/138875005",
+     "label": "SNOMED CT Concept"
+    },
+    {
+     "iri": "http://snomed.info/id/272379006",
+     "label": "Event"
+    },
+    {
+     "iri": "http://snomed.info/id/418715001",
+     "label": "Exposure to potentially harmful entity"
+    },
+    {
+     "iri": "http://snomed.info/id/773760007",
+     "label": "Traumatic event"
+    },
+    {
+     "iri": "http://snomed.info/id/83208000",
+     "label": "Exposure to mechanical force"
+    }
+   ]
+  }
+ },
+ "VERTIGO": {
+  "hp": {
+   "search": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0002321",
+     "obo_id": "HP:0002321",
+     "label": "Vertigo",
+     "ontology_name": "hp"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000001",
+     "label": "All"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000118",
+     "label": "Phenotypic abnormality"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000598",
+     "label": "Abnormality of the ear"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0001751",
+     "label": "Abnormal vestibular function"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0011389",
+     "label": "Functional abnormality of the inner ear"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0031704",
+     "label": "Abnormal ear physiology"
+    }
+   ]
+  },
+  "snomed": {
+   "search": [
+    {
+     "iri": "http://snomed.info/id/399153001",
+     "obo_id": "SNOMED:399153001",
+     "label": "Vertigo",
+     "ontology_name": "snomed"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://snomed.info/id/102957003",
+     "label": "Neurological finding"
+    },
+    {
+     "iri": "http://snomed.info/id/138875005",
+     "label": "SNOMED CT Concept"
+    },
+    {
+     "iri": "http://snomed.info/id/404640003",
+     "label": "Dizziness"
+    },
+    {
+     "iri": "http://snomed.info/id/404684003",
+     "label": "Clinical finding"
+    }
+   ]
+  }
+ },
+ "ACUTE KIDNEY INJURY": {
+  "hp": {
+   "search": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0001919",
+     "obo_id": "HP:0001919",
+     "label": "Acute kidney injury",
+     "ontology_name": "hp"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000001",
+     "label": "All"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000077",
+     "label": "Abnormality of the kidney"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000079",
+     "label": "Abnormality of the urinary system"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000083",
+     "label": "Renal insufficiency"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000118",
+     "label": "Phenotypic abnormality"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0000119",
+     "label": "Abnormality of the genitourinary system"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0010935",
+     "label": "Abnormality of the upper urinary tract"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0011277",
+     "label": "Abnormality of the urinary system physiology"
+    },
+    {
+     "iri": "http://purl.obolibrary.org/obo/HP_0012211",
+     "label": "Abnormal renal physiology"
+    }
+   ]
+  },
+  "snomed": {
+   "search": [
+    {
+     "iri": "http://snomed.info/id/14669001",
+     "obo_id": "SNOMED:14669001",
+     "label": "Acute kidney injury",
+     "ontology_name": "snomed"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://snomed.info/id/106098005",
+     "label": "Urinary system finding"
+    },
+    {
+     "iri": "http://snomed.info/id/1148582006",
+     "label": "Finding of renal function"
+    },
+    {
+     "iri": "http://snomed.info/id/1156448003",
+     "label": "Impaired urinary system function"
+    },
+    {
+     "iri": "http://snomed.info/id/118228005",
+     "label": "Functional finding"
+    },
+    {
+     "iri": "http://snomed.info/id/118238000",
+     "label": "Urogenital finding"
+    },
+    {
+     "iri": "http://snomed.info/id/118948005",
+     "label": "Disorder of abdomen"
+    },
+    {
+     "iri": "http://snomed.info/id/128121009",
+     "label": "Disorder of trunk"
+    },
+    {
+     "iri": "http://snomed.info/id/128606002",
+     "label": "Disorder of urinary system"
+    },
+    {
+     "iri": "http://snomed.info/id/138875005",
+     "label": "SNOMED CT Concept"
+    },
+    {
+     "iri": "http://snomed.info/id/175176000",
+     "label": "Acute genitourinary disorder"
+    },
+    {
+     "iri": "http://snomed.info/id/236423003",
+     "label": "Renal impairment"
+    },
+    {
+     "iri": "http://snomed.info/id/249561001",
+     "label": "Abdominal organ finding"
+    },
+    {
+     "iri": "http://snomed.info/id/249578005",
+     "label": "Kidney finding"
+    },
+    {
+     "iri": "http://snomed.info/id/2704003",
+     "label": "Acute disease"
+    },
+    {
+     "iri": "http://snomed.info/id/302292003",
+     "label": "Finding of trunk structure"
+    },
+    {
+     "iri": "http://snomed.info/id/362965005",
+     "label": "Disorder of body system"
+    },
+    {
+     "iri": "http://snomed.info/id/404684003",
+     "label": "Clinical finding"
+    },
+    {
+     "iri": "http://snomed.info/id/406123005",
+     "label": "Viscus structure finding"
+    },
+    {
+     "iri": "http://snomed.info/id/42030000",
+     "label": "Disorder of the genitourinary system"
+    },
+    {
+     "iri": "http://snomed.info/id/42399005",
+     "label": "Renal failure syndrome"
+    },
+    {
+     "iri": "http://snomed.info/id/443820000",
+     "label": "Disorder of kidney and/or ureter"
+    },
+    {
+     "iri": "http://snomed.info/id/58574008",
+     "label": "Acute nephropathy"
+    },
+    {
+     "iri": "http://snomed.info/id/609624008",
+     "label": "Finding of abdomen"
+    },
+    {
+     "iri": "http://snomed.info/id/64572001",
+     "label": "Disease"
+    },
+    {
+     "iri": "http://snomed.info/id/734045002",
+     "label": "Disorder of retroperitoneal compartment (disorder)"
+    },
+    {
+     "iri": "http://snomed.info/id/822987005",
+     "label": "Finding of abdominopelvic segment of trunk"
+    },
+    {
+     "iri": "http://snomed.info/id/822988000",
+     "label": "Disorder of abdominopelvic segment of trunk"
+    },
+    {
+     "iri": "http://snomed.info/id/90708001",
+     "label": "Kidney disease"
+    }
+   ]
+  }
+ },
+ "BLOOD CREATININE INCREASED": {
+  "hp": {
+   "search": [],
+   "ancestors": []
+  },
+  "snomed": {
+   "search": [],
+   "ancestors": []
+  }
+ },
+ "HYPOMAGNESAEMIA": {
+  "hp": {
+   "search": [],
+   "ancestors": []
+  },
+  "snomed": {
+   "search": [
+    {
+     "iri": "http://snomed.info/id/190855004",
+     "obo_id": "SNOMED:190855004",
+     "label": "Hypomagnesemia (disorder)",
+     "ontology_name": "snomed"
+    }
+   ],
+   "ancestors": [
+    {
+     "iri": "http://snomed.info/id/138875005",
+     "label": "SNOMED CT Concept"
+    },
+    {
+     "iri": "http://snomed.info/id/237840007",
+     "label": "Disorder of electrolytes"
+    },
+    {
+     "iri": "http://snomed.info/id/404684003",
+     "label": "Clinical finding"
+    },
+    {
+     "iri": "http://snomed.info/id/420200001",
+     "label": "Magnesium disorder"
+    },
+    {
+     "iri": "http://snomed.info/id/64572001",
+     "label": "Disease"
+    },
+    {
+     "iri": "http://snomed.info/id/75934005",
+     "label": "Metabolic disease"
+    },
+    {
+     "iri": "http://snomed.info/id/76314005",
+     "label": "Disorder of fluid AND/OR electrolyte"
+    }
+   ]
+  }
+ },
+ "NEPHROPATHY TOXIC": {
+  "hp": {
+   "search": [],
+   "ancestors": []
+  },
+  "snomed": {
+   "search": [],
+   "ancestors": []
+  }
+ }
+}

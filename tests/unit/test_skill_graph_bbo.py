@@ -207,3 +207,15 @@ def test_the_path_to_the_sources_total_survives_the_round_trip():
     back = from_bbo(Graph().parse(data=to_bbo(process), format="turtle"))
 
     assert back["steps"][0]["total"] == "total_count"
+
+
+def test_a_mapping_declaration_survives_the_round_trip():
+    process = {"skill": "d", "inputs": ["drug_name"], "optional_inputs": ["requested_aes"], "steps": [
+        {"id": "requested_terms", "calls": [], "judge": ["requested_meddra"],
+         "mapping": {"requested_meddra": {"of": "requested_aes",
+                                          "onto": {"rows": "faers_term_rows", "field": "term"}}},
+         "produces": ["requested_meddra"]}]}
+
+    back = from_bbo(Graph().parse(data=to_bbo(process), format="turtle"))
+
+    assert back["steps"][0]["mapping"] == process["steps"][0]["mapping"]

@@ -159,6 +159,7 @@ _JSON_SPECS = {
     "check": SRP.checkSpec,
     "narrowed": SRP.narrowedBecause,
     "total": SRP.sourceTotalPath,
+    "mapping": SRP.mappingSpec,
 }
 
 

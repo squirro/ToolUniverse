@@ -14,6 +14,7 @@ The executor is injected here, so these tests need no ToolUniverse and no networ
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -2070,3 +2071,66 @@ def test_an_answer_whose_rows_are_not_objects_is_refused_not_a_crash():
     (failure,) = check_facts(rules, {"prr_table": ["stub"]}, {})
 
     assert failure["fact"] == "prr_table" and "not an object" in failure["reason"]
+
+
+# --- a judged mapping is checked for membership, then shown with its reason and placing ---
+
+MAPPED = {
+    "skill": "mapped", "inputs": ["drug_name"], "optional_inputs": ["requested_aes"],
+    "tables": {"faers_term_rows": "fact", "requested_meddra": "fact"},
+    "steps": [
+        {"id": "faers_counts",
+         "calls": [{"tool": "count_reactions", "arguments": {"drug": "{drug_name}"}}],
+         "collect": {"faers_term_rows": {"path": "result", "flatten": True, "fields": ["term"]}}},
+        {"id": "requested_terms", "requires": ["faers_counts"], "when": "requested_aes",
+         "judge": ["requested_meddra"],
+         "mapping": {"requested_meddra": {"of": "requested_aes",
+                                          "onto": {"rows": "faers_term_rows", "field": "term"}}},
+         "produces": ["requested_meddra"]},
+    ],
+}
+FAERS_TERMS = {"result": [{"term": t} for t in ("DEAFNESS", "TINNITUS", "FALL", "NAUSEA")]}
+ANSWER = {"requested_meddra": [
+    {"of": "ototoxicity", "term": "DEAFNESS", "reason": "hearing loss is the ototoxic injury",
+     "concept": ["ear", "hearing", "vestibular"]},
+    {"of": "ototoxicity", "term": "FALL", "reason": "may follow from dizziness",
+     "concept": ["ear", "hearing", "vestibular"]}]}
+
+
+def _recorded_lookup(term):
+    import json
+    from pathlib import Path
+    recorded = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "ols"
+                           / "placing_probe_2026-09-21.json").read_text())
+    return recorded.get(term, {})
+
+
+def test_a_judged_mapping_becomes_a_table_with_the_reason_and_the_placing_of_each_term():
+    runner = SkillRunner(MAPPED, execute=lambda tool, a: FAERS_TERMS, ask=lambda q: ANSWER,
+                         lookup=_recorded_lookup)
+    run_id = runner.start({"drug_name": "x", "requested_aes": ["ototoxicity"]})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    facts = runner.handover(run_id)["facts"]
+
+    assert [(r["of"], r["term"], r["placing"]) for r in facts["requested_meddra"]] == [
+        ("ototoxicity", "DEAFNESS", "placed"), ("ototoxicity", "FALL", "not placed")]
+    assert facts["requested_meddra"][0]["reason"] == "hearing loss is the ototoxic injury"
+    assert re.search(r"ear|hearing", facts["requested_meddra"][0]["under"], re.I)
+    assert facts["requested_meddra_terms"] == ["DEAFNESS", "FALL"]
+
+
+def test_a_mapped_term_that_is_not_in_the_sources_list_is_refused_and_asked_again():
+    """"KIDNEY DAMAGE" is not a FAERS term: an invented term never reaches a query."""
+    asked = []
+    answers = iter([{"requested_meddra": [{"of": "ototoxicity", "term": "HEARING DAMAGE",
+                                           "reason": "r", "concept": ["ear"]}]}, ANSWER])
+    runner = SkillRunner(MAPPED, execute=lambda tool, a: FAERS_TERMS,
+                         ask=lambda q: asked.append(q) or next(answers), lookup=_recorded_lookup)
+    run_id = runner.start({"drug_name": "x", "requested_aes": ["ototoxicity"]})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    assert "HEARING DAMAGE" in asked[1]["problem"]
+    assert [r["term"] for r in runner.handover(run_id)["facts"]["requested_meddra"]] == ["DEAFNESS", "FALL"]

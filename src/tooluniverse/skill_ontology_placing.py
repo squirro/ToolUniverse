@@ -1,0 +1,82 @@
+"""Where an ontology puts a mapped term, beside the agent's reason for it.
+
+A judged mapping is checked for membership in the source's list; that proves the term exists,
+not that it belongs. The placing adds evidence from the Ontology Lookup Service (OLS): placed
+under the concept the user named, not placed, or unknown. It never refuses a term.
+
+The pure half works on recorded responses; the live half fetches them.
+"""
+
+from __future__ import annotations
+
+import json
+import urllib.parse
+import urllib.request
+from typing import Any
+
+ONTOLOGIES = ("hp", "mondo", "efo", "snomed", "mesh", "ncit", "chebi", "go")
+OLS = "https://www.ebi.ac.uk/ols4/api"
+
+
+def place(responses: dict[str, dict], concept: list[str]) -> dict:
+    """The verdict for one term from its recorded OLS responses, one entry per ontology.
+
+    `concept`: words that name the branch the user meant (for ototoxicity: ear, hearing,
+    vestibular). Placed when any ontology puts the term under an ancestor whose label holds
+    one of them; not placed when an ontology knows the term but no ancestor does; unknown
+    when no ontology knows it or the service failed.
+    """
+    words = [w.lower() for w in concept]
+    known, errors = [], []
+    for ontology, response in responses.items():
+        if "error" in response:
+            errors.append(f"{ontology}: {response['error']}")
+            continue
+        hits = response.get("search") or []
+        if not hits:
+            continue
+        hit = hits[0]
+        for ancestor in response.get("ancestors") or []:
+            label = (ancestor.get("label") or "").lower()
+            if any(word in label for word in words):
+                return {"placing": "placed", "ontology": ontology, "term": hit.get("obo_id"),
+                        "label": hit.get("label"), "under": ancestor.get("label")}
+        known.append((ontology, hit))
+    if known:
+        ontology, hit = known[0]
+        return {"placing": "not placed", "ontology": ontology, "term": hit.get("obo_id"),
+                "label": hit.get("label"), "under": None}
+    verdict: dict[str, Any] = {"placing": "unknown", "ontology": None, "term": None,
+                               "label": None, "under": None}
+    if errors:
+        verdict["note"] = "the lookup service failed: " + "; ".join(errors)
+    return verdict
+
+
+def _get(url: str, timeout: int = 30) -> Any:
+    request = urllib.request.Request(url, headers={"User-Agent": "tooluniverse-skills",
+                                                   "Accept": "application/json"})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return json.load(response)
+
+
+def lookup(term: str, ontologies: tuple[str, ...] = ONTOLOGIES) -> dict[str, dict]:
+    """The recorded shape `place` reads, fetched live: exact label or synonym, then ancestors."""
+    responses: dict[str, dict] = {}
+    for ontology in ontologies:
+        try:
+            found = _get(f"{OLS}/search?" + urllib.parse.urlencode(
+                {"q": term.lower(), "ontology": ontology, "rows": 1,
+                 "queryFields": "label,synonym", "exact": "true"}))
+            hits = [{k: doc.get(k) for k in ("iri", "obo_id", "label", "ontology_name")}
+                    for doc in found["response"]["docs"]]
+            ancestors = []
+            if hits:
+                iri = urllib.parse.quote(urllib.parse.quote(hits[0]["iri"], safe=""), safe="")
+                above = _get(f"{OLS}/ontologies/{ontology}/terms/{iri}/hierarchicalAncestors?size=200")
+                ancestors = [{"iri": t["iri"], "label": t["label"]}
+                             for t in above.get("_embedded", {}).get("terms", [])]
+            responses[ontology] = {"search": hits, "ancestors": ancestors}
+        except Exception as exc:                          # noqa: BLE001 — evidence, never a gate
+            responses[ontology] = {"error": f"{type(exc).__name__}: {str(exc)[:80]}"}
+    return responses

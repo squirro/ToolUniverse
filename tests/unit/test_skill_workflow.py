@@ -594,6 +594,33 @@ async def test_a_closed_gateway_strands_nothing_on_temporal_either():
         == _in_memory(responses, gated, {"drug_name": "x"})
 
 
+# --- an upstream failure inside a result is a failed call on this host too -------------------
+
+UPSTREAM = {"status": "error", "error": "Monarch answered HTTP 502 (Bad Gateway)", "upstream_status": 502,
+            "retryable": True, "error_details": {"type": "ToolServerError", "retriable": True}}
+FAILING_UPSTREAM = {
+    "skill": "upstream", "inputs": ["hpo_ids"],
+    "steps": [
+        {"id": "differential", "calls": [{"tool": "monarch", "arguments": {"ids": "{hpo_ids}"}}],
+         "extract": {"candidates": {"path": "result"}}, "produces": ["candidates"]},
+        {"id": "resolve", "requires": ["differential"], "for_each": "candidates", "as": "name",
+         "calls": [{"tool": "orphanet", "arguments": {"query": "{name}"}}]},
+    ],
+}
+
+
+async def test_an_upstream_failure_in_a_result_is_recorded_as_a_failed_call_on_temporal_too():
+    responses = {"monarch": UPSTREAM, "orphanet": {"data": {}}}
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        handed, _ = await _run(env, responses, FAILING_UPSTREAM, {"hpo_ids": ["HP:1"]}, "run-upstream")
+
+    (failure,) = handed["failures"]
+    assert failure["tool"] == "monarch" and "502" in failure["error"] and failure["step"] == "differential"
+    assert "monarch" in handed["blocked"][0]["reason"]
+    assert {k: v for k, v in handed.items() if k not in ("record", "run_id", "_records")} \
+        == _in_memory(responses, FAILING_UPSTREAM, {"hpo_ids": ["HP:1"]})
+
+
 # --- a delegated loop: one call per query the agent wrote; its answer is an evidence table ---
 
 SEARCHED = {

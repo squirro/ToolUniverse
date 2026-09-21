@@ -33,6 +33,7 @@ from typing import Any
 
 from temporalio import activity, workflow
 from temporalio.common import RetryPolicy
+from temporalio.exceptions import ApplicationError
 from temporalio.worker.workflow_sandbox import (
     SandboxedWorkflowRunner,
     SandboxRestrictions,
@@ -48,6 +49,7 @@ from .skill_runner import (
     asked,
     checked,
     handover_of,
+    is_upstream_failure,
     judged,
     keep_evidence,
     mapping_choices,
@@ -57,6 +59,7 @@ from .skill_runner import (
     placed_mapping,
     question_for,
     substitute,
+    upstream_failure_text,
 )
 
 from .skill_working_record import WorkingRecord
@@ -143,6 +146,11 @@ def execute_tool(call: ToolCall) -> ToolResult:
     payload = _executor(call.tool, call.arguments)
     _record_of(call.run_id).put_result(call.step, call.call_n, call.tool, call.arguments,
                                        payload, attempt=call.attempt)
+    if is_upstream_failure(payload):
+        # On record as the source answered; on the run as the failed call it is. The tool
+        # already retried within its limits, so the activity is not retried again.
+        raise ApplicationError(upstream_failure_text(payload)[len("UpstreamFailure: "):],
+                               type="UpstreamFailure", non_retryable=True)
     return ToolResult(step=call.step, call_n=call.call_n,
                       size=len(json.dumps(payload, default=str)))
 
@@ -398,8 +406,11 @@ class SkillWorkflow:
                 # A broken tool must not end the procedure. The failure is in the
                 # history as the failed activity; the bundle names it and its item.
                 cause = getattr(outcome, "cause", None) or outcome
+                # A typed application error carries the name the activity gave it.
+                kind = getattr(cause, "type", None) or type(cause).__name__
+                text = str(cause)
                 failures.append({"tool": call["tool"], "arguments": call["arguments"],
-                                 "error": f"{type(cause).__name__}: {cause}"})
+                                 "error": text if text.startswith(f"{kind}: ") else f"{kind}: {text}"})
         return failures
 
     async def _repair(self, spec, step, repair, outcome, failures, made):

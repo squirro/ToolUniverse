@@ -38,6 +38,7 @@ from typing import Any
 from .skill_graph import (
     SkillGraphError,
     _fill,
+    _produces,
     delegated_calls,
     next_step,
     skipped_gates,
@@ -406,6 +407,30 @@ def new_run(inputs: dict) -> dict:
             "questions": [], "unresolved": [], "excluded": {}}
 
 
+_SERVER_ERROR_TYPES = ("ServerError", "UpstreamServiceError", "Timeout", "ConnectionError")
+
+
+def is_upstream_failure(result: Any) -> bool:
+    """A result that reports the SOURCE failed, not that it had nothing to say.
+
+    A `status: error` is an answer when the source says "not found"; it is a failure when
+    the source was unreachable, refused, or broke -- a retriable error, a server error type,
+    or an HTTP status of 5xx/408/429 carried in the envelope.
+    """
+    if not isinstance(result, dict) or result.get("status") != "error":
+        return False
+    details = result.get("error_details") or {}
+    status = result.get("upstream_status")
+    return bool(details.get("retriable") or result.get("retryable")
+                or any(t in str(details.get("type", "")) for t in _SERVER_ERROR_TYPES)
+                or (isinstance(status, int) and (status >= 500 or status in (408, 429))))
+
+
+def upstream_failure_text(result: dict) -> str:
+    error = result.get("error")
+    return f"UpstreamFailure: {error if isinstance(error, str) else json.dumps(error, default=str)}"
+
+
 def apply(run: dict, step_id: str, failures: list, outcome: dict,
           calls: list[dict] | None = None) -> None:
     """Record a finished step on the run. Pure over its arguments; mutates `run`.
@@ -419,13 +444,29 @@ def apply(run: dict, step_id: str, failures: list, outcome: dict,
     run["calls_made"][step_id] = [{"tool": c["tool"], "arguments": c.get("arguments", {})}
                                   for c in (calls or [])]
     run["done"].append(step_id)
-    run["failures"].extend(failures)
+    run["failures"].extend({**f, "step": f.get("step", step_id)} for f in failures)
     run["facts"].update(outcome["facts"])
     run["blocked"].extend(outcome["blocked"])
     if outcome.get("excluded"):
         run["excluded"][step_id] = outcome["excluded"]
     run["unresolved"].extend({"step": step_id, "fact": name}
                              for name in outcome["unresolved"])
+
+
+_MISSING = re.compile(r"missing (\w+)")
+
+
+def _with_cause(graph: dict, run: dict, reason: str) -> str:
+    """A step blocked on a missing fact names the failed call that should have produced it."""
+    match = _MISSING.search(reason)
+    if not match:
+        return reason
+    producers = {s["id"] for s in graph["steps"] if _produces(s, match.group(1))}
+    causes = [f"{f['tool']}: {f['error']}" for f in run.get("failures", [])
+              if f.get("step") in producers]
+    if not causes:
+        return reason
+    return f"{reason} -- {', '.join(sorted(producers))} failed: {'; '.join(causes)}"
 
 
 def next_runnable(graph: dict, run: dict) -> dict | None:
@@ -448,7 +489,7 @@ def next_runnable(graph: dict, run: dict) -> dict | None:
             if blocked is None:
                 return None
             run["skipped"].append(blocked)
-            run["blocked"].append({"step": blocked, "reason": str(exc)})
+            run["blocked"].append({"step": blocked, "reason": _with_cause(graph, run, str(exc))})
 
 
 # The same five lines for every skill. The report's structure is the skill's; this is not.
@@ -1133,12 +1174,19 @@ class SkillRunner:
         results, failures, made = [], [], list(step["calls"])
         for call in step["calls"]:
             try:
-                results.append(self.execute(call["tool"], call["arguments"]))
+                result = self.execute(call["tool"], call["arguments"])
             except Exception as exc:                       # noqa: BLE001
                 # A broken tool must not end the procedure: one bot-blocked FDA
                 # endpoint ended a whole run under the model-driven loop.
                 failures.append({"tool": call["tool"], "arguments": call["arguments"],
                                  "error": f"{type(exc).__name__}: {exc}"})
+                continue
+            results.append(result)
+            if is_upstream_failure(result):
+                # The source failed and said so inside its answer: a failed call, on record
+                # with the upstream status, never an empty extraction.
+                failures.append({"tool": call["tool"], "arguments": call["arguments"],
+                                 "error": upstream_failure_text(result)})
 
         repair = spec.get("repair")
         if repair and self.ask:

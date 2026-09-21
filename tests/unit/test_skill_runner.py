@@ -736,7 +736,8 @@ def test_apply_records_everything_a_step_leaves_on_the_run():
     assert run["done"] == ["identity"]
     assert "results" not in run, "results live in the Working Record, never on the run"
     assert run["facts"] == {"drug_name": "x", "setid": "72d1"}
-    assert run["failures"] == [{"tool": "t", "error": "E"}]
+    assert run["failures"] == [{"tool": "t", "error": "E", "step": "identity"}], \
+        "a failure names its step, so a step blocked on a missing fact can name its cause"
     assert run["unresolved"] == [{"step": "identity", "fact": "brand"}]
     assert run["blocked"] == [{"step": "identity", "reason": "r"}]
 
@@ -1301,7 +1302,7 @@ def test_a_failed_iteration_is_recorded_with_its_arguments():
     assert state["facts"]["prrs"] == [2.0, 2.0]
     assert state["failures"] == [{"tool": "FAERS_calculate_disproportionality",
                                   "arguments": {"drug": "x", "event": "nausea"},
-                                  "error": "RuntimeError: 429 Too Many Requests"}]
+                                  "error": "RuntimeError: 429 Too Many Requests", "step": "prr"}]
 
 
 # --- the run remembers what it asked and what it called, for the Run Record ------

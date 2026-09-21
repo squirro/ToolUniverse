@@ -90,8 +90,12 @@ class GraphQLTool(BaseTool):
 
     def run(self, arguments):
         arguments = copy.deepcopy(arguments)
+        # A paging parameter the caller left out takes the schema's default -- the source's
+        # own page where the schema says so -- else the historical five.
         if "size" in self.parameters and "size" not in arguments:
-            arguments["size"] = self.default_size
+            arguments["size"] = self.parameters["size"].get("default", self.default_size)
+        if "index" in self.parameters and "index" not in arguments:
+            arguments["index"] = self.parameters["index"].get("default", 0)
         result = execute_query(
             endpoint_url=self.endpoint_url, query=self.query_schema, variables=arguments
         )

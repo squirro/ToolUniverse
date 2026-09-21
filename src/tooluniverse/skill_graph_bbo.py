@@ -157,6 +157,7 @@ _JSON_SPECS = {
     "judge": SRP.judges,
     "delegate": SRP.delegateSpec,
     "check": SRP.checkSpec,
+    "narrowed": SRP.narrowedBecause,
 }
 
 

@@ -186,3 +186,14 @@ def test_the_declared_tables_survive_the_round_trip():
     back = from_bbo(Graph().parse(data=to_bbo(process), format="turtle"))
 
     assert back["tables"] == {"prr_rows": "fact", "papers": "evidence"}
+
+
+def test_the_reason_for_a_narrowed_call_survives_the_round_trip():
+    process = {"skill": "d", "inputs": ["drug_name"], "steps": [
+        {"id": "literature",
+         "calls": [{"tool": "PubMed_search_articles", "arguments": {"query": "{drug_name}"}}],
+         "narrowed": "the ten most relevant are read; the total is recorded"}]}
+
+    back = from_bbo(Graph().parse(data=to_bbo(process), format="turtle"))
+
+    assert back["steps"][0]["narrowed"] == process["steps"][0]["narrowed"]

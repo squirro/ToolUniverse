@@ -37,9 +37,14 @@ report: >-
   from its row in `facts.prr_table` and cite it with that row's `url`, one link
   per term — never one footnote for the whole table (`facts.signal_aes` lists the same terms; cite from the rows). Cite label numbers with the `source_url` of
   their result. Literature is the table `literature_rows`, one row per paper
-  with the reaction it was found for: read the rows you need with fetch_run_data,
-  present them per reaction, cite each paper by its own row's `url` or `doi`, and say
-  when a reaction has no papers. Reported-disease terms were not searched; they
+  with the reaction it was found for. Its own order is the source's, not relevance to
+  the question: for each reaction the question names, find the papers to read with
+  fetch_run_data(rank_by=<your own words, in the source's vocabulary>, limit=<how many
+  you will read>), asking for `abstract`, `url` and `doi`. Read each abstract and state
+  what it found, as the abstract gives it; cite a paper only if you read it, by its own
+  row's `url` or `doi`. Say how many you read of how many matched, fetch the next ones
+  with `offset` if the first do not answer the question, and say when a reaction has
+  no papers. Reported-disease terms were not searched; they
   are listed under `facts.excluded_aes` — say so. The signal table is the agent's
   answer to the compute step, checked by the server against the FAERS rows: cite
   each PRR by its row's `url`, and never cite the step itself as code, a sandbox

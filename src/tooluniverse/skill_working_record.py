@@ -7,6 +7,7 @@ bounded by the disk and not by what a workflow history or a model turn can carry
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import sqlite3
@@ -43,6 +44,38 @@ def _rows_of(payload: Any) -> list[dict]:
 
 
 RESULTS = "results."
+
+_WORD = re.compile(r"[a-z0-9]+")
+K1, B = 1.5, 0.75
+
+
+def _words(value: Any) -> list[str]:
+    text = value if isinstance(value, str) else json.dumps(value, default=str, ensure_ascii=False)
+    return _WORD.findall(text.lower())
+
+
+def ranked_rows(rows: list[dict], query: str) -> list[tuple[float, int]]:
+    """BM25 of each row's text against the query: (score, row index), best first.
+
+    Only rows that share a word with the query are returned. Ties keep the table's order, so
+    the same query always gives the same sequence and an offset continues it.
+    """
+    documents = [_words(list(row.values())) for row in rows]
+    terms = set(_words(query))
+    average = (sum(len(d) for d in documents) / len(documents)) or 1.0
+    holding = {t: sum(1 for d in documents if t in d) for t in terms}
+    scored = []
+    for n, words in enumerate(documents):
+        score = 0.0
+        for term in terms:
+            frequency = words.count(term)
+            if frequency:
+                idf = math.log(1 + (len(documents) - holding[term] + 0.5) / (holding[term] + 0.5))
+                score += idf * frequency * (K1 + 1) / (
+                    frequency + K1 * (1 - B + B * len(words) / average))
+        if score > 0:
+            scored.append((score, n))
+    return sorted(scored, key=lambda pair: (-pair[0], pair[1]))
 
 
 class WorkingRecord:
@@ -133,8 +166,12 @@ class WorkingRecord:
         return kept + steps
 
     def fetch(self, table: str, columns: list[str] | None = None,
-              limit: int | None = None, offset: int = 0) -> dict:
-        """Rows of one table. A wrong name is answered with the right ones, never with nothing."""
+              limit: int | None = None, offset: int = 0, rank_by: str | None = None) -> dict:
+        """Rows of one table. A wrong name is answered with the right ones, never with nothing.
+
+        `rank_by` is plain words: the rows that share a word with it come back best first,
+        each with its `_score`. Text in, ranked rows out; it is not a query language.
+        """
         rows = self._rows(table)
         if not rows:
             return {"status": "unknown_table", "table": table, "tables": self.tables()}
@@ -143,8 +180,28 @@ class WorkingRecord:
         if unknown:
             return {"status": "unknown_columns", "table": table, "unknown": unknown,
                     "columns": known}
+        if rank_by and limit is None:
+            return {"status": "limit_required", "table": table, "total_rows": len(rows),
+                    "hint": "give `limit` with `rank_by`: say how many of the best rows you "
+                            "will read; ask for the next ones with `offset` if they are not enough"}
+        out = {"status": "ok", "table": table, "total_rows": len(rows), "offset": offset}
+        scores: dict[int, float] = {}
+        if rank_by:
+            # One record can arrive under several calls (one paper, many reaction searches):
+            # rows equal in the columns asked for are one record, and its best copy is kept.
+            ranked, seen = [], set()
+            for score, n in ranked_rows(rows, rank_by):
+                same = json.dumps({c: rows[n].get(c) for c in (columns or known)},
+                                  sort_keys=True, default=str)
+                if same not in seen:
+                    seen.add(same)
+                    ranked.append((score, n))
+            scores = {id(rows[n]): score for score, n in ranked}
+            rows = [rows[n] for _, n in ranked]
+            out["matched"] = len(rows)
         chosen = rows[offset:] if limit is None else rows[offset:offset + limit]
-        if columns:
-            chosen = [{c: row.get(c) for c in columns} for row in chosen]
-        return {"status": "ok", "table": table, "total_rows": len(rows), "offset": offset,
-                "returned": len(chosen), "rows": chosen}
+        projected = [{c: row.get(c) for c in columns} if columns else dict(row) for row in chosen]
+        if rank_by:
+            for row, source in zip(projected, chosen):
+                row["_score"] = round(scores[id(source)], 4)
+        return {**out, "returned": len(projected), "rows": projected}

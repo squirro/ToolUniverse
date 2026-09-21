@@ -124,7 +124,8 @@ async def resume(client: Any, run_id: str, answer: dict | None = None) -> dict:
 
 
 def fetch_run_data(run_id: str, table: str, columns: list[str] | None = None,
-                   limit: int | None = None, offset: int = 0, *, directory=None) -> dict:
+                   limit: int | None = None, offset: int = 0, rank_by: str | None = None,
+                   *, directory=None) -> dict:
     """Rows of one table of a run's Working Record, as the agent asks for them."""
     from .skill_working_record import WorkingRecord, records_dir
 
@@ -133,4 +134,4 @@ def fetch_run_data(run_id: str, table: str, columns: list[str] | None = None,
         return {"status": "unknown_run", "run_id": run_id,
                 "hint": "use the run_id that run_skill returned; a record lives as long as "
                         "the server that made it"}
-    return record.fetch(table, columns, limit, offset)
+    return record.fetch(table, columns, limit, offset, rank_by)

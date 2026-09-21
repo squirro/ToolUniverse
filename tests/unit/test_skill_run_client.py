@@ -230,3 +230,17 @@ async def test_an_optional_input_that_is_bound_reaches_the_run():
                 {"drug_name": "x", "requested_aes": ["ototoxicity"]})
 
     assert client.started[0][0].inputs == {"drug_name": "x", "requested_aes": ["ototoxicity"]}
+
+
+def test_the_agent_asks_for_the_rows_most_relevant_to_its_own_words(tmp_path):
+    from tooluniverse.skill_run_client import fetch_run_data
+    from tooluniverse.skill_working_record import WorkingRecord
+
+    WorkingRecord(tmp_path, "skill-demo-1").put_table("papers", [
+        {"pmid": "1", "abstract": "A herbal formula was studied in mice."},
+        {"pmid": "2", "abstract": "Magnesium lowered acute kidney injury after cisplatin."}])
+
+    out = fetch_run_data("skill-demo-1", "papers", columns=["pmid"], limit=1,
+                         rank_by="cisplatin kidney injury magnesium", directory=tmp_path)
+
+    assert out["rows"][0]["pmid"] == "2" and out["matched"] == 1

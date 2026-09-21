@@ -1352,7 +1352,8 @@ class SMCP(FastMCP):
             annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
         )
         async def fetch_run_data(run_id: str, table: str, columns: list[str] | None = None,
-                                 limit: int | None = None, offset: int = 0) -> str:
+                                 limit: int | None = None, offset: int = 0,
+                                 rank_by: str | None = None) -> str:
             """Read rows of one table of a finished Skill Run.
 
             The hand-over of run_skill describes each table under `tables`; its preview
@@ -1365,6 +1366,14 @@ class SMCP(FastMCP):
                 columns: the columns to return; all of them when omitted.
                 limit: how many rows; all of them when omitted.
                 offset: the first row to return, counting from 0.
+                rank_by: plain words. The rows that share a word with them come back
+                    best first, each with its `_score`, and `matched` says how many
+                    there are. Give `limit` with it: how many of the best rows you will
+                    read. If they do not answer the question, ask for the next ones with
+                    the same words and an `offset`. For text tables — abstracts, pages —
+                    this is how you find what to read: the table's own order is the
+                    source's, not relevance to the question. Write the words in the
+                    source's vocabulary, as the run's mapped terms give it.
 
             Returns:
                 JSON with `status` "ok" and `rows`, or a status that names what exists:
@@ -1374,7 +1383,7 @@ class SMCP(FastMCP):
             from .skill_run_client import fetch_run_data as fetch
 
             try:
-                out = fetch(run_id, table, columns, limit, offset)
+                out = fetch(run_id, table, columns, limit, offset, rank_by)
             except Exception as exc:                       # noqa: BLE001
                 out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
             return json.dumps(out, ensure_ascii=False, default=str)

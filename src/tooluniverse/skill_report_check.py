@@ -21,6 +21,14 @@ _CHIP = re.compile(r"<sub>.*?</sub>", re.S)                     # the chat's att
 _NUMBERING = re.compile(r"(?m)^\s*(?:#+\s*|[-*]\s*)?\d{1,2}[.)]\s")    # headings and list items
 
 
+_THOUSANDS = re.compile(r"(?<=\d)[,\u202f\u2009 ](?=\d{3}\b)")
+
+
+def _fold_thousands(text: str) -> str:
+    """2,078 and 2 078 read as 2078, so a separator never makes two numbers of one."""
+    return _THOUSANDS.sub("", text)
+
+
 def _rounded_forms(value: str) -> set[str]:
     f = float(value)
     return {value, f"{f:.0f}", f"{f:.1f}", f"{f:.2f}", f"{f:.3f}", f"{f:.4f}"}
@@ -68,11 +76,32 @@ def _unvouched_links(draft: str, received: Any) -> list[dict]:
     return failures
 
 
+def _unstated_narrowing(draft: str, received: Any) -> list[dict]:
+    """Every table the run holds less of than its source, whose total the draft never gives."""
+    handover = received.get("handover") if isinstance(received, dict) else None
+    tables = (handover or {}).get("tables") or []
+    plain = _fold_thousands(draft or "")
+    failures = []
+    for table in tables:
+        totals = table.get("source_total")
+        totals = totals if isinstance(totals, dict) else {"": totals}
+        for item, total in totals.items():
+            if not isinstance(total, (int, float)) or total <= table.get("rows", 0):
+                continue
+            if not re.search(rf"(?<!\d){int(total)}(?!\d)", plain):
+                where = f" ({item})" if item else ""
+                failures.append({"kind": "narrowing_not_stated",
+                                 "text": f"{table['table']}: {table['rows']} rows of {int(total)}{where}",
+                                 "context": "the report must say how much the source holds and how "
+                                            "much this run holds"})
+    return failures
+
+
 def check_report(draft: str, received: Any) -> list[dict]:
     """Every statement in the draft that what the agent received does not vouch for."""
     vouched = _vouched_numbers(received)
     prose = _FOOTNOTE.sub(" ", _DOI.sub(" ", _URL.sub(" ", draft or "")))
-    prose = _NUMBERING.sub("\n", _CHIP.sub(" ", prose))
+    prose = _fold_thousands(_NUMBERING.sub("\n", _CHIP.sub(" ", prose)))
     failures, seen = [], set()
     for match in _NUMBER.finditer(prose):
         number = match.group(1)
@@ -82,4 +111,4 @@ def check_report(draft: str, received: Any) -> list[dict]:
         start, end = max(0, match.start() - 50), min(len(prose), match.end() + 50)
         failures.append({"kind": "unvouched_number", "text": number,
                          "context": " ".join(prose[start:end].split())})
-    return failures + _unvouched_links(draft, received)
+    return failures + _unvouched_links(draft, received) + _unstated_narrowing(draft, received)

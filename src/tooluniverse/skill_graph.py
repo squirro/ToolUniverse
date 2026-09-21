@@ -110,7 +110,12 @@ every step and every tool call itself.
    describes what is too wide to hand over; its preview is not the data — read
    the rows you need with `fetch_run_data(run_id=..., table=..., columns=[...])`.
    Every number comes from `handover.facts` or from rows you fetched; state
-   `failures`, `blocked`, `unresolved` and `excluded` as gaps.
+   `failures`, `blocked`, `unresolved` and `excluded` as gaps. Follow the five
+   lines in `handover.write_the_report`.
+4. Before you answer the user, hand the whole draft to
+   `submit_report(run_id=..., draft=...)`. `accepted`: send it. `revise`: correct
+   each named statement and submit once more. `accepted_with_failures`: send it
+   with `append_to_report` added at the end.
 
 Do not call `execute_tool` for any step of this skill yourself.
 

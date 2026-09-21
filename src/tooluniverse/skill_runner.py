@@ -443,6 +443,20 @@ def next_runnable(graph: dict, run: dict) -> dict | None:
             run["blocked"].append({"step": blocked, "reason": str(exc)})
 
 
+# The same five lines for every skill. The report's structure is the skill's; this is not.
+WRITE_THE_REPORT = [
+    "Take every number from its row and cite it with that row's own link.",
+    "State a finding only from a source you read: an abstract, a page, a row -- never from a "
+    "title alone.",
+    "Wherever this run holds less than the source, say both numbers: how much the source holds "
+    "(source_total) and how much you read of it.",
+    "A number published in a paper or a page stands beside a number this run computed, each "
+    "with its source and period; never merge the two.",
+    "State what failed, what was not found and what was set aside, from failures, blocked, "
+    "unresolved and excluded.",
+]
+
+
 def handover_of(graph: dict, run: dict) -> dict:
     """What the agent is handed ONCE at the end: the facts, and a description of each table
     that is too wide to hand over. Tool results are in the Working Record, fetched by table."""
@@ -458,6 +472,7 @@ def handover_of(graph: dict, run: dict) -> dict:
         "notes": {s["id"]: s["notes"] for s in graph["steps"]
                   if s.get("notes") and s["id"] in run["done"]},
         "report": graph.get("report"),
+        "write_the_report": WRITE_THE_REPORT,
         "excluded": run.get("excluded", {}),
         "failures": run["failures"],
         "blocked": run["blocked"],

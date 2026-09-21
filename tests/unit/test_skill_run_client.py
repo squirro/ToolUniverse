@@ -258,3 +258,56 @@ async def test_an_input_name_the_process_does_not_declare_is_refused_with_the_de
     assert out["unknown_inputs"] == ["focus_adverse_events"]
     assert out["required_inputs"] == ["drug_name"] and out["optional_inputs"] == ["requested_aes"]
     assert client.started == []
+
+
+# --- the draft report is read before the user sees it ------------------------------
+
+HANDOVER = {"skill": "demo", "facts": {"prr_table": [
+    {"term": "ototoxicity", "prr": 54.766,
+     "url": "https://api.fda.gov/drug/event.json?search=ototoxicity&api_key=REDACTED"}]}}
+
+
+class FinishedClient(FakeClient):
+    def get_workflow_handle(self, run_id):
+        return self.handle
+
+
+def _records(tmp_path):
+    from tooluniverse.skill_working_record import WorkingRecord
+    record = WorkingRecord(tmp_path, "skill-demo-1")
+    record.put_table("papers", [{"pmid": "31234567", "abstract": "Hearing loss in 57%.",
+                                 "url": "https://pubmed.ncbi.nlm.nih.gov/31234567/"}])
+    record.fetch("papers", columns=["pmid", "abstract", "url"], limit=1)
+    return tmp_path
+
+
+@pytest.mark.asyncio
+async def test_a_draft_that_states_only_what_the_agent_received_is_accepted(tmp_path):
+    from tooluniverse.skill_run_client import submit_report
+
+    draft = ("PRR 54.77 for ototoxicity [1]; hearing loss in 57% [2].\n"
+             "[1]: https://api.fda.gov/drug/event.json?search=ototoxicity\n"
+             "[2]: https://pubmed.ncbi.nlm.nih.gov/31234567/")
+    client = FinishedClient(ScriptedHandle([_status("z", ["z"], finished=True)], result=HANDOVER))
+
+    out = await submit_report(client, "skill-demo-1", draft, directory=_records(tmp_path))
+
+    assert out == {"status": "accepted", "run_id": "skill-demo-1", "failures": []}
+
+
+@pytest.mark.asyncio
+async def test_a_draft_with_an_unvouched_number_is_sent_back_once_then_goes_out_with_the_failure_stated(tmp_path):
+    from tooluniverse.skill_run_client import submit_report
+
+    draft = "PRR 54.77 for ototoxicity, against a Canadian PRR of about 53.44."
+    client = FinishedClient(ScriptedHandle([_status("z", ["z"], finished=True)], result=HANDOVER))
+    directory = _records(tmp_path)
+
+    first = await submit_report(client, "skill-demo-1", draft, directory=directory)
+    second = await submit_report(client, "skill-demo-1", draft, directory=directory)
+
+    assert first["status"] == "revise" and first["failures"][0]["text"] == "53.44"
+    assert "53.44" in first["hint"]
+    assert second["status"] == "accepted_with_failures"
+    assert second["failures"][0]["text"] == "53.44"
+    assert "53.44" in second["append_to_report"]

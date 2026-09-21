@@ -170,3 +170,28 @@ def test_a_table_description_says_how_much_the_source_holds_or_that_it_is_unknow
     assert (described["results.trials"]["rows"], described["results.trials"]["source_total"]) == (2, 866)
     assert described["results.literature"]["source_total"] == {"DEAFNESS": 4120, "TINNITUS": 77}
     assert described["results.label"]["source_total"] == "unknown"
+
+
+# --- what the agent received, so the report can be read against it ------------------
+
+def test_the_record_keeps_what_it_served_so_the_report_can_be_checked_against_it(tmp_path):
+    """"Cite only what you read" needs the server to know what was read."""
+    runner, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
+    record = WorkingRecord(tmp_path, run_id)
+
+    record.fetch("papers", columns=["pmid", "url"], limit=2)
+    record.fetch("results.signals", columns=["term", "prr"], limit=1)
+    served = record.served()
+
+    assert [row["pmid"] for row in served["papers"]] == ["101", "102"]
+    assert served["results.signals"] == [{"term": "DEAFNESS", "prr": 17.7}]
+    assert "abstract" not in served["papers"][0], "only the columns the agent asked for were served"
+
+
+def test_the_handover_carries_the_same_lines_of_discipline_for_every_skill(tmp_path):
+    runner, run_id = _finished_run(tmp_path)
+
+    lines = runner.handover(run_id)["write_the_report"]
+
+    assert isinstance(lines, list) and len(lines) == 5
+    assert all(isinstance(line, str) and line for line in lines)

@@ -96,3 +96,23 @@ def test_the_numbering_of_the_report_itself_is_not_a_claim():
              "The PRR is 54.77.")
 
     assert check_report(draft, RECEIVED) == []
+
+
+# --- narrowing must be stated ------------------------------------------------------
+
+NARROWED = {"handover": {"facts": {}, "tables": [
+    {"table": "results.literature", "rows": 200, "source_total": {"ototoxicity": 2078}},
+    {"table": "results.trials", "rows": 866, "source_total": 866},
+    {"table": "results.label", "rows": 36, "source_total": "unknown"}]}}
+
+
+def test_a_table_the_run_holds_less_of_than_the_source_must_be_stated_with_its_total():
+    """Four live reports in a row said "5 abstracts read" and never "of 2,078"."""
+    silent = "Literature: the five most relevant abstracts were read."
+    stated = "Literature: PubMed holds 2,078 papers on ototoxicity; this run holds the 200 most relevant."
+
+    (failure,) = check_report(silent, NARROWED)
+
+    assert failure["kind"] == "narrowing_not_stated"
+    assert failure["text"] == "results.literature: 200 rows of 2078 (ototoxicity)"
+    assert check_report(stated, NARROWED) == []

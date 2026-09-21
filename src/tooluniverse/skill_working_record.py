@@ -97,6 +97,7 @@ class WorkingRecord:
                    "PRIMARY KEY (step, attempt, call_n))")
         db.execute("CREATE TABLE IF NOT EXISTS row (name TEXT, row_n INT, json TEXT, "
                    "PRIMARY KEY (name, row_n))")
+        db.execute("CREATE TABLE IF NOT EXISTS served (n INTEGER PRIMARY KEY, name TEXT, json TEXT)")
         return db
 
     def put_result(self, step: str, call_n: int, tool: str, arguments: dict,
@@ -204,4 +205,40 @@ class WorkingRecord:
         if rank_by:
             for row, source in zip(projected, chosen):
                 row["_score"] = round(scores[id(source)], 4)
+        self._note_served(table, projected)
         return {**out, "returned": len(projected), "rows": projected}
+
+    def _note_served(self, table: str, rows: list[dict]) -> None:
+        """What the agent was given, as it was given: the report is read against this."""
+        db = self._open()
+        try:
+            db.executemany("INSERT INTO served (name, json) VALUES (?, ?)",
+                           [(table, json.dumps(row, default=str, ensure_ascii=False))
+                            for row in rows])
+            db.commit()
+        finally:
+            db.close()
+
+    def count(self, event: str) -> int:
+        """How often something happened to this run -- a report submitted, for one."""
+        db = self._open()
+        try:
+            db.execute("INSERT INTO served (name, json) VALUES (?, ?)", (f"@{event}", "{}"))
+            db.commit()
+            return db.execute("SELECT COUNT(*) FROM served WHERE name = ?",
+                              (f"@{event}",)).fetchone()[0]
+        finally:
+            db.close()
+
+    def served(self) -> dict[str, list[dict]]:
+        """Every row the agent fetched, by table, in the order it was served."""
+        db = self._open()
+        try:
+            found = db.execute("SELECT name, json FROM served ORDER BY n").fetchall()
+        finally:
+            db.close()
+        out: dict[str, list[dict]] = {}
+        for name, text in found:
+            if not name.startswith("@"):
+                out.setdefault(name, []).append(json.loads(text))
+        return out

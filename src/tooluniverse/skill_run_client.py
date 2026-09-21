@@ -143,3 +143,34 @@ def fetch_run_data(run_id: str, table: str, columns: list[str] | None = None,
                 "hint": "use the run_id that run_skill returned; a record lives as long as "
                         "the server that made it"}
     return record.fetch(table, columns, limit, offset, rank_by)
+
+
+REPORT_ATTEMPTS = 2
+
+
+async def submit_report(client: Any, run_id: str, draft: str, *, directory=None) -> dict:
+    """Read the draft against what the agent received; ask once more, then let it go.
+
+    Received = the hand-over (facts, tables) and every row served by fetch_run_data. A draft
+    that states nothing else is accepted. Otherwise the agent is asked once to revise, with
+    each failure named; a second draft goes out with the remaining failures appended.
+    """
+    from .skill_report_check import check_report
+    from .skill_working_record import WorkingRecord, records_dir
+    from .skill_workflow import SkillWorkflow
+
+    handover = await client.get_workflow_handle(run_id).result()
+    record = WorkingRecord.existing(directory or records_dir(), run_id)
+    received = {"handover": handover, "fetched": record.served() if record else {}}
+    failures = check_report(draft, received)
+    if not failures:
+        return {"status": "accepted", "run_id": run_id, "failures": []}
+    attempt = record.count("report_submitted") if record else REPORT_ATTEMPTS
+    named = "; ".join(f"{f['kind']} {f['text']!r} in: {f['context']}" for f in failures)
+    if attempt < REPORT_ATTEMPTS:
+        return {"status": "revise", "run_id": run_id, "failures": failures,
+                "hint": ("these statements are not in the facts you were handed or the rows you "
+                         "fetched: take each from its row and cite that row, fetch the row that "
+                         "holds it, or remove it; then submit again -- " + named)}
+    return {"status": "accepted_with_failures", "run_id": run_id, "failures": failures,
+            "append_to_report": ("Not verified against the run's data: " + named)}

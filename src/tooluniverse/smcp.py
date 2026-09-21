@@ -1283,7 +1283,8 @@ class SMCP(FastMCP):
             from the hand-over at the end.
 
             Loop: call this once; while the answer is `running` or `waiting`, call
-            `continue_skill(run_id)`; when it is `finished`, write the report.
+            `continue_skill(run_id)`; when it is `finished`, write the report, then
+            hand the draft to `submit_report(run_id, draft)` BEFORE you answer the user.
               - `running`  → progress: {step_id, step_label, done, remaining}. Tell
                 the user which phase completed, then call continue_skill.
               - `waiting`  → a `question` {kind, step, wants, context}. Answer with
@@ -1301,7 +1302,9 @@ class SMCP(FastMCP):
                 over — row count, columns, a two-row preview that is NOT the data:
                 read the rows you need with fetch_run_data(run_id, table, ...).
                 Every number comes from handover.facts or from rows you fetched;
-                report failures/blocked/unresolved/excluded as gaps.
+                report failures/blocked/unresolved/excluded as gaps. Follow the
+                five lines in `handover.write_the_report`: they hold for every
+                skill, and submit_report checks the draft against them.
               - `schema_mismatch` → bind the `missing_inputs` from the question
                 and call run_skill again.
               - `confirm_inputs` → the run did NOT start: `undecided_inputs` are
@@ -1384,6 +1387,37 @@ class SMCP(FastMCP):
 
             try:
                 out = fetch(run_id, table, columns, limit, offset, rank_by)
+            except Exception as exc:                       # noqa: BLE001
+                out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+            return json.dumps(out, ensure_ascii=False, default=str)
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False)
+        )
+        async def submit_report(run_id: str, draft: str) -> str:
+            """Hand in the draft report of a finished Skill Run before you answer the user.
+
+            The server reads the draft against what you received: the hand-over's facts and
+            every row you fetched. Every number and every link must be there, and wherever
+            the run holds less than its source (a table's `source_total` above its `rows`)
+            the draft must give both numbers.
+
+            Returns:
+                `accepted`: answer the user with the draft as it is.
+                `revise`: `failures` names each statement nothing vouches for, with its
+                context. Take each number from its row and cite that row, fetch the row that
+                holds it, or remove the statement; then call submit_report once more.
+                `accepted_with_failures`: answer the user with the draft, and add the text
+                in `append_to_report` at its end, as it is.
+
+            Args:
+                run_id: the run_id that run_skill returned.
+                draft: the whole report you are about to send, in the form you will send it.
+            """
+            from .skill_run_client import submit_report as submit
+
+            try:
+                out = await submit(await client(), run_id, draft)
             except Exception as exc:                       # noqa: BLE001
                 out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
             return json.dumps(out, ensure_ascii=False, default=str)

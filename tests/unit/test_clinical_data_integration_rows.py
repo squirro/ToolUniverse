@@ -49,8 +49,10 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERM
             ae = a["adverse_event"]
             return {"data": {"metrics": {"PRR": {"value": prr[ae]}}}, "source_url": _url(ae)}
         if tool == "PubMed_search_articles":
-            return {"total": 4120,
-                    "data": [{"pmid": "1", "title": "t", "pub_year": 2024, "doi_url": "d"}]}
+            # the shape recorded from the live tool on sr-dev, 2026-09-21
+            return {"status": "success",
+                    "data": [{"pmid": "1", "title": "t", "pub_year": 2024, "doi_url": "d"}],
+                    "metadata": {"count": 1, "total": 4120, "query": a["query"], "source": "PubMed"}}
         if tool == "search_clinical_trials":
             return {"data": {"total_count": 866, "studies": [
                 {"NCT ID": "NCT1", "brief_title": "A", "overall_status": "COMPLETED", "phase": "PHASE3"},
@@ -225,5 +227,21 @@ def test_the_process_names_where_each_wide_source_reports_its_total():
     process = load_graph("clinical-data-integration")
     totals = {s["id"]: s.get("total") for s in process["steps"] if s["id"] in ("trials", "literature")}
 
-    assert totals == {"trials": "data.total_count", "literature": "total"}
+    assert totals == {"trials": "data.total_count", "literature": "metadata.total"}
     assert process["tables"]["trial_rows"] == "evidence"
+
+
+def test_the_declared_paths_find_the_totals_in_the_recorded_payloads(tmp_path):
+    """A path that matches an invented payload proves nothing: live, every literature total read "unknown"."""
+    from tooluniverse.skill_runner import source_total
+
+    process = load_graph("clinical-data-integration")
+    literature = next(s for s in process["steps"] if s["id"] == "literature")
+    trials = next(s for s in process["steps"] if s["id"] == "trials")
+    pubmed = {"status": "success", "data": [], "source_url": "u",
+              "metadata": {"count": 200, "total": 4120, "query": "q", "source": "PubMed"}}
+    ctgov = {"status": "success", "data": {"studies": [], "total_count": 866, "next_page_token": None},
+             "metadata": {"source": "ClinicalTrials.gov API v2", "operation": "search"}}
+
+    assert source_total(literature, [pubmed], ["DEAFNESS"]) == {"DEAFNESS": 4120}
+    assert source_total(trials, [ctgov], None) == 866

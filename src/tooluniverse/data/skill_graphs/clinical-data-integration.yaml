@@ -235,7 +235,7 @@ steps:
         # PubMed's own relevance order: unset, it answers newest first, and "the first
         # papers" were the newest, not the ones that answer the question.
         arguments: {query: "{inn} AND {reaction}", limit: 200, sort: "relevance"}
-    total: "total"
+    total: "metadata.total"
     narrowed: >-
       200 is the most this tool documents for one call; the source's total for each
       reaction is recorded beside the rows, and the report states it.

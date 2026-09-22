@@ -125,7 +125,7 @@ steps:
       - tool: UniProt_get_function_by_accession
         arguments: {accession: "{uniprot_id}"}
     extract:
-      function: "0"   # the tool answers a bare list of function texts
+      function: "result.0"   # the tool answers a bare list; the executor wraps it as {result: [...]}
     produces: [function]
 
   - id: disease_candidates

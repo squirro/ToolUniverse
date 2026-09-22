@@ -120,6 +120,9 @@ def test_what_counts_as_an_upstream_failure():
         "status": "error", "url": "https://www.ebi.ac.uk/chembl/api/data/target.json",
         "error": "ChEMBL API request failed: HTTPSConnectionPool(host='www.ebi.ac.uk', port=443): Read timed out. (read timeout=30)",
         "detail": "ReadTimeout(ReadTimeoutError(\"...Read timed out.\"))"})
+    # a tool the deployment does not serve: the call was never made, so it is a failed call
+    assert is_upstream_failure({"status": "error", "error": "Tool 'Pharos_get_target' not found even after loading tools",
+                                "error_details": {"type": "ToolUnavailableError", "retriable": False}})
     assert not is_upstream_failure(NOT_FOUND)
     assert not is_upstream_failure({"status": "success", "data": []})
     assert not is_upstream_failure(["a", "list"])

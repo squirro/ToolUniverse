@@ -530,7 +530,8 @@ def new_run(inputs: dict) -> dict:
             "questions": [], "unresolved": [], "excluded": {}}
 
 
-_SERVER_ERROR_TYPES = ("ServerError", "UpstreamServiceError", "Timeout", "ConnectionError")
+_SERVER_ERROR_TYPES = ("ServerError", "UpstreamServiceError", "Timeout", "ConnectionError",
+                       "ToolUnavailableError")
 
 
 def is_upstream_failure(result: Any) -> bool:

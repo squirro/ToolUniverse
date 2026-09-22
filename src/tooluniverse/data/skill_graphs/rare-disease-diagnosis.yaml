@@ -1,16 +1,14 @@
 # rare-disease-diagnosis as a process graph.
 #
-# Chosen because it is the flakiest skill we measured: three identical probes on
-# 2026-08-21 returned fail, warn and pass. The prose body already carries the right
-# procedure — what varies is whether the agent performs it.
+# The prose body already carries the right procedure — what varies is whether the
+# agent performs it.
 #
 # Two things the graph fixes that prose could not. Phase 2 demands TWO joint calls,
 # one over every phenotype and one over only the discriminating ones, because the
 # strict intersection of common terms starves while the discriminating pair returns
-# the textbook differential; written as prose it is regularly reduced to one call.
-# And the body sources candidate genes FROM the literature, yet puts literature in
-# Phase 6 and gene work in Phase 3 — here literature runs first, so the dependency
-# is real rather than aspirational.
+# the textbook differential; written as prose it is reduced to one call. And the
+# body sources candidate genes FROM the literature, yet puts literature after the
+# gene work — here literature runs first, so the dependency is real.
 #
 # Facts the agent feeds back: symptoms, hpo_ids, discriminating_hpo_ids,
 # top_candidate, genes, variant_id.
@@ -21,9 +19,8 @@ inputs: [symptoms]
 # the `variant` step's `when: variant_id` could never be true.
 optional_inputs: [variant_id, age_years]
 # How the report must read the evidence. The bundle carries the numbers; this
-# carries the author's rules for ranking, grading and citing them. Blind-judged
-# 2026-09-03 on clinical-data-integration: without it the writer had the data and
-# not the judgement.
+# carries the author's rules for ranking, grading and citing them. Without it the
+# writer has the data and not the judgement.
 report: >-
   Open with five answers, each its own sentence: the most likely diagnosis and its
   primary evidence; the ranked differential; the tests or variants that would
@@ -45,13 +42,11 @@ report: >-
   keyword search; weight the HPO route as primary when the two disagree. Name
   the features of the case the leading candidate leaves unexplained. The third
   answer — the tests that discriminate the top candidates — must be concrete:
-  when the top two are in the same disease family (two mucopolysaccharidoses,
-  two gangliosidoses), name the enzyme or gene pair that separates them from
-  their rows in `facts.orphanet_gene_rows` (for example IDUA for Hurler against
-  IDS for MPS II) and say that the enzyme assay or the gene test decides. State
-  the inheritance and age of onset that separate them from their rows in
-  `facts.disease_inheritance` (X-linked MPS II against autosomal recessive
-  Hurler). A clinical sign that no row carries, if you add one, is labelled
+  when the top two are in the same disease family, name the enzyme or gene pair
+  that separates them from their rows in `facts.orphanet_gene_rows` and say that
+  the enzyme assay or the gene test decides. State the inheritance and age of
+  onset that separate them from their rows in `facts.disease_inheritance`. A
+  clinical sign that no row carries, if you add one, is labelled
   clinical reasoning. The values
   `working_hypothesis`, `discriminating_features`, `discriminating_hpo_ids` and
   `top_candidate` in `facts` were supplied by the model when the run asked for
@@ -86,6 +81,24 @@ report: >-
   table. End with a Limitations section built from `failures`, `blocked` and
   `unresolved`, and from any symptom that resolved to no HP: id.
 
+# What the agent gets whole (fact) and what it gets described and fetches from (evidence).
+# A table a later step reads must be a fact. The kind decides, never the size.
+# Every table here is read by a later step or cited row by row in the report.
+tables:
+  hpo_ids: fact
+  term_counts: fact
+  hpo_hierarchy_calls: fact
+  orphanet_matches: fact
+  orphanet_codes: fact
+  disease_phenotypes: fact
+  disease_inheritance: fact
+  disease_prevalence: fact
+  orphanet_gene_rows: fact
+  genes: fact
+  mondo_ids: fact
+  opentargets_rows: fact
+  gene_rows: fact
+
 steps:
   - id: hypothesis
     label: "Phase 0 — clinical reasoning, before any tool call"
@@ -109,8 +122,8 @@ steps:
     calls:
       - tool: get_HPO_ID_by_phenotype
         arguments: {query: "{symptom}", limit: 5}
-    # Live, the lookup answers UPHENO:, MP:, then HP: — the human phenotype is
-    # third. One HP id per symptom, taken mechanically; which two or three
+    # The lookup also answers UPHENO: and MP: ids, so the human phenotype is not
+    # always first. One HP id per symptom, taken mechanically; which two or three
     # discriminate is judgement.
     collect:
       hpo_ids: {path: "data.items[].id", match: "^HP:"}
@@ -147,9 +160,9 @@ steps:
         arguments: {term_id: "{hpo}", direction: "parents"}
       - tool: HPO_get_term_hierarchy
         arguments: {term_id: "{hpo}", direction: "children"}
-    # Orphanet annotates Hurler with Hepatomegaly and Splenomegaly as two terms; the
-    # case's Hepatosplenomegaly is their conjunction. The match is ontological:
-    # a disease carries a term if it lists it, all its parents, or a child.
+    # A disease may annotate two terms whose conjunction is the case's single term,
+    # so the match is ontological: a disease carries a term if it lists it, all its
+    # parents, or a child.
     collect:
       hpo_hierarchy_calls: {path: "", fields: ["$item as hpo_id", "$call.direction as direction", "data[].id as ids"]}
     compute:
@@ -163,11 +176,10 @@ steps:
     label: "Phase 1c — the two phenotypes annotated to the fewest diseases"
     requires: [hpo_counts]
     calls: []
-    # UI run 3e342e1a: asked for the rarest phenotypes, the model chose developmental
-    # delay and seizures once in fifteen runs and the differential became a
-    # neurodevelopmental list. Fewest annotated diseases is arithmetic; the model
-    # is asked only when the counts tie at the cut (the name stays unresolved and
-    # the judge below fills it).
+    # Fewest annotated diseases is arithmetic, not judgement: asked for the rarest
+    # phenotypes, the model picks common ones and the differential drifts with them.
+    # It is asked only when the counts tie at the cut, and the judge below fills
+    # the tie.
     compute:
       discriminating_hpo_ids: {op: fewest, rows: term_counts, id: hpo_id, count: diseases, take: 2}
     produces: [discriminating_hpo_ids]
@@ -184,13 +196,12 @@ steps:
       - tool: get_joint_associated_diseases_by_HPO_ID_list
         arguments: {HPO_ID_list: "{hpo_ids}", limit: 20}
     # The tool answers a bare list of names, which the executor hands the run as
-    # {"result": [...]} — the same shape every saved trace shows.
+    # {"result": [...]}.
     extract: {strict_candidates: {path: "result"}}
     produces: [strict_candidates]
     notes: >-
-      A SHORT list here is normal, not a failure — common terms like developmental
-      delay are annotated on thousands of diseases, so the strict intersection
-      starves. Do not stop here.
+      A SHORT list here is normal, not a failure — a common phenotype is annotated
+      on thousands of diseases, so the strict intersection starves. Do not stop here.
 
   - id: differential_discriminating
     label: "Phase 2b — the same query on the DISCRIMINATING phenotypes only"
@@ -201,9 +212,9 @@ steps:
     extract: {decisive_candidates: {path: "result"}}
     produces: [decisive_candidates]
     notes: >-
-      This is the call that surfaces the clinically decisive differential — coarse
-      facies plus hepatosplenomegaly returns the storage disorders, where the full
-      term set returns almost nothing. Both 2a and 2b are required.
+      This is the call that surfaces the clinically decisive differential — the
+      two discriminating phenotypes together return the disease family, where the
+      full term set returns almost nothing. Both 2a and 2b are required.
 
   - id: resolve_candidates
     label: "Phase 2b' — an Orphanet entry for each decisive candidate"
@@ -215,8 +226,7 @@ steps:
         arguments: {query: "{candidate}", limit: 1}
     # The joint tool gives names only. One lookup per name carries the hit as a
     # row — code and preferred term together — so a name Orphanet does not know
-    # is absent rather than shifting every later index (live 2026-09-04: no
-    # ranked disease could be linked).
+    # is absent rather than shifting every later index.
     collect:
       orphanet_matches: {path: "data.results.0"}
       orphanet_codes: {path: "data.results.0.ORPHAcode"}
@@ -234,7 +244,7 @@ steps:
     calls:
       - tool: Orphanet_get_phenotypes
         arguments: {orphacode: "{orphacode}"}
-    # ~10 KB per disease; the run keeps one row: code, name, HPO ids.
+    # The response is wide; the run keeps one row: code, name, HPO ids.
     collect:
       disease_phenotypes: {path: "data", fields: ["orpha_code", "preferred_term", "phenotypes[].hpo_id as hpo_ids"]}
     produces: [disease_phenotypes]
@@ -256,8 +266,8 @@ steps:
     produces: [disease_inheritance]
     notes: >-
       One call per resolved candidate. Inheritance and onset are what separate
-      siblings the phenotypes cannot (X-linked MPS II against autosomal recessive
-      Hurler); cite them from these rows.
+      siblings of one disease family that the phenotypes cannot; cite them from
+      these rows.
 
   - id: disease_prevalence
     label: "Phase 2b.4 — how common each candidate is, from Orphanet"
@@ -295,6 +305,9 @@ steps:
     calls:
       - tool: EuropePMC_search_articles
         arguments: {query: "{top_candidate}", limit: 10}
+    narrowed: >-
+      Literature is context for the report, not where genes come from; the few most
+      relevant papers are read, and the source exposes no total to state.
     notes: >-
       Recent papers on the top candidate, cited by PMID. Literature is context
       for the report; it is not where genes come from.
@@ -307,10 +320,9 @@ steps:
     calls:
       - tool: Orphanet_get_genes
         arguments: {orphacode: "{orphacode}"}
-    # Live 2026-09-04 the model, asked for genes, answered four once (three from
-    # its own hypothesis) and none twice on identical data. A gene is a claim the
-    # Run Record must vouch for: it is looked up, never judged. Each row keeps
-    # the disease it belongs to; the flat unique list is what the panel loops over.
+    # A gene is a claim the Run Record must vouch for: it is looked up, never
+    # judged. Each row keeps the disease it belongs to; the flat unique list is
+    # what the panel loops over.
     collect:
       orphanet_gene_rows: {path: "data"}
       genes: {path: "data.genes[].Symbol", flatten: true, unique: true}
@@ -379,9 +391,8 @@ steps:
     label: "Phase 2c.2 — overlap and grade per candidate, computed by the server"
     requires: [hpo_hierarchy, disease_phenotypes, gene_evidence_orphanet]
     calls: []
-    # Counting shared HPO ids is arithmetic, not judgement. Delegated to the agent's
-    # code tool it came back empty twice and on retyped inputs three times in
-    # fifteen runs. The rubric is the served body's; T1 needs a causal gene.
+    # Counting shared HPO ids is arithmetic, not judgement, so the server does it.
+    # The rubric is the served body's; T1 needs a causal gene.
     compute:
       overlap_rows:
         op: overlap
@@ -406,10 +417,9 @@ steps:
     label: "Phase 2c.3 — the order a clinician uses: age fit, then how common, then overlap"
     requires: [disease_inheritance, disease_prevalence, compute_overlap]
     calls: []
-    # DSR-729: both blinded judges marked the reports down for ranking by Orphanet
-    # annotation count — sialuria (five families worldwide) and an adolescent-onset
-    # sialidosis above the mucopolysaccharidoses a four-year-old must have excluded
-    # first. Ranking is arithmetic over rows the run holds, so the server does it.
+    # Ranking by Orphanet annotation count puts ultra-rare and late-onset diseases
+    # above the ones a clinician must exclude first. Ranking is arithmetic over rows
+    # the run holds, so the server does it.
     compute:
       ranked_rows:
         op: rank_differential
@@ -420,7 +430,7 @@ steps:
         early_onset: ["Antenatal", "Neonatal", "Infancy", "Childhood", "All ages"]
         late_onset: ["Adolescent", "Adult", "Elderly"]
         # A candidate must carry the discriminating pair the run computed to rank
-        # above candidates that do (DSR-729 v2: Sotos-first).
+        # above candidates that do.
         must_carry: discriminating_hpo_ids
         rows_ids: disease_phenotypes
         hierarchy: hpo_hierarchy

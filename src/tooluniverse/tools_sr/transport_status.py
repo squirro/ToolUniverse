@@ -1,23 +1,10 @@
-"""Says which kind of empty an empty result is (DSR-666 / DSR-672).
+"""Says which kind of empty an empty result is.
 
-DSR-629: a dead network read as a biological negative. The tool returned an empty payload,
-the agent reported "no association found", and nothing in the result said the source had
-never answered. 1,957 of 2,241 tools declare no ``status`` field at all, so there is
-nowhere for that answer to live today -- which is why the annotation here is *additive*.
-
-**The rule that makes this safe:** absence of call records is not evidence of
-unreachability. Only a record of a *failed* call is.
-
-That single line is why DSR-672 needs no separate mechanism. Roughly 105 tools reach their
-data without touching HTTP -- AgenticTool ~50, XMLTool ~19, ComposeTool ~11, plus SOAP,
-subprocess and local-file readers -- and the DSR-658 interceptor records nothing for any of
-them. A "no successful call means unreachable" rule would stamp all 105 as broken while
-they work perfectly. Today those tools are merely mute; that rule would make them lie.
-
-The vocabulary is deliberately generic, per ADR-0014. A central layer can say the source
-was unreachable; it cannot say ``gene_not_measured`` and must not pretend to. A tool that
-carries its own domain status keeps it -- ``tools_sr/differential.py``'s ``_STATUS_DETAIL``
-is the reference for when a tool genuinely needs one.
+Most tools declare no ``status`` field, so the annotation is additive, and the vocabulary is
+deliberately generic: a central layer can say the source was unreachable, not why a
+particular domain has no rows. The rule that makes it safe is that absence of call records
+is not evidence of unreachability; only a record of a failed call is. A tool that reaches
+its data without touching HTTP records nothing and works perfectly.
 """
 
 from __future__ import annotations
@@ -40,8 +27,8 @@ __all__ = [
 SOURCE_UNREACHABLE = "source_unreachable"
 NO_DATA = "no_data"
 
-# Carried beside the status because the status alone is a label, and the inference the
-# agent must NOT make -- empty means absent -- is the whole defect.
+# Carried beside the status because the status alone is a label; the inference the agent
+# must not make is that empty means absent.
 _NOTE = {
     SOURCE_UNREACHABLE: (
         "The source could not be reached, so this empty result is not evidence of "
@@ -54,19 +41,14 @@ _NOTE = {
     ),
 }
 
-# Only a verdict we already wrote stops us writing another. `status` deliberately does NOT
-# appear here: the BaseREST family answers {status, data, metadata, source_url} where
-# `status` is the envelope's own success flag, and treating it as a domain vocabulary
-# suppressed the annotation on the entire family -- measured live on sempart, which is
-# exactly where DSR-629 lives. Nothing is overwritten either way, because the verdict goes
-# to its own key and a tool's `status` is never touched.
+# Only a verdict we already wrote stops us writing another. `status` is deliberately absent:
+# in the BaseREST envelope it is the success flag, not a domain vocabulary, so treating it
+# as one suppresses the annotation on the whole family.
 _OWN_STATUS_KEYS = ("transport_status",)
 
-# Envelope scaffolding: present on a result whether or not it carries records, so it must
-# not count towards emptiness. `metadata` is the load-bearing one -- it holds non-empty
-# strings ("source": "Europe PMC") beside an empty `data`, so counting it reads a result
-# with no records as though it had some. `source_url` and the transport keys are our own,
-# and would otherwise let install order decide whether a verdict appeared.
+# Envelope scaffolding: present whether or not the result carries records, so it must not
+# count towards emptiness. `metadata` holds non-empty strings beside an empty payload, and
+# the transport keys are our own, so install order must not decide the verdict.
 _ENVELOPE_KEYS = frozenset(
     {"transport_status", "transport_note", "source_url", "url", "metadata", "status"}
 )
@@ -81,15 +63,10 @@ def _is_container(value: Any) -> bool:
 def is_empty(result: Any) -> bool:
     """True when the payload carries no data.
 
-    It has to look inside a mapping, because the shape that caused DSR-629 is
-    ``{"results": [], "query": "SSTR2"}`` -- truthy, non-trivial, and carrying nothing but
-    an echo of the question.
-
-    Payload and echo are told apart structurally rather than by field name. Where a mapping
-    has container values, those hold the payload and scalars beside them are metadata, so
-    the echoed ``query`` does not make an empty ``results`` look like data. Only when a
-    mapping has no containers at all does a bare scalar count as the answer, which keeps
-    ``{"answer": "text"}`` honest. Naming the echo fields instead would mean maintaining a
+    It looks inside a mapping, because a result can be truthy and carry nothing but an empty
+    list beside an echo of the question. Payload and echo are told apart structurally: where
+    a mapping has container values those hold the payload, and only when it has none does a
+    bare scalar count as the answer. Naming the echo fields instead would mean maintaining a
     vocabulary that the next API extends.
     """
     if result is None:
@@ -114,18 +91,15 @@ def is_empty(result: Any) -> bool:
 def decide(records, result: Any) -> str | None:
     """The status for this result, or ``None`` when none applies.
 
-    Pure -- a function of the call records and the payload, with no network and no clock.
-
-    ``None`` covers the two cases where a verdict would be noise or a lie: a result that
-    carries data (nothing is ambiguous), and a tool that made no HTTP call at all (we know
-    nothing about its transport, and guessing is the DSR-672 regression).
+    Pure: a function of the call records and the payload. ``None`` covers the two cases
+    where a verdict would be noise or a lie: a result that carries data, and a tool that
+    made no HTTP call at all, whose transport we know nothing about.
     """
     if not records:
         return None
     if not is_empty(result):
         return None
-    # One source answering is enough: a tool that failed over to a mirror and succeeded
-    # has genuinely seen the data, so its emptiness is real.
+    # One source answering is enough: a tool that failed over to a mirror has seen the data.
     if any(record.reached for record in records):
         return NO_DATA
     return SOURCE_UNREACHABLE
@@ -134,10 +108,8 @@ def decide(records, result: Any) -> str | None:
 def annotate(result: Any, records) -> Any:
     """Return ``result`` with a transport status attached, if one applies.
 
-    Additive and non-mutating. Only mappings are annotated -- attaching a key to a list or
-    a string would change the payload's type, and 87.3% of tools have consumers expecting
-    the shape they already return. Non-mapping results are therefore returned untouched,
-    and that gap is recorded rather than silent.
+    Additive and non-mutating. Only mappings are annotated: attaching a key to a list or a
+    string would change the payload type that consumers already expect.
     """
     if not isinstance(result, Mapping):
         return result
@@ -158,8 +130,7 @@ def install(cls) -> None:
     """Annotate every ``run_one_function`` result on ``cls``. Safe to call repeatedly.
 
     Wraps the class from outside rather than editing ``execute_function.py``, which
-    re-syncs from upstream -- the same reasoning ADR-0014 applies to the 110 swallowing
-    modules, applied to the seam itself.
+    re-syncs from upstream.
     """
     original = cls.run_one_function
     if getattr(original, "_sr_transport_status", False):
@@ -174,7 +145,7 @@ def install(cls) -> None:
             return annotate(result, records)
 
     wrapper._sr_transport_status = True
-    # Marked for http_record too, so install_invocation_scope does not wrap this again and
-    # open a redundant inner scope.
+    # Marked for http_record too, so install_invocation_scope does not open a redundant
+    # inner scope.
     wrapper._sr_http_record = True
     cls.run_one_function = wrapper

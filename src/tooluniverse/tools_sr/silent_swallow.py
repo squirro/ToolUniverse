@@ -1,23 +1,10 @@
-"""Find broad exception handlers that hide a failure from the agent (DSR-659).
+"""Find broad exception handlers that hide a failure from the agent.
 
 A tool that catches everything and returns an empty value tells the agent nothing went
-wrong. The agent reads zero rows as a real negative -- "no interactions reported" rather
-than "the source was unreachable" -- and writes a confident wrong answer. That is the same
-defect DSR-666 fixed at the envelope level, seen at its source.
-
-**A log does not count as surfacing the failure.** Server logs are not the agent's channel.
-A handler whose whole body is ``logger.warning(...)`` still returns nothing to the caller,
-so logging statements are transparent here: they are removed before asking what the body
-reduces to.
-
-This is containment, not remediation. The count is frozen; existing debt stays and new code
-cannot add to it. Most of the population is upstream, and rewriting it would conflict with
-every fork sync.
-
-Measured 2026-08-12: 299 handlers across 117 modules, before the optional-dependency
-exemption. The ticket's figure of 245 across 110 does not reproduce -- the corpus has grown,
-and treating logging as transparent counts the log-and-fall-through shape that a literal
-reading of "reduces to pass" misses.
+wrong, and the agent reads zero rows as a real negative. A log does not count as surfacing
+the failure, because server logs are not the agent's channel, so logging statements are
+transparent here and are removed before asking what the handler body reduces to. This is
+containment: the count is frozen, existing debt stays and new code cannot add to it.
 """
 
 from __future__ import annotations
@@ -28,13 +15,12 @@ from pathlib import Path
 
 __all__ = ["Finding", "PRAGMA", "find_in_source", "scan"]
 
-# Catching these is catching everything. A narrow `except KeyError` is a decision; this is
-# an absence of one.
+# Catching these is catching everything: a narrow `except KeyError` is a decision, this is
+# the absence of one.
 _BROAD = {"Exception", "BaseException"}
 
-# Words that mean the handler passed the failure on rather than hiding it. Checked only in
-# returns and assignments -- never in calls, so `logger.warning(...)` cannot rescue a
-# handler by containing the word "warning".
+# Words that mean the handler passed the failure on. Checked in returns and assignments
+# only, so `logger.warning(...)` cannot rescue a handler by containing the word "warning".
 _DIAGNOSTIC = ("error", "status", "reason", "detail", "message", "warning", "failure",
                "note", "diagnostic")
 
@@ -44,8 +30,8 @@ _EMPTY = (None, "", [], {}, (), 0, False)
 _LOG_CALLS = {"debug", "info", "warning", "warn", "error", "exception", "critical", "log",
               "print"}
 
-# ``# silent-swallow: <reason>``. The reason is required: a bare pragma is a way to silence
-# the guard without thinking, which is how a ratchet stops meaning anything.
+# ``# silent-swallow: <reason>``. The reason is required so the guard cannot be silenced
+# without stating why.
 PRAGMA = re.compile(r"#\s*silent-swallow\s*:\s*(?P<reason>\S.*?)\s*$")
 
 
@@ -100,10 +86,9 @@ def _mentions_diagnostic(stmt: ast.stmt) -> bool:
 def _probes_an_optional_import(node: ast.Try) -> bool:
     """Whether the guarded block only imports something.
 
-    ``try: import cupy / except Exception: pass`` is correct as written -- the absence of an
-    optional dependency is not a failure to report, it is the question being asked. Exempted
-    structurally rather than by pragma so that the exemption needs no edit to upstream files,
-    which re-sync from ``mims-harvard:main``.
+    The absence of an optional dependency is not a failure to report, it is the question
+    being asked. Exempted structurally rather than by pragma, so the exemption needs no
+    edit to upstream files.
     """
     statements = [s for s in node.body if not isinstance(s, ast.Expr)]
     return bool(statements) and all(
@@ -125,9 +110,8 @@ def _waived(lines: list[str], handler: ast.ExceptHandler) -> str | None:
 def _swallows(handler: ast.ExceptHandler) -> bool:
     """Whether the handler ends up telling the caller nothing.
 
-    Re-raising is not swallowing. A return or assignment naming the failure is not
-    swallowing. Everything else that reduces to pass, continue, an empty return, or a bare
-    fall-through is.
+    Re-raising is not swallowing, nor is a return or assignment that names the failure.
+    Everything that reduces to pass, continue, an empty return or a bare fall-through is.
     """
     for node in ast.walk(handler):
         if isinstance(node, ast.Raise):

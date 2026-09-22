@@ -1,0 +1,1648 @@
+{
+ "MyGene_query_genes": {
+  "status": "success",
+  "data": {
+   "took": 3,
+   "total": 3,
+   "max_score": 167.0419,
+   "hits": [
+    {
+     "_id": "2348",
+     "_score": 167.0419,
+     "ensembl": {
+      "gene": "ENSG00000110195"
+     },
+     "entrezgene": "2348",
+     "name": "folate receptor alpha",
+     "symbol": "FOLR1",
+     "uniprot": {
+      "Swiss-Prot": "P15328"
+     }
+    },
+    {
+     "_id": "140577509",
+     "_score": 109.78042,
+     "ensembl": {
+      "gene": "ENSG00000204971"
+     },
+     "entrezgene": "140577509",
+     "name": "FOLR1 antisense RNA 1",
+     "symbol": "FOLR1-AS1"
+    },
+    {
+     "_id": "2350",
+     "_score": 2.4916399,
+     "ensembl": {
+      "gene": "ENSG00000165457"
+     },
+     "entrezgene": "2350",
+     "name": "folate receptor beta",
+     "symbol": "FOLR2",
+     "uniprot": {
+      "Swiss-Prot": "P14207",
+      "TrEMBL": [
+       "J3KQP4",
+       "A0ACI8U7T2",
+       "F5GXV3",
+       "E7EU04",
+       "F5H5L8",
+       "J3KR13",
+       "F5H3Z4",
+       "A0ACI8U7S9",
+       "F5H4Z6",
+       "F5GZ45"
+      ]
+     }
+    }
+   ]
+  }
+ },
+ "OpenTargets_get_target_id_description_by_name": {
+  "status": "success",
+  "data": {
+   "search": {
+    "hits": [
+     {
+      "id": "ENSG00000110195",
+      "name": "FOLR1",
+      "description": "folate receptor alpha"
+     },
+     {
+      "id": "ENSG00000204971",
+      "name": "FOLR1-AS1",
+      "description": "FOLR1 antisense RNA 1"
+     },
+     {
+      "id": "ENSG00000256518",
+      "name": "FOLR1P1",
+      "description": "folate receptor 1 pseudogene 1"
+     }
+    ]
+   }
+  }
+ },
+ "OpenTargets_get_disease_id_description_by_name": {
+  "status": "success",
+  "data": {
+   "search": {
+    "hits": [
+     {
+      "id": "MONDO_0008170",
+      "name": "ovarian cancer",
+      "description": "A primary or metastatic malignant neoplasm involving the ovary. Most primary malignant ovarian neoplasms are either carcinomas (serous, mucinous, or endometrioid adenocarcinomas) or malignant germ cell tumors. Metastatic malignant neoplasms to the ovary include carcinomas, lymphomas, and melanomas."
+     },
+     {
+      "id": "MONDO_0005140",
+      "name": "ovarian carcinoma",
+      "description": "A malignant neoplasm originating from the surface ovarian epithelium. It accounts for the greatest number of deaths from malignancies of the female genital tract and is the fifth leading cause of cancer fatalities in women. It is predominantly a disease of older white women of northern European extraction, but it is seen in all ages and ethnic groups. Adenocarcinomas constitute the vast majority of ovarian carcinomas. The pattern of metastatic spread in ovarian carcinoma is similar regardless of the microscopic type. The most common sites of involvement are the contralateral ovary, peritoneal cavity, para-aortic and pelvic lymph nodes, and liver. Lung and pleura are the most common sites of extra-abdominal spread. The primary form of therapy is surgical. The overall prognosis of ovarian carcinoma remains poor, a direct result of its rapid growth rate and the lack of early symptoms. --2002"
+     },
+     {
+      "id": "Orphanet_145",
+      "name": "Hereditary breast and ovarian cancer syndrome",
+      "description": "An autosomal dominant inherited syndrome caused by mutations in the BRCA1 or BRCA2 genes. Patients are at high risk of developing breast cancer, particularly before the age of fifty, high risk of developing a second primary breast cancer, and high risk of developing both breast and ovarian cancer."
+     },
+     {
+      "id": "MONDO_0003582",
+      "name": "hereditary breast ovarian cancer syndrome",
+      "description": "An autosomal dominant inherited syndrome caused by mutations in the BRCA1 or BRCA2 genes. Patients are at high risk of developing breast cancer, particularly before the age of fifty, high risk of developing a second primary breast cancer, and high risk of developing both breast and ovarian cancer."
+     },
+     {
+      "id": "MONDO_0016249",
+      "name": "hereditary site-specific ovarian cancer syndrome",
+      "description": "Ovarian cancer caused by germline mutations in various genes, usually associated with additional cancer risks. The most common are breast and ovarian cancer syndrome (HBOC) due to mutations in BRCA1 and BRCA2 genes and hereditary nonpolyposis colorectal cancer (HNPCC) due to mutations in DNA mismatch-repair genes. Mutations in STK11 gene, causing Peutz-Jeghers syndrome, are also associated with a risk of ovarian cancer (typically sex cord stromal tumors). Mutations in other genes, including RAD51C, RAD51D, PALB2, confer an elevated ovarian cancer risk in a minority of patients."
+     }
+    ]
+   }
+  }
+ },
+ "ensembl_lookup_gene": {
+  "status": "success",
+  "data": {
+   "object_type": "Gene",
+   "species": "homo_sapiens",
+   "display_name": "FOLR1",
+   "seq_region_name": "11",
+   "canonical_transcript": "ENST00000393676.5",
+   "biotype": "protein_coding",
+   "source": "ensembl_havana",
+   "id": "ENSG00000110195",
+   "strand": 1,
+   "version": 16,
+   "db_type": "core",
+   "logic_name": "ensembl_havana_gene_homo_sapiens",
+   "description": "folate receptor alpha [Source:HGNC Symbol;Acc:HGNC:3791]",
+   "start": 72189529,
+   "assembly_name": "GRCh38",
+   "end": 72199329
+  },
+  "url": "https://rest.ensembl.org/lookup/symbol/homo_sapiens/FOLR1",
+  "content_type": "application/json"
+ },
+ "ChEMBL_search_targets": {
+  "status": "error",
+  "error": "ChEMBL API request failed: HTTPSConnectionPool(host='www.ebi.ac.uk', port=443): Read timed out. (read timeout=30)",
+  "url": "https://www.ebi.ac.uk/chembl/api/data/target.json",
+  "detail": "ReadTimeout(ReadTimeoutError(\"HTTPSConnectionPool(host='www.ebi.ac.uk', port=443): Read timed out. (read timeout=30)\"))"
+ },
+ "UniProt_get_function_by_accession": {
+  "result": [
+   "Binds to folate and reduced folic acid derivatives and mediates delivery of 5-methyltetrahydrofolate and folate analogs into the interior of cells (PubMed:19074442, PubMed:23851396, PubMed:23934049, PubMed:2527252, PubMed:8033114, PubMed:8567728). Has high affinity for folate and folic acid analogs at neutral pH (PubMed:23851396, PubMed:23934049, PubMed:2527252, PubMed:8033114, PubMed:8567728). Exposure to slightly acidic pH after receptor endocytosis triggers a conformation change that strongly reduces its affinity for folates and mediates their release (PubMed:8567728). Required for normal embryonic development and normal cell proliferation (By similarity)"
+  ]
+ },
+ "OpenTargets_target_disease_evidence": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0008170",
+    "name": "ovarian cancer",
+    "evidences": {
+     "count": 0
+    }
+   }
+  },
+  "metadata": {
+   "note": "IntOGen returns 0 evidence rows for this query. IntOGen only covers somatic tumor driver mutations — it has no data for non-cancer diseases or non-driver genes. For non-oncology phenotypes, use OpenTargets_get_evidence_by_datasource instead."
+  }
+ },
+ "OpenTargets_get_diseases_phenotypes_by_target_ensembl": {
+  "status": "success",
+  "data": {
+   "target": {
+    "id": "ENSG00000110195",
+    "approvedSymbol": "FOLR1",
+    "associatedDiseases": {
+     "count": 461,
+     "rows": [
+      {
+       "disease": {
+        "id": "MONDO_0013110",
+        "name": "neurodegenerative syndrome due to cerebral folate transport deficiency"
+       },
+       "score": 0.8075857698193567,
+       "datasourceScores": [
+        {
+         "id": "genomics_england",
+         "score": 0.9513974960387728
+        },
+        {
+         "id": "eva",
+         "score": 0.9196395822122077
+        },
+        {
+         "id": "clingen",
+         "score": 0.607930797611621
+        },
+        {
+         "id": "gene2phenotype",
+         "score": 0.607930797611621
+        },
+        {
+         "id": "uniprot_literature",
+         "score": 0.607930797611621
+        },
+        {
+         "id": "orphanet",
+         "score": 0.607930797611621
+        },
+        {
+         "id": "europepmc",
+         "score": 0.08872369038464738
+        }
+       ]
+      },
+      {
+       "disease": {
+        "id": "MONDO_0008170",
+        "name": "ovarian cancer"
+       },
+       "score": 0.5341155851809023,
+       "datasourceScores": [
+        {
+         "id": "clinical_precedence",
+         "score": 0.8333239879975678
+        },
+        {
+         "id": "europepmc",
+         "score": 0.9051118514387316
+        }
+       ]
+      },
+      {
+       "disease": {
+        "id": "MONDO_0005070",
+        "name": "neoplasm"
+       },
+       "score": 0.4955930104171081,
+       "datasourceScores": [
+        {
+         "id": "clinical_precedence",
+         "score": 0.7666682836546554
+        },
+        {
+         "id": "europepmc",
+         "score": 0.9708917313399403
+        }
+       ]
+      },
+      {
+       "disease": {
+        "id": "MONDO_0021092",
+        "name": "fallopian tube neoplasm"
+       },
+       "score": 0.4619748183558772,
+       "datasourceScores": [
+        {
+         "id": "clinical_precedence",
+         "score": 0.7599134970145264
+        }
+       ]
+      },
+      {
+       "disease": {
+        "id": "MONDO_0006901",
+        "name": "peritoneal neoplasm"
+       },
+       "score": 0.4619748183558772,
+       "datasourceScores": [
+        {
+         "id": "clinical_precedence",
+         "score": 0.7599134970145264
+        }
+       ]
+      }
+     ]
+    }
+   }
+  }
+ },
+ "gnomad_get_gene_constraints": {
+  "status": "success",
+  "data": {
+   "gene": {
+    "symbol": "FOLR1",
+    "gene_id": "ENSG00000110195",
+    "exac_constraint": null,
+    "gnomad_constraint": {
+     "exp_lof": 22.817518974238926,
+     "obs_lof": 11,
+     "oe_lof": 0.4820857172253936,
+     "pLI": 0.05847585758086927,
+     "exp_mis": 320.25829991193723,
+     "obs_mis": 273,
+     "oe_mis": 0.8524369238051533,
+     "exp_syn": 116.5521347849012,
+     "obs_syn": 108,
+     "oe_syn": 0.9266239541585034
+    }
+   }
+  },
+  "url": "https://gnomad.broadinstitute.org/api",
+  "gene_symbol": "FOLR1"
+ },
+ "OpenTargets_get_target_tractability_by_ensemblID": {
+  "status": "success",
+  "data": {
+   "target": {
+    "id": "ENSG00000110195",
+    "approvedSymbol": "FOLR1",
+    "tractability": [
+     {
+      "label": "Approved Drug",
+      "modality": "SM",
+      "value": false
+     },
+     {
+      "label": "Advanced Clinical",
+      "modality": "SM",
+      "value": false
+     },
+     {
+      "label": "Phase 1 Clinical",
+      "modality": "SM",
+      "value": false
+     },
+     {
+      "label": "Structure with Ligand",
+      "modality": "SM",
+      "value": true
+     },
+     {
+      "label": "High-Quality Ligand",
+      "modality": "SM",
+      "value": true
+     }
+    ]
+   }
+  }
+ },
+ "OpenTargets_get_target_classes_by_ensemblID": {
+  "status": "success",
+  "data": {
+   "target": {
+    "id": "ENSG00000110195",
+    "approvedSymbol": "FOLR1",
+    "targetClass": [
+     {
+      "id": 11,
+      "label": "Membrane receptor",
+      "level": "l1"
+     }
+    ]
+   }
+  }
+ },
+ "Pharos_get_target": {
+  "status": "success",
+  "data": {
+   "name": "Folate receptor alpha",
+   "sym": "FOLR1",
+   "uniprot": "P15328",
+   "tdl": "Tclin",
+   "fam": null,
+   "novelty": 0.00283538,
+   "description": "The protein encoded by this gene is a member of the folate receptor family. Members of this gene family bind folic acid and its reduced derivatives, and transport 5-methyltetrahydrofolate into cells. This gene product is a secreted protein that either anchors to membranes via a glycosyl-phosphatidylinositol linkage or exists in a soluble form. Mutations in this gene have been associated with neurodegeneration due to cerebral folate transport deficiency. Due to the presence of two promoters, multiple transcription start sites, and alternative splicing, multiple transcript variants encoding the same protein have been found for this gene. [provided by RefSeq, Oct 2009]",
+   "publicationCount": 158
+  }
+ },
+ "OpenTargets_get_associated_drugs_by_target_ensemblID": {
+  "status": "success",
+  "data": {
+   "target": {
+    "id": "ENSG00000110195",
+    "approvedSymbol": "FOLR1",
+    "drugAndClinicalCandidates": {
+     "count": 4,
+     "rows": [
+      {
+       "drug": {
+        "id": "CHEMBL3039521",
+        "name": "VINTAFOLIDE",
+        "maximumClinicalStage": "APPROVAL"
+       },
+       "maxClinicalStage": "APPROVAL",
+       "diseases": [
+        {
+         "disease": {
+          "id": "MONDO_0005070",
+          "name": "neoplasm"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0008170",
+          "name": "ovarian cancer"
+         }
+        },
+        {},
+        {
+         "disease": {
+          "id": "MONDO_0011962",
+          "name": "endometrial cancer"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0005061",
+          "name": "lung adenocarcinoma"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0004992",
+          "name": "cancer"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0005233",
+          "name": "non-small cell lung carcinoma"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0005494",
+          "name": "triple-negative breast carcinoma"
+         }
+        },
+        {},
+        {},
+        {},
+        {
+         "disease": {
+          "id": "MONDO_0005070",
+          "name": "neoplasm"
+         }
+        }
+       ]
+      },
+      {
+       "drug": {
+        "id": "CHEMBL3545192",
+        "name": "MIRVETUXIMAB",
+        "maximumClinicalStage": "PHASE_2"
+       },
+       "maxClinicalStage": "PHASE_2",
+       "diseases": [
+        {
+         "disease": {
+          "id": "MONDO_0008170",
+          "name": "ovarian cancer"
+         }
+        }
+       ]
+      },
+      {
+       "drug": {
+        "id": "CHEMBL3545132",
+        "name": "MIRVETUXIMAB SORAVTANSINE",
+        "maximumClinicalStage": "APPROVAL"
+       },
+       "maxClinicalStage": "APPROVAL",
+       "diseases": [
+        {
+         "disease": {
+          "id": "MONDO_0008170",
+          "name": "ovarian cancer"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0021068",
+          "name": "ovarian neoplasm"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0021092",
+          "name": "fallopian tube neoplasm"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0006901",
+          "name": "peritoneal neoplasm"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0005070",
+          "name": "neoplasm"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0018364",
+          "name": "malignant epithelial tumor of ovary"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0021092",
+          "name": "fallopian tube neoplasm"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0006901",
+          "name": "peritoneal neoplasm"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0002158",
+          "name": "fallopian tube cancer"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0008170",
+          "name": "ovarian cancer"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0015686",
+          "name": "primary peritoneal carcinoma"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0005140",
+          "name": "ovarian carcinoma"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0018364",
+          "name": "malignant epithelial tumor of ovary"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0004992",
+          "name": "cancer"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0004992",
+          "name": "cancer"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0006206",
+          "name": "fallopian tube carcinoma"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0005140",
+          "name": "ovarian carcinoma"
+         }
+        },
+        {},
+        {},
+        {
+         "disease": {
+          "id": "MONDO_0005494",
+          "name": "triple-negative breast carcinoma"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0011962",
+          "name": "endometrial cancer"
+         }
+        },
+        {},
+        {},
+        {},
+        {},
+        {
+         "disease": {
+          "id": "MONDO_0007254",
+          "name": "breast cancer"
+         }
+        }
+       ]
+      },
+      {
+       "drug": {
+        "id": "CHEMBL1743016",
+        "name": "FARLETUZUMAB",
+        "maximumClinicalStage": "PHASE_3"
+       },
+       "maxClinicalStage": "PHASE_3",
+       "diseases": [
+        {
+         "disease": {
+          "id": "MONDO_0005233",
+          "name": "non-small cell lung carcinoma"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0008170",
+          "name": "ovarian cancer"
+         }
+        },
+        {},
+        {},
+        {
+         "disease": {
+          "id": "MONDO_0018364",
+          "name": "malignant epithelial tumor of ovary"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0005140",
+          "name": "ovarian carcinoma"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0008170",
+          "name": "ovarian cancer"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0006373",
+          "name": "pituitary gland adenoma"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0005061",
+          "name": "lung adenocarcinoma"
+         }
+        },
+        {
+         "disease": {
+          "id": "MONDO_0001056",
+          "name": "gastric cancer"
+         }
+        },
+        {}
+       ]
+      }
+     ]
+    }
+   }
+  }
+ },
+ "OpenTargets_get_chemical_probes_by_target_ensemblID": {
+  "status": "success",
+  "data": {
+   "target": {
+    "chemicalProbes": [
+     {
+      "id": "CHEMBL3335604",
+      "control": "",
+      "drugId": "CHEMBL3335604",
+      "isHighQuality": false,
+      "origin": [
+       "calculated"
+      ],
+      "probeMinerScore": 28,
+      "probesDrugsScore": 90,
+      "scoreInOrganisms": 0,
+      "targetFromSourceId": "P15328",
+      "urls": [
+       {
+        "niceName": "Tool Compound Set",
+        "url": "http://pubs.acs.org/doi/abs/10.1021/acs.jcim.7b00343?journalCode=jcisd8"
+       }
+      ]
+     },
+     {
+      "id": "PD081588",
+      "control": "",
+      "drugId": "CHEMBL85848",
+      "isHighQuality": false,
+      "origin": [
+       "calculated"
+      ],
+      "probeMinerScore": 54,
+      "probesDrugsScore": 48,
+      "scoreInOrganisms": 0,
+      "targetFromSourceId": "P15328",
+      "urls": [
+       {
+        "niceName": "Probe Miner (suitable probes)",
+        "url": "http://probeminer.icr.ac.uk/#/"
+       }
+      ]
+     },
+     {
+      "id": "PD081625",
+      "control": "",
+      "drugId": "CHEMBL85436",
+      "isHighQuality": false,
+      "origin": [
+       "calculated"
+      ],
+      "probeMinerScore": 74,
+      "probesDrugsScore": 10,
+      "scoreInOrganisms": 0,
+      "targetFromSourceId": "P15328",
+      "urls": [
+       {
+        "niceName": "Probe Miner (suitable probes)",
+        "url": "http://probeminer.icr.ac.uk/#/"
+       }
+      ]
+     },
+     {
+      "id": "PD081815",
+      "control": "",
+      "drugId": "CHEMBL309415",
+      "isHighQuality": false,
+      "origin": [
+       "calculated"
+      ],
+      "probeMinerScore": 65,
+      "probesDrugsScore": 60,
+      "scoreInOrganisms": 0,
+      "targetFromSourceId": "P15328",
+      "urls": [
+       {
+        "niceName": "Probe Miner (suitable probes)",
+        "url": "http://probeminer.icr.ac.uk/#/"
+       }
+      ]
+     },
+     {
+      "id": "PD082335",
+      "control": "",
+      "drugId": "CHEMBL84935",
+      "isHighQuality": false,
+      "origin": [
+       "calculated"
+      ],
+      "probeMinerScore": 71,
+      "probesDrugsScore": 57.3,
+      "scoreInOrganisms": 0,
+      "targetFromSourceId": "P15328",
+      "urls": [
+       {
+        "niceName": "Probe Miner (suitable probes)",
+        "url": "http://probeminer.icr.ac.uk/#/"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "alphafold_get_summary": {
+  "status": "success",
+  "data": {
+   "uniprot_entry": {
+    "ac": "P15328",
+    "id": "FOLR1_HUMAN",
+    "uniprot_checksum": "52f74cde0ab0313dcd97a9ab97b766fc",
+    "sequence_length": 257,
+    "segment_start": 1,
+    "segment_end": 257
+   },
+   "structures": [
+    {
+     "summary": {
+      "model_identifier": "AF-P15328-F1",
+      "model_category": "AB-INITIO",
+      "model_url": "https://alphafold.ebi.ac.uk/files/AF-P15328-F1-model_v6.cif",
+      "model_format": "MMCIF",
+      "model_type": null,
+      "model_page_url": "https://alphafold.ebi.ac.uk/entry/AF-P15328-F1",
+      "provider": "AlphaFold DB",
+      "number_of_conformers": null,
+      "ensemble_sample_url": null,
+      "ensemble_sample_format": null,
+      "created": "2025-08-01T00:00:00Z",
+      "sequence_identity": 1.0,
+      "uniprot_start": 1,
+      "uniprot_end": 257,
+      "coverage": 1.0,
+      "experimental_method": null,
+      "resolution": null,
+      "confidence_type": "pLDDT",
+      "confidence_version": null,
+      "confidence_avg_local_score": 91.19,
+      "oligomeric_state": "MONOMER",
+      "preferred_assembly_id": null,
+      "entities": [
+       {
+        "entity_type": "POLYMER",
+        "entity_poly_type": "POLYPEPTIDE(L)",
+        "identifier": "P15328",
+        "identifier_category": "UNIPROT",
+        "description": "Folate receptor alpha",
+        "chain_ids": [
+         "A"
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "summary": {
+      "model_identifier": "AF-0000000210709941",
+      "model_category": "AB-INITIO",
+      "model_url": "https://alphafold.ebi.ac.uk/files/AF-0000000210709941-model_v1.cif",
+      "model_format": "MMCIF",
+      "model_type": null,
+      "model_page_url": "https://alphafold.ebi.ac.uk/entry/AF-0000000210709941",
+      "provider": "AlphaFold DB",
+      "number_of_conformers": null,
+      "ensemble_sample_url": null,
+      "ensemble_sample_format": null,
+      "created": "2026-02-20T09:04:10Z",
+      "sequence_identity": 1.0,
+      "uniprot_start": 1,
+      "uniprot_end": 257,
+      "coverage": 1.0,
+      "experimental_method": null,
+      "resolution": null,
+      "confidence_type": "pLDDT",
+      "confidence_version": null,
+      "confidence_avg_local_score": 83.82,
+      "oligomeric_state": "HETERODIMER",
+      "preferred_assembly_id": null,
+      "entities": [
+       {
+        "entity_type": "POLYMER",
+        "entity_poly_type": "POLYPEPTIDE(L)",
+        "identifier": "Q6UWP7",
+        "identifier_category": "UNIPROT",
+        "description": "Lysocardiolipin acyltransferase 1",
+        "chain_ids": [
+         "A"
+        ]
+       },
+       {
+        "entity_type": "POLYMER",
+        "entity_poly_type": "POLYPEPTIDE(L)",
+        "identifier": "P15328",
+        "identifier_category": "UNIPROT",
+        "description": "Folate receptor alpha",
+        "chain_ids": [
+         "B"
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "metadata": {
+   "count": 1,
+   "source": "AlphaFold Protein Structure DB",
+   "endpoint": "https://alphafold.ebi.ac.uk/api/uniprot/summary/P15328.json",
+   "query": {
+    "qualifier": "P15328"
+   }
+  }
+ },
+ "search_clinical_trials": {
+  "status": "success",
+  "data": {
+   "studies": [
+    {
+     "NCT ID": "NCT04209855",
+     "brief_title": "A Study of Mirvetuximab Soravtansine vs. Investigator's Choice (IC) of Chemotherapy in Platinum-Resistant, Advanced High-Grade Epithelial Ovarian, Primary Peritoneal, or Fallopian Tube Cancers With High Folate Receptor-Alpha (FRα) Expression",
+     "brief_summary": "This Phase 3 study is designed to compare the efficacy and safety of mirvetuximab soravtansine (MIRV) vs. IC chemotherapy in participants with platinum-resistant high-grade epithelial ovarian cancer, primary peritoneal, or fallopian tube cancer, whose tumors express a high-level of FRα. Participants will be, in the opinion of the Investigator, appropriate for single-agent therapy for their next line of therapy. The FRα positivity will be defined by the Ventana FOLR1 (FOLR1-2.1) CDx assay.",
+     "overall_status": "COMPLETED",
+     "condition": [
+      "Epithelial Ovarian Cancer",
+      "Peritoneal Cancer",
+      "Fallopian Tube Cancer"
+     ],
+     "phase": [
+      "PHASE3"
+     ]
+    },
+    {
+     "NCT ID": "NCT02631876",
+     "brief_title": "A Study of Mirvetuximab Soravtansine vs. Investigator's Choice of Chemotherapy in Women With Folate Receptor (FR) Alpha Positive Advanced Epithelial Ovarian Cancer (EOC), Primary Peritoneal or Fallopian Tube Cancer",
+     "brief_summary": "This is a Phase 3, open label, randomized study designed to compare the safety and efficacy of mirvetuximab soravtansine to that of selected single-agent chemotherapy (Investigator's choice) in women with platinum-resistant FR-alpha positive advanced EOC, primary peritoneal cancer and/or fallopian tube cancer.",
+     "overall_status": "COMPLETED",
+     "condition": [
+      "Epithelial Ovarian Cancer",
+      "Primary Peritoneal Carcinoma",
+      "Fallopian Tube Cancer",
+      "Ovarian Cancer"
+     ],
+     "phase": [
+      "PHASE3"
+     ]
+    },
+    {
+     "NCT ID": "NCT02317705",
+     "brief_title": "Phase 2 Study of OTL38 for Intra-operative Imaging of Folate Receptor-alpha Positive Ovarian Cancer",
+     "brief_summary": "This study is being done to:\n\n* test the safety of OTL38\n* see if OTL38 helps light up the cancer when viewed with the special camera system\n* test the safety of the special camera system for use along with OTL38 during surgery",
+     "overall_status": "COMPLETED",
+     "condition": [
+      "Ovarian Cancer"
+     ],
+     "phase": [
+      "PHASE2"
+     ]
+    },
+    {
+     "NCT ID": "NCT03012100",
+     "brief_title": "Multi-epitope Folate Receptor Alpha Peptide Vaccine, GM-CSF, and Cyclophosphamide in Treating Patients With Triple Negative Breast Cancer",
+     "brief_summary": "This randomized phase II trial studies how well multi-epitope folate receptor alpha peptide vaccine, sargramostim (GM-CSF), and cyclophosphamide work to prevent the recurrence of stage 1-3 triple negative breast cancer. Vaccines made from a person's white blood cells mixed with tumor proteins may help the body build an effective immune response to kill tumor cells. Drugs used in chemotherapy, such as cyclophosphamide, work in different ways to stop the growth of tumor cells, either by killing the cells, by stopping them from dividing, or by stopping them from spreading. Giving multi-epitope folate receptor alpha peptide vaccine, sargramostim (GM-CSF), and cyclophosphamide may work well together to prevent cancer recurrence after surgery and other standard treatments for triple negative breast cancer.",
+     "overall_status": "ACTIVE_NOT_RECRUITING",
+     "condition": [
+      "Bilateral Breast Carcinoma",
+      "Breast Inflammatory Carcinoma",
+      "Stage IB Breast Cancer AJCC v7",
+      "Stage II Breast Cancer AJCC v6 and v7",
+      "Stage IIA Breast Cancer AJCC v6 and v7",
+      "Stage IIB Breast Cancer AJCC v6 and v7",
+      "Stage III Breast Cancer AJCC v7",
+      "Stage IIIA Breast Cancer AJCC v7",
+      "Stage IIIB Breast Cancer AJCC v7",
+      "Stage IIIC Breast Cancer AJCC v7",
+      "Triple-Negative Breast Carcinoma",
+      "Unilateral Breast Carcinoma"
+     ],
+     "phase": [
+      "PHASE2"
+     ]
+    },
+    {
+     "NCT ID": "NCT04241315",
+     "brief_title": "ELUCIDATE: Enabling Lung Cancer Identification Using Folate Receptor Targeting",
+     "brief_summary": "This is a phase 3, multi-center, single dose, open-label, exploratory study in suspected lung cancer patients scheduled to undergo endoscopic or thoracic surgery per CT/PET/MRI or other imaging based on standard of care. This study aims to assess the efficacy of OTL38 and Near Infrared Imaging (NIR) at identifying pulmonary nodules within the operating theater, and to assess the safety and tolerability of single intravenous doses of OTL38.",
+     "overall_status": "COMPLETED",
+     "condition": [
+      "Lung Neoplasms",
+      "Lung Cancer"
+     ],
+     "phase": [
+      "PHASE3"
+     ]
+    }
+   ],
+   "total_count": 22
+  },
+  "metadata": {
+   "source": "ClinicalTrials.gov API v2"
+  }
+ },
+ "OpenTargets_get_target_safety_profile_by_ensemblID": {
+  "status": "success",
+  "data": {
+   "target": {
+    "id": "ENSG00000110195",
+    "approvedSymbol": "FOLR1"
+   }
+  }
+ },
+ "GTEx_get_median_gene_expression": {
+  "status": "success",
+  "data": [
+   {
+    "median": 0.061196900000000005,
+    "tissueSiteDetailId": "Adipose_Subcutaneous",
+    "ontologyId": "UBERON:0002190",
+    "datasetId": "gtex_v8",
+    "gencodeId": "ENSG00000110195.12",
+    "geneSymbol": "FOLR1",
+    "unit": "TPM"
+   },
+   {
+    "median": 0.06254080000000001,
+    "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+    "ontologyId": "UBERON:0010414",
+    "datasetId": "gtex_v8",
+    "gencodeId": "ENSG00000110195.12",
+    "geneSymbol": "FOLR1",
+    "unit": "TPM"
+   },
+   {
+    "median": 1.02663,
+    "tissueSiteDetailId": "Adrenal_Gland",
+    "ontologyId": "UBERON:0002369",
+    "datasetId": "gtex_v8",
+    "gencodeId": "ENSG00000110195.12",
+    "geneSymbol": "FOLR1",
+    "unit": "TPM"
+   },
+   {
+    "median": 0.0629763,
+    "tissueSiteDetailId": "Artery_Aorta",
+    "ontologyId": "UBERON:0001496",
+    "datasetId": "gtex_v8",
+    "gencodeId": "ENSG00000110195.12",
+    "geneSymbol": "FOLR1",
+    "unit": "TPM"
+   },
+   {
+    "median": 0.0883679,
+    "tissueSiteDetailId": "Artery_Coronary",
+    "ontologyId": "UBERON:0001621",
+    "datasetId": "gtex_v8",
+    "gencodeId": "ENSG00000110195.12",
+    "geneSymbol": "FOLR1",
+    "unit": "TPM"
+   }
+  ],
+  "paging_info": {},
+  "num_results": 54
+ },
+ "OpenTargets_get_biological_mouse_models_by_ensemblID": {
+  "status": "success",
+  "data": {
+   "target": {
+    "id": "ENSG00000110195",
+    "approvedSymbol": "FOLR1",
+    "mousePhenotypes": [
+     {
+      "biologicalModels": [
+       {
+        "allelicComposition": "Folr1<tm1Fnn>/Folr1<+>",
+        "geneticBackground": "involves: 129 * C57BL/6J",
+        "id": "MGI:3575525",
+        "literature": [
+         "15705887"
+        ]
+       }
+      ]
+     },
+     {
+      "biologicalModels": [
+       {
+        "allelicComposition": "Folr1<tm1Fnn>/Folr1<tm1Fnn>",
+        "geneticBackground": "involves: 129P2/OlaHsd * C57BL/6J",
+        "id": "MGI:3615352",
+        "literature": [
+         "10508523"
+        ]
+       }
+      ]
+     },
+     {
+      "biologicalModels": [
+       {
+        "allelicComposition": "Folr1<tm1Fnn>/Folr1<+>",
+        "geneticBackground": "involves: 129P2/OlaHsd * C57BL/6J",
+        "id": "MGI:3615351",
+        "literature": [
+         "10508523"
+        ]
+       }
+      ]
+     },
+     {
+      "biologicalModels": [
+       {
+        "allelicComposition": "Folr1<tm1Fnn>/Folr1<tm1Fnn>",
+        "geneticBackground": "involves: 129P2/OlaHsd * C57BL/6J",
+        "id": "MGI:3615352",
+        "literature": [
+         "10508523"
+        ]
+       }
+      ]
+     },
+     {
+      "biologicalModels": [
+       {
+        "allelicComposition": "Folr1<tm1.1(KOMP)Vlcg> het early",
+        "geneticBackground": "C57BL/6NCrl",
+        "id": "MGI:5695973"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "DepMap_get_gene_dependencies": {
+  "status": "success",
+  "data": {
+   "gene_symbol": "FOLR1",
+   "matched_gene": {
+    "gene_id": "SIDG09258",
+    "symbol": "FOLR1",
+    "name": null,
+    "hgnc_id": "HGNC:3791",
+    "ensembl_id": null,
+    "exact_match": true
+   },
+   "note": "Gene effect scores: negative = essential (cell death upon knockout), zero = no effect, positive = growth advantage. Full dependency profiles at depmap.org."
+  }
+ },
+ "PubMed_search_articles": {
+  "status": "success",
+  "data": [
+   {
+    "pmid": "38055253",
+    "title": "Mirvetuximab Soravtansine in FRα-Positive, Platinum-Resistant Ovarian Cancer.",
+    "authors": [
+     "Moore KN",
+     "Angelergues A",
+     "Konecny GE",
+     "García Y",
+     "Banerjee S"
+    ],
+    "journal": "The New England journal of medicine",
+    "pub_date": "2023 Dec 7",
+    "pub_year": "2023",
+    "doi": "10.1056/NEJMoa2309169",
+    "pmcid": null,
+    "article_type": "Clinical Trial, Phase III, Comparative Study, Journal Article, Randomized Controlled Trial",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/38055253/",
+    "doi_url": "https://doi.org/10.1056/NEJMoa2309169",
+    "pmc_url": null,
+    "abstract": "Mirvetuximab soravtansine-gynx (MIRV), a first-in-class antibody-drug conjugate targeting folate receptor α (FRα), is approved for the treatment of platinum-resistant ovarian cancer in the United States.\nWe conducted a phase 3, global, confirmatory, open-label, randomized, controlled trial to compare the efficacy and safety of MIRV with the investigator's choice of chemotherapy in the treatment of platinum-resistant, high-grade serous ovarian cancer. Participants who had previously received one to three lines of therapy and had high FRα tumor expression (≥75% of cells with ≥2+ staining intensity) were randomly assigned in a 1:1 ratio to receive MIRV (6 mg per kilogram of adjusted ideal body weight every 3 weeks) or chemotherapy (paclitaxel, pegylated liposomal doxorubicin, or topotecan). The primary end point was investigator-assessed progression-free survival; key secondary analytic end points included objective response, overall survival, and participant-reported outcomes.\nA total of 453 participants underwent randomization; 227 were assigned to the MIRV group and 226 to the chemotherapy group. The median progression-free survival was 5.62 months (95% confidence interval [CI], 4.34 to 5.95) with MIRV and 3.98 months (95% CI, 2.86 to 4.47) with chemotherapy (P<0.001). An objective response occurred in 42.3% of the participants in the MIRV group and in 15.9% of those in the chemotherapy group (odds ratio, 3.81; 95% CI, 2.44 to 5.94; P<0.001). Overall survival was significantly longer with MIRV than with chemotherapy (median, 16.46 months vs. 12.75 months; hazard ratio for death, 0.67; 95% CI, 0.50 to 0.89; P = 0.005). During the treatment period, fewer adverse events of grade 3 or higher occurred with MIRV than with chemotherapy (41.7% vs. 54.1%), as did serious adverse events of any grade (23.9% vs. 32.9%) and events leading to discontinuation (9.2% vs. 15.9%).\nAmong participants with platinum-resistant, FRα-positive ovarian cancer, treatment with MIRV showed a significant benefit over chemotherapy with respect to progression-free and overall survival and objective response. (Funded by ImmunoGen; MIRASOL ClinicalTrials.gov number, NCT04209855.).",
+    "abstract_source": "PubMed"
+   },
+   {
+    "pmid": "37711615",
+    "title": "Therapeutic strategies targeting folate receptor α for ovarian cancer.",
+    "authors": [
+     "Mai J",
+     "Wu L",
+     "Yang L",
+     "Sun T",
+     "Liu X"
+    ],
+    "journal": "Frontiers in immunology",
+    "pub_date": "2023",
+    "pub_year": "2023",
+    "doi": "10.3389/fimmu.2023.1254532",
+    "pmcid": "PMC10499382",
+    "article_type": "Journal Article, Review, Research Support, Non-U.S. Gov't",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/37711615/",
+    "doi_url": "https://doi.org/10.3389/fimmu.2023.1254532",
+    "pmc_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10499382/",
+    "abstract": "Epithelial ovarian cancer (EOC) is the deadliest gynecological cancer, and presents a major clinical challenge due to limited treatment options. Folate receptor alpha (FRα), encoded by the FOLR1 gene, is an attractive therapeutically target due to its prevalent and high expression in EOC cells. Recent basic and translational studies have explored several modalities, such as antibody-drug conjugate (ADC), monoclonal antibodies, small molecules, and folate-drug conjugate, to exploit FRα for EOC treatment. In this review, we summarize the function of FRα, and clinical efficacies of various FRα-based therapeutics. We highlight mirvetuximab soravtansine (MIRV), or Elahere (ImmunoGen), the first FRα-targeting ADC approved by the FDA to treat platinum-resistant ovarian cancer. We discuss potential mechanisms and management of ocular adverse events associated with MIRV administration.",
+    "abstract_source": "PubMed"
+   },
+   {
+    "pmid": "39617145",
+    "title": "The efficacy and safety of mirvetuximab soravtansine in FRα-positive, third-line and later, recurrent platinum-sensitive ovarian cancer: the single-arm phase II PICCOLO trial.",
+    "authors": [
+     "Alvarez Secord A",
+     "Lewin SN",
+     "Murphy CG",
+     "Cecere SC",
+     "Barquín A"
+    ],
+    "journal": "Annals of oncology : official journal of the European Society for Medical Oncology",
+    "pub_date": "2025 Mar",
+    "pub_year": "2025",
+    "doi": "10.1016/j.annonc.2024.11.011",
+    "pmcid": null,
+    "article_type": "Journal Article, Clinical Trial, Phase II, Multicenter Study",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39617145/",
+    "doi_url": "https://doi.org/10.1016/j.annonc.2024.11.011",
+    "pmc_url": null,
+    "abstract": "Mirvetuximab soravtansine-gynx (MIRV) is a first-in-class, folate receptor alpha (FRα)-targeting antibody-drug conjugate with United States Food and Drug Administration approval for FRα-positive platinum-resistant ovarian cancer. PICCOLO is a phase II, global, open-label, single-arm trial of MIRV as third-line or greater (≥3L) treatment in patients with FRα-positive (≥75% of cells with ≥2+ staining intensity) recurrent platinum-sensitive ovarian cancer (PSOC).\nParticipants received MIRV (6 mg/kg adjusted ideal body weight every 3 weeks) until progressive disease (PD), unacceptable toxicity, withdrawal of consent, or death. Primary endpoint was investigator-assessed objective response rate (ORR). Key secondary endpoint was investigator-assessed duration of response (DOR). Additional endpoints included investigator-assessed progression-free survival (PFS), overall survival (OS), and safety. Analyses of subgroups by disease characteristics (e.g. platinum-free interval) and treatment history [e.g. prior bevacizumab and poly (adenosine diphosphate [ADP]-ribose) polymerase inhibitor (PARPi) treatment] were exploratory.\nSeventy-nine participants were enrolled and efficacy assessable. The primary endpoint was met; ORR was 51.9% [95% confidence interval (CI) 40.4% to 63.3%]. Median DOR was 8.25 months (95% CI 5.55-10.78 months) and median PFS was 6.93 months (95% CI 5.85-9.59 months). OS was not mature at data cut-off. ORR was 45.8% (95% CI 32.7% to 59.2%) in participants with PD while on/within 30 days of prior PARPi (n = 59) and 60.0% (95% CI 14.7% to 94.7%) in those without PD with prior PARPi (n = 5). No new safety signals occurred; most common treatment-emergent adverse events (TEAEs) were gastrointestinal, neurosensory, and resolvable ocular events. TEAEs led to discontinuation in 13 participants (16%) and death in 2 participants (3%).\nMIRV as ≥3L treatment in heavily pretreated recurrent FRα-positive PSOC demonstrated notable efficacy and tolerable safety, including among those with prior PD on or within 30 days of PARPi (NCT05041257).",
+    "abstract_source": "PubMed"
+   },
+   {
+    "pmid": "40508029",
+    "title": "Folate Receptor Alpha in Advanced Epithelial Ovarian Cancer: Diagnostic Role and Therapeutic Implications of a Clinically Validated Biomarker.",
+    "authors": [
+     "Zannoni GF",
+     "Santoro A",
+     "d'Amati A",
+     "D'Alessandris N",
+     "Scaglione G"
+    ],
+    "journal": "International journal of molecular sciences",
+    "pub_date": "2025 May 29",
+    "pub_year": "2025",
+    "doi": "10.3390/ijms26115222",
+    "pmcid": "PMC12154392",
+    "article_type": "Journal Article, Review",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/40508029/",
+    "doi_url": "https://doi.org/10.3390/ijms26115222",
+    "pmc_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12154392/",
+    "abstract": "Folate receptor alpha (FRα), a glycosylphosphatidylinositol-anchored glycoprotein encoded by the FOLR1 gene, plays a crucial role in folate transport during cell growth and development. While minimally expressed in most normal adult tissues, FRα is frequently overexpressed in several epithelial malignancies, particularly in high-grade serous ovarian carcinoma. An immunohistochemical (IHC) evaluation of FRα expression using the VENTANA FOLR1 (FOLR1-2.1) RxDx Assay is now approved as a companion diagnostic for selecting patients eligible for mirvetuximab soravtansine, an FRα-targeted antibody-drug conjugate. Clinical trials such as SORAYA and MIRASOL have demonstrated significant clinical benefit in platinum-resistant epithelial ovarian cancer patients with high FRα expression (≥75% of tumor cells with moderate to strong membrane staining). This review summarizes the biological significance of FRα in ovarian cancer progression, its predictive value for targeted therapy, and the technical aspects of IHC assessment, including scoring interpretation and pre-analytical variables. We also discuss heterogeneity in FRα expression across histological subtypes and tumor sites, as well as the impact of archival versus fresh tissue. Understanding FRα expression patterns across histologic subtypes and tissue samples is critical for optimizing clinical decision-making and expanding the role of FRα-targeted therapies in gynecologic oncology.",
+    "abstract_source": "PubMed"
+   },
+   {
+    "pmid": "39461270",
+    "title": "Safety and tolerability of mirvetuximab soravtansine monotherapy for folate receptor alpha-expressing recurrent ovarian cancer: An integrated safety summary.",
+    "authors": [
+     "Moore KN",
+     "Lorusso D",
+     "Oaknin A",
+     "Oza A",
+     "Colombo N"
+    ],
+    "journal": "Gynecologic oncology",
+    "pub_date": "2024 Dec",
+    "pub_year": "2024",
+    "doi": "10.1016/j.ygyno.2024.10.013",
+    "pmcid": null,
+    "article_type": "Journal Article, Research Support, Non-U.S. Gov't",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/39461270/",
+    "doi_url": "https://doi.org/10.1016/j.ygyno.2024.10.013",
+    "pmc_url": null,
+    "abstract": "Mirvetuximab soravtansine-gynx (MIRV) is a novel antibody-drug conjugate targeting folate receptor alpha (FRα), which is overexpressed in epithelial ovarian cancer (EOC), with limited expression on normal tissues. This integrated safety summary sought to characterize the safety profile of MIRV monotherapy in participants with FRα-expressing recurrent EOC.\nSafety data were retrospectively analyzed from 4 clinical studies (phase 1 trial [NCT01609556], phase 3 FORWARD I [NCT02631876], phase 2 SORAYA [NCT04296890], phase 3 MIRASOL [NCT04209855]) that evaluated participants with FRα-expressing recurrent EOC who received ≥1 dose of MIRV 6 mg/kg adjusted ideal body weight every 3 weeks.\nIn this analysis of 682 participants, 94 % had platinum-resistant ovarian cancer (PROC). Blurred vision (43 %), nausea (41 %), diarrhea (39 %), and fatigue (35 %) were the most common treatment-emergent adverse events (TEAEs) and were primarily grade 1-2 in severity. Grade ≥ 3 TEAEs occurred in 48 % of participants, with the most common being keratopathy and blurred vision (5 % each). Most TEAEs were managed with supportive care and dose modifications, and only 12 % of participants experienced a TEAE leading to discontinuation (1 % due to ocular events). No corneal ulcerations or perforations have been reported. Median time to onset of blurred vision and keratopathy was 5.9 and 6.7 weeks, respectively. Most blurred vision events and keratopathy events resolved completely (71 % and 66 %, respectively) or partially (15 % and 14 %, respectively).\nAs demonstrated among 682 participants, the safety profile of MIRV is well tolerated and consists primarily of low-grade gastrointestinal, fatigue, headache, peripheral neuropathy, and resolvable ocular adverse events.",
+    "abstract_source": "PubMed"
+   }
+  ],
+  "metadata": {
+   "count": 150,
+   "total": 150,
+   "query": "FOLR1 AND ovarian cancer",
+   "source": "PubMed"
+  }
+ },
+ "Reactome_map_uniprot_to_pathways": {
+  "status": "success",
+  "data": [
+   {
+    "dbId": 204005,
+    "displayName": "COPII-mediated vesicle transport",
+    "stId": "R-HSA-204005",
+    "stIdVersion": "R-HSA-204005.6",
+    "isInDisease": false,
+    "isInferred": false,
+    "maxDepth": 2,
+    "name": [
+     "COPII-mediated vesicle transport"
+    ],
+    "releaseDate": "2010-12-14",
+    "speciesName": "Homo sapiens",
+    "hasDiagram": true,
+    "hasEHLD": false,
+    "lastUpdatedDate": "2019-03-25",
+    "schemaClass": "Pathway",
+    "className": "Pathway"
+   },
+   {
+    "dbId": 5694530,
+    "displayName": "Cargo concentration in the ER",
+    "stId": "R-HSA-5694530",
+    "stIdVersion": "R-HSA-5694530.3",
+    "isInDisease": false,
+    "isInferred": false,
+    "maxDepth": 2,
+    "name": [
+     "Cargo concentration in the ER"
+    ],
+    "releaseDate": "2015-09-22",
+    "speciesName": "Homo sapiens",
+    "hasDiagram": true,
+    "hasEHLD": false,
+    "lastUpdatedDate": "2019-03-25",
+    "schemaClass": "Pathway",
+    "className": "Pathway"
+   },
+   {
+    "dbId": 6807878,
+    "displayName": "COPI-mediated anterograde transport",
+    "stId": "R-HSA-6807878",
+    "stIdVersion": "R-HSA-6807878.2",
+    "isInDisease": false,
+    "isInferred": false,
+    "maxDepth": 2,
+    "name": [
+     "COPI-mediated anterograde transport"
+    ],
+    "releaseDate": "2015-12-15",
+    "speciesName": "Homo sapiens",
+    "hasDiagram": true,
+    "hasEHLD": false,
+    "schemaClass": "Pathway",
+    "className": "Pathway"
+   }
+  ]
+ },
+ "FDA_get_boxed_warning_info_by_drug_name": {
+  "meta": {
+   "skip": 0,
+   "limit": 100,
+   "total": 1
+  },
+  "results": [
+   {
+    "openfda.brand_name": [
+     "ELAHERE"
+    ],
+    "openfda.generic_name": [
+     "MIRVETUXIMAB SORAVTANSINE"
+    ],
+    "boxed_warning": [
+     "WARNING: OCULAR TOXICITY ELAHERE can cause severe ocular toxicities, including visual impairment, keratopathy, dry eye, photophobia, eye pain, and uveitis [see Warnings and Precautions ( 5.1 ) and Adverse Reactions ( 6.1 )] . Conduct an ophthalmic exam including visual acuity and slit lamp exam prior to initiation of ELAHERE, every other cycle for the first 8 cycles, and as clinically indicated [see Dosage and Administration ( 2.3 )] . Administer prophylactic artificial tears and ophthalmic topical steroids [see Dosage and Administration ( 2.3 ) and Warnings and Precautions ( 5.1 )] . Withhold ELAHERE for ocular toxicities until improvement and resume at the same or reduced dose [see Dosage and Administration ( 2.4 ) and Warnings and Precautions ( 5.1 )] . Discontinue ELAHERE for Grade 4 ocular toxicities [see Dosage and Administration ( 2.4 ) and Warnings and Precautions ( 5.1 )] . WARNING: OCULAR TOXICITY See full prescribing information for complete boxed warning. ELAHERE can cause severe ocular toxicities, including visual impairment, keratopathy, dry eye, photophobia, eye pain, and uveitis. ( 5.1 , 6.1 ) Conduct an ophthalmic exam including visual acuity and slit lamp exam prior to initiation of ELAHERE, every other cycle for the first 8 cycles, and as clinically indicated. ( 2.3 ) Administer prophylactic artificial tears and ophthalmic topical steroids. ( 2.3 , 5.1 ) Withhold ELAHERE for ocular toxicities until improvement and resume at the same or reduced dose. ( 2.4 , 5.1 ) Discontinue ELAHERE for Grade 4 ocular toxicities. ( 2.4 , 5.1 )"
+    ]
+   }
+  ]
+ },
+ "OpenTargets_get_evidence_by_datasource": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0008170",
+    "name": "ovarian cancer",
+    "evidences": {
+     "count": 4,
+     "rows": [
+      {
+       "datasourceId": "eva",
+       "datatypeId": "genetic_association",
+       "disease": {
+        "id": "MONDO_0006046",
+        "name": "ovarian serous cystadenocarcinoma"
+       },
+       "diseaseFromSource": "Ovarian serous cystadenocarcinoma",
+       "target": {
+        "id": "ENSG00000110195",
+        "approvedSymbol": "FOLR1"
+       },
+       "score": 0
+      },
+      {
+       "datasourceId": "eva",
+       "datatypeId": "genetic_association",
+       "disease": {
+        "id": "MONDO_0006046",
+        "name": "ovarian serous cystadenocarcinoma"
+       },
+       "diseaseFromSource": "Ovarian serous cystadenocarcinoma",
+       "target": {
+        "id": "ENSG00000110195",
+        "approvedSymbol": "FOLR1"
+       },
+       "score": 0
+      },
+      {
+       "datasourceId": "eva",
+       "datatypeId": "genetic_association",
+       "disease": {
+        "id": "MONDO_0006046",
+        "name": "ovarian serous cystadenocarcinoma"
+       },
+       "diseaseFromSource": "Ovarian serous cystadenocarcinoma",
+       "target": {
+        "id": "ENSG00000110195",
+        "approvedSymbol": "FOLR1"
+       },
+       "score": 0
+      },
+      {
+       "datasourceId": "eva",
+       "datatypeId": "genetic_association",
+       "disease": {
+        "id": "MONDO_0006046",
+        "name": "ovarian serous cystadenocarcinoma"
+       },
+       "diseaseFromSource": "Ovarian serous cystadenocarcinoma",
+       "target": {
+        "id": "ENSG00000110195",
+        "approvedSymbol": "FOLR1"
+       },
+       "score": 0
+      }
+     ]
+    }
+   }
+  }
+ },
+ "gwas_get_snps_for_gene": {
+  "status": "success",
+  "data": [
+   {
+    "rsId": "rs1540087",
+    "merged": 0,
+    "functionalClass": "intron_variant",
+    "lastUpdateDate": "2025-10-04T23:10:33.832+0000",
+    "locations": [
+     {
+      "chromosomeName": "11",
+      "chromosomePosition": 72190447,
+      "region": {
+       "name": "11q13.4"
+      },
+      "_links": {
+       "snps": {
+        "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087{?projection}",
+        "templated": true
+       }
+      }
+     }
+    ],
+    "genomicContexts": [
+     {
+      "isIntergenic": true,
+      "isUpstream": false,
+      "isDownstream": true,
+      "distance": 26154,
+      "gene": {
+       "geneName": "FOLR2",
+       "entrezGeneIds": [
+        {
+         "entrezGeneId": "2350"
+        }
+       ],
+       "ensemblGeneIds": [
+        {
+         "ensemblGeneId": "ENSG00000165457"
+        }
+       ]
+      },
+      "location": {
+       "chromosomeName": "11",
+       "chromosomePosition": 72190447,
+       "region": {
+        "name": "11q13.4"
+       },
+       "_links": {
+        "snps": {
+         "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087{?projection}",
+         "templated": true
+        }
+       }
+      },
+      "source": "Ensembl",
+      "mappingMethod": "Ensembl_pipeline",
+      "isClosestGene": true,
+      "_links": {
+       "snp": {
+        "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087{?projection}",
+        "templated": true
+       }
+      }
+     },
+     {
+      "isIntergenic": true,
+      "isUpstream": true,
+      "isDownstream": false,
+      "distance": 79665,
+      "gene": {
+       "geneName": "LRTOMT",
+       "entrezGeneIds": [
+        {
+         "entrezGeneId": "220074"
+        }
+       ],
+       "ensemblGeneIds": [
+        {
+         "ensemblGeneId": "ENSG00000284922"
+        }
+       ]
+      },
+      "location": {
+       "chromosomeName": "11",
+       "chromosomePosition": 72190447,
+       "region": {
+        "name": "11q13.4"
+       },
+       "_links": {
+        "snps": {
+         "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087{?projection}",
+         "templated": true
+        }
+       }
+      },
+      "source": "Ensembl",
+      "mappingMethod": "Ensembl_pipeline",
+      "isClosestGene": false,
+      "_links": {
+       "snp": {
+        "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087{?projection}",
+        "templated": true
+       }
+      }
+     }
+    ],
+    "_links": {
+     "self": {
+      "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087"
+     },
+     "singleNucleotidePolymorphism": {
+      "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087{?projection}",
+      "templated": true
+     },
+     "associationsBySnpSummary": {
+      "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087/associations?projection=associationBySnp"
+     },
+     "associations": {
+      "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087/associations"
+     },
+     "studies": {
+      "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087/studies"
+     },
+     "currentSnp": {
+      "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs1540087/currentSnp"
+     }
+    }
+   }
+  ],
+  "metadata": {
+   "pagination": {
+    "size": 50,
+    "totalElements": 88,
+    "totalPages": 2,
+    "number": 0
+   },
+   "links": {
+    "first": {
+     "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/search/findByGene?geneName=FOLR1&page=0&size=50"
+    },
+    "self": {
+     "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/search/findByGene?geneName=FOLR1&size=50&page=0"
+    },
+    "next": {
+     "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/search/findByGene?geneName=FOLR1&page=1&size=50"
+    },
+    "last": {
+     "href": "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/search/findByGene?geneName=FOLR1&page=1&size=50"
+    }
+   }
+  }
+ },
+ "HPA_search_genes_by_query": {
+  "status": "success",
+  "data": {
+   "search_query": "FOLR1",
+   "match_count": 2,
+   "genes": [
+    {
+     "gene_name": "FOLR1",
+     "ensembl_id": "ENSG00000110195",
+     "gene_synonyms": [
+      "FOLR",
+      "FRalpha"
+     ]
+    },
+    {
+     "gene_name": "FOLR2",
+     "ensembl_id": "ENSG00000165457",
+     "gene_synonyms": [
+      "FRbeta"
+     ]
+    }
+   ]
+  }
+ },
+ "STRING_get_protein_interactions": {
+  "status": "success",
+  "data": [
+   {
+    "stringId_A": "9606.ENSP00000256999",
+    "stringId_B": "9606.ENSP00000308895",
+    "preferredName_A": "FOLH1",
+    "preferredName_B": "SLC19A1",
+    "ncbiTaxonId": "9606",
+    "score": "0.485",
+    "nscore": "0",
+    "fscore": "0",
+    "pscore": "0",
+    "ascore": "0.086",
+    "escore": "0",
+    "dscore": "0",
+    "tscore": "0.46"
+   },
+   {
+    "stringId_A": "9606.ENSP00000256999",
+    "stringId_B": "9606.ENSP00000480703",
+    "preferredName_A": "FOLH1",
+    "preferredName_B": "SLC46A1",
+    "ncbiTaxonId": "9606",
+    "score": "0.525",
+    "nscore": "0",
+    "fscore": "0",
+    "pscore": "0",
+    "ascore": "0",
+    "escore": "0",
+    "dscore": "0",
+    "tscore": "0.525"
+   },
+   {
+    "stringId_A": "9606.ENSP00000256999",
+    "stringId_B": "9606.ENSP00000263735",
+    "preferredName_A": "FOLH1",
+    "preferredName_B": "EPCAM",
+    "ncbiTaxonId": "9606",
+    "score": "0.665",
+    "nscore": "0",
+    "fscore": "0",
+    "pscore": "0",
+    "ascore": "0.042",
+    "escore": "0",
+    "dscore": "0",
+    "tscore": "0.665"
+   },
+   {
+    "stringId_A": "9606.ENSP00000256999",
+    "stringId_B": "9606.ENSP00000372313",
+    "preferredName_A": "FOLH1",
+    "preferredName_B": "MSLN",
+    "ncbiTaxonId": "9606",
+    "score": "0.755",
+    "nscore": "0",
+    "fscore": "0",
+    "pscore": "0",
+    "ascore": "0",
+    "escore": "0",
+    "dscore": "0",
+    "tscore": "0.755"
+   },
+   {
+    "stringId_A": "9606.ENSP00000256999",
+    "stringId_B": "9606.ENSP00000275493",
+    "preferredName_A": "FOLH1",
+    "preferredName_B": "EGFR",
+    "ncbiTaxonId": "9606",
+    "score": "0.782",
+    "nscore": "0",
+    "fscore": "0",
+    "pscore": "0",
+    "ascore": "0.051",
+    "escore": "0",
+    "dscore": "0",
+    "tscore": "0.78"
+   }
+  ],
+  "metadata": {
+   "columns": [
+    "stringId_A",
+    "stringId_B",
+    "preferredName_A",
+    "preferredName_B",
+    "ncbiTaxonId",
+    "score",
+    "nscore",
+    "fscore",
+    "pscore",
+    "ascore",
+    "escore",
+    "dscore",
+    "tscore"
+   ]
+  }
+ },
+ "_note": "Recorded on sr-dev 2026-09-22 for FOLR1 / ovarian cancer (MONDO_0008170, ENSG00000110195, P15328). Lists longer than 5 records are cut to 5; counts/totals are the source's. The diseases-by-target response is kept whole (re-recorded after the tool gained `size` and `score`). Non-dict tool results are wrapped as {result: ...}, as normalised_executor hands them to the runner."
+}

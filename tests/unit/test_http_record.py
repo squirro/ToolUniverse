@@ -2,16 +2,12 @@
 
 The registry swallows transport failures: 245 broad handlers across 110 modules return an
 empty value without surfacing that the call died, and 87.3% of tools have no schema slot to
-report it in. That is how a dead network came to read as a biological negative (DSR-629).
-
-Fixing 110 modules is not an option -- they re-sync from upstream. Instead a single
-interception point records, per tool invocation, whether the call actually happened
-(ADR-0014). This slice only *observes*; DSR-666 is what turns a record into a status on the
-result, and DSR-667 is what stamps the URL.
-
-Tests drive a real localhost HTTP server rather than mocking ``requests``. The whole point
-is that interception catches calls made by modules that build their own sessions, and a
-mock of the thing being intercepted cannot show that.
+report it in -- which is how a dead network came to read as a biological negative (DSR-629).
+Fixing 110 modules is not an option, they re-sync from upstream, so a single interception
+point records per tool invocation whether the call happened (ADR-0014). This slice only
+*observes*. Tests drive a real localhost HTTP server rather than mocking ``requests``,
+because a mock of the thing being intercepted cannot show that interception catches calls
+made by modules that build their own sessions.
 """
 
 import threading
@@ -28,10 +24,7 @@ class _Handler(BaseHTTPRequestHandler):
     """Echoes the requested path; 404s anything under /missing."""
 
     def do_GET(self):
-        if self.path.startswith("/missing"):
-            self.send_response(404)
-        else:
-            self.send_response(200)
+        self.send_response(404 if self.path.startswith("/missing") else 200)
         self.send_header("Content-Type", "text/plain")
         self.end_headers()
         self.wfile.write(b"ok")
@@ -43,8 +36,7 @@ class _Handler(BaseHTTPRequestHandler):
 @pytest.fixture(scope="module")
 def server():
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
-    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-    thread.start()
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{httpd.server_address[1]}"
     httpd.shutdown()
 
@@ -54,43 +46,29 @@ def installed():
     http_record.install()
 
 
-def _closed_port_url() -> str:
-    """A port with nothing listening, so the connection is refused immediately."""
-    import socket
-
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        port = s.getsockname()[1]
-    return f"http://127.0.0.1:{port}/gone"
-
-
-def test_a_successful_call_is_recorded_with_its_status(server):
+@pytest.mark.parametrize("path,params,status,tail", [
+    ("/hello", None, 200, None),
+    # A 404 means the source answered. That is not a transport failure.
+    ("/missing", None, 404, None),
+    ("/search", {"gene": "SSTR2", "size": 5}, 200, "/search?gene=SSTR2&size=5"),
+])
+def test_a_call_that_reaches_the_server_is_recorded_with_its_status(server, path, params,
+                                                                   status, tail):
     with http_record.recording() as records:
-        requests.get(f"{server}/hello")
+        requests.get(f"{server}{path}", params=params)
 
     assert len(records) == 1
     assert records[0].reached is True
-    assert records[0].status_code == 200
-
-
-def test_an_error_status_is_recorded_as_reached(server):
-    """A 404 means the source answered. That is not a transport failure."""
-    with http_record.recording() as records:
-        requests.get(f"{server}/missing")
-
-    assert records[0].reached is True
-    assert records[0].status_code == 404
-
-
-def test_the_recorded_url_retains_its_query_string(server):
-    with http_record.recording() as records:
-        requests.get(f"{server}/search", params={"gene": "SSTR2", "size": 5})
-
-    assert records[0].url.endswith("/search?gene=SSTR2&size=5"), records[0].url
+    assert records[0].status_code == status
+    assert tail is None or records[0].url.endswith(tail), records[0].url
 
 
 def test_a_call_that_never_reaches_a_server_is_recorded_as_unreached():
-    url = _closed_port_url()
+    import socket
+
+    with socket.socket() as s:                 # a port with nothing listening
+        s.bind(("127.0.0.1", 0))
+        url = f"http://127.0.0.1:{s.getsockname()[1]}/gone"
 
     with http_record.recording() as records:
         with pytest.raises(requests.exceptions.ConnectionError):
@@ -149,8 +127,7 @@ def test_concurrent_scopes_do_not_see_each_others_calls(server):
     for index, urls in enumerate(results):
         assert len(urls) == 3, f"worker {index} saw {len(urls)} records, expected 3"
         assert all(f"id={index}" in url for url in urls), (
-            f"worker {index} saw another worker's calls: {urls}"
-        )
+            f"worker {index} saw another worker's calls: {urls}")
 
 
 def test_a_nested_scope_reports_to_its_parent_too(server):
@@ -177,8 +154,7 @@ def test_install_is_idempotent(server):
 
 
 # --- the scope boundary is one tool invocation ---
-# The records are only useful if their scope matches the thing being judged: DSR-666 asks
-# "this tool returned empty -- did its source answer?", which is a question about one
+# DSR-666 asks "this tool returned empty -- did its source answer?", a question about one
 # invocation. install_invocation_scope() puts that boundary on run_one_function without
 # editing execute_function.py, which re-syncs from upstream.
 
@@ -207,9 +183,8 @@ class _Host:
 
 def test_an_invocation_records_the_calls_its_tool_made(server):
     http_record.install_invocation_scope(_Host)
-    host = _Host(f"{server}/fetch")
 
-    host.run_one_function({"name": "some_tool"})
+    _Host(f"{server}/fetch").run_one_function({"name": "some_tool"})
 
     records = http_record.last_invocation_records()
     assert len(records) == 1
@@ -219,9 +194,8 @@ def test_an_invocation_records_the_calls_its_tool_made(server):
 def test_the_invocation_result_is_returned_unchanged(server):
     """This slice only observes -- DSR-666 is what changes the result."""
     http_record.install_invocation_scope(_Host)
-    host = _Host(f"{server}/fetch")
 
-    result = host.run_one_function({"name": "some_tool"})
+    result = _Host(f"{server}/fetch").run_one_function({"name": "some_tool"})
 
     assert result == {"name": "some_tool", "result": "done"}
 
@@ -238,22 +212,16 @@ def test_records_do_not_leak_between_sequential_invocations(server):
 def test_install_invocation_scope_is_idempotent(server):
     http_record.install_invocation_scope(_Host)
     http_record.install_invocation_scope(_Host)
-    host = _Host(f"{server}/fetch")
 
-    host.run_one_function({"name": "some_tool"})
+    _Host(f"{server}/fetch").run_one_function({"name": "some_tool"})
 
     assert len(http_record.last_invocation_records()) == 1
 
 
-def test_a_real_tool_invocation_making_no_http_call_records_nothing(
-    unwrapped_tooluniverse,
-):
-    """Against the real ToolUniverse, not a stand-in.
-
-    all_tool_dict is pre-seeded because run_one_function auto-loads all 2,236 tools when it
-    is empty, which no unit test can afford. The unknown-tool path returns without touching
-    the network, which is exactly the "completes normally with an empty record set" case.
-    """
+def test_a_real_tool_invocation_making_no_http_call_records_nothing(unwrapped_tooluniverse):
+    """Against the real ToolUniverse. all_tool_dict is pre-seeded because run_one_function
+    auto-loads all 2,236 tools when it is empty; the unknown-tool path returns without
+    touching the network, which is the "completes normally, empty record set" case."""
     http_record.install_invocation_scope(unwrapped_tooluniverse)
     tu = unwrapped_tooluniverse()
     tu.all_tool_dict = {"placeholder": {"name": "placeholder"}}

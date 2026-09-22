@@ -1,11 +1,10 @@
-"""The permanent Run Record: a PROV-O skeleton of one Skill Run (ADR-0016, DSR-725).
+"""The permanent Run Record: a PROV-O skeleton of one Skill Run.
 
-Temporal keeps the working record for thirty days; this is what lasts. The
-skeleton is pure Python so the sandboxed workflow can build it; the RDF is made
-inside the activity that writes it. It holds which definition ran, each step's
-outcome, every call with its arguments and every question with its answer —
-and no payload: no result, no bundle, no question context, no timings. Derived
-facts (Rung 3) will point at these IRIs, so they are minted, never blank.
+Temporal keeps the working record only for a while; this is what lasts. The skeleton is
+pure Python so the sandboxed workflow can build it, and the RDF is made inside the
+activity that writes it. It holds which definition ran, each step's outcome, every call
+with its arguments and every question with its answer, but no payload; its nodes are
+minted IRIs, never blank, so derived facts can point at them.
 """
 from __future__ import annotations
 

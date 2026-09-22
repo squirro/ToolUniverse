@@ -2,7 +2,6 @@
 
 A rate limit belongs to the source (openFDA, ChEMBL, PubMed), not to the skill,
 so the table is data beside the worker and a process author never writes it.
-Ceilings start conservative and are raised only after a measured run.
 """
 from __future__ import annotations
 

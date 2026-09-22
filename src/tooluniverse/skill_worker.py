@@ -1,15 +1,8 @@
-"""The Temporal worker for Skill Runs, started inside the SMCP process (ADR-0016).
+"""The Temporal worker for Skill Runs, started inside the SMCP process.
 
-It lives here and not in its own container for one reason: the registry. SMCP
-loads ~2,278 tools once, applies the exclusion list, and installs the central
-repairs — transport status, the citation stamp, the id cue — on that instance. A
-worker in another container would carry a second copy of all of it, or none. So
-the activity is bound to SMCP's own instance through the same normalisation the
-agent's `execute_tool` uses: one door.
-
-The worker runs in a daemon thread with its own event loop, beside FastMCP's.
-It starts only when TEMPORAL_ADDRESS is set; otherwise SMCP is exactly as
-before and `run_skill` is simply not served.
+It lives here so the activity is bound to the registry SMCP already loaded, through
+the same normalisation the agent's `execute_tool` uses. It runs in a daemon thread
+with its own event loop and starts only when TEMPORAL_ADDRESS is set.
 """
 from __future__ import annotations
 
@@ -24,17 +17,25 @@ from typing import Any
 from temporalio.client import Client
 from temporalio.worker import Worker
 
+from . import skill_ontology_placing
 from .skill_process_store import Store
 from .skill_runner import normalised_executor
 from .skill_workflow import (
     TASK_QUEUE,
     WORKFLOW_RUNNER,
     SkillWorkflow,
+    absorb_step,
     bind_executor,
+    bind_lookup,
     bind_recorder,
+    bind_records,
+    check_answer,
     execute_tool,
+    keep_answered_evidence,
+    place_mapping,
     record_run,
 )
+from .skill_working_record import records_dir
 
 log = logging.getLogger(__name__)
 
@@ -50,17 +51,19 @@ def configured() -> str | None:
 def build_worker(client: Client, tooluniverse: Any, *, task_queue: str = TASK_QUEUE) -> Worker:
     """A worker whose activity calls tools through the agent's door."""
     bind_executor(normalised_executor(tooluniverse.run_one_function))
+    bind_records(records_dir())
+    bind_lookup(lambda term: skill_ontology_placing.lookup(term))
     try:
         bind_recorder(Store.from_env())
     except RuntimeError:
-        # No GRAPHDB_ENDPOINT: run_skill cannot load a definition either, so the
-        # worker is only reached in tests; the record activity then fails soft.
+        # Without GRAPHDB_ENDPOINT the record activity fails soft.
         log.warning("skill worker: GRAPHDB_ENDPOINT unset; Run Records will not be written")
     return Worker(
         client,
         task_queue=task_queue,
         workflows=[SkillWorkflow],
-        activities=[execute_tool, record_run],
+        activities=[execute_tool, absorb_step, place_mapping, keep_answered_evidence, check_answer,
+                    record_run],
         activity_executor=ThreadPoolExecutor(MAX_ACTIVITIES),
         workflow_runner=WORKFLOW_RUNNER,
     )

@@ -475,8 +475,7 @@ Requirements:
         if return_list_only is None:
             return_list_only = self.return_list_only
 
-        # [] means "no preselection", not "select nothing" -- see
-        # tool_finder_keyword.find_tools for the full reasoning.
+        # [] means "no preselection", not "select nothing".
         if not picked_tool_names:
             assert message is not None, (
                 "find_tools needs a message to search for, or a non-empty "

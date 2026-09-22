@@ -12,7 +12,7 @@
         },
         "limit": {
           "type": "integer",
-          "description": "Number of articles to return. This sets the maximum number of articles retrieved from Europe PMC.",
+          "description": "Number of articles to return. Europe PMC serves at most 1000 per request; a larger limit is honoured by paging with the service's cursor, and `metadata.total` gives the source's full count.",
           "default": 5
         },
         "require_has_ft": {

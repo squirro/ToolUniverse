@@ -1,0 +1,496 @@
+# drug-target-validation as a Skill Process.
+#
+# The go or no-go question: is this target worth pursuing, for this disease? The upstream
+# skill scores five dimensions to 100 points from grading tables and ends in a tier and a
+# verdict. Here the tables are the server's (`band`, `map`, `sum`), the judgements are
+# options out of closed lists the process declares (`constants:`), the user's disease is
+# read onto the source's ids in a judged, checked mapping, the wide tables are evidence
+# fetched at the source's width, and the report keeps the skill's skeleton.
+#
+# Every extraction path was written from recorded responses (tests/fixtures/dtv/); an
+# invented path agrees with any stub and misses live. A step calls one tool per collected
+# table, because `collect` reads its path from every call of the step.
+
+skill: drug-target-validation
+inputs: [target]
+# Optional, bound by the agent from the question in its own words: the disease the target is
+# to be validated for. Without it the disease-bound steps are skipped, the report says so,
+# and the total is not computed -- a score with a dimension missing is not a score.
+optional_inputs: [disease]
+
+report: >-
+  Open with the Executive Summary the skill prescribes: the Target Validation Score
+  (`facts.total` of 100), the Priority Tier and the verdict (`facts.tier`), then one sentence
+  each for disease association, druggability, safety and clinical precedent, and the top
+  risks. Then the Validation Scorecard as a table: every one of the twelve sub-scores from
+  its fact (`genetic_points`, `literature_points`, `pathway_points`, `structural_points`,
+  `chemical_points`, `class_points`, `expression_points`, `ko_points`, `adverse_points`,
+  `clinical_points`, `functional_points`, `model_points`), the dimension sums, the total; the
+  points are the server's arithmetic over the skill's own tables, so state them as computed,
+  never re-derived. For every judged option (`*_class`) give the option chosen and its
+  `*_reason` from the facts, and name it as the agent's judgement over the data, not as tool
+  output. Then the skill's sections in its order: 1 Target identity (from `facts`: symbol,
+  name, ensembl, versioned ensembl, uniprot, entrez, function, tdl); 2 Disease association --
+  when the run holds `facts.disease_choice`, show first how the disease named in the question
+  was read onto the source's ids (word, id, reason, placing), then the pair's overall score
+  `disease_score` out of `disease_rows` (a wide table is described, not printed: say how many
+  diseases the source associates and where this one ranks), the constraint (`pli`, `oe_lof`),
+  the genetic evidence rows and the literature (table `literature_rows`: read the most
+  relevant with fetch_run_data(rank_by=<the disease and the mechanism>, limit=<how many you
+  will read>), state the source's total beside what the run holds, cite each paper by its own
+  `url`); 3 Druggability (the tractability rows that are true, the target class, the
+  AlphaFold confidence, the chemical probes); 4 Known modulators (`drug_rows`, each with its
+  stage); 5 Clinical precedent (`trial_rows` is evidence: fetch the ones you discuss, cite
+  each as https://clinicaltrials.gov/study/<nct_id>, state the total); 6 Safety (expression in
+  the critical tissues from `expression_rows`, the mouse models, the boxed warnings found);
+  7 Pathway context (`pathway_rows`, `interaction_rows`); 8 Validation evidence; 9 Web context
+  (`web_rows`: pages the agent's own searches returned, cited by their url, a web number is
+  that page's number and never merged with a computed one); 10 GO/NO-GO recommendation with
+  the tier; 11 Data limitations built from `failures`, `blocked`, `unresolved` and every
+  step skipped; 12 References. Every number in the report is one the run holds or a page
+  the run fetched; every judged option is shown with its reason.
+
+# The process's closed lists: facts from the first step, shown in every question that asks
+# for one of them, and what `only_in` checks and `map` tables read.
+constants:
+  yes_no: ["yes", "no"]   # quoted: bare yes/no read as booleans
+  structural_options: [cocrystal_with_ligand, pdb_with_pockets, alphafold_confident, alphafold_low_or_none, none]
+  chemical_options: [drug_like_below_100nM, tool_compound_below_1uM, hts_hits_only, none]
+  class_options: [validated_druggable_family, enzyme_or_ion_channel, ppi_or_transporter, novel_or_unknown]
+  expression_options: [restricted_to_disease_tissue, low_in_critical_tissues, moderate_in_one_or_two_critical, high_in_multiple_critical]
+  ko_options: [viable_no_severe_phenotype, viable_mild_phenotype, concerning_phenotype, lethal, no_ko_data_low_pli, no_ko_data_high_pli]
+  adverse_options: [no_known_signals, mild_manageable, serious_reported, boxed_warning_or_withdrawal]
+  clinical_options: [approved_same_disease, approved_other_disease, phase_3, phase_2, phase_1, preclinical_only, none]
+  functional_options: [crispr_knockout_phenotype, sirna_knockdown_phenotype, biochemical_assay, overexpression_only, none]
+  model_options: [patient_derived_xenograft, genetically_engineered_mouse, cell_line, in_silico_only, none]
+  # GTEx tissue ids of the tissues the skill calls critical (heart, liver, kidney, brain, blood).
+  critical_tissues: [Heart_Atrial_Appendage, Heart_Left_Ventricle, Liver, Kidney_Cortex, Kidney_Medulla,
+                     Brain_Cortex, Brain_Cerebellum, Whole_Blood]
+
+# What the agent gets whole (fact) and what it gets described and fetches from (evidence).
+# A table a later step reads must be a fact. The kind decides, never the size.
+tables:
+  disease_candidates: fact   # the mapping is checked against it
+  disease_choice: fact       # the mapping itself: shown in the report
+  disease_rows: fact         # the lookup reads the pair's score from it
+  evidence_rows: fact
+  tractability_rows: fact
+  class_rows: fact
+  probe_rows: fact
+  drug_rows: fact            # the clinical judgement reads it
+  drug_names: fact           # the boxed-warning loop iterates it
+  expression_rows: fact      # the expression judgement reads it against critical_tissues
+  mouse_rows: fact
+  boxed_rows: fact
+  pathway_rows: fact
+  interaction_rows: fact
+  gwas_rows: evidence        # wide; the agent reads what it needs
+  literature_rows: evidence
+  trial_rows: evidence
+  web_rows: evidence
+
+steps:
+  - id: identity
+    label: "Phase 0 -- identifiers, function, development level"
+    calls:
+      - tool: MyGene_query_genes
+        arguments: {query: "{target}", fields: "symbol,name,entrezgene,ensembl.gene,uniprot", species: "human"}
+      - tool: Pharos_get_target
+        arguments: {gene: "{target}"}
+      - tool: ensembl_lookup_gene
+        arguments: {gene_id: "{target}", species: "homo_sapiens"}
+    repair:
+      # A protein name or an alias returns no hit; the agent knows the symbol.
+      argument: target
+      when_missing: ensembl_id
+    extract:
+      symbol: "data.hits.0.symbol"
+      gene_name: "data.hits.0.name"
+      entrez_id: "data.hits.0.entrezgene"
+      ensembl_id: "data.hits.0.ensembl.gene"
+      uniprot_id: "data.hits.0.uniprot.Swiss-Prot"
+      tdl: "data.tdl"
+      pharos_publications: "data.publicationCount"
+      ensembl_version: "data.version"
+    produces: [symbol, gene_name, entrez_id, ensembl_id, uniprot_id, tdl, pharos_publications, ensembl_version]
+    notes: >-
+      MyGene's first hit is the gene when the symbol is exact. Pharos gives the target
+      development level (Tclin, Tchem, Tbio, Tdark) as `tdl` -- report it as Pharos's, not
+      derived. Ensembl gives the version; the versioned id is `<ensembl_id>.<ensembl_version>`.
+
+  - id: function
+    label: "Phase 0b -- protein function"
+    requires: [identity]
+    calls:
+      - tool: UniProt_get_function_by_accession
+        arguments: {accession: "{uniprot_id}"}
+    extract:
+      function: "result.0"   # the tool answers a bare list; the executor wraps it as {result: [...]}
+    produces: [function]
+
+  - id: disease_candidates
+    label: "Phase 1a -- the source's disease ids for the disease named"
+    requires: [identity]
+    when: disease
+    calls:
+      - tool: OpenTargets_get_disease_id_description_by_name
+        arguments: {diseaseName: "{disease}"}
+    collect:
+      disease_candidates: {path: "data.search.hits", flatten: true, fields: ["id", "name", "description"]}
+    produces: [disease_candidates]
+
+  - id: disease_choice
+    label: "Phase 1b -- the question's disease, read onto the source's ids"
+    requires: [disease_candidates]
+    when: disease
+    calls: []
+    judge: [disease_choice]
+    mapping:
+      disease_choice: {of: disease, onto: {rows: disease_candidates, field: id}}
+    compute:
+      efo_id: {op: first, of: disease_choice_terms}
+    produces: [disease_choice, efo_id]
+    notes: >-
+      Answer `disease_choice` as a list with ONE row, the source's id that IS the disease the
+      question names, copied exactly from `choices.disease_choice`: {of: the disease as the
+      question gave it, term: the id, reason: one sentence, concept: a list of two to four
+      plain words naming the disease for an ontology to place it under}. Prefer the id whose
+      name is the disease itself over a parent or a subtype; say in the reason when only a
+      parent or a subtype is listed.
+
+  - id: associations
+    label: "Phase 1c -- every disease the source associates with the target, scored"
+    requires: [identity]
+    calls:
+      - tool: OpenTargets_get_diseases_phenotypes_by_target_ensembl
+        # One page wide enough for the whole association list of a well-studied target.
+        arguments: {ensemblId: "{ensembl_id}", size: 500}
+    total: "data.target.associatedDiseases.count"
+    collect:
+      disease_rows: {path: "data.target.associatedDiseases.rows", flatten: true,
+                     fields: ["disease.id as disease_id", "disease.name as name", "score"]}
+    produces: [disease_rows]
+
+  - id: pair
+    label: "Phase 1d -- the pair's evidence and its association score"
+    requires: [disease_choice, associations]
+    when: disease
+    calls:
+      - tool: OpenTargets_get_evidence_by_datasource
+        arguments: {efoId: "{efo_id}", ensemblId: "{ensembl_id}",
+                    datasourceIds: [ot_genetics_portal, eva, gene_burden]}
+    collect:
+      evidence_rows: {path: "data.disease.evidences.rows", flatten: true}
+    compute:
+      disease_score: {op: lookup, rows: disease_rows, key: disease_id, equals: efo_id, field: score}
+      pathway_points: {op: band, from: disease_score, bands: [[0.8, 10], [0.5, 7], [0.2, 4], [0, 1]]}
+    produces: [evidence_rows, disease_score, pathway_points]
+    notes: >-
+      The pathway sub-score is the skill's band over the source's overall association score
+      for this pair, applied by the server. The evidence rows are the genetic sources only.
+
+  - id: constraint
+    label: "Phase 1e -- constraint"
+    requires: [identity]
+    calls:
+      - tool: gnomad_get_gene_constraints
+        arguments: {gene_symbol: "{symbol}"}
+    extract:
+      pli: "data.gene.gnomad_constraint.pLI"
+      oe_lof: "data.gene.gnomad_constraint.oe_lof"
+    compute:
+      pli_points: {op: band, from: pli, bands: [[0.9, 2], [0, 0]]}
+    produces: [pli, oe_lof, pli_points]
+
+  - id: gwas
+    label: "Phase 1e -- GWAS variants in the gene"
+    requires: [identity]
+    calls:
+      - tool: gwas_get_snps_for_gene
+        arguments: {gene_symbol: "{symbol}"}
+    collect:
+      gwas_rows: {path: "data", flatten: true, fields: ["rsId", "functionalClass", "lastUpdateDate"]}
+    produces: [gwas_rows]
+
+  - id: genetic
+    label: "Phase 1f -- the genetic sub-score, from the evidence in hand"
+    requires: [pair, constraint, gwas]
+    calls: []
+    judge: [gwas_loci, rare_variant, somatic_mutation, genetic_reason]
+    check:
+      rare_variant: [{only_in: yes_no}]
+      somatic_mutation: [{only_in: yes_no}]
+    compute:
+      gwas_points: {op: band, from: gwas_loci, bands: [[2, 6], [1, 3], [0, 0]]}
+      rare_points: {op: map, from: rare_variant, table: {"yes": 2, "no": 0}}
+      somatic_points: {op: map, from: somatic_mutation, table: {"yes": 2, "no": 0}}
+      genetic_points: {op: sum, of: [gwas_points, rare_points, somatic_points, pli_points], cap: 10}
+    produces: [gwas_loci, rare_variant, somatic_mutation, genetic_reason, genetic_points]
+    notes: >-
+      From `evidence_rows` (the genetic sources) and the `gwas_rows` description: `gwas_loci`
+      is the number of genome-wide significant loci for THIS disease (0 when none); `rare_variant`
+      is yes when a pathogenic rare variant links the gene to this disease (ClinVar / EVA rows),
+      else no; `somatic_mutation` is yes when the evidence rows carry somatic mutations in this
+      disease, else no; `genetic_reason` is one sentence naming the rows read. The points are
+      the server's: +3 per locus (max 6), +2 rare variant, +2 somatic, +2 when pLI > 0.9, capped at 10.
+
+  - id: literature
+    label: "Phase 1g -- published work on the target and the disease"
+    requires: [identity]
+    when: disease
+    calls:
+      - tool: PubMed_search_articles
+        arguments: {query: "{symbol} AND {disease}", limit: 200, sort: "relevance"}
+    total: "metadata.total"
+    extract:
+      literature_total: "metadata.total"
+    collect:
+      literature_rows: {path: "data", flatten: true,
+                        fields: ["pmid", "title", "pub_year as year", "journal", "article_type", "url",
+                                 "doi_url as doi", "abstract"]}
+    compute:
+      literature_points: {op: band, from: literature_total, bands: [[100, 10], [50, 7], [10, 5], [1, 3], [0, 0]]}
+    produces: [literature_total, literature_rows, literature_points]
+    notes: >-
+      The literature sub-score is the skill's band over the source's own total for the pair,
+      not over the rows the run holds.
+
+  - id: druggability
+    label: "Phase 2 -- tractability, class, structure, probes"
+    requires: [identity]
+    calls:
+      - tool: OpenTargets_get_target_tractability_by_ensemblID
+        arguments: {ensemblId: "{ensembl_id}"}
+      - tool: OpenTargets_get_target_classes_by_ensemblID
+        arguments: {ensemblId: "{ensembl_id}"}
+      - tool: alphafold_get_summary
+        arguments: {qualifier: "{uniprot_id}"}
+      - tool: OpenTargets_get_chemical_probes_by_target_ensemblID
+        arguments: {ensemblId: "{ensembl_id}"}
+    extract:
+      alphafold_confidence: "data.structures.0.summary.confidence_avg_local_score"
+    collect:
+      tractability_rows: {path: "data.target.tractability", flatten: true, fields: ["modality", "label", "value"]}
+      class_rows: {path: "data.target.targetClass", flatten: true, fields: ["label", "level"]}
+      probe_rows: {path: "data.target.chemicalProbes", flatten: true,
+                   fields: ["id", "isHighQuality", "probeMinerScore", "probesDrugsScore"]}
+    produces: [alphafold_confidence, tractability_rows, class_rows, probe_rows]
+
+  - id: modulators
+    label: "Phase 3 -- known drugs and clinical candidates"
+    requires: [identity]
+    calls:
+      - tool: OpenTargets_get_associated_drugs_by_target_ensemblID
+        arguments: {ensemblId: "{ensembl_id}"}
+      - tool: ChEMBL_search_targets
+        arguments: {target_synonym__icontains: "{symbol}"}
+    total: "data.target.drugAndClinicalCandidates.count"
+    collect:
+      drug_rows: {path: "data.target.drugAndClinicalCandidates.rows", flatten: true,
+                  fields: ["drug.id as chembl_id", "drug.name as name", "maxClinicalStage as stage",
+                           "diseases[].disease.name as indications"]}
+      drug_names: {path: "data.target.drugAndClinicalCandidates.rows[].drug.name", flatten: true}
+    produces: [drug_rows, drug_names]
+    notes: >-
+      ChEMBL's search can fail at the source; a failure here is recorded and the chemical-matter
+      judgement reads the drugs, probes and tractability instead.
+
+  - id: druggability_judged
+    label: "Phase 2/3 -- the druggability sub-scores, from the data in hand"
+    requires: [druggability, modulators]
+    calls: []
+    judge: [structural_class, chemical_class, target_class, druggability_reason]
+    check:
+      structural_class: [{only_in: structural_options}]
+      chemical_class: [{only_in: chemical_options}]
+      target_class: [{only_in: class_options}]
+    compute:
+      structural_points: {op: map, from: structural_class, table: {cocrystal_with_ligand: 10, pdb_with_pockets: 7, alphafold_confident: 5, alphafold_low_or_none: 2, none: 0}}
+      chemical_points: {op: map, from: chemical_class, table: {drug_like_below_100nM: 10, tool_compound_below_1uM: 7, hts_hits_only: 4, none: 0}}
+      class_points: {op: map, from: target_class, table: {validated_druggable_family: 5, enzyme_or_ion_channel: 4, ppi_or_transporter: 2, novel_or_unknown: 0}}
+    produces: [structural_class, chemical_class, target_class, druggability_reason,
+               structural_points, chemical_points, class_points]
+    notes: >-
+      Choose each option from its list, from the data only: `tractability_rows` (which labels
+      are true, per modality), `alphafold_confidence` (below 70 is low), `probe_rows`,
+      `drug_rows` and their stages, `class_rows`. `druggability_reason` names the rows behind
+      each choice in one sentence each. The points are the skill's tables, applied by the server.
+
+  - id: expression
+    label: "Phase 5a -- tissue expression"
+    requires: [identity]
+    calls:
+      - tool: GTEx_get_median_gene_expression
+        arguments: {gene_symbol: "{symbol}"}
+    collect:
+      expression_rows: {path: "data", flatten: true, fields: ["tissueSiteDetailId as tissue", "median as tpm"]}
+    produces: [expression_rows]
+
+  - id: mouse_models
+    label: "Phase 5b -- mouse models and the source's safety profile"
+    requires: [identity]
+    calls:
+      - tool: OpenTargets_get_biological_mouse_models_by_ensemblID
+        arguments: {ensemblId: "{ensembl_id}"}
+      - tool: OpenTargets_get_target_safety_profile_by_ensemblID
+        arguments: {ensemblId: "{ensembl_id}"}
+    collect:
+      mouse_rows: {path: "data.target.mousePhenotypes", flatten: true}
+    produces: [mouse_rows]
+
+  - id: boxed_warnings
+    label: "Phase 5c -- boxed warnings of the known drugs"
+    requires: [modulators]
+    when: drug_names
+    for_each: drug_names
+    as: drug
+    calls:
+      - tool: FDA_get_boxed_warning_info_by_drug_name
+        arguments: {drug_name: "{drug}"}
+    collect:
+      boxed_rows: {path: "", fields: ["$item as drug", "results.0.boxed_warning.0 as boxed_warning"]}
+    produces: [boxed_rows]
+    notes: >-
+      A NOT_FOUND is normal: a candidate without a US label has no boxed warning to find.
+
+  - id: safety_judged
+    label: "Phase 5d -- the safety sub-scores, from the data in hand"
+    requires: [constraint, expression, mouse_models, boxed_warnings]
+    calls: []
+    judge: [expression_class, ko_class, adverse_class, safety_reason]
+    check:
+      expression_class: [{only_in: expression_options}]
+      ko_class: [{only_in: ko_options}]
+      adverse_class: [{only_in: adverse_options}]
+    compute:
+      expression_points: {op: map, from: expression_class, table: {restricted_to_disease_tissue: 5, low_in_critical_tissues: 4, moderate_in_one_or_two_critical: 2, high_in_multiple_critical: 0}}
+      ko_points: {op: map, from: ko_class, table: {viable_no_severe_phenotype: 10, viable_mild_phenotype: 7, concerning_phenotype: 3, lethal: 0, no_ko_data_low_pli: 5, no_ko_data_high_pli: 2}}
+      adverse_points: {op: map, from: adverse_class, table: {no_known_signals: 5, mild_manageable: 3, serious_reported: 1, boxed_warning_or_withdrawal: 0}}
+    produces: [expression_class, ko_class, adverse_class, safety_reason, expression_points, ko_points, adverse_points]
+    notes: >-
+      `expression_class` from `expression_rows` read against `critical_tissues` (TPM in those
+      tissues against the disease tissue); `ko_class` from `mouse_rows` (the phenotypes named)
+      and, when no model is listed, from `pli`; `adverse_class` from `boxed_rows` and the
+      drugs' stages. `safety_reason`: one sentence per choice naming the rows read.
+
+  - id: trials
+    label: "Phase 4 -- registry entries"
+    requires: [identity]
+    calls:
+      - tool: search_clinical_trials
+        arguments: {query_term: "{symbol}", pageSize: 1000}
+    total: "data.total_count"
+    collect:
+      trial_rows: {path: "data.studies", flatten: true,
+                   fields: ["NCT ID as nct_id", "brief_title as title", "overall_status as status", "phase", "condition"]}
+    produces: [trial_rows]
+
+  - id: clinical_judged
+    label: "Phase 4b -- the clinical precedent sub-score"
+    requires: [disease_choice, modulators, trials]
+    calls: []
+    judge: [clinical_class, clinical_reason]
+    check:
+      clinical_class: [{only_in: clinical_options}]
+    compute:
+      clinical_points: {op: map, from: clinical_class, table: {approved_same_disease: 15, approved_other_disease: 12, phase_3: 10, phase_2: 7, phase_1: 5, preclinical_only: 3, none: 0}}
+    produces: [clinical_class, clinical_reason, clinical_points]
+    notes: >-
+      From `drug_rows` (each drug's `stage` and its `indications`, the diseases the source lists
+      it for) and the `trial_rows` description: the highest stage reached on this target, and
+      whether an approval's `indications` include the disease named -- `approved_same_disease`
+      only when a row says so. `clinical_reason` names the drug or trial that sets the stage.
+
+  - id: pathways
+    label: "Phase 6a -- pathways"
+    requires: [identity]
+    calls:
+      - tool: Reactome_map_uniprot_to_pathways
+        arguments: {uniprot_id: "{uniprot_id}"}
+    collect:
+      pathway_rows: {path: "data", flatten: true, fields: ["stId", "displayName", "isInDisease"]}
+    produces: [pathway_rows]
+
+  - id: interactions
+    label: "Phase 6b -- protein interactions"
+    requires: [identity]
+    calls:
+      - tool: STRING_get_protein_interactions
+        arguments: {protein_ids: ["{symbol}"], species: 9606}
+    collect:
+      interaction_rows: {path: "data", flatten: true, fields: ["preferredName_A", "preferredName_B", "score"]}
+    produces: [interaction_rows]
+
+  - id: essentiality
+    label: "Phase 7 -- essentiality"
+    requires: [identity]
+    calls:
+      - tool: DepMap_get_gene_dependencies
+        arguments: {gene_symbol: "{symbol}"}
+
+  - id: validation_judged
+    label: "Phase 7b -- the validation evidence sub-scores"
+    requires: [literature, pathways, interactions, essentiality]
+    calls: []
+    judge: [functional_class, model_class, validation_reason]
+    check:
+      functional_class: [{only_in: functional_options}]
+      model_class: [{only_in: model_options}]
+    compute:
+      functional_points: {op: map, from: functional_class, table: {crispr_knockout_phenotype: 5, sirna_knockdown_phenotype: 4, biochemical_assay: 3, overexpression_only: 2, none: 0}}
+      model_points: {op: map, from: model_class, table: {patient_derived_xenograft: 5, genetically_engineered_mouse: 4, cell_line: 3, in_silico_only: 1, none: 0}}
+    produces: [functional_class, model_class, validation_reason, functional_points, model_points]
+    notes: >-
+      From the literature (fetch `literature_rows` ranked by the mechanism and the model words
+      you look for), the DepMap result and the pathways: the strongest functional evidence and
+      the strongest disease model the run holds. `validation_reason` cites the papers read by
+      their `url`. Choose `none` when nothing read supports a stronger option.
+
+  - id: score
+    label: "Phase 10 -- the Target Validation Score, its tier and verdict"
+    requires: [pair, genetic, literature, druggability_judged, safety_judged, clinical_judged, validation_judged]
+    calls: []
+    compute:
+      disease_association: {op: sum, of: [genetic_points, literature_points, pathway_points]}
+      druggability_total: {op: sum, of: [structural_points, chemical_points, class_points]}
+      safety_total: {op: sum, of: [expression_points, ko_points, adverse_points]}
+      validation_total: {op: sum, of: [functional_points, model_points]}
+      total: {op: sum, of: [disease_association, druggability_total, safety_total, clinical_points, validation_total]}
+      tier: {op: band, from: total, bands: [[80, "Tier 1 -- GO"], [60, "Tier 2 -- CONDITIONAL GO"], [40, "Tier 3 -- CAUTION"], [0, "Tier 4 -- NO-GO"]]}
+    produces: [disease_association, druggability_total, safety_total, validation_total, total, tier]
+
+  - id: web_queries
+    label: "Phase 9 -- the web queries, written by the agent for this question"
+    requires: [score]
+    calls: []
+    combine:
+      web_subjects: {union: [target, disease]}
+    judge: [web_queries]
+    produces: [web_subjects, web_queries]
+    notes: >-
+      Answer `web_queries` as a list of search strings, one for each entry of `web_subjects`
+      and one for the verdict: for the target, what is published about it as a drug target;
+      for the disease, the target in that disease; for the verdict, a published assessment of
+      this target's validation or a competing program. Name the target in every query.
+
+  - id: web_search
+    label: "Phase 9b -- the pages, one row each (agent's own search tool)"
+    requires: [web_queries]
+    for_each: web_queries
+    as: query
+    delegate:
+      - tool: exa_web_search
+        arguments: {action: "search", query: "{query}", contents: true}
+    produces: [web_rows]
+    notes: >-
+      Run every composed call as given, with your web search tool. Answer `web_rows` as a list
+      of rows, one per page returned: {query, title, url, source, date, content}. Copy titles,
+      links and dates as returned. An empty list is the right answer when nothing was found.
+
+  - id: synthesis
+    label: "Phase 10b -- the report (no new tools)"
+    requires: [function, score, web_search]
+    calls: []
+    notes: >-
+      Write the report from the facts and the tables as `report` says. The verdict is
+      `facts.tier`; do not soften or harden it in prose -- argue from the sub-scores.

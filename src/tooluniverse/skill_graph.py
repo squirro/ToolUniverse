@@ -1,24 +1,9 @@
-"""Skills as a process graph — the plan lives in data, not in the model's head.
+"""A skill's procedure as a process graph, held in data rather than in the model's head.
 
-A served skill body is a standing operating procedure written as prose: nine
-phases, each naming its tools, with gateways expressed in capital letters ("pick
-the first applicable, then STOP"). The agent is handed all of it at once and asked
-to remember it while doing the work. Measured on sr-dev on 2026-08-21 with three
-probes per skill, four of the first eight skills returned a different verdict
-across three identical runs, and a citation rule delivered on every single turn was
-ignored on 29 of 76 answers. Soft pressure has plateaued.
-
-This module holds the same procedure as a graph. `next_step` is pure and stateless:
-give it the graph, the step ids already done, and the facts gathered so far, and it
-returns the ONE step to run now — with the exact tool calls and their arguments
-already filled in. The agent stops planning and starts executing, which is the
-only class of technique that binds rather than persuades (the others being tool
-masking and schema-constrained arguments).
-
-Deliberately not a workflow engine. There is no server-side state: the caller
-passes back what it has done, exactly as an MCP tool call must. If this earns its
-keep on one skill, running the same graph under a durable engine is the next step,
-not a prerequisite.
+`next_step` is pure and stateless: given the graph, the step ids already done and the
+facts gathered so far, it returns the one step to run now with its tool calls already
+filled in. There is no server-side state; the caller passes back what it has done, as
+an MCP tool call must.
 """
 from __future__ import annotations
 
@@ -29,9 +14,7 @@ from typing import Any
 
 import yaml
 
-# Package data, not deploy/: the image installs `src` and nothing else, so a graph
-# under deploy/ would silently not exist in the container. Overridable for local
-# iteration and, later, for a projection compiled out of GraphDB.
+# Package data, not deploy/: the image installs only `src`.
 GRAPHS_DIR = Path(
     os.environ.get("TU_SKILL_GRAPHS_DIR")
     or Path(__file__).resolve().parent / "data" / "skill_graphs"
@@ -42,6 +25,13 @@ _PLACEHOLDER = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
 
 class SkillGraphError(RuntimeError):
     """No graph for that skill, or the graph cannot be run with these facts."""
+
+
+def undeclared_tables(graph: dict) -> list[str]:
+    """Collected tables the process does not declare a fact table or an evidence table."""
+    declared = graph.get("tables") or {}
+    return [name for step in graph.get("steps", []) for name in (step.get("collect") or {})
+            if declared.get(name) not in ("fact", "evidence")]
 
 
 def load_graph(skill: str, graphs_dir: str | Path | None = None) -> dict:
@@ -56,6 +46,10 @@ def load_graph(skill: str, graphs_dir: str | Path | None = None) -> dict:
     graph = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(graph, dict) or not graph.get("steps"):
         raise SkillGraphError(f"graph for {skill!r} has no steps")
+    if undeclared := undeclared_tables(graph):
+        raise SkillGraphError(
+            f"graph for {skill!r} collects {undeclared} without declaring them under `tables:` "
+            "as `fact` (the agent gets it whole) or `evidence` (described, then fetched)")
     return graph
 
 
@@ -66,11 +60,9 @@ def has_graph(skill: str) -> bool:
 def graph_directive(skill: str, server_runs: bool = False) -> str:
     """The header prepended to a graphed skill's body, or "" when it has none.
 
-    A graph nobody is told about changes nothing. And two sets of instructions that
-    disagree are worse than either alone, so this states which one governs and
-    demotes the prose phases to reference. With `server_runs` (Temporal configured,
-    ADR-0016) the server executes the process and the model only starts it,
-    answers its questions, and writes the report.
+    It states which instructions govern and demotes the prose phases to reference. With
+    `server_runs` the server executes the process; the model starts it, answers its
+    questions and writes the report.
     """
     if not has_graph(skill):
         return ""
@@ -81,8 +73,10 @@ REFERENCE for what each step means; they are not your plan. The server executes
 every step and every tool call itself.
 
 1. Bind the inputs from the question and call `run_skill(skill="{skill}",
-   inputs={{...}})`. If it answers `schema_mismatch`, bind the named inputs and
-   call again.
+   inputs={{...}})`. Give EVERY input a value or null: an optional input the
+   question names must be bound, and one it does not name is passed as null. If
+   it answers `schema_mismatch` or `confirm_inputs`, bind or decline the named
+   inputs and call again.
 2. While it answers `running` or `waiting`, call `continue_skill(run_id=...)`.
    `running` is progress — tell the user which phase is done. `waiting` carries a
    `question`: answer it with `continue_skill(run_id=..., answer={{...}})` — for a
@@ -90,11 +84,19 @@ every step and every tool call itself.
    `judge`, each wanted name mapped to your decision; for a `delegate`, make the
    listed `calls` with your own tools (web search, code) and map each wanted name
    to what came back.
-3. When it answers `finished`, write the report from `bundle` and nothing else.
-   `bundle.report` is the author's instruction for how to read the evidence and
-   `bundle.notes` says what each step means: follow both. Every number comes from
-   `bundle.results` or `bundle.facts`; cite with the `source_url` in each result;
-   state `failures`, `blocked`, `unresolved` and `excluded` as gaps.
+3. When it answers `finished`, write the report from `handover` and nothing else.
+   `handover.report` is the author's instruction for how to read the evidence and
+   `handover.notes` says what each step means: follow both. `handover.facts` is
+   what you must cite, whole, each row with its own link. `handover.tables`
+   describes what is too wide to hand over; its preview is not the data — read
+   the rows you need with `fetch_run_data(run_id=..., table=..., columns=[...])`.
+   Every number comes from `handover.facts` or from rows you fetched; state
+   `failures`, `blocked`, `unresolved` and `excluded` as gaps. Follow the five
+   lines in `handover.write_the_report`.
+4. Before you answer the user, hand the whole draft to
+   `submit_report(run_id=..., draft=...)`. `accepted`: send it. `revise`: correct
+   each named statement and submit once more. `accepted_with_failures`: send it
+   with `append_to_report` added at the end.
 
 Do not call `execute_tool` for any step of this skill yourself.
 
@@ -159,10 +161,9 @@ def _is_runnable(step: dict, done: set[str], facts: dict) -> bool:
         return False
     condition = step.get("when")
     if condition and not facts.get(condition):
-        # A gateway: the step is only on this path if the fact is present and true.
+        # A gateway: the fact must be present and true.
         return False
-    # An empty list means there is nothing to iterate: move on rather than demand
-    # a call that cannot be made.
+    # Nothing to iterate: move on rather than demand a call that cannot be made.
     return not _vacuous(step, facts)
 
 
@@ -187,18 +188,76 @@ def _expand_calls(step: dict, facts: dict) -> list[dict]:
     return expanded
 
 
+def delegated_calls(step: dict, facts: dict) -> list[dict]:
+    """The calls the agent makes itself for this step, one per item when the step loops.
+
+    Composed exactly like the server's own calls, so nothing is added beyond the filled arguments.
+    """
+    return _expand_calls({**step, "calls": step.get("delegate") or []}, facts)
+
+
+_PRODUCING_KEYS = ("extract", "collect", "combine", "compute", "derive")
+
+
+def _produces(step: dict, name: str) -> bool:
+    return (name in (step.get("produces") or []) or name in (step.get("judge") or [])
+            or any(name in (step.get(key) or {}) for key in _PRODUCING_KEYS))
+
+
+def _gate_is_closed(graph: dict, step: dict, done: set[str], facts: dict) -> bool:
+    """A gateway that will not open: its fact is false, or nothing is left that could set it."""
+    name = step.get("when")
+    if not name:
+        return False
+    if name in facts:
+        return not facts[name]
+    return all(s["id"] in done for s in graph["steps"] if _produces(s, name))
+
+
+def _settled(graph: dict, done: set[str], facts: dict) -> set[str]:
+    """`done`, plus every step behind a closed gateway whose requirements are met.
+
+    Closing one gate can meet another step's requirements, so this runs to a fixpoint.
+    """
+    done = set(done)
+    while True:
+        closed = {s["id"] for s in graph["steps"]
+                  if s["id"] not in done
+                  and all(dep in done for dep in s.get("requires", []))
+                  and _gate_is_closed(graph, s, done, facts)}
+        if not closed:
+            return done
+        done |= closed
+
+
+def skipped_gates(graph: dict, done: list[str], facts: dict) -> list[dict]:
+    """Steps that did not run because their gateway closed, each with the gate's name."""
+    ran = set(done or [])
+    settled = _settled(graph, ran, facts or {})
+    return [{"step": s["id"], "gate": s["when"]} for s in graph["steps"]
+            if s["id"] in settled and s["id"] not in ran and s.get("when")]
+
+
+def stalled_steps(graph: dict, done: list[str], facts: dict) -> list[dict]:
+    """Steps that never ran and were not skipped, each with the requirements it still waited for."""
+    facts = facts or {}
+    settled = _settled(graph, set(done or []) | {
+        s["id"] for s in graph["steps"] if _vacuous(s, facts)}, facts)
+    return [{"step": s["id"],
+             "waiting_for": [dep for dep in s.get("requires", []) if dep not in settled]}
+            for s in graph["steps"] if s["id"] not in settled]
+
+
 def next_step(graph: dict, done: list[str], facts: dict) -> dict | None:
     """The one step to run now, or None when the procedure is finished.
 
-    Steps are offered in declaration order, so the graph reads top to bottom like
-    the body it replaces. A step whose gateway condition is absent is skipped, and
-    skipping it must never stall the procedure.
+    Steps are offered in declaration order, so the graph reads top to bottom like the
+    body it replaces. Skipping a closed gateway must never stall the procedure.
     """
     facts = facts or {}
-    # A loop with nothing to iterate is complete without running, so the steps
-    # that require it are not left waiting for a call that will never be made.
-    done_set = set(done or []) | {
-        s["id"] for s in graph["steps"] if _vacuous(s, facts)}
+    # A loop with nothing to iterate counts as done, so its dependants are not left waiting.
+    done_set = _settled(graph, set(done or []) | {
+        s["id"] for s in graph["steps"] if _vacuous(s, facts)}, facts)
     for step in graph["steps"]:
         if not _is_runnable(step, done_set, facts):
             continue

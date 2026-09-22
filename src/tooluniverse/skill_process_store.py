@@ -1,12 +1,10 @@
 """Skill Processes in GraphDB: publish the reviewed YAML, read it back at run start.
 
-ADR-0016. The YAML in the repo is authoritative — it goes through a PR, the graph
-guard and the round-trip test. GraphDB holds the published copy, one named graph
-per skill in a dedicated repository, so the process is queryable beside the
-atlas ("which skills call gnomAD?") and `run_skill` reads it from the same store
-that will hold the Run Record. A publish replaces the graph; a load is one
-CONSTRUCT. There is no fallback to packaged YAML: a store that does not answer is
-an error the tool returns, not a silently different definition.
+The YAML in the repo is authoritative; GraphDB holds the published copy, one named
+graph per skill in a dedicated repository, so a process is queryable and `run_skill`
+reads it from the same store that holds the Run Record. A publish replaces the graph;
+a load is one CONSTRUCT. There is no fallback to packaged YAML: a store that does not
+answer is an error, not a silently different definition.
 """
 from __future__ import annotations
 

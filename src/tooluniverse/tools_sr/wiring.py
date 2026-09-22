@@ -1,18 +1,10 @@
-"""Which tool definitions the loader can actually reach (DSR-663).
+"""Which tool definitions the loader can actually reach.
 
-A definition sitting under ``data/`` is not the same thing as a tool the server can serve.
-The loader reads a configured set of category files -- ``default_tool_files`` -- plus a
-directory scan of ``data/remote_tools``. Anything else on disk is inert.
-
-That gap is invisible exactly where it matters. The name is in the registry files, so a
-name check passes. It is not in the image's ``--exclude-tools``, so the exclusion check
-passes too. And the agent still gets "Tool 'X' not found even after loading tools", which
-reads as a registry bug rather than a mistake in the body and burns an iteration. This is
-the population the persona linter structurally could not see.
-
-Reachability is computed from the loader's own configuration rather than from a copied
-list, for the same reason ``excluded_tool_names`` parses the Dockerfile: a duplicated list
-drifts, and a drifted list is how a skill ends up naming a tool nobody serves.
+A definition sitting under ``data/`` is not the same thing as a tool the server can serve:
+the loader reads a configured set of category files plus a directory scan of
+``data/remote_tools``, and anything else on disk is inert. Reachability is computed from the
+loader's own configuration rather than from a copied list, because a duplicated list drifts
+and a drifted list is how a skill ends up naming a tool nobody serves.
 """
 
 from __future__ import annotations
@@ -32,15 +24,13 @@ __all__ = [
 # Collections that are on disk, unreachable, and meant to be. Each says why, because an
 # undeclared exception and a forgotten wiring bug look identical six months later.
 DECLARED_UNWIRED: dict[str, str] = {
-    # Not tools. 39 records whose `type` is `endpoint` or `secret` -- the generated
-    # catalogue of which API keys each tool family needs. They carry a `name`, which is the
-    # only reason a definition scan sees them at all.
+    # Not tools: records whose `type` is `endpoint` or `secret`. They carry a `name`, which
+    # is the only reason a definition scan sees them at all.
     "api_keys_catalog.json": (
         "catalogue of API-key records, not tool definitions (type: endpoint/secret)"
     ),
-    # A holding area for APIs that stopped working. default_config.py already records an
-    # "Archived at: ..." comment at each removed entry, so the wiring was removed on
-    # purpose and the definitions were kept for the day the API returns.
+    # A holding area for APIs that stopped working. default_config.py records an
+    # "Archived at: ..." comment at each removed entry, so the removal was deliberate.
     "broken_apis/": (
         "archived definitions for APIs that no longer respond; default_config.py records "
         "an 'Archived at:' comment where each was unwired"
@@ -57,8 +47,8 @@ def reachable_files(data: Path | None = None) -> set[Path]:
     """Every file the loader reads, resolved.
 
     Two sources, matching ``ToolUniverse._read_all_tools``: the configured category files,
-    and every ``*.json`` in ``data/remote_tools`` (that one is a directory scan, so a new
-    file there is wired by being put there).
+    and every ``*.json`` in ``data/remote_tools``, which is a directory scan, so a new file
+    there is wired by being put there.
     """
     from ..default_config import default_tool_files
 
@@ -71,10 +61,8 @@ def reachable_files(data: Path | None = None) -> set[Path]:
 def definitions_by_file(data: Path | None = None) -> dict[Path, list[str]]:
     """Tool names per file, for every file under ``data`` that holds tool definitions.
 
-    A definition is an object with both a ``name`` and a ``type``. Files that are not a
-    JSON list, and lists holding anything else, are skipped rather than guessed at.
-    Unparseable files are skipped too: a malformed file is a different guard's problem
-    (``test_no_duplicate_json_keys``) and this one must not fail for it.
+    A definition is an object with both a ``name`` and a ``type``. Files that are not a JSON
+    list, and files that will not parse, are skipped rather than guessed at.
     """
     data = data or data_dir()
     found: dict[Path, list[str]] = {}
@@ -112,8 +100,8 @@ def is_declared(relative: str) -> bool:
 def unwired_definitions(data: Path | None = None) -> dict[str, list[str]]:
     """Tool names the loader cannot reach, keyed by path relative to ``data``.
 
-    Declared collections are omitted. What is left is a wiring bug: a definition that can
-    be referenced by name and can never be served.
+    Declared collections are omitted. What is left is a wiring bug: a definition that can be
+    referenced by name and can never be served.
     """
     data = data or data_dir()
     reachable = reachable_files(data)
@@ -132,8 +120,8 @@ def servable_definition_names(data: Path | None = None) -> set[str]:
     """Every tool name the loader can actually reach.
 
     The complement of ``unwired_definitions``, and the set a name check should validate
-    against. Reading every JSON under ``data`` instead -- which is the obvious thing to do
-    -- accepts the archived and catalogue names as though they were servable.
+    against. Reading every JSON under ``data`` instead accepts the archived and catalogue
+    names as though they were servable.
     """
     data = data or data_dir()
     reachable = reachable_files(data)

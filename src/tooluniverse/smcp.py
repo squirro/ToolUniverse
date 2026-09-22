@@ -972,11 +972,7 @@ class SMCP(FastMCP):
                 elif "Tool_Finder_LLM" in available_tool_names:
                     return "Tool_Finder_LLM"
 
-        # Every path must name a tool. This used to fall off the end for
-        # search_method="auto" with use_advanced_search=False -- an implicit None
-        # that surfaced downstream as "Missing or empty function name", i.e. a
-        # legitimate-looking call answering nothing and inviting a retry loop.
-        # use_advanced_search is an exposed parameter, so a model can trip it.
+        # Every path must name a tool; "auto" without advanced search lands here.
         return "Tool_Finder_Keyword"
 
     def _setup_smcp_tools(self):
@@ -1060,7 +1056,7 @@ class SMCP(FastMCP):
         )
 
         skills_dir = self.skills_dir
-        # Temporal configured => the server runs Skill Processes (ADR-0016).
+        # Temporal configured means the server runs Skill Processes.
         temporal_address = __import__("os").environ.get("TEMPORAL_ADDRESS") or None
         # Build the find_skill catalog index ONCE — the served set is fixed at container start.
         skill_index = build_index(skills_dir)
@@ -1114,9 +1110,6 @@ class SMCP(FastMCP):
 
             Args:
                 name: the skill id to load, e.g. "disease-research".
-
-            Args:
-                name: the skill id.
                 plain: serve the prose body only, without the process directive —
                     for comparison runs that must follow the phases themselves.
                     Leave unset in normal use.
@@ -1131,10 +1124,7 @@ class SMCP(FastMCP):
                 return f"ERROR: {exc}"
             if plain:
                 return body
-            # A skill that ships a process graph is DRIVEN, not read: the header
-            # says so and demotes the phases below it to reference. With Temporal
-            # configured the server runs it (run_skill); otherwise the model does
-            # (next_skill_step).
+            # A graphed skill is driven, not read: the header names who runs it.
             return graph_directive(normalize_skill_name(name),
                                    server_runs=bool(temporal_address)) + body
 
@@ -1244,12 +1234,10 @@ class SMCP(FastMCP):
         )
 
     def _add_skill_run_tools(self, temporal_address: str) -> None:
-        """run_skill / continue_skill: the server runs a Skill Process on Temporal.
+        """Register the Skill Run tools; the server runs a Skill Process on Temporal.
 
-        Registered only when TEMPORAL_ADDRESS is set — a missing setting is an
-        absent tool, never a silent fallback to the model-driven loop. The logic
-        is in `skill_run_client` (pure, tested over a scripted handle); these
-        wrappers only hold the Temporal client and the GraphDB store.
+        Only when TEMPORAL_ADDRESS is set: a missing setting is an absent tool, not a
+        silent fallback. The logic lives in `skill_run_client`.
         """
         import json
         import os
@@ -1280,10 +1268,11 @@ class SMCP(FastMCP):
             and every tool call, extracts what the next step needs, and decides
             each gateway from real results. Your jobs are to bind the inputs from
             the question, answer the questions the run asks, and write the report
-            from the bundle at the end.
+            from the hand-over at the end.
 
             Loop: call this once; while the answer is `running` or `waiting`, call
-            `continue_skill(run_id)`; when it is `finished`, write the report.
+            `continue_skill(run_id)`; when it is `finished`, write the report, then
+            hand the draft to `submit_report(run_id, draft)` BEFORE you answer the user.
               - `running`  → progress: {step_id, step_label, done, remaining}. Tell
                 the user which phase completed, then call continue_skill.
               - `waiting`  → a `question` {kind, step, wants, context}. Answer with
@@ -1293,25 +1282,35 @@ class SMCP(FastMCP):
                 to your decision; for kind "delegate", make the listed `calls`
                 with your own tools (web search, code interpreter) and map each
                 wanted name to what came back.
-              - `finished` → `bundle` {facts, results, calls, notes, report,
-                excluded, steps_done, failures, blocked, unresolved}. Write the
-                report as `bundle.report` instructs and read each step as
-                `bundle.notes` says. Every number comes from bundle.results or
-                bundle.facts; cite with each result's `source_url`; report
-                failures/blocked/unresolved/excluded as gaps.
+              - `finished` → `handover` {facts, tables, calls, notes, report,
+                excluded, steps_done, failures, blocked, unresolved, run_id}. Write
+                the report as `handover.report` instructs and read each step as
+                `handover.notes` says. `facts` holds what you must cite, whole, each
+                row with its own link. `tables` DESCRIBES what is too wide to hand
+                over — row count, columns, a two-row preview that is NOT the data:
+                read the rows you need with fetch_run_data(run_id, table, ...).
+                Every number comes from handover.facts or from rows you fetched;
+                report failures/blocked/unresolved/excluded as gaps. Follow the
+                five lines in `handover.write_the_report`: they hold for every
+                skill, and submit_report checks the draft against them.
               - `schema_mismatch` → bind the `missing_inputs` from the question
                 and call run_skill again.
+              - `confirm_inputs` → the run did NOT start: `undecided_inputs` are
+                optional inputs you neither bound nor declined. Read the question
+                again. Bind each one the question names; pass each of the others
+                as null. Absent is not an answer — an input the question names
+                and you leave out changes what the run computes.
 
             Args:
                 skill: skill id with a published Skill Process, e.g.
                     "clinical-data-integration", "rare-disease-diagnosis".
                 inputs: the process's declared inputs bound from the question,
-                    e.g. {"drug_name": "Lutathera", "requested_aes": ["renal
-                    impairment"]} or {"symptoms": ["hepatosplenomegaly", ...]}.
+                    each under its declared name, e.g. {"drug_name": "<the drug the
+                    question names>"} or {"symptoms": ["<each symptom>", ...]}.
 
             Returns:
                 JSON with `status` in {running, waiting, finished, schema_mismatch,
-                error} and `run_id` — pass run_id to continue_skill.
+                confirm_inputs, error} and `run_id` — pass run_id to continue_skill.
             """
             try:
                 out = await start(await client(), Store.from_env(), skill, inputs or {})
@@ -1336,6 +1335,77 @@ class SMCP(FastMCP):
             """
             try:
                 out = await resume(await client(), run_id, answer)
+            except Exception as exc:                       # noqa: BLE001
+                out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+            return json.dumps(out, ensure_ascii=False, default=str)
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
+        )
+        async def fetch_run_data(run_id: str, table: str, columns: list[str] | None = None,
+                                 limit: int | None = None, offset: int = 0,
+                                 rank_by: str | None = None) -> str:
+            """Read rows of one table of a finished Skill Run.
+
+            The hand-over of run_skill describes each table under `tables`; its preview
+            is not the data. Name the columns you need — a row can be large — and read
+            `total_rows` against `returned` to know how much you have seen.
+
+            Args:
+                run_id: the run_id that run_skill returned.
+                table: a table name from `handover.tables`, e.g. "results.<step id>".
+                columns: the columns to return; all of them when omitted.
+                limit: how many rows; all of them when omitted.
+                offset: the first row to return, counting from 0.
+                rank_by: plain words. The rows that share a word with them come back
+                    best first, each with its `_score`, and `matched` says how many
+                    there are. Give `limit` with it: how many of the best rows you will
+                    read. If they do not answer the question, ask for the next ones with
+                    the same words and an `offset`. For text tables — abstracts, pages —
+                    this is how you find what to read: the table's own order is the
+                    source's, not relevance to the question. Write the words in the
+                    source's vocabulary, as the run's mapped terms give it.
+
+            Returns:
+                JSON with `status` "ok" and `rows`, or a status that names what exists:
+                `unknown_table` (with `tables`), `unknown_columns` (with `columns`),
+                `unknown_run`.
+            """
+            from .skill_run_client import fetch_run_data as fetch
+
+            try:
+                out = fetch(run_id, table, columns, limit, offset, rank_by)
+            except Exception as exc:                       # noqa: BLE001
+                out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+            return json.dumps(out, ensure_ascii=False, default=str)
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False)
+        )
+        async def submit_report(run_id: str, draft: str) -> str:
+            """Hand in the draft report of a finished Skill Run before you answer the user.
+
+            The server reads the draft against what you received: the hand-over's facts and
+            every row you fetched. Every number and every link must be there, and wherever
+            the run holds less than its source (a table's `source_total` above its `rows`)
+            the draft must give both numbers.
+
+            Returns:
+                `accepted`: answer the user with the draft as it is.
+                `revise`: `failures` names each statement nothing vouches for, with its
+                context. Take each number from its row and cite that row, fetch the row that
+                holds it, or remove the statement; then call submit_report once more.
+                `accepted_with_failures`: answer the user with the draft, and add the text
+                in `append_to_report` at its end, as it is.
+
+            Args:
+                run_id: the run_id that run_skill returned.
+                draft: the whole report you are about to send, in the form you will send it.
+            """
+            from .skill_run_client import submit_report as submit
+
+            try:
+                out = await submit(await client(), run_id, draft)
             except Exception as exc:                       # noqa: BLE001
                 out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
             return json.dumps(out, ensure_ascii=False, default=str)
@@ -1772,9 +1842,8 @@ class SMCP(FastMCP):
             banner_thread = threading.Thread(target=delayed_banner, daemon=True)
             banner_thread.start()
 
-        # Skill Runs on Temporal (ADR-0016): the worker shares this process so its
-        # activity reaches the loaded registry — exclusions and central repairs
-        # included — through the same door as execute_tool. Only when configured.
+        # The skill worker shares this process so it reaches the same loaded
+        # registry as execute_tool. Only when configured.
         if not hasattr(self, "_skill_worker"):
             from .skill_worker import start_in_thread
 
@@ -1932,17 +2001,8 @@ class SMCP(FastMCP):
         if "oneOf" in param_info:
             return cls._resolve_oneof_type(param_info)
 
-        # No `type` and no `oneOf` means unconstrained, and JSON Schema says so: an absent
-        # `type` permits any type. Defaulting to `str` did the opposite -- it produced the
-        # tightest constraint available.
-        #
-        # That is not academic. DSR-627 removed execute_tool's `oneOf` deliberately, so a
-        # malformed call would reach the handler and be explained instead of being rejected
-        # at the schema layer, because a schema rejection surfaces as isError:true and kills
-        # the whole turn. The relaxation silently became "string only", which rejected the
-        # dict form of `arguments` that the tool's own description tells callers to send --
-        # and every one of the ~2,278 tools is reached through execute_tool. Measured on a
-        # local sweep: 2,186 of 2,194 tools failed with one identical validation error.
+        # An absent `type` permits any type in JSON Schema; defaulting to `str`
+        # would reject the dict `arguments` that execute_tool asks callers to send.
         if "type" not in param_info:
             return Any, extra
 

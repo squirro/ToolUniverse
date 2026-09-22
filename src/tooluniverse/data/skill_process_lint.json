@@ -1,0 +1,73 @@
+{
+  "_about": "What the process lint needs and the registry does not hold. `maxima`: the most a source returns in one call, MEASURED (the registry declares a maximum for 1 paging argument in 17). `entities`: the drugs, diseases, genes and findings of each skill's benchmark questions AND their answers; a process that names one was written from its test. `known_violations`: where the shipped processes break the rules today; it may only shrink.",
+  "maxima": {
+    "search_clinical_trials": {
+      "pageSize": 1000
+    },
+    "EuropePMC_search_articles": {
+      "limit": 1000
+    },
+    "PubMed_search_articles": {
+      "limit": 200
+    }
+  },
+  "entities": {
+    "clinical-data-integration": [
+      "Lutathera",
+      "lutetium",
+      "dotatate",
+      "myelodysplastic syndrome",
+      "myelodysplastic",
+      "renal impairment",
+      "cisplatin",
+      "nephrotoxicity",
+      "ototoxicity"
+    ],
+    "adverse-event-detection": [
+      "Lutathera",
+      "lutetium",
+      "dotatate",
+      "terbium",
+      "SSTR2"
+    ],
+    "rare-disease-diagnosis": [
+      "developmental delay",
+      "seizures",
+      "coarse facial features",
+      "coarse facies",
+      "hepatosplenomegaly",
+      "cherry-red",
+      "Hurler",
+      "mucopolysaccharidosis",
+      "mucopolysaccharidoses",
+      "MPS II",
+      "IDUA",
+      "IDS",
+      "gangliosidosis",
+      "gangliosidoses",
+      "sialidosis",
+      "galactosialidosis",
+      "storage disorder",
+      "storage disorders"
+    ],
+    "drug-target-validation": [
+      "FOLR1",
+      "folate receptor",
+      "folate",
+      "ovarian cancer",
+      "ovarian",
+      "mirvetuximab",
+      "Elahere",
+      "vintafolide",
+      "MONDO_0008170",
+      "ENSG00000110195",
+      "P15328"
+    ]
+  },
+  "known_violations": {
+    "adverse-event-detection": [
+      "literature: calls[0].arguments.query [free_text_argument] '{drug_name} adverse events safety'",
+      "literature: calls[1].arguments.query [free_text_argument] '{drug_name} pharmacovigilance adverse drug reaction'"
+    ]
+  }
+}

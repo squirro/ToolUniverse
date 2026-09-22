@@ -16,13 +16,23 @@
         "efoId": {
           "type": "string",
           "description": "The efoId of a disease or phenotype."
+        },
+        "size": {
+          "type": "integer",
+          "description": "Rows per page. Open Targets pages the associations; the response's `count` says how many exist in total, so a caller can see whether one page is the whole answer.",
+          "default": 25
+        },
+        "index": {
+          "type": "integer",
+          "description": "Page number, from 0.",
+          "default": 0
         }
       },
       "required": [
         "efoId"
       ]
     },
-    "query_schema": "\nquery associatedTargets($efoId: String!) {\n  disease(efoId: $efoId) {\n    id\n    name\n    associatedTargets {\n      count\n      rows {\n        target {\n          id\n          approvedSymbol\n        }\n        score\n      }\n    }\n  }\n}\n",
+    "query_schema": "\nquery associatedTargets($efoId: String!, $size: Int!, $index: Int!) {\n  disease(efoId: $efoId) {\n    id\n    name\n    associatedTargets(page: {index: $index, size: $size}) {\n      count\n      rows {\n        target {\n          id\n          approvedSymbol\n        }\n        score\n      }\n    }\n  }\n}\n",
     "type": "OpenTarget",
     "test_examples": [
       {
@@ -48,7 +58,8 @@
                   "type": "object",
                   "properties": {
                     "count": {
-                      "type": "integer"
+                      "type": "integer",
+                      "description": "the total available at the source, which exceeds the rows returned when `size` capped the page; compare it with the row count to see whether the table is complete"
                     },
                     "rows": {
                       "type": "array",
@@ -83,7 +94,7 @@
   },
   {
     "name": "OpenTargets_get_diseases_phenotypes_by_target_ensembl",
-    "description": "Find diseases or phenotypes associated with a specific target using ensemblId.",
+    "description": "Find diseases or phenotypes associated with a specific target using ensemblId. Each row carries the overall association `score` beside the per-source scores; page with `size` and `index`.",
     "label": [
       "Target",
       "Disease",
@@ -98,13 +109,23 @@
         "ensemblId": {
           "type": "string",
           "description": "The ensemblId of a target."
+        },
+        "size": {
+          "type": "integer",
+          "description": "Rows per page. Open Targets pages the associations; the response's `count` says how many exist, so a caller can see whether one page is the whole answer.",
+          "default": 25
+        },
+        "index": {
+          "type": "integer",
+          "description": "Page number, from 0.",
+          "default": 0
         }
       },
       "required": [
         "ensemblId"
       ]
     },
-    "query_schema": "\nquery associatedDiseases($ensemblId: String!) {\n  target(ensemblId: $ensemblId) {\n    id\n    approvedSymbol\n    associatedDiseases {\n      count\n      rows {\n        disease {\n          id\n          name\n        }\n        datasourceScores {\n          id\n          score\n        }\n      }\n    }\n  }\n}\n",
+    "query_schema": "\nquery associatedDiseases($ensemblId: String!, $size: Int!, $index: Int!) {\n  target(ensemblId: $ensemblId) {\n    id\n    approvedSymbol\n    associatedDiseases(page: {index: $index, size: $size}) {\n      count\n      rows {\n        disease {\n          id\n          name\n        }\n        score\n        datasourceScores {\n          id\n          score\n        }\n      }\n    }\n  }\n}\n",
     "type": "OpenTarget",
     "test_examples": [
       {
@@ -130,7 +151,8 @@
                   "type": "object",
                   "properties": {
                     "count": {
-                      "type": "integer"
+                      "type": "integer",
+                      "description": "the total available at the source, which exceeds the rows returned when `size` capped the page; compare it with the row count to see whether the table is complete"
                     },
                     "rows": {
                       "type": "array",

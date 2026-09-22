@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Publish the reviewed Skill Processes to GraphDB (ADR-0016, DSR-709).
+"""Publish the reviewed Skill Processes to GraphDB.
 
-    GRAPHDB_ENDPOINT=http://localhost:7200 GRAPHDB_USERNAME=… GRAPHDB_PASSWORD=… \\
+    GRAPHDB_ENDPOINT=… GRAPHDB_USERNAME=… GRAPHDB_PASSWORD=… \\
         python publish_skill_graphs.py            # every YAML under data/skill_graphs
     python publish_skill_graphs.py rare-disease-diagnosis   # one
 
-Each process replaces its own named graph in the `skill-processes` repository
-(created if absent), stamped with the git commit and the definition hash. The YAML
-in the repo stays authoritative; this is the deploy step that makes GraphDB agree.
+Each process replaces its own named graph in the `skill-processes` repository, created
+if absent, stamped with the git commit and the definition hash. The YAML in the repo
+stays authoritative; this is the deploy step that makes GraphDB agree.
 """
 import argparse
 import subprocess

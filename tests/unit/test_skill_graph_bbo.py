@@ -1,17 +1,11 @@
-"""Emit a skill's process graph as BBO, the notation the Novartis PoC used.
+"""Emit a skill's process graph as BBO, a standard business process ontology.
 
-Novartis models its HR processes in BBO — `Process`, `ServiceTask`, `UserTask`,
-`ExclusiveGateway`, `NormalSequenceFlow`, `ConditionalSequenceFlow` with a
-`ConditionExpression`, and `has_resource` onto a `SoftwareResource` or
-`HumanResource`. Our YAML is a compact subset of exactly that, so the structural
-half of the conversion is mechanical and belongs in a generator, not in hand-
-written Turtle: `repair` is one block to read and four nodes to draw, and nobody
-should edit four nodes to change "try twice" to "try three times".
+Our YAML is a compact subset of BBO's control-flow terms, so the structural half of
+the conversion is mechanical and belongs in a generator, not in hand-written Turtle.
 
-BBO describes control flow and says nothing about data plumbing, so four things
-have no BBO term and take an SR extension namespace — extraction paths, gathering
-across a loop, derived gateway conditions, and typed process inputs. Novartis hit
-the same wall and answered it with `data/kg/ontology_extensions.ttl`.
+BBO says nothing about data plumbing, so four things take an SR extension namespace:
+extraction paths, gathering across a loop, derived gateway conditions, and typed
+process inputs.
 """
 
 import sys
@@ -144,11 +138,9 @@ def test_every_shipped_graph_converts_and_parses(skill):
     assert len(list(g.subjects(rdflib.RDF.type, BBO.ServiceTask))) >= 8
 
 
-# --- the reader is the inverse of the generator (DSR-709) ---------------------
-# The proof that BBO plus the srp: extension expresses every construct a shipped
-# process uses: what goes out as Turtle comes back as the same dict. Readable
-# literals stay for people and SPARQL; a JSON literal per construct is the
-# lossless channel the reader uses.
+# --- the reader is the inverse of the generator -------------------------------
+# What goes out as Turtle comes back as the same dict. Readable literals stay for
+# people and SPARQL; a JSON literal per construct is the lossless channel.
 
 from rdflib import Graph  # noqa: E402
 

@@ -1,15 +1,9 @@
 """The pack two blinded judges score: the reports of one question, one arm each, with the
-abstract of every cited paper -- and no word that says which arm wrote which.
+abstract of every cited paper, and no word that says which arm wrote which.
 
-Two faults of the first comparison shaped this. The web agent's persona opens every answer
-with a "Research Plan" quoteblock that names its tools, so the judges could tell the arms
-apart; it is stripped here, and the original is kept beside the blinded text. And citations
-were resolved by PMID only, so a paper cited by its PMC or DOI link reached the pack without
-its abstract and its numbers scored "not verified"; all three kinds resolve now, and the
-abstract goes in whole.
-
-Pure over an injected `fetch(url) -> str`: the tests replay recorded responses, the command
-line uses the network.
+The agent's leading "Research Plan" quoteblock names its tools, so it is stripped and kept
+beside the blinded text. Everything is pure over an injected `fetch(url) -> str`: the tests
+replay recorded responses, the command line uses the network.
 """
 from __future__ import annotations
 
@@ -27,7 +21,7 @@ except ImportError:                    # pragma: no cover
 
 PLAN_MARK = "Research Plan"
 
-# What the persona and the runtime print that a report should never carry into the pack.
+# Words that would tell a judge which arm wrote the report.
 ARM_WORDS = ("Research Plan", "Step A", "first-batch calls", "run_skill", "continue_skill",
              "fetch_run_data", "submit_report", "get_skill", "find_skill", "execute_tool",
              "exa_web_search", "openai_web_search", "perplexity", "ToolUniverse", "OptimusKG",
@@ -47,11 +41,7 @@ class Citation:
 # --- blinding ------------------------------------------------------------------------------
 
 def strip_plan(text: str) -> tuple[str, str | None]:
-    """Remove the leading quoteblock that holds the agent's plan; everything else stays as it is.
-
-    The block is the first run of `>` lines when it names the plan. Blank lines inside the run
-    belong to it; the report resumes at the first non-quoted line with content.
-    """
+    """Remove the leading quoteblock that names the plan; blank lines inside the run belong to it."""
     lines = text.splitlines()
     if not lines or not lines[0].startswith(">"):
         return text, None
@@ -108,10 +98,7 @@ def _pubmed_record(pmid: str, fetch: Callable[[str], str]) -> dict | None:
 
 def resolve(citation: Citation, fetch: Callable[[str], str] = _get) -> dict | None:
     """The paper behind a link: pmid, title, the whole abstract, and its PubMed url.
-
-    PMC ids go through NCBI's id converter to their PMID; a DOI is looked up in Europe PMC,
-    which carries the abstract itself and the PMID when it has one.
-    """
+    A PMC id goes through NCBI's id converter; a DOI is looked up in Europe PMC."""
     if citation.kind == "pmid":
         return _pubmed_record(citation.ident, fetch)
     if citation.kind == "pmc":
@@ -175,11 +162,7 @@ def render(pack: dict) -> str:
 def check_pack(pack: dict, question: str, arm_words: tuple[str, ...] = ARM_WORDS,
                fetch: Callable[[str], str] | None = None) -> list[str]:
     """Everything wrong with a pack before the judges see it; an empty list means it may go.
-
-    The question in the header must be the one asked; no report may carry a word that tells
-    the arm; and every abstract must be in the pack whole -- checked against the source again
-    when a `fetch` is given, else against the resolver's own record of it.
-    """
+    With a `fetch`, each abstract is checked against the source again."""
     problems = []
     if pack.get("question") != question:
         problems.append(f"question: the header holds {pack.get('question')!r}, not the question asked")

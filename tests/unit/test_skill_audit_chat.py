@@ -57,9 +57,7 @@ def test_a_turn_without_a_result_frame_keeps_its_raw_stream(tmp_path):
 
 def test_the_conversation_id_travels_inside_runtime_config_so_tools_can_see_it():
     """The streaming route builds the agent's runtime config from the body's `runtime_config`
-    only; a top-level `conversation_id` never reaches a tool's placeholder. Measured 2026-09-22:
-    the agent logged conversation_id=None on every API-driven turn, and stage_run_data could
-    not find the conversation's code container."""
+    only, so a top-level `conversation_id` never reaches a tool's placeholder."""
     from skill_audit.squirro_chat import payload_for
 
     payload = payload_for(agent_id="A", instruction="q", conversation_id="conv-1",

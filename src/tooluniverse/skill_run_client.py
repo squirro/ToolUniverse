@@ -1,20 +1,10 @@
-"""run_skill / continue_skill: the agent's side of a Skill Run (ADR-0016).
+"""run_skill / continue_skill: the agent's side of a Skill Run.
 
-The agent never sees Temporal. It calls `run_skill(skill, inputs)`, then
-`continue_skill(run_id, answer)` until the return says finished. Each return is
-one of three shapes:
-
-    {"status": "finished", "run_id", "handover"}                 -> write the report
-    {"status": "waiting",  "run_id", "question", ...}          -> answer it
-    {"status": "running",  "run_id", "step_id", "step_label", "done", "remaining"}
-
-and each is a progress line the user can see. Waiting returns as soon as the run
-crosses a step boundary (the user's choice: one tick per step), or asks a
-question, or finishes, or the window elapses — the window keeps a tool call
-under whatever timeout the MCP client has, which we cannot see.
-
-Pure over a handle that offers `query`, `signal`, `result`; SMCP passes the real
-workflow handle, tests pass a script.
+The agent calls `run_skill(skill, inputs)`, then `continue_skill(run_id, answer)`
+until the return says finished. A return is "finished", "waiting" or "running" and
+comes back at a step boundary, a question, the end of the run, or the end of the
+poll window, which keeps a tool call under the MCP client's own timeout. Pure over
+a handle that offers `query`, `signal`, `result`.
 """
 from __future__ import annotations
 
@@ -33,7 +23,7 @@ def undecided_inputs(process: dict, inputs: dict) -> list[str]:
 
 
 def missing_inputs(process: dict, inputs: dict) -> list[str]:
-    """Required names the agent did not bind — reported before any run starts."""
+    """Required names the agent did not bind."""
     return [name for name in process.get("inputs", []) if inputs.get(name) in (None, "")]
 
 
@@ -152,12 +142,8 @@ REPORT_ATTEMPTS = 2
 
 
 async def submit_report(client: Any, run_id: str, draft: str, *, directory=None) -> dict:
-    """Read the draft against what the agent received; ask once more, then let it go.
-
-    Received = the hand-over (facts, tables) and every row served by fetch_run_data. A draft
-    that states nothing else is accepted. Otherwise the agent is asked once to revise, with
-    each failure named; a second draft goes out with the remaining failures appended.
-    """
+    """Check the draft against what the agent received (the hand-over and every fetched row);
+    ask once to revise, then accept with the remaining failures appended."""
     from .skill_report_check import check_report
     from .skill_working_record import WorkingRecord, records_dir
     from .skill_workflow import SkillWorkflow

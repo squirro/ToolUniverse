@@ -90,8 +90,7 @@ class GraphQLTool(BaseTool):
 
     def run(self, arguments):
         arguments = copy.deepcopy(arguments)
-        # A paging parameter the caller left out takes the schema's default -- the source's
-        # own page where the schema says so -- else the historical five.
+        # A paging parameter the caller left out takes the schema's default.
         if "size" in self.parameters and "size" not in arguments:
             arguments["size"] = self.parameters["size"].get("default", self.default_size)
         if "index" in self.parameters and "index" not in arguments:
@@ -180,10 +179,7 @@ class OpentargetTool(GraphQLTool):
             else:
                 return {
                     "status": "error",
-                    # Must cite a LIVE id. EFO has migrated its disease branch to
-                    # MONDO and obsoleted the EFO disease terms, so the example
-                    # this message used to give (EFO_0000384) resolves to nothing
-                    # -- an error message recommending a dead identifier.
+                    # The example must be a live id; EFO disease terms are obsolete in favour of MONDO.
                     "error": f"Could not resolve disease name to a disease ID. "
                     "Try passing efoId directly (e.g. MONDO_0005011 for Crohn "
                     "disease); OpenTargets indexes diseases under MONDO ids.",
@@ -212,13 +208,8 @@ class OpentargetTool(GraphQLTool):
                     modified_arguments[each_arg] = arg_value.replace("-", " ")
             result = super().run(modified_arguments)
 
-        # An id the platform cannot resolve comes back as {"data": {"disease": null}},
-        # and remove_none_and_empty_values strips the null to leave {"data": {}}.
-        # execute_query documents that callers are meant to tell that apart from a
-        # real empty result -- no caller ever did, so it surfaced as
-        # {"status": "success", "data": {}}. An agent reads that as "this disease
-        # genuinely has no associated targets" and reports a confident wrong answer
-        # it has no way to question.
+        # An unresolved disease id comes back as {"data": {}} after null stripping,
+        # which must not pass as a real empty result.
         if result.get("status") == "success" and "disease(" in self.query_schema:
             data = result.get("data") or {}
             if not data.get("disease"):

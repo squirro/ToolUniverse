@@ -1,12 +1,9 @@
 """Every FAERS analytics operation resolves the drug through the same field chain.
 
-`calculate_disproportionality` learned to resolve a brand name through the field chain
-(test_faers_drug_resolution); the four other operations still hard-coded
-`patient.drug.openfda.generic_name`. Live on sr-dev, 2026-09-22, in one clinical-data-integration
-run for Lutathera: the reaction counts came back through `medicinalproduct`, then hospitalisation,
-death and sex stratification all answered 404 (`generic_name:"LUTATHERA"` matches nothing), and
-the report said seriousness "could not be characterized". One drug name, one field for every
-operation.
+Only `calculate_disproportionality` resolved a brand name through the chain; the other
+operations hard-coded `patient.drug.openfda.generic_name`, which matches no brand name, so
+the reaction counts arrived and every other operation answered 404. One drug name, one field
+for every operation.
 """
 import json
 import pathlib
@@ -23,7 +20,7 @@ CONFIGS = {t["name"]: t for t in json.loads(
     (pathlib.Path(__file__).resolve().parents[2] / "src" / "tooluniverse" / "data"
      / "faers_analytics_tools.json").read_text())}
 
-# Measured 2026-09-22 with seriousnesshospitalization:1 -- generic_name 404, brand_name 200.
+# openFDA answers 404 for generic_name and a count for brand_name.
 KNOWN = {"patient.drug.openfda.brand_name": 5551}
 
 CASES = [

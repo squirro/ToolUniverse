@@ -1,9 +1,8 @@
 """A judged mapping is shown with a placing from the Ontology Lookup Service (rule 2).
 
-The check proves membership, not meaning: the agent mapped "ototoxicity" onto DIZZINESS and
-FALL, and the server accepted both because both are FAERS terms. The placing says, for each
-term, whether an ontology puts it under the concept the user named. It is evidence, never a
-gate: as a gate it would strike three correct renal terms of ten.
+The check proves membership, not meaning: a mapped term is accepted because it is in the
+source's list. The placing says whether an ontology puts that term under the concept the user
+named. It is evidence, never a gate, because as a gate it would strike correct terms.
 """
 
 import json
@@ -48,8 +47,7 @@ def test_a_placed_term_names_the_ontology_term_and_the_ancestor_that_placed_it()
 
 
 def test_a_concept_given_as_one_phrase_is_read_as_words_not_letters():
-    """Live, the agent wrote `concept: "kidney failure"`; iterated as letters, any ancestor
-    with an "l" in it placed the term, and RENAL FAILURE came back "placed under All"."""
+    """A concept iterated as letters places a term on any ancestor sharing one letter."""
     assert place(RECORDED["ACUTE KIDNEY INJURY"], "kidney injury")["placing"] == "placed"
     assert "kidney" in place(RECORDED["ACUTE KIDNEY INJURY"], "kidney injury")["under"].lower()
     assert place(RECORDED["FALL"], "kidney failure")["placing"] == "not placed"

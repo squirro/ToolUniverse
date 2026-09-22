@@ -5,7 +5,7 @@ from .http_utils import request_with_retry
 import xml.etree.ElementTree as ET
 import re
 
-EUROPEPMC_PAGE_MAX = 1000      # measured 2026-09-21: pageSize 2000 answers errCode 404 in a 200 body
+EUROPEPMC_PAGE_MAX = 1000      # the widest page Europe PMC serves
 
 
 def _normalize_pmcid(pmcid: str | None) -> tuple[str | None, str | None]:
@@ -461,9 +461,8 @@ class EuropePMCTool(BaseTool):
         enrich_missing_abstract: bool = False,
         extract_terms_from_fulltext: list | None = None,
     ):
-        # Europe PMC serves at most EUROPEPMC_PAGE_MAX results per request and answers a
-        # larger pageSize with HTTP 200 and an errCode body; a wider limit pages with the
-        # cursor it returns. Core mode carries the abstracts, lite mode the journal.
+        # A limit above the page cap pages with the cursor. Core mode carries the
+        # abstracts, lite mode the journal.
         limit = int(limit)
         page_size = max(1, min(limit, EUROPEPMC_PAGE_MAX))
         core_results, lite_results = [], []
@@ -491,7 +490,7 @@ class EuropePMCTool(BaseTool):
             except ValueError:
                 return [self._error_item("Europe PMC returned invalid JSON", retryable=True)]
             if "errCode" in core_payload:
-                # The service refuses inside a 200: read as success, this was "no literature".
+                # A refusal inside a 200 must not read as "no literature".
                 return [self._error_item(
                     f"Europe PMC error {core_payload.get('errCode')}: {core_payload.get('errMsg')}",
                     retryable=False)]

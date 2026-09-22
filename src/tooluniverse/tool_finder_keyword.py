@@ -541,11 +541,8 @@ class ToolFinderKeyword(BaseTool):
         Raises:
             AssertionError: If both message and picked_tool_names are None
         """
-        # An empty list means "no preselection", not "select nothing". [] is not
-        # None, so this branch used to be skipped and the empty list flowed
-        # straight through to zero tools with no error -- on the discovery path,
-        # which makes the whole registry look empty to the agent. These tools'
-        # own test_examples send picked_tool_names: [].
+        # [] means "no preselection", not "select nothing"; an `is None` test
+        # would pass it through as zero tools.
         if not picked_tool_names:
             assert message is not None, (
                 "find_tools needs a message to search for, or a non-empty "

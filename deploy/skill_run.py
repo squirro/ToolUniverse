@@ -4,11 +4,9 @@
     python skill_run.py clinical-data-integration drug_name=Lutathera
     python skill_run.py rare-disease-diagnosis 'symptoms=["hepatosplenomegaly","coarse facies"]'
 
-Polls `status` and prints a line per step boundary. When the run asks a question
-(a repair or a judgement), it is printed and answered from stdin as JSON — or,
-with --auto, with a placeholder, which is enough to prove the plumbing. The bundle
-is printed at the end. Reads the process from the packaged YAML until DSR-709
-lands the GraphDB loader.
+Polls `status` and prints a line per step boundary. When the run asks a question, it is
+printed and answered from stdin as JSON, or with a placeholder under --auto. The bundle
+is printed at the end. The process is read from the packaged YAML.
 """
 import argparse
 import asyncio

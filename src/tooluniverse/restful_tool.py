@@ -10,7 +10,7 @@ BACKOFF_SECONDS = 0.5
 
 
 def _upstream_error(message: str, status: int | None, *, retryable: bool) -> dict:
-    """A failure of the service, as a failure: never an empty answer, never `False`."""
+    """A service failure reported as an error, never as an empty answer."""
     return {"status": "error", "error": message, "upstream_status": status, "retryable": retryable,
             "error_details": {"type": "UpstreamServiceError", "retriable": retryable}}
 
@@ -110,8 +110,7 @@ class MonarchDiseasesForMultiplePhenoTool(MonarchTool):
                 endpoint_url=self.endpoint_url, variables=each_query_schema_runtime
             )
             if isinstance(each_output, dict) and each_output.get("status") == "error":
-                # One list missing makes the intersection meaningless: the call fails whole,
-                # with the service's status, instead of answering an empty differential.
+                # One list missing makes the intersection meaningless, so the call fails whole.
                 return each_output
             items = each_output.get("items", []) if isinstance(each_output, dict) else []
             all_diseases.append([disease["subject_label"] for disease in items])

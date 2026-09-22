@@ -1,7 +1,6 @@
 """Read the agent's draft report against what the agent received, before the user reads it.
 
-Pure: the draft and the received data in, failures out. The rules are the ones the benchmark
-harness proved on judged reports; here they run in production, on every report.
+Pure: the draft and the received data in, failures out.
 """
 
 from __future__ import annotations
@@ -10,8 +9,7 @@ import json
 import re
 from typing import Any
 
-# A standalone numeric token: not glued to a word or a dot on either side, so HP:0001433,
-# ORPHA:580, [^3^], v3 and 1.2.3 are names, not numbers.
+# A standalone numeric token; HP:0001433, [^3^], v3 and 1.2.3 are names, not numbers.
 _NUMBER = re.compile(r"(?<![\w.:/^])(\d{1,6}(?:\.\d{1,4})?)(?![\w^/]|\.\d)")
 _NUMBER_RECEIVED = re.compile(r"(?<![\w.:/^])(\d+(?:\.\d+)?)(?![\w^/]|\.\d)")
 _URL = re.compile(r"\(?https?://\S+\)?")
@@ -57,8 +55,7 @@ def _bare(link: str) -> str:
 
 
 def _built_from_received(link: str, text: str) -> bool:
-    """A link whose last segment is an identifier the agent received: a trial by its NCT id,
-    a label by its setid. The process tells the agent to cite these by building the link."""
+    """A link whose last segment is an identifier the agent received, as a process may tell it to build."""
     tail = re.split(r"[/=]", link.rstrip(".,;:!?/"))[-1]
     return bool(_IDENTIFIER.fullmatch(tail)) and any(c.isdigit() for c in tail) and tail in text
 

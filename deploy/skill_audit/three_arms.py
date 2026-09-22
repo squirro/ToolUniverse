@@ -1,15 +1,12 @@
-"""The three-arm comparison DSR-706 exists for (ADR-0016, DSR-713).
-
-One question, three ways, N runs each, on one deployment and one agent:
+"""The arm comparison: one question, several ways, N runs each.
 
     prose     the skill body served plain; the agent follows the phases itself
     bare      no skill at all; the agent finds and calls tools on its own
     modelled  the Skill Process, run server-side on Temporal via run_skill
+    web       a different agent with web search and no skills; the baseline
 
-Scored the way the original 12/12 measurement was scored: how many
-disproportionality (PRR) values the report states, how many of those can be
-found in a tool result the same turn produced, and how many cannot (a value the
-model made up). A trace can fail an arm; nothing here passes one on style.
+Scored by how many PRR values the report states, how many a tool result of the same turn
+vouches for, and how many it cannot. A trace can fail an arm; nothing here passes one on style.
 
     python -m skill_audit.three_arms --agent-id <id> --env-file ../.env --runs 3
 """
@@ -53,9 +50,7 @@ def arms_for(skill: str) -> dict[str, str]:
             "continue_skill). Use find_tools and execute_tool as you see fit. "
         ),
         "modelled": f"Use the {skill} skill. ",
-        # A different agent, possibly on a different cluster: the General Research agent
-        # with web search, code interpreter, trials and patents — no ToolUniverse, no
-        # skills. The one arm where persona and toolset differ: the baseline, not a variant.
+        # A different agent with web search and no skills: the baseline, not a variant.
         "web": "",
     }
 
@@ -94,12 +89,8 @@ _CELL_NUMBER = re.compile(r"(\d{1,4}(?:\.\d{1,3})?)")
 
 
 def prr_values(answer: str) -> list[str]:
-    """Values the report presents AS the PRR.
-
-    Two ways a report says it: the number right after "PRR" in prose ("PRR
-    95.953 (CI …)" states one value, not three; "95% CI" states none), and a
-    markdown table whose header names a PRR column, one value per row.
-    """
+    """Values the report presents as the PRR: the number right after "PRR" in prose, and
+    each row of a markdown table whose header names a PRR column."""
     found = [m.group(1) for m in _PRR.finditer(answer or "")]
     column = None
     for line in (answer or "").splitlines():
@@ -119,8 +110,7 @@ def prr_values(answer: str) -> list[str]:
 
 
 def score(turn_actions: list[dict], answer: str, bundle_path: Path | None = None) -> dict:
-    # The numbers the bundle cannot vouch for (DSR-727). A .bundle.json sidecar,
-    # read back from Temporal, stands in for a bundle the trace capped.
+    # A .bundle.json sidecar, read back from Temporal, stands in for a bundle the trace capped.
     bundle_text = None
     if bundle_path is not None and Path(bundle_path).exists():
         bundle_text = Path(bundle_path).read_text()
@@ -247,7 +237,7 @@ def rescore(args) -> int:
         r = json.loads(path.read_text())
         r.update(score(r["actions"], r["answer"], bundle_path=path.with_suffix(".bundle.json")))
         if r.get("server_activities"):
-            # Annotated from the Temporal history for runs whose bundle predates `calls`.
+            # Annotated from the Temporal history when the bundle has no `calls`.
             r["distinct_tools_reached"] = sorted(r["server_activities"])
         path.write_text(json.dumps(r, indent=1, ensure_ascii=False))
         rows.append(r)

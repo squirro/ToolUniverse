@@ -1,16 +1,9 @@
 """Skills as a process graph: the server holds the plan, the agent runs one step.
 
-Measured on sr-dev (2026-08-21, 3 probes per skill): four of the first eight
-skills returned a DIFFERENT verdict across three identical runs —
-`rare-disease-diagnosis` gave fail, warn and pass. The plan currently lives in the
-model's head, restated as ~14k characters of standing operating procedure on every
-turn, and adherence degrades as that instruction set grows. The footnote rule was
-delivered on every turn and ignored on 29 of 76 answers, which is the evidence that
-soft pressure has plateaued.
-
-So the plan moves out of the prose and into data. `next_step` is pure: given the
-graph and the steps already done, it returns the one step to run now, with the
-exact tool calls and their arguments. No LLM planning, no state on the server.
+A plan restated as prose on every turn lives in the model's head, and adherence to it
+degrades as the instruction set grows. So the plan moves into data: `next_step` is pure,
+and given the graph and the steps already done it returns the one step to run now, with
+the exact tool calls and their arguments. No LLM planning, no state on the server.
 """
 
 import sys
@@ -76,9 +69,7 @@ def test_the_graph_ends_when_every_runnable_step_is_done():
 # --- gateways ---------------------------------------------------------------
 
 def test_a_conditional_step_is_skipped_when_its_condition_is_absent():
-    """No strong signal was found, so stratification must not be demanded —
-    this is the "pick the first applicable, then STOP" gateway the prose bodies
-    express in capital letters and the agent sometimes ignores."""
+    """No strong signal was found, so stratification must not be demanded."""
     assert _step(done=["resolve", "profile"])["id"] == "report"
 
 
@@ -113,9 +104,8 @@ def test_the_step_says_what_it_produces_so_the_agent_knows_what_to_extract():
 
 
 # --- loops -------------------------------------------------------------------
-# Phase 2 of adverse-event-detection is "for the top 15-20 reactions, calculate
-# disproportionality" — one call per reaction. Left as a placeholder the agent has
-# to fill, it is exactly the guesswork this design removes.
+# One call per item, composed by the graph: a placeholder the agent has to fill is
+# exactly the guesswork this design removes.
 
 LOOP_GRAPH = {
     "skill": "loopy",
@@ -273,9 +263,7 @@ def _registry_parameters() -> dict:
                                     / "data" / "skill_graphs").glob("*.yaml")])
 def test_a_graph_only_passes_arguments_the_tool_declares(skill):
     """A graph composes the call, so a misspelled or invented parameter name is
-    baked in and repeats on every run — worse than an agent guessing once. Live
-    examples of this class: ChEMBL_get_drug_mechanisms without drug_chembl_id,
-    alphafold_get_summary given protein_name where it wants qualifier."""
+    baked in and repeats on every run, which is worse than an agent guessing once."""
     declared = _registry_parameters()
     graph = load_graph(skill)
     wrong = []
@@ -319,10 +307,9 @@ def test_rare_disease_diagnosis_declares_its_judgement_points():
     them to be silently unresolved."""
     graph = load_graph("rare-disease-diagnosis")
     judged = {s["id"]: s.get("judge") for s in graph["steps"] if s.get("judge")}
-    # `genes` is no longer judged (DSR-730): it is looked up per resolved
-    # candidate, so the model is asked for nothing it could recall from memory.
-    # The discriminating pair is computed from HPO disease counts; the judge on
-    # `discriminating` is reached only when the counts tie at the cut.
+    # `genes` is looked up per resolved candidate, so the model is asked for
+    # nothing it could recall from memory. The discriminating pair is computed
+    # from HPO disease counts; the judge is reached only when the counts tie.
     assert judged == {
         "hypothesis": ["primary_keyword", "working_hypothesis", "discriminating_features"],
         "discriminating": ["discriminating_hpo_ids"],
@@ -349,10 +336,9 @@ def test_with_temporal_the_directive_points_at_run_skill_and_forbids_self_execut
 
 
 def test_rare_disease_diagnosis_carries_report_guidance_and_notes_on_every_step():
-    """Blind-judged 2026-09-03: a bundle that carries data without the author's
-    rules is written up worse than prose. The rare-disease process is the Rung 2
-    arm, so it must carry the rules the same way clinical-data-integration does —
-    and a case that supplies a variant must be able to say so."""
+    """A bundle that carries data without the author's rules is written up worse
+    than prose, so the rare-disease process carries them the same way
+    clinical-data-integration does."""
     graph = load_graph("rare-disease-diagnosis")
     assert graph["optional_inputs"] == ["variant_id", "age_years"]
     assert [s["id"] for s in graph["steps"] if not s.get("notes")] == []

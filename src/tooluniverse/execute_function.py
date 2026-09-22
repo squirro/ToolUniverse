@@ -757,20 +757,11 @@ class ToolUniverse:
         return list(self.tool_files.keys())
 
     def _get_api_key(self, key_name: str):
-        """Get API key from environment variables, without the env-file's prose.
+        """Get an API key from the environment, dropping any inline `# comment`.
 
-        A shell strips `KEY=value  # note`; Docker's `--env-file` does not --
-        everything after the first `=` is the value, and a comment is only a
-        comment on its own line. Twelve variables in the deployed .env carry an
-        inline comment, which breaks two ways: a real key arrives corrupted (a
-        valid UMLS key was rejected until the comment was stripped), and a
-        key-less line like `KEY=   # get one at ...` looks *set* to the
-        availability check, then goes out as an HTTP header and fails header
-        validation with a message naming nothing anyone can act on.
-
-        Only a `#` that begins a comment is treated as one -- preceded by
-        whitespace or at the start -- so a credential containing a literal hash
-        survives intact.
+        Docker's `--env-file` keeps everything after `=` as the value, comment included.
+        Only a `#` at the start or after whitespace begins a comment, so a key holding a
+        literal hash survives.
         """
         raw = os.getenv(key_name)
         if raw is None:
@@ -781,10 +772,8 @@ class ToolUniverse:
     def _tool_unavailable_message(self, function_name: str) -> str:
         """Why this tool cannot be called, in terms the caller can act on.
 
-        A "required API key" that is really a package-presence flag must not be
-        reported as a credential: there is nothing to obtain, and an agent that
-        follows the instruction sets the variable, satisfies the gate, and fails
-        further in. When the tool declares `required_packages`, say that instead.
+        A "key" that is really a package-presence flag is reported as a missing
+        package, not as a credential.
         """
         missing_keys = getattr(self, "_excluded_api_key_tools", {}).get(function_name)
         packages = getattr(self, "_excluded_tool_packages", {}).get(function_name)
@@ -1006,22 +995,9 @@ class ToolUniverse:
                 categories = tool_type
         self.logger.debug(f"Number of tools before load tools: {len(self.all_tools)}")
 
-        # Clear only on a genuine full reload -- no selection of any kind -- so
-        # that repeated bare calls don't accumulate duplicates.
-        #
-        # Naming a subset used to clear too, which made a partial load destructive:
-        # the registry was emptied and refilled from that subset alone, so every
-        # other tool was evicted. ToolUniverse keeps ONE registry per process and
-        # SMCP serves every MCP client from it, so this removed all ~2,261 tools
-        # for every client until the container restarted, while the server kept
-        # answering 200 and its healthcheck stayed green (DSR-634).
-        #
-        # ea01ffad fixed the ComposeTool that reached this, but the hazard was
-        # never in ComposeTool -- it is here, and output_hook.py still calls
-        # load_tools with a bare category list. Requiring the absence of a
-        # selection removes the whole class, rather than one caller at a time.
-        # Duplicates remain impossible either way: _filter_and_deduplicate_tools
-        # runs on every path.
+        # Clear only on a full reload with no selection of any kind. Clearing on a
+        # subset load would evict every other tool from the shared registry.
+        # Duplicates stay impossible: _filter_and_deduplicate_tools runs on every path.
         selection_given = (
             include_tools is not None
             or tools_file is not None
@@ -1359,11 +1335,8 @@ class ToolUniverse:
                 if not all_keys_available:
                     all_missing_keys.update(missing_keys)
                     self._excluded_api_key_tools[tool_name] = list(missing_keys)
-                    # Some "keys" are really package-presence flags (e.g.
-                    # CELLXGENE_CENSUS_PACKAGE_INSTALLED). Keep the packages the
-                    # tool declares so the error can name the actual remedy
-                    # instead of telling the caller to set a credential that
-                    # does not exist.
+                    # Some "keys" are package-presence flags; keep the declared
+                    # packages so the error names the real remedy.
                     if each.get("required_packages"):
                         self._excluded_tool_packages[tool_name] = list(
                             each["required_packages"]

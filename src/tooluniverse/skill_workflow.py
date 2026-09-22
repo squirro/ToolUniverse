@@ -1,26 +1,9 @@
-"""A Skill Process on Temporal: one interpreter workflow, the process as its input.
+"""One Temporal workflow that interprets a Skill Process given as its input.
 
-ADR-0016. The in-memory `SkillRunner` proved the trust properties — the server
-orders, calls, extracts and branches; the model binds inputs, answers named
-questions, writes the report. Temporal adds the Run Record: every call, argument,
-question and answer in the event history, and the run survives the process that
-started it.
-
-The split is Temporal's own. Everything that touches the world is an activity:
-one `execute_tool` per call, bound to the registry the SMCP process already
-loaded. Everything that decides is the pure step logic in `skill_runner` — the
-same functions the in-memory driver uses — awaited here instead of called.
-
-The model is reached through a query and a signal, never a callback: when a step
-needs a Repair or a Judgement fact the workflow publishes the question in
-`status()` and waits for `answer()`. The agent sees the question as the return
-value of `run_skill` / `continue_skill` and answers with the next call. A
-question nobody answers closes the step as blocked after ORACLE_WAIT, so the run
-still finishes and states the gap.
-
-Nothing here reads a file, the clock or a random source: the process dict is in
-the workflow-started event, which is also what makes a run readable after the
-skill it ran has changed.
+Everything that touches the world is an activity; everything that decides is the
+pure step logic in `skill_runner`, awaited here. The model is reached through a
+query and a signal: a step that needs an answer publishes the question in
+`status()` and waits for `answer()`.
 """
 from __future__ import annotations
 
@@ -70,13 +53,10 @@ from .skill_working_record import WorkingRecord
 
 TASK_QUEUE = "skills"
 
-# The sandbox re-imports the workflow's module per run, and importing this module
-# imports the `tooluniverse` package — the whole registry. Pass the package through:
-# the step logic it needs is pure by contract, and the registry is never touched
-# from workflow code.
+# Importing this module imports the whole `tooluniverse` package; pass it through the sandbox.
 WORKFLOW_RUNNER = SandboxedWorkflowRunner(
     restrictions=SandboxRestrictions.default.with_passthrough_modules("tooluniverse"))
-CALL_TIMEOUT = timedelta(seconds=120)       # the Ensembl cold-path ceiling
+CALL_TIMEOUT = timedelta(seconds=120)       # the slowest source's cold path
 ORACLE_WAIT = timedelta(hours=1)            # then the step is blocked, not the run
 MAX_REPAIRS = 2
 
@@ -151,8 +131,7 @@ def execute_tool(call: ToolCall) -> ToolResult:
     _record_of(call.run_id).put_result(call.step, call.call_n, call.tool, call.arguments,
                                        payload, attempt=call.attempt)
     if is_upstream_failure(payload):
-        # On record as the source answered; on the run as the failed call it is. The tool
-        # already retried within its limits, so the activity is not retried again.
+        # The tool already retried within its limits, so the activity is not retried.
         raise ApplicationError(upstream_failure_text(payload)[len("UpstreamFailure: "):],
                                type="UpstreamFailure", non_retryable=True)
     return ToolResult(step=call.step, call_n=call.call_n,
@@ -176,8 +155,8 @@ class AnswerToCheck:
 
 @activity.defn(name="check_answer")
 def check_answer(answer: AnswerToCheck) -> dict:
-    """A check that reads an Evidence table runs beside the record. Back go the failures and,
-    for a selection answered as keys, the table's own rows for those keys -- never the table."""
+    """Run the checks that read an Evidence table beside the record.
+    Returns the failures and the rows for selected keys, never the table."""
     tables = _record_of(answer.run_id).rows
     return {"failures": check_facts(answer.rules, answer.produced, answer.facts, tables=tables),
             "rows_by_key": materialised(answer.rules, answer.produced, answer.facts, tables=tables)}
@@ -192,8 +171,8 @@ class AnsweredToKeep:
 
 @activity.defn(name="keep_answered_evidence")
 def keep_answered_evidence(answered: AnsweredToKeep) -> dict:
-    """An evidence table the agent answered (a delegated search's pages) goes to the record,
-    described, instead of travelling whole in the facts -- as a collected one does."""
+    """An evidence table the agent answered goes to the record, described,
+    instead of travelling whole in the facts."""
     outcome = {**answered.outcome, "facts": dict(answered.outcome["facts"])}
     described = keep_evidence(_record_of(answered.run_id), answered.tables, outcome)
     return {"outcome": outcome, "evidence": described}
@@ -214,7 +193,7 @@ def bind_lookup(lookup: Callable[[str], dict] | None) -> None:
     _lookup = lookup
 
 
-PLACING_TIMEOUT = timedelta(seconds=300)    # eight ontologies, two requests each, per term
+PLACING_TIMEOUT = timedelta(seconds=300)    # several ontology requests per term
 
 
 @activity.defn(name="place_mapping")
@@ -274,8 +253,7 @@ class SkillWorkflow:
             outcome.pop("resolved")
             delegated = spec.get("delegate") or []
             if delegated:
-                # Web search and code live on the agent: the run pauses with the
-                # calls composed, the agent makes them, the answer is on record.
+                # Web search and code live on the agent: it makes the composed calls.
                 wanted = spec.get("produces") or []
                 try:
                     calls = delegated_calls(spec, run["facts"])
@@ -287,8 +265,7 @@ class SkillWorkflow:
                     outcome = await self._answered(spec, step, wanted, outcome, question_for(
                         step["id"], "delegate", wanted, dict(run["facts"]), calls=calls,
                         notes=spec.get("notes")))
-            # A judgement is for what the step could not resolve itself: a name an
-            # extraction or compute already supplied is never put to the model.
+            # Only names the step could not resolve itself go to the model.
             wants = [n for n in (spec.get("judge") or []) if n not in outcome["facts"]]
             if wants:
                 outcome = await self._answered(spec, step, wants, outcome, question_for(
@@ -376,8 +353,8 @@ class SkillWorkflow:
         return recomputed(spec, outcome, self._run["facts"])
 
     async def _checked_beside_record(self, spec: dict, wants: list[str], outcome: dict) -> list | None:
-        """The step's checks, run beside the Working Record when one reads an Evidence table;
-        None when no check needs the record, and `checked` runs them here."""
+        """The step's checks, run beside the record when one reads an Evidence table;
+        None when none does."""
         rules = spec.get("check") or {}
         if not tables_checked(rules):
             return None
@@ -416,13 +393,8 @@ class SkillWorkflow:
             retry_policy=RetryPolicy(maximum_attempts=3))
 
     async def _calls(self, calls: list[dict], attempt: int = 0) -> list:
-        """Run a step's calls concurrently and gather them in declared order.
-
-        A loop's iterations are the same call with one value substituted, so they
-        are independent and run at once; a per-source semaphore keeps a rate
-        limit from turning fan-out into a ban. One failure is one item missing,
-        named by its arguments, never the whole step.
-        """
+        """Run a step's calls at once and gather them in declared order; a per-source
+        semaphore keeps a rate limit from banning the fan-out. One failure is one missing item."""
         gates: dict[str, asyncio.Semaphore] = {}
 
         run_id = workflow.info().workflow_id
@@ -443,8 +415,7 @@ class SkillWorkflow:
         failures = []
         for call, outcome in zip(calls, settled):
             if isinstance(outcome, BaseException):
-                # A broken tool must not end the procedure. The failure is in the
-                # history as the failed activity; the bundle names it and its item.
+                # A broken tool must not end the procedure; the bundle names the missing item.
                 cause = getattr(outcome, "cause", None) or outcome
                 # A typed application error carries the name the activity gave it.
                 kind = getattr(cause, "type", None) or type(cause).__name__

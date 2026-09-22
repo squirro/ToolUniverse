@@ -1,9 +1,8 @@
-"""A failure of an upstream service must not look like an answer (DSR-771).
+"""A failure of an upstream service must not look like an answer.
 
-Recorded 2026-09-18 in rare-disease-diagnosis: Monarch answered a server error, the REST
-wrapper turned it into `False`, the tool indexed it, and the wrapper's TypeError became a
-`status: error` result the run counted as an answer -- zero failed calls, two facts never
-produced, seven steps blocked with a reason that named only the missing list.
+A server error became `False` in the REST wrapper, the tool indexed it, and the resulting
+TypeError became a `status: error` result the run counted as an answer: no failed calls,
+facts never produced, and steps blocked for a reason that named only the missing list.
 """
 
 import json

@@ -1,21 +1,21 @@
-# drug-target-validation as a Skill Process -- the proof conversion of the playbook (DSR-789).
+# drug-target-validation as a Skill Process.
 #
-# The chief scientific officer's go or no-go question: is this target worth pursuing, for
-# this disease? The upstream skill scores five dimensions to 100 points from grading tables
-# and ends in a tier and a verdict. Here the tables are the server's (`band`, `map`, `sum`),
-# the judgements are options out of closed lists the process declares (`constants:`), the
-# user's disease is read onto the source's ids in a judged, checked mapping, the wide tables
-# are evidence fetched at the source's width, and the report keeps the skill's skeleton.
+# The go or no-go question: is this target worth pursuing, for this disease? The upstream
+# skill scores five dimensions to 100 points from grading tables and ends in a tier and a
+# verdict. Here the tables are the server's (`band`, `map`, `sum`), the judgements are
+# options out of closed lists the process declares (`constants:`), the user's disease is
+# read onto the source's ids in a judged, checked mapping, the wide tables are evidence
+# fetched at the source's width, and the report keeps the skill's skeleton.
 #
-# Every extraction path was written from responses recorded on sr-dev (tests/fixtures/dtv/);
-# an invented path agrees with any stub and misses live. A step calls one tool per collected
+# Every extraction path was written from recorded responses (tests/fixtures/dtv/); an
+# invented path agrees with any stub and misses live. A step calls one tool per collected
 # table, because `collect` reads its path from every call of the step.
 
 skill: drug-target-validation
 inputs: [target]
-# Optional, bound by the AGENT from the question, in the question's own words: the disease the
-# target is to be validated for. Without it the disease-bound steps are skipped, the report
-# says so, and the total is not computed -- a score with a dimension missing is not a score.
+# Optional, bound by the agent from the question in its own words: the disease the target is
+# to be validated for. Without it the disease-bound steps are skipped, the report says so,
+# and the total is not computed -- a score with a dimension missing is not a score.
 optional_inputs: [disease]
 
 report: >-

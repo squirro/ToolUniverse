@@ -1,7 +1,6 @@
 """Ranked fetch: the agent reads the most relevant rows of an evidence table, and can get more.
 
-Before it, "the first five papers" were the five newest, and no agent had read an abstract.
-Text in, ranked rows out: not a query language.
+Text in, ranked rows out: not a query language, so date order never stands in for relevance.
 """
 
 import sys

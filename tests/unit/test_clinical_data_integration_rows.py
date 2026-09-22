@@ -1,8 +1,7 @@
-"""DSR-726: the FAERS signal table travels to the writer as rows, and the literature
-search is one query per flagged reaction.
+"""The FAERS signal table travels to the writer as rows, and the literature search is
+one query per flagged reaction.
 
-Rung 1 handed the writer three parallel lists (`signal_aes`, `prrs`, `prr_urls`) and
-one run mis-indexed two footnotes. A row cannot be mis-indexed.
+Parallel lists let a footnote be mis-indexed; a row cannot be.
 """
 import json
 import re
@@ -97,7 +96,7 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERM
             ae = a["adverse_event"]
             return {"data": {"metrics": {"PRR": {"value": prr[ae]}}}, "source_url": _url(ae)}
         if tool == "FAERS_filter_serious_events":
-            # the shape recorded from the live tool on sr-dev, 2026-09-22 (LUTATHERA)
+            # the shape recorded from the live tool
             kind = a["seriousness_type"]
             return {"status": "success", "source_url": _url(kind), "data": {
                 "drug_name": a["drug_name"], "seriousness_type": kind,
@@ -113,7 +112,7 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERM
                 "stratification": [{"group": "Male", "count": 957, "percentage": 51.7},
                                    {"group": "Female", "count": 894, "percentage": 48.3}]}}
         if tool == "PubMed_search_articles":
-            # the shape recorded from the live tool on sr-dev, 2026-09-21
+            # the shape recorded from the live tool
             return {"status": "success",
                     "data": [{"pmid": "1", "title": "t", "pub_year": 2024, "doi_url": "d"}],
                     "metadata": {"count": 1, "total": 4120, "query": a["query"], "source": "PubMed"}}
@@ -160,8 +159,8 @@ def test_each_signal_row_carries_the_term_its_prr_its_flag_and_its_own_query_url
 
 
 def test_the_signals_travel_as_rows_only_and_the_gateway_reads_the_rows():
-    """The parallel lists are gone: a reaction without a PRR dropped out of one list and
-    not the other. The rows carry term, value and link together."""
+    """A reaction without a PRR drops out of one parallel list and not the other, so the
+    rows carry term, value and link together."""
     state, _, _ = _drive()
     facts = state["facts"]
     assert facts["signal_aes"] == TERMS
@@ -172,10 +171,8 @@ def test_the_signals_travel_as_rows_only_and_the_gateway_reads_the_rows():
 
 
 def test_seriousness_and_the_sex_split_reach_the_report_as_facts_tagged_by_their_call():
-    """Live 2026-09-22 (a user's UI run): the seriousness and stratify steps ran and produced
-    nothing -- no fact, no mention in the report. Once the calls succeeded the reply had no
-    section on serious outcomes at all. The rows travel as facts, each serious row tagged with
-    the call that made it, because the record flattens hospitalisation and death into one list."""
+    """A step that runs and produces no fact leaves the report with no section on serious
+    outcomes, so the rows travel as facts, each tagged with the call that made it."""
     state, calls, _ = _drive()
     facts = state["facts"]
 
@@ -194,9 +191,8 @@ def test_seriousness_and_the_sex_split_reach_the_report_as_facts_tagged_by_their
 # --- the question's words are read onto the source's terms, and the reading is shown ----
 
 def test_a_requested_reaction_is_mapped_onto_faers_terms_before_any_loop_sees_it():
-    """Live, the word the question used was sent to FAERS as it stood, and once read in the
-    agent's head onto DIZZINESS and FALL with nothing to show for it. The reading is now a
-    judged step: checked against the source's own list, placed by an ontology, handed over."""
+    """Reading the question's word onto the source's terms is a judged step: checked
+    against the source's own list, placed by an ontology, and handed over."""
     terms = ["NAUSEA", "DEAFNESS", "FALL"]
     prr = {"NAUSEA": 1.1, "DEAFNESS": 17.7, "FALL": 2.5}
     state, calls, asked = _drive(prr=prr, terms=terms, requested_aes=["ototoxicity"])
@@ -224,8 +220,7 @@ def test_the_literature_loop_fans_over_exactly_the_flagged_reactions():
     state, calls, _ = _drive()
     queries = [a["query"] for tool, a in calls if tool == "PubMed_search_articles"]
     # Untagged on purpose: PubMed maps the INN to its substance record and the
-    # reaction to its MeSH heading. Tagged [Title/Abstract], "Lutathera AND
-    # myelodysplastic syndrome" found 0 papers; untagged, 12 (probed 2026-09-07).
+    # reaction to its MeSH heading.
     assert queries == ["lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME",
                        "lutetium Lu 177 dotatate AND RENAL IMPAIRMENT"]
     # One row for each paper, carrying its reaction and its own links: a paper without a
@@ -276,8 +271,8 @@ def test_the_loop_item_is_recovered_when_its_marker_sits_inside_a_longer_argumen
 # --- compute rules resolve regardless of the order a store hands them back -------
 
 def test_a_compute_that_reads_another_compute_resolves_whatever_the_declared_order():
-    """GraphDB hands the rules back alphabetically; live, `flagged_aes` ran before
-    `prr_table` existed and the literature loop was blocked."""
+    """The store hands the rules back alphabetically, so a rule can be reached before
+    the fact it reads exists."""
     from tooluniverse.skill_runner import absorb
     spec = {"id": "compute", "calls": [],
             "compute": {"flagged_aes": {"op": "pluck", "rows": "prr_table", "field": "term", "where": "flagged"},
@@ -299,8 +294,8 @@ def test_the_process_read_back_from_the_store_still_searches_per_flagged_reactio
 
 
 def test_the_literature_search_uses_the_inn_from_the_label_even_when_the_agent_bound_the_brand():
-    """Live 2026-09-07 the agent bound "Lutathera"; untagged, the brand maps to the
-    element and the PSMA prostate papers came back. DailyMed's title carries the INN."""
+    """Untagged, a brand name maps to the element and the wrong papers come back, so
+    the query uses the INN the label title carries."""
     _, calls, _ = _drive(drug_name="Lutathera")
     queries = [a["query"] for tool, a in calls if tool == "PubMed_search_articles"]
     assert queries == ["lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME",
@@ -335,9 +330,8 @@ def test_the_literature_loop_skips_indication_terms_and_the_bundle_says_which():
 # --- the indication is the drug's own, judged from its label, not a fixed cancer pattern ---
 
 def test_a_flagged_cancer_term_of_a_non_cancer_drug_stays_a_signal_and_its_indication_is_set_aside():
-    """Live, every flagged term matching TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION was
-    called "reported disease" for every drug, and a diabetes drug kept its own disease as a signal.
-    The terms are from metformin's recorded FAERS list (ranks 3, 94, 356 of 1000)."""
+    """A fixed cancer pattern calls every drug's tumour terms reported disease, so a
+    drug for another disease keeps its own indication as a signal."""
     terms = ["BLOOD GLUCOSE INCREASED", "NAUSEA", "PANCREATIC CARCINOMA", "DIABETES MELLITUS INADEQUATE CONTROL"]
     prr = {"BLOOD GLUCOSE INCREASED": 3.1, "NAUSEA": 1.1, "PANCREATIC CARCINOMA": 2.4,
            "DIABETES MELLITUS INADEQUATE CONTROL": 4.0}
@@ -381,8 +375,8 @@ def test_covid_19_is_not_on_the_fixed_noise_list_of_either_process():
 # --- web search inside the process: the agent writes the queries, the pages become rows ------
 
 def test_the_agents_queries_reach_the_delegated_calls_unchanged_one_per_subject():
-    """The process held one test question's words as its web query, for every drug. Now the
-    agent writes one query per subject -- here no input is named, so only the signals."""
+    """The agent writes one query per subject, so the query is not fixed text in the
+    process; with no input named, the subjects are the signals."""
     import tempfile
     state, _, asked = _drive(records=tempfile.mkdtemp(prefix="working-records-"))
 
@@ -444,7 +438,7 @@ def test_the_process_holds_no_query_text_and_no_loose_web_fact():
 # --- fetch wide: the source's maximum, and its total beside the rows ---------------
 
 def test_trials_are_asked_for_at_the_sources_maximum_and_kept_as_one_row_each():
-    """Four parallel lists cut at ten gave ten trials of 866, with nothing to say so."""
+    """Parallel lists cut short give a few trials with nothing to say how many there were."""
     state, calls, _ = _drive()
     (sent,) = [a for tool, a in calls if tool == "search_clinical_trials"]
 
@@ -464,7 +458,7 @@ def test_the_process_names_where_each_wide_source_reports_its_total():
 
 
 def test_the_declared_paths_find_the_totals_in_the_recorded_payloads(tmp_path):
-    """A path that matches an invented payload proves nothing: live, every literature total read "unknown"."""
+    """A path that matches an invented payload proves nothing about the real one."""
     from tooluniverse.skill_runner import source_total
 
     process = load_graph("clinical-data-integration")

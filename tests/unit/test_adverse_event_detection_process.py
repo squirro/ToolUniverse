@@ -90,8 +90,8 @@ def test_without_a_requested_reaction_the_reading_is_skipped_and_the_top_terms_r
 
 
 def test_the_facts_the_process_feeds_forward_are_the_servers_not_the_agents():
-    """As shipped, `chembl_id`, `top_aes` and the grading were "fed back by the agent" — and
-    never asked for, so the run had none of them. They are extracted and computed now."""
+    """A fact said to be "fed back by the agent" is never asked for, so `chembl_id`,
+    `top_aes` and the grading are extracted and computed instead."""
     handed, calls, asked = _drive()
 
     assert asked == []

@@ -1,9 +1,8 @@
 """Europe PMC serves at most 1,000 results per request; a larger `limit` must page, not vanish.
 
-Measured 2026-09-21: `pageSize=2000` answers HTTP 200 with
-`{"errCode": 404, "errMsg": "Invalid page size provided. Valid size is between 1 and 1000"}`,
-and the tool read the missing result list as "success, no articles". A process author who
-asked for the source's width got "no literature found", stated as a fact.
+An oversized page size answers HTTP 200 with an error body and no result list, which the tool
+read as "success, no articles", so asking for the source's width gave "no literature found",
+stated as a fact.
 """
 
 import json

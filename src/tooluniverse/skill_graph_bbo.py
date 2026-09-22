@@ -1,23 +1,9 @@
-"""Render a skill's process graph as BBO — the notation the Novartis PoC uses.
+"""Render a skill's process graph as BBO, an OWL rendering of BPMN, and read it back.
 
-BBO is an OWL rendering of BPMN. The Novartis HR processes
-(`data/kg/*_process.ttl`) use `Process`, `ServiceTask`, `UserTask`,
-`StartEvent`, `EndEvent`, `ExclusiveGateway`, `NormalSequenceFlow`,
-`ConditionalSequenceFlow` with a `ConditionExpression`, and `has_resource` onto a
-`SoftwareResource` or `HumanResource`. Our YAML graphs are a compact subset of
-precisely that, so the structural half of the conversion is mechanical.
-
-It belongs in a generator rather than in hand-written Turtle. `repair` is one
-block a person can read and four nodes a graph must draw — a ServiceTask, a
-gateway asking whether the value resolved, a task that asks the agent, and a flow
-back into the task it repairs. Nobody should edit four nodes to change "try
-twice" into "try three times".
-
-BBO describes control flow and says nothing about data plumbing. Four things in
-our graphs therefore have no BBO term and ride in an SR extension namespace:
-extraction paths, gathering across a loop's calls, a gateway condition derived
-from returned values, and typed process inputs. Novartis needed the same and
-answered it with `ontology_extensions.ttl`.
+The YAML graphs are a compact subset of BBO's process, task, gateway and flow terms, so
+the control-flow half converts mechanically. BBO says nothing about data plumbing, so
+extraction paths, loop collection, derived gateway conditions and typed inputs ride in
+an extension namespace.
 """
 from __future__ import annotations
 
@@ -54,8 +40,7 @@ def to_bbo(graph: dict, git_commit: str | None = None) -> str:
     process = _node(skill, "Process")
     g.add((process, RDF.type, BBO.Process))
     g.add((process, RDFS.label, Literal(skill)))
-    # Provenance: a Skill Run carries these, so a record can be matched to the
-    # repo revision it executed after the skill has changed.
+    # Provenance, so a run record can be matched to the definition it executed.
     g.add((process, SRP.definitionHash, Literal(definition_hash(graph))))
     if graph.get("report"):
         g.add((process, SRP.reportGuidance, Literal(graph["report"])))
@@ -67,8 +52,7 @@ def to_bbo(graph: dict, git_commit: str | None = None) -> str:
     if git_commit:
         g.add((process, SRP.gitCommit, Literal(git_commit)))
 
-    # Typed process inputs — what the AGENT must bind from the question. The one
-    # boundary that stays with the model, so it is declared rather than implied.
+    # Inputs are the one boundary the model binds, so they are declared, not implied.
     for order, name in enumerate(graph.get("inputs", [])):
         _declare_input(g, process, skill, name, optional=False, order=order)
     for order, name in enumerate(graph.get("optional_inputs", [])):
@@ -108,14 +92,11 @@ def _task(g: Graph, process: URIRef, skill: str, step: dict, order: int) -> None
     g.add((process, BBO.has_flowElements, task))
     if step.get("notes"):
         g.add((task, RDFS.comment, Literal(step["notes"])))
-    # The lossless channel: the reader rebuilds the step from these, while the
-    # readable literals below serve people and SPARQL.
+    # Lossless channel for `from_bbo`; the readable literals below serve people and SPARQL.
     for key, prop in _JSON_SPECS.items():
         if key in step:
             g.add((task, prop, Literal(json.dumps(step[key], sort_keys=True))))
 
-    # Every tool is a resource the task points at — the same hook Novartis uses
-    # for its knowledge graph, and where Biolink I/O types would hang (DSR-688).
     for call in step.get("calls", []):
         resource = RES[call["tool"]]
         g.add((resource, RDF.type, BBO.SoftwareResource))
@@ -210,7 +191,7 @@ def _flows(g: Graph, process: URIRef, skill: str, steps: list[dict],
 
         if step.get("repair"):
             _repair(g, process, skill, step, task)
-    assert ids  # every step reachable is checked by the graph's own guard tests
+    assert ids  # reachability is checked by the graph's own guard tests
 
 
 def _gated_flow(g: Graph, process: URIRef, skill: str, step: dict,
@@ -235,9 +216,8 @@ def _repair(g: Graph, process: URIRef, skill: str, step: dict,
             task: URIRef) -> None:
     """Ask-and-retry as four nodes: gateway, ask task, agent resource, loop back.
 
-    The agent supplies world knowledge the data does not hold — that "Lu-177" and
-    "lu 177" name one isotope. Novartis writes a human in this position as a
-    UserTask with a HumanResource; this is the same task with an agent resource.
+    The agent supplies world knowledge the data does not hold, so it stands where BPMN
+    puts a human: a UserTask with a HumanResource.
     """
     repair = step["repair"]
     gateway = _node(skill, f"gateway/{step['id']}-resolved")
@@ -265,7 +245,7 @@ def _repair(g: Graph, process: URIRef, skill: str, step: dict,
     _flow(g, process, ask, task, _node(skill, f"flow/{step['id']}-retry"))
 
 
-# --- the inverse: a process dict from the graph (DSR-709) -----------------------
+# --- the inverse: a process dict from the graph --------------------------------
 
 def _local(node: URIRef, skill: str) -> str:
     return str(node)[len(str(SR[skill])) + 1:]
@@ -283,9 +263,8 @@ def provenance(g: Graph) -> dict:
 def from_bbo(g: Graph) -> dict:
     """Rebuild the process dict the generator was given.
 
-    Control flow comes back from the BBO elements — order, flows, gateways, the
-    repair cluster — and the data plumbing from the JSON literals. Only keys the
-    original had are produced, so `from_bbo(parse(to_bbo(p))) == p`.
+    Control flow comes back from the BBO elements and the data plumbing from the JSON
+    literals. Only keys the original had are produced, so `from_bbo(parse(to_bbo(p))) == p`.
     """
     process = next(g.subjects(RDF.type, BBO.Process))
     skill = str(g.value(process, RDFS.label))
@@ -320,9 +299,7 @@ def _step(g: Graph, skill: str, task: URIRef, order_of: dict) -> dict:
     if label and label != step["id"]:
         step["label"] = label
 
-    # Dependencies and the gate: a flow in from a task, or from the step's own
-    # gateway, whose flows in name the real sources and whose conditional flow
-    # names the fact.
+    # A source is a task, or the step's own gateway whose incoming flows name the real sources.
     sources, condition = [], None
     for flow in g.subjects(BBO.has_targetRef, task):
         source = g.value(flow, BBO.has_sourceRef)

@@ -34,7 +34,7 @@ def test_a_number_the_agent_received_passes_in_any_rounding_the_value_admits():
 
 
 def test_a_number_nothing_vouches_for_is_a_failure_that_quotes_it_in_context():
-    """Seen in a web report: "a Canadian PRR of about 53.44", cited to a paper that does not give it."""
+    """A number cited to a source that never gave it must be caught and quoted back."""
     draft = "Ototoxicity shows PRR 54.77, against a Canadian PRR of about 53.44 in the same period."
 
     (failure,) = check_report(draft, RECEIVED)
@@ -44,7 +44,7 @@ def test_a_number_nothing_vouches_for_is_a_failure_that_quotes_it_in_context():
 
 
 def test_a_link_the_agent_never_received_is_a_failure():
-    """In the pointer runs the footnotes "pointed at the wrong thing": a link typed from memory."""
+    """A footnote link typed from memory points at something the agent never received."""
     draft = ("PRR 54.77 [1]; weekly dosing [2]; a guideline [3].\n"
              "[1]: https://api.fda.gov/drug/event.json?search=cisplatin+ototoxicity\n"
              "[2]: https://pubmed.ncbi.nlm.nih.gov/31234567/\n"
@@ -63,7 +63,7 @@ def test_a_received_link_passes_with_or_without_the_punctuation_prose_puts_after
     assert check_report(draft, RECEIVED) == []
 
 
-# --- from the live reports of 2026-09-21: what a strict rule wrongly refused ---------
+# --- what a strict rule wrongly refused ----------------------------------------------
 
 def test_a_link_cited_without_its_api_key_is_the_link_that_was_received():
     """The agent rightly drops `api_key=REDACTED` before it cites a FAERS query."""
@@ -88,7 +88,7 @@ def test_a_link_built_from_an_identifier_the_agent_received_passes():
 
 
 def test_the_numbering_of_the_report_itself_is_not_a_claim():
-    """Flagged in a live report: "## 7. Integrated Assessment" and a size chip the chat adds."""
+    """Heading numbers, list markers and the size chip the chat adds are not claims."""
     draft = ("## 7. Integrated Assessment\n"
              "Primary completion 2026-01-20; published 2026-07.\n"
              "1) Drug overview\n"
@@ -108,7 +108,7 @@ NARROWED = {"handover": {"facts": {}, "tables": [
 
 
 def test_a_table_the_run_holds_less_of_than_the_source_must_be_stated_with_its_total():
-    """Four live reports in a row said "5 abstracts read" and never "of 2,078"."""
+    """A report that says how much it read must say what it read out of."""
     silent = "Literature on ototoxicity: the most relevant abstracts were read."
     stated = "Literature on ototoxicity: PubMed holds 2,078 papers; this run holds 200 of them."
 
@@ -119,7 +119,7 @@ def test_a_table_the_run_holds_less_of_than_the_source_must_be_stated_with_its_t
     assert check_report(stated, NARROWED) == []
 
 
-# --- real reports: a live run of the production shape, and a web report -----------------
+# --- real reports: one of the production shape, and a web report ------------------------
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
@@ -156,13 +156,13 @@ def test_a_live_report_of_the_production_shape_is_flagged_only_for_what_is_real(
 
     kinds = {f["kind"] for f in failures}
     assert "unvouched_number" not in kinds, [f for f in failures if f["kind"] == "unvouched_number"]
-    # the run held 200 of thousands for each reaction and the report never said so
+    # the run held a slice of each reaction's papers and the report never said so
     assert "narrowing_not_stated" in kinds
     assert all("ontains" not in f["text"] for f in failures)
 
 
 def test_the_web_report_with_the_sourceless_prr_fails_on_that_number():
-    """Both judges called "a Canadian PRR of about 53.44" a number with no real source."""
+    """A number with no source in what the agent received is refused in a real report too."""
     import json
     trace = json.loads((FIXTURES / "web_report_cisplatin_2026-09-19.json").read_text())
 
@@ -172,7 +172,7 @@ def test_the_web_report_with_the_sourceless_prr_fails_on_that_number():
 
 
 def test_a_per_item_total_is_required_only_for_the_items_the_report_discusses():
-    """Live, a rule that asked for ten reactions' totals -- eight of them unasked -- was given up on."""
+    """A total is required only for the items the report actually discusses."""
     received = {"handover": {"facts": {}, "tables": [
         {"table": "results.literature", "rows": 1935,
          "source_total": {"ototoxicity": 2078, "ANAEMIA": 2464, "NEUTROPENIA": 5827}}]}}

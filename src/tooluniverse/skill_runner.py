@@ -1,29 +1,10 @@
-"""Run a skill's process graph SERVER-SIDE — the Novartis navigator, ported.
+"""Run a skill's process graph server-side, keeping the model out of the control loop.
 
-The Novartis PoC did not make an LLM obedient; it kept the LLM out of the control
-loop. A Python `ProcessNavigator` walked the BBO graph, `SessionState` held the
-state, `_gw_*` predicates chose each branch from state the code had computed, and
-`_action_*` functions performed the work. Nothing was asked to choose, so nothing
-drifted.
-
-Our first port moved the PLAN out of the model and left the RUNTIME with it: the
-model had to decide to start, carry `done` and `facts` between calls, report the
-values gateways branch on, and choose to make each call. Measured on sr-dev, it
-executed that loop faithfully when it entered it (nine steps, in order, four calls
-where four were offered) but failed to enter it on two runs of three, and
-abandoned it after seven of nine steps on another.
-
-This module closes that gap. It holds the run state, executes each step's calls
-itself, extracts the values the next step needs, and evaluates gateways from the
-REAL results. The model's remaining jobs are choosing the skill and writing the
-report.
-
-`execute` is injected — SMCP passes the in-process ToolUniverse (ExecuteTool is
-already constructed with `tooluniverse=self`), and tests pass a stub. State is an
-in-memory dict. The step logic — `absorb`, `resolved`, `substitute`, `apply`,
-`trim` — is module-level and pure, so a durable host (Temporal, ADR-0016) can
-await the calls itself and hand the results to the same functions; this class is
-the synchronous driver over them.
+The runner holds the run state, executes each step's calls, extracts the values the
+next step needs and evaluates gateways from the real results; the model only chooses
+the skill, answers judgement questions and writes the report. Step logic (`absorb`,
+`resolved`, `substitute`, `apply`) is module-level and pure so a durable host can await
+the calls itself; `SkillRunner` is the synchronous driver over those functions.
 """
 from __future__ import annotations
 
@@ -58,16 +39,10 @@ _OPS: dict[str, Callable[[Any, Any], bool]] = {
 
 
 def _dig(payload: Any, path: str) -> Any:
-    """Follow a dotted path into a result, returning None rather than raising.
+    """Follow a dotted path into a result; a miss returns None so it surfaces as a missing fact.
 
-    Deliberately not JSONPath: a boring, declarative accessor is what keeps the
-    extraction reviewable, and a miss surfaces as a named missing fact at the next
-    step rather than a crash.
-
-    One form beyond dots: a segment ending ``[]`` maps over a list, so
-    ``result[].term`` turns FAERS's [{term, count}, ...] into the term strings the
-    next step must pass back VERBATIM — MedDRA is case- and spelling-strict, and
-    the prose body spends five lines asking the model not to retype them.
+    Deliberately not JSONPath, so extraction stays reviewable. One extra form: a segment
+    ending ``[]`` maps over a list, giving the values the next step must pass back verbatim.
     """
     current: Any = payload
     mapping = False
@@ -80,7 +55,7 @@ def _dig(payload: Any, path: str) -> Any:
                 return None
         if mapped:
             if mapping:
-                return None                    # nested mapping is out of scope
+                return None                    # nested mapping is not supported
             if not isinstance(current, list):
                 return None
             mapping = True
@@ -104,15 +79,14 @@ def _step_in(current: Any, key: str, mapping: bool) -> Any:
 # --- compute: arithmetic over rows the run holds --------------------------------
 
 _PREVALENCE_TIERS = (">1 / 1000", "1-5 / 10 000", "6-9 / 10 000", "1-9 / 100 000",
-                     "1-9 / 1 000 000", "<1 / 1 000 000")   # commonest first, Orphanet's classes
-_UNKNOWN_TIER_POSITION = 4.5      # below every counted class, above the rarest-of-the-rare
+                     "1-9 / 1 000 000", "<1 / 1 000 000")   # Orphanet's classes, commonest first
+_UNKNOWN_TIER_POSITION = 4.5      # below every counted class, above the rarest
 
 
 def _prevalence_tier(classes: list[str]) -> tuple[str, float]:
     """The class most of Orphanet's entries agree on, and its position.
 
-    Orphanet lists one estimate per study and region; a single outlier must not
-    crown a disease (live: one 1-5/10 000 among five 1-in-a-million entries).
+    Orphanet lists one estimate per study and region, so a single outlier must not decide.
     Ties go to the commoner class; no counted class at all is "unknown".
     """
     known = [c for c in classes or [] if c in _PREVALENCE_TIERS]
@@ -124,11 +98,10 @@ def _prevalence_tier(classes: list[str]) -> tuple[str, float]:
 
 
 def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
-    """Order candidates the way a clinician does: age fit, then how common, then fit.
+    """Order candidates by onset fit, then discriminating phenotypes, then prevalence, then overlap.
 
-    Onset: a disease whose every onset class is later than the patient goes below
-    every disease that fits; no patient age means onset is not assessed. Prevalence:
-    Orphanet's class, commonest first, unknown in the middle. Overlap: last key.
+    A disease whose every onset class is later than the patient goes below every disease
+    that fits; no patient age means onset is not assessed.
     """
     overlap = facts.get(rule["overlap"])
     if overlap is None:
@@ -139,10 +112,8 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
     prev_by = {str(r.get("orpha_code")): r.get("classes") or []
                for r in facts.get(rule.get("epidemiology", ""), []) or []}
     early, late = set(rule.get("early_onset", [])), set(rule.get("late_onset", []))
-    # The gate: a candidate must carry the discriminating phenotypes the run
-    # computed to rank above candidates that do. Without it the commonest disease
-    # matching the NON-discriminating phenotypes floats to the top (Sotos, which
-    # Orphanet lists no hepatosplenomegaly for, above every storage disease).
+    # A candidate missing the discriminating phenotypes ranks below one that carries them,
+    # else the commonest disease matching only the common phenotypes floats to the top.
     pair = facts.get(rule.get("must_carry", "")) or []
     ids_by = {str(r.get("orpha_code")): set(r.get("hpo_ids") or [])
               for r in facts.get(rule.get("rows_ids", ""), []) or []}
@@ -167,8 +138,7 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
             fit, fit_key = "unknown onset", 0
         tier, tier_key = _prevalence_tier(prev_by.get(code, []))
         pct = float(row.get("overlap_pct") or 0)
-        # A candidate that matches nothing goes to the bottom of its onset band:
-        # prevalence orders the diseases that fit at all, it does not rescue one.
+        # A candidate matching nothing goes to the bottom of its band; prevalence does not rescue it.
         out.append({**row, "onset": onsets, "onset_fit": fit, "prevalence_tier": tier,
                     "carries_discriminating": carried,
                     "_key": (fit_key, gate_key, 0 if pct > 0 else 1, tier_key, -pct)})
@@ -182,17 +152,14 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
 def carries(term: str, disease_ids: set, hierarchy: dict) -> bool:
     """Does a disease's annotation carry a case phenotype?
 
-    Yes if it lists the term itself, or ALL of the term's parents (HPO composes
-    Hepatosplenomegaly from Hepatomegaly and Splenomegaly), or any child (a
-    generalized seizure is a seizure). Ontological, from rows the run fetched;
-    with no hierarchy row for the term, exact match only.
+    Yes if it lists the term itself, all of the term's parents, or any child. With no
+    hierarchy row for the term, exact match only.
     """
     if term in disease_ids:
         return True
     h = hierarchy.get(term) or {}
     parents = h.get("parents") or []
-    # Two or more parents all present is the conjunction the term names; a lone
-    # parent is a broader term and does not stand for it.
+    # A lone parent is a broader term, not the conjunction the term names.
     if len(parents) >= 2 and all(p in disease_ids for p in parents):
         return True
     return any(c in disease_ids for c in (h.get("children") or []))
@@ -206,8 +173,8 @@ def _hierarchy(rule: dict, facts: dict) -> dict:
 def _overlap(rule: dict, facts: dict) -> list[dict] | None:
     """Per row: how many of the case's ids it carries, and the grade that earns.
 
-    Grades are the author's rubric in the YAML, first match wins; `needs_gene`
-    holds a grade back unless a gene row for the same code lists a gene.
+    Grades are the author's rubric, first match wins; `needs_gene` holds a grade back
+    unless a gene row for the same code lists a gene.
     """
     rows, against = facts.get(rule["rows"]), facts.get(rule["against"])
     if rows is None or against is None:
@@ -235,12 +202,7 @@ def _overlap(rule: dict, facts: dict) -> list[dict] | None:
 
 
 def _fewest(rule: dict, facts: dict) -> list | None:
-    """The `take` ids whose count is smallest; None (unresolved) when the cut ties.
-
-    Which phenotypes discriminate is "which are annotated to the fewest
-    diseases" — arithmetic. A tie exactly at the cut is the one case left to the
-    model, which is asked because the name stays unresolved.
-    """
+    """The `take` ids whose count is smallest; None when the cut ties, so the model is asked."""
     rows = facts.get(rule["rows"])
     if rows is None:
         return None
@@ -250,14 +212,14 @@ def _fewest(rule: dict, facts: dict) -> list | None:
         value = row.get(rule["count"])
         size = len(value) if isinstance(value, (list, dict)) else value
         ident = row.get(rule["id"])
-        if size is not None and ident not in seen:        # two symptoms on one term are one phenotype
+        if size is not None and ident not in seen:        # one term counts once
             seen[ident] = size
     sized = [(size, ident) for ident, size in seen.items()]
     if len(sized) < take:
         return None
     sized.sort(key=lambda t: (t[0], str(t[1])))
     if len(sized) > take and sized[take - 1][0] == sized[take][0]:
-        return None                                   # a tie at the cut: the model breaks it
+        return None                                   # tie at the cut
     return [ident for _, ident in sized[:take]]
 
 
@@ -270,9 +232,8 @@ def loop_items(spec: dict, calls: list[dict]) -> list | None:
     templates = (spec.get("calls") or [{}])[0].get("arguments", {})
     items = []
     for call in calls:
-        # The filled argument whose template was the loop variable carries the item;
-        # failing that, the one whose template contained it (PubMed has one `query`,
-        # so the reaction rides inside it beside the drug name).
+        # The argument whose template was the loop variable carries the item;
+        # failing that, the one whose template contained it.
         found = None
         filled = call.get("arguments", {})
         for name, tmpl in templates.items():
@@ -288,8 +249,7 @@ def loop_items(spec: dict, calls: list[dict]) -> list | None:
 
 
 def _item_in(template: str, marker: str, text: str) -> str | None:
-    """The loop value inside a filled argument whose template also carried other
-    placeholders: the marker becomes the capture, every other placeholder a wildcard."""
+    """The loop value inside a filled argument: the marker captures, other placeholders match anything."""
     pattern = re.escape(template).replace(re.escape(marker), "(?P<item>.+?)", 1)
     pattern = re.sub(r"\\\{[A-Za-z_][A-Za-z0-9_]*\\\}", ".+?", pattern)
     match = re.fullmatch(pattern, text, flags=re.S)
@@ -297,8 +257,7 @@ def _item_in(template: str, marker: str, text: str) -> str | None:
 
 
 def _hierarchy_rows(rule: dict, facts: dict) -> list[dict] | None:
-    """Fold the per-call hierarchy rows (parents call, children call, per term) into
-    one row per term: {hpo_id, parents, children}."""
+    """Fold the per-call hierarchy rows into one row per term: {hpo_id, parents, children}."""
     rows = facts.get(rule["rows"])
     if rows is None:
         return None
@@ -312,8 +271,7 @@ def _hierarchy_rows(rule: dict, facts: dict) -> list[dict] | None:
 
 
 def _flag(rule: dict, facts: dict) -> list[dict] | None:
-    """The rows ordered by one numeric field, largest first, each marked whether it
-    reaches the threshold. A PRR signal table is this and nothing more."""
+    """The rows ordered by one numeric field, largest first, each marked whether it reaches the threshold."""
     rows = facts.get(rule["rows"])
     if rows is None:
         return None
@@ -331,8 +289,7 @@ def _flag(rule: dict, facts: dict) -> list[dict] | None:
 
 
 def _pluck(rule: dict, facts: dict) -> list | None:
-    """One field from every row, or only from the rows whose `where` field is true;
-    values matching `exclude_pattern` are set aside (see `_pluck_excluded`)."""
+    """One field from every row (or the rows whose `where` field is true), minus `exclude_pattern` matches."""
     picked = _pluck_all(rule, facts)
     if picked is None:
         return None
@@ -341,7 +298,7 @@ def _pluck(rule: dict, facts: dict) -> list | None:
 
 
 def _pluck_excluded(rule: dict, facts: dict) -> list:
-    """The values `_pluck` set aside — recorded so the report can say so."""
+    """The values `_pluck` set aside, recorded so the report can say so."""
     picked = _pluck_all(rule, facts) or []
     pattern = rule.get("exclude_pattern")
     return [v for v in picked if pattern and re.search(pattern, str(v), re.I)]
@@ -357,7 +314,7 @@ def _pluck_all(rule: dict, facts: dict) -> list | None:
 
 
 class _Refused:
-    """A compute that cannot proceed on what it was given -- named, so the run says why."""
+    """A compute that cannot proceed on what it was given, with the reason."""
 
     def __init__(self, reason: str):
         self.reason = reason
@@ -371,8 +328,7 @@ def _number(value: Any) -> float | None:
 
 
 def _band(rule: dict, facts: dict) -> Any:
-    """Points from a number by the first threshold it reaches: a skill's grading prose
-    ("more than 100 publications: 10; 50-100: 7") as a table the server applies."""
+    """Points from a number by the first threshold it reaches."""
     value = _number(_dig(facts, rule["from"]))
     if value is None:
         return None
@@ -383,8 +339,7 @@ def _band(rule: dict, facts: dict) -> Any:
 
 
 def _map(rule: dict, facts: dict) -> Any:
-    """Points from a judged option out of a closed list; an option off the list is refused
-    by name, with the list, so the judgement is asked again or left unresolved."""
+    """Points from a judged option out of a closed list; an option off the list is refused by name."""
     option = facts.get(rule["from"])
     if option is None:
         return None
@@ -406,7 +361,7 @@ def _sum(rule: dict, facts: dict) -> Any:
 
 
 def _first(rule: dict, facts: dict) -> Any:
-    """The one value a list fact holds first -- a judged mapping's `_terms` as the id to call with."""
+    """The first value of a list fact."""
     values = facts.get(rule["of"])
     if values is None:
         return None
@@ -414,10 +369,10 @@ def _first(rule: dict, facts: dict) -> Any:
 
 
 def _lookup(rule: dict, facts: dict) -> Any:
-    """One row's value from a fact table, by the key another fact names: the pair's score."""
+    """One row's value from a fact table, by the key another fact names."""
     rows, wanted = facts.get(rule["rows"]), facts.get(rule["equals"])
     if isinstance(wanted, list):
-        wanted = wanted[0] if wanted else None      # a judged mapping's `_terms`: the first id
+        wanted = wanted[0] if wanted else None      # a list key means its first id
     if rows is None or wanted is None:
         return None
     for row in rows:
@@ -446,9 +401,8 @@ def _computed(spec: dict, pending: dict, facts: dict, extracted: dict,
               excluded: dict) -> tuple[list[dict], list[str], dict]:
     """Apply `pending` rules to a fixpoint, adding what resolves to `extracted`.
 
-    Returns (blocked, refused, still pending). A rule may read what another rule in the
-    same pass produces; a rule whose source is absent waits; a rule the server cannot
-    apply to what it was given is refused by name, said and not skipped.
+    Returns (blocked, refused, still pending). A rule may read what another rule produces,
+    so passes repeat until nothing new settles.
     """
     blocked: list[dict] = []
     refused: list[str] = []
@@ -475,11 +429,9 @@ def _computed(spec: dict, pending: dict, facts: dict, extracted: dict,
 
 
 def recomputed(spec: dict, outcome: dict, facts: dict) -> dict:
-    """The compute rules a judgement left waiting, applied now that the judged facts are in.
+    """Apply the compute rules a judgement left waiting, now that the judged facts are in.
 
-    Pure. The arithmetic over an option the agent chose -- the points its table gives, the
-    one id a mapping's `_terms` holds -- belongs to the step that asked, not to a step of
-    its own. Only the rules still unresolved run; what resolves leaves `unresolved`.
+    Pure. Only the rules still unresolved run; what resolves leaves `unresolved`.
     """
     waiting = {name: rule for name, rule in (spec.get("compute") or {}).items()
                if name in outcome["unresolved"]}
@@ -496,11 +448,8 @@ def recomputed(spec: dict, outcome: dict, facts: dict) -> dict:
 def _derive(spec: dict, facts: dict) -> bool | None:
     """A gateway condition computed from data, not asserted by the model.
 
-    None means UNKNOWN: the source fact never arrived, so there is nothing to
-    decide on. Live on enzalutamide the `signals` extraction missed, the rule
-    derived over an empty list, and the branch was skipped as though the data had
-    said "no strong signal" — a silent wrong answer. A genuine empty result is
-    still False; only an ABSENT fact is unknown.
+    None means unknown: the source fact never arrived. A genuine empty result is
+    still False; only an absent fact is unknown, so a miss cannot pass as "no".
     """
     if spec["from"] not in facts:
         return None
@@ -520,11 +469,11 @@ def _derive(spec: dict, facts: dict) -> bool | None:
 
 
 
-MAX_PAYLOAD = 12_000   # per fact in a question's context; the question stays readable
+MAX_PAYLOAD = 12_000   # per fact in a question's context
 
 
 def new_run(inputs: dict) -> dict:
-    """Fresh run state: the whole of it is (done, facts) plus what went wrong."""
+    """Fresh run state: (done, facts) plus what went wrong."""
     return {"facts": dict(inputs), "done": [], "failures": [], "blocked": [],
             "skipped": [], "calls": {}, "calls_made": {},
             "questions": [], "unresolved": [], "excluded": {}}
@@ -535,17 +484,16 @@ _SERVER_ERROR_TYPES = ("ServerError", "UpstreamServiceError", "Timeout", "Connec
 
 
 def is_upstream_failure(result: Any) -> bool:
-    """A result that reports the SOURCE failed, not that it had nothing to say.
+    """A result that reports the source failed, not that it had nothing to say.
 
-    A `status: error` is an answer when the source says "not found"; it is a failure when
-    the source was unreachable, refused, or broke -- a retriable error, a server error type,
-    or an HTTP status of 5xx/408/429 carried in the envelope.
+    "Not found" is an answer; a retriable error, a server error type or a 5xx/408/429
+    status in the envelope is a failure.
     """
     if not isinstance(result, dict) or result.get("status") != "error":
         return False
     details = result.get("error_details") or {}
     status = result.get("upstream_status")
-    # Some tools carry the exception only in text (`detail: "ReadTimeout(...)"`).
+    # Some tools carry the exception type only in text.
     typed = " ".join(str(result.get(k, "")) for k in ("detail", "error")) + str(details.get("type", ""))
     return bool(details.get("retriable") or result.get("retryable")
                 or any(t in typed for t in _SERVER_ERROR_TYPES)
@@ -559,14 +507,9 @@ def upstream_failure_text(result: dict) -> str:
 
 def apply(run: dict, step_id: str, failures: list, outcome: dict,
           calls: list[dict] | None = None) -> None:
-    """Record a finished step on the run. Pure over its arguments; mutates `run`.
-
-    Results are not among them: they are in the Working Record.
-    """
-    # The tools this step ran, retries included: the agent's own trace never
-    # shows them, so the bundle carries the record itself.
+    """Record a finished step on the run; mutates `run`. Results live in the Working Record."""
+    # The tools this step ran, retries included: the agent's own trace never shows them.
     run["calls"][step_id] = [c["tool"] for c in (calls or [])]
-    # …and with their arguments, for the Run Record: which reaction, which code.
     run["calls_made"][step_id] = [{"tool": c["tool"], "arguments": c.get("arguments", {})}
                                   for c in (calls or [])]
     run["done"].append(step_id)
@@ -596,11 +539,9 @@ def _with_cause(graph: dict, run: dict, reason: str) -> str:
 
 
 def next_runnable(graph: dict, run: dict) -> dict | None:
-    """The step to run now, marking any step that cannot be built as blocked.
+    """The step to run now, marking any step that cannot be built as blocked, not fatal.
 
-    Loops, because skipping one blocked step can reveal another. A step we
-    cannot build is BLOCKED, not fatal: live, a missed FAERS extraction killed a
-    ten-step run at step four, and the other four sources did not depend on it.
+    Loops, because skipping one blocked step can reveal another.
     """
     while True:
         try:
@@ -618,7 +559,7 @@ def next_runnable(graph: dict, run: dict) -> dict | None:
             run["blocked"].append({"step": blocked, "reason": _with_cause(graph, run, str(exc))})
 
 
-# The same five lines for every skill. The report's structure is the skill's; this is not.
+# The same rules for every skill; the report's structure is the skill's own.
 WRITE_THE_REPORT = [
     "Take every number from its row and cite it with that row's own link.",
     "State a finding only from a source you read: an abstract, a page, a row -- never from a "
@@ -633,17 +574,17 @@ WRITE_THE_REPORT = [
 
 
 def handover_of(graph: dict, run: dict) -> dict:
-    """What the agent is handed ONCE at the end: the facts, and a description of each table
-    that is too wide to hand over. Tool results are in the Working Record, fetched by table."""
+    """What the agent is handed once at the end: the facts, and a description of each wide table.
+
+    Tool results stay in the Working Record, fetched by table.
+    """
     handed = {
         "skill": graph["skill"],
         "facts": run["facts"],
         "steps_done": run["done"],
         "steps_skipped": skipped_gates(graph, run["done"] + run["skipped"], run["facts"]),
         "calls": run.get("calls", {}),
-        # The author's judgement, with the data: what each step means and how the
-        # report must read the evidence. Blind-judged 2026-09-03, the reports that
-        # lacked this printed FAERS coding noise as signals.
+        # The author's notes on what each step means and how the report must read it.
         "notes": {s["id"]: s["notes"] for s in graph["steps"]
                   if s.get("notes") and s["id"] in run["done"]},
         "report": graph.get("report"),
@@ -666,13 +607,11 @@ def handover_of(graph: dict, run: dict) -> dict:
 
 # --- mapping: the user's words onto the source's own vocabulary, judged, checked, placed ----
 #
-# The check proves membership, not meaning: live, "ototoxicity" was mapped onto DIZZINESS and
-# FALL and both were accepted because both are FAERS terms. So the mapping is a fact table the
-# report must show, each row with the agent's reason and a placing from an ontology.
+# The check proves membership, not meaning, so the mapping is a fact table the report must
+# show, each row with the agent's reason and a placing from an ontology.
 
 def mapping_choices(spec: dict, facts: dict) -> dict | None:
-    """The source's terms a mapping may use, whole: the agent copies from this list, so it
-    travels in the question even when the rows it comes from are too wide to show."""
+    """The source's terms a mapping may use, whole, so they travel in the question even when the rows are too wide."""
     choices = {name: _picked(rule["onto"], facts) for name, rule in (spec.get("mapping") or {}).items()}
     choices = {name: terms for name, terms in choices.items() if terms}
     return choices or None
@@ -698,7 +637,7 @@ def mapping_problem(spec: dict, outcome: dict, facts: dict) -> str | None:
 
 
 def placed_mapping(spec: dict, outcome: dict, lookup: Callable[[str], dict] | None) -> dict:
-    """Each mapped row gets its placing; the flat list of terms is kept for the steps that loop."""
+    """Each mapped row gets its placing; a flat `<name>_terms` list is kept for the steps that loop."""
     facts = dict(outcome["facts"])
     for name in (spec.get("mapping") or {}):
         rows = facts.get(name)
@@ -730,7 +669,7 @@ def source_total(spec: dict, results: list, items: list | None) -> Any:
     """How much the source holds for this step's calls, by the path the step declares.
 
     One number for a single call, one per loop item for a loop; "unknown" when the step
-    declares no `total` or the source gave none. The reader sees the narrowing either way.
+    declares no `total` or the source gave none.
     """
     path = spec.get("total")
     if not path:
@@ -779,9 +718,7 @@ def substitute(calls: list[dict], argument: str, candidate: Any) -> list[dict]:
 def question_for(step_id: str, kind: str, wants: list[str], context: dict, **detail) -> dict:
     """The one question shape the model is asked mid-run: repair, judgement or delegation.
 
-    The step's notes ride along when it has any — they say what shape the answer
-    should take, and an agent that never saw them answered a web search with bare
-    URLs where the author had asked for title, url and snippet.
+    The step's notes ride along when it has any; they say what shape the answer should take.
     """
     return {"kind": kind, "step": step_id, "wants": list(wants),
             "context": _readable(context, detail.get("calls") or []),
@@ -789,12 +726,9 @@ def question_for(step_id: str, kind: str, wants: list[str], context: dict, **det
 
 
 def _readable(facts: dict, calls: list[dict]) -> dict:
-    """The facts a question shows the model: a fact larger than one payload cap
-    is stubbed — twenty Open Targets rows are in the bundle, not for judging.
+    """The facts a question shows the model; a fact over the payload cap is replaced by a stub.
 
-    The stub says where the value is. Live 2026-09-07 a stub that only said
-    "in the bundle" made the model transcribe an empty list into its code,
-    though the same rows travelled whole in the question's own calls.
+    The stub says where the value is, so the model does not transcribe an empty value.
     """
     carried = json.dumps([c.get("arguments") for c in calls], default=str)
     out = {}
@@ -811,7 +745,7 @@ def _readable(facts: dict, calls: list[dict]) -> dict:
 
 
 def asked(run: dict, question: dict, answer: dict | None) -> None:
-    """Remember a question and its answer — never its context, which is payload."""
+    """Remember a question and its answer, never its context, which is payload."""
     run["questions"].append({"step": question["step"], "kind": question["kind"],
                              "wants": list(question["wants"]), "answer": answer})
 
@@ -819,14 +753,13 @@ def asked(run: dict, question: dict, answer: dict | None) -> None:
 def judged(outcome: dict, wants: list[str], answer: dict | None) -> dict:
     """Fold the model's answer to a judgement into a step outcome.
 
-    Only the names the step declared are taken; a declared name the model did
-    not answer is unresolved, like an extraction that never arrived.
+    Only the names the step declared are taken; a declared name the model did not
+    answer is unresolved.
     """
     answer = answer or {}
     facts = {**outcome["facts"],
              **{name: answer[name] for name in wants if name in answer}}
-    # A name a compute left unresolved (a tie at the cut) and the model then
-    # supplied is resolved; only names nobody answered stay on the list.
+    # A name a compute left unresolved and the model then supplied is resolved.
     unresolved = ([n for n in outcome["unresolved"] if n not in answer]
                   + [n for n in wants if n not in answer])
     return {**outcome, "facts": facts, "unresolved": unresolved}
@@ -835,8 +768,7 @@ def judged(outcome: dict, wants: list[str], answer: dict | None) -> dict:
 # --- check: a model answer is verified against the rows before it becomes a fact ---
 #
 # The server cannot make the agent use a tool; it can refuse an answer that does
-# not hold against the data the run already has. Seven closed kinds, each over a
-# produced fact: rows_of, sorted_by, flag, subset_of, covers, excludes, only.
+# not hold against the data the run already has.
 
 def _num(value: Any) -> float | None:
     if value is None or isinstance(value, bool):
@@ -972,11 +904,10 @@ def _rows_by_key(rule: dict, keys: list, table: list) -> tuple[list, str | None]
 
 
 def _check_selected_from(rule: dict, value: Any, facts: dict) -> str | None:
-    """A selection the code tool made: every row from the table, every row meeting the
-    condition, and no row of the table that meets it left out. The first breach is named.
+    """Every row is from the table, meets the condition, and no qualifying row is left out.
 
-    Answered as keys (when the rule names a `key`), the rows are the table's own, so no prose
-    can be retyped; answered as rows, each must be a row of the table unchanged.
+    Answered as keys (when the rule names a `key`), the rows are the table's own; answered
+    as rows, each must be a row of the table unchanged. The first breach is named.
     """
     table = facts.get(rule["table"])
     if not isinstance(table, list):
@@ -992,7 +923,7 @@ def _check_selected_from(rule: dict, value: Any, facts: dict) -> str | None:
     where = rule.get("where") or {}
 
     def holds(cell: Any, wanted: Any) -> bool:
-        # A list-valued cell (a trial's phases) meets the condition when it holds the value.
+        # A list-valued cell meets the condition when it holds the value.
         return any(_same(m, wanted) for m in cell) if isinstance(cell, list) else _same(cell, wanted)
 
     meets = lambda row: all(holds(row.get(k), v) for k, v in where.items())  # noqa: E731
@@ -1023,7 +954,7 @@ _CHECKS: dict[str, Callable[[Any, Any, dict], str | None]] = {
 
 
 def tables_checked(rules: dict | None) -> list[str]:
-    """The Evidence tables a step's checks read: the host loads them for the check alone."""
+    """The evidence tables a step's checks read; the host loads them for the check alone."""
     names = []
     for spec in (rules or {}).values():
         for rule in (spec if isinstance(spec, list) else [spec]):
@@ -1034,7 +965,7 @@ def tables_checked(rules: dict | None) -> list[str]:
 
 def materialised(rules: dict, produced: dict, facts: dict,
                  tables: Callable[[str], list] | None = None) -> dict:
-    """The produced facts answered as keys, as the table's own rows -- what the run keeps."""
+    """The produced facts answered as keys, as the table's own rows, which is what the run keeps."""
     known = dict(facts)
     for name in tables_checked(rules):
         if name not in known and tables is not None:
@@ -1056,9 +987,8 @@ def check_facts(rules: dict, produced: dict, facts: dict,
                 tables: Callable[[str], list] | None = None) -> list[dict]:
     """The checks a produced fact fails, as {fact, check, reason}. Pure.
 
-    A name the answer did not supply is skipped: it is already unresolved. Rules
-    may name other produced facts; both are visible to a check. A rule that reads an
-    Evidence table gets its rows from `tables`, for the check alone.
+    A name the answer did not supply is skipped: it is already unresolved. A rule that
+    reads an evidence table gets its rows from `tables`.
     """
     known = {**facts, **produced}
     for name in tables_checked(rules):
@@ -1101,10 +1031,9 @@ def checked(spec: dict, step_id: str, wants: list[str], outcome: dict, facts: di
             rows_by_key: dict | None = None) -> tuple[dict, str | None]:
     """Apply the step's checks to what the answer supplied.
 
-    Returns the outcome and, when a re-ask is warranted, the problem to name in
-    it; the host asks once more and calls again with `answered=False` to close.
-    A host that ran the checks elsewhere (an activity, so a table's rows stay out
-    of the history) passes their `failures` in.
+    Returns the outcome and, when a re-ask is warranted, the problem to name in it;
+    the host asks once more and calls again with `answered=False` to close. A host
+    that ran the checks elsewhere passes their `failures` in.
     """
     rules = spec.get("check")
     if not rules:
@@ -1125,11 +1054,10 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
            calls: list[dict] | None = None) -> dict:
     """What a step's results yield: facts, what never arrived, what cannot be decided.
 
-    Pure. `extract` takes the first match, `collect` the lot, `combine` merges
-    with facts the question supplied, `derive` decides a gateway from data. A
-    derive over a source that never arrived is UNKNOWN and lands in `blocked`,
-    never in facts — `when` reads a missing key as falsy and would skip the
-    branch silently.
+    Pure. `extract` takes the first match, `collect` one per call, `combine` merges with
+    facts the question supplied, `compute` is arithmetic over rows, `derive` decides a
+    gateway from data. A derive over an absent source lands in `blocked`, never in facts,
+    because `when` would read a missing key as falsy and skip the branch silently.
     """
     extracted: dict[str, Any] = {}
     excluded: dict[str, list] = {}
@@ -1140,18 +1068,13 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
             if found is None:
                 continue
             if rule.get("regex") and isinstance(found, str):
-                # Some values only exist inside a returned string: DailyMed
-                # puts the BRAND at the head of its SPL title, and FAERS
-                # indexes this drug family by brand (LUTATHERA returns 100
-                # reaction terms where the generic name returns 3).
+                # Some values only exist inside a returned string.
                 match = re.search(rule["regex"], found)
                 if not match:
                     continue
                 found = match.group(1) if match.groups() else match.group(0)
             if rule.get("exclude") and isinstance(found, list):
-                # The author knows which returned values are noise — FAERS coding
-                # terms such as ILL-DEFINED DISORDER — and says so in the process,
-                # before any cap, so the cap trims real terms only.
+                # The author's noise list applies before the cap, so the cap trims real values only.
                 dropped = [v for v in found if v in rule["exclude"]]
                 if dropped:
                     excluded[name] = dropped
@@ -1164,9 +1087,7 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
             fallback = facts.get(rule["default_from"])
             if fallback is not None:
                 extracted[name] = fallback
-    # `collect` gathers a value from EVERY call, which is what a loop step
-    # needs: FAERS answers one metrics object per reaction, and the gateway
-    # has to see them all.
+    # `collect` gathers a value from every call, which is what a loop step needs.
     for name, rule in (spec.get("collect") or {}).items():
         rule = rule if isinstance(rule, dict) else {"path": rule}
         gathered = []
@@ -1175,16 +1096,14 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
             if found is None:
                 continue
             def row_of(record: dict, index: int = index) -> dict:
-                # Keep the few fields the run needs from a large payload, as one row.
-                # "$item" is the loop value this call was made for — a tool that does
-                # not echo its input (HPO's disease list) still yields a paired row.
+                # Keep the few fields the run needs, as one row. "$item" is the loop
+                # value this call was made for, so a tool that does not echo its input still pairs.
                 row = {}
                 for spec_field in rule["fields"]:
                     src, _, alias = spec_field.partition(" as ")
                     if src == "$item":
                         value = items[index] if items and index < len(items) else None
                     elif src.startswith("$call."):
-                        # a filled argument of the call this payload answered
                         arg = src[len("$call."):]
                         value = (calls[index].get("arguments") or {}).get(arg) if calls and index < len(calls) else None
                     else:
@@ -1197,12 +1116,10 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
                 found = row_of(found)
             elif (rule.get("fields") and isinstance(found, list)
                   and all(isinstance(record, dict) for record in found)):
-                # One row for each record: a record that lacks a field is a row without
-                # it, so nothing after it moves up a place.
+                # A record that lacks a field is a row without it, so positions are kept.
                 found = [row_of(record) for record in found]
             if rule.get("match"):
-                # The first item that matches, per call: an HPO lookup answers
-                # UPHENO:, MP:, then HP:, and only the HP id is a human phenotype.
+                # The first item that matches, per call.
                 candidates = found if isinstance(found, list) else [found]
                 found = next((c for c in candidates
                               if isinstance(c, str) and re.search(rule["match"], c)),
@@ -1210,8 +1127,6 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
                 if found is None:
                     continue
             if rule.get("flatten") and isinstance(found, list):
-                # One list per call folded into one list: Orphanet answers a
-                # gene list per disease, and the gene panel loops over genes.
                 gathered.extend(found)
             else:
                 gathered.append(found)
@@ -1219,9 +1134,7 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
             gathered = list(dict.fromkeys(gathered))
         if gathered:
             extracted[name] = gathered
-    # `combine` merges facts the question supplied with facts the data
-    # produced. Requested terms lead and the cap trims the frequency-ranked
-    # tail, never the ask.
+    # `combine` merges in union order, so the cap trims the tail, never the ask.
     for name, rule in (spec.get("combine") or {}).items():
         merged: list = []
         for source in rule.get("union", []):
@@ -1233,13 +1146,8 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
             merged = merged[: rule["limit"]]
         extracted[name] = merged
 
-    # `compute` is arithmetic over rows the run already holds — ranking a
-    # differential by onset, prevalence and overlap is not a judgement, so the
-    # server does it, with the author's rule. Delegated to the agent's code tool,
-    # the same arithmetic ran on a retyped input once (DSR-729, GM1 4/4).
-    # Resolved in passes: a rule may read what another rule in the same step
-    # produces, and a store hands the rules back in its own order, not the
-    # author's (GraphDB: alphabetical, and the literature loop lost its list).
+    # `compute` runs on the server, in passes: a rule may read what another rule in the
+    # same step produces, and a store may hand the rules back in its own order.
     blocked, refused, pending = _computed(spec, dict(spec.get("compute") or {}), facts, extracted, excluded)
     computed_missing = list(pending) + refused
 
@@ -1257,7 +1165,7 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
         else:
             extracted[name] = decided
 
-    # A value the step SAYS it produces and did not is recorded, always.
+    # A value the step says it produces and did not is always recorded.
     unresolved = [name for name in (spec.get("extract") or {})
                   if name not in extracted] + computed_missing
     return {"facts": extracted, "unresolved": unresolved, "blocked": blocked,
@@ -1275,25 +1183,19 @@ class SkillRunner:
                  lookup: Callable[[str], dict] | None = None):
         self.graph = graph
         self.execute = execute
-        # Where a mapped term sits in an ontology; injected so tests read recorded responses.
+        # Where a mapped term sits in an ontology; injected so tests can stub it.
         self.lookup = lookup
         # Where each run's Working Record is kept; without it results stay in memory only.
         self.records = records
-        # `ask` puts the model back in the loop as an ORACLE, never as the
-        # scheduler: the server decides a lookup failed, frames the question,
-        # validates the answer by re-querying, and stops after MAX_REPAIRS.
-        # It exists because the agent knows things the data does not — that
-        # "Lu-177" and "lu 177" are one isotope — and DailyMed returns nothing
-        # for the form the agent correctly binds from the question.
+        # `ask` puts the model in the loop as an oracle, never as the scheduler: the
+        # server frames each question, validates the answer and stops after MAX_REPAIRS.
         self.ask = ask
         self._runs: dict[str, dict] = {}
 
     def start(self, inputs: dict, run_id: str | None = None) -> dict:
-        # A host that already names its runs (Temporal) passes the id in; the
-        # in-memory host is the only one that mints its own.
+        # A host that already names its runs passes the id in.
         run_id = run_id or uuid.uuid4().hex
-        # A process's closed lists and fixed values are facts from the first step: the
-        # questions show them, the checks read them, and no step has to produce them.
+        # The graph's constants are facts from the first step; no step has to produce them.
         self._runs[run_id] = {**new_run({**(self.graph.get("constants") or {}), **inputs}),
                               "run_id": run_id}
         return {"run_id": run_id, "step": self._peek(run_id)}
@@ -1319,8 +1221,7 @@ class SkillRunner:
         )
         answer = self.ask(question)
         asked(run, question, answer)
-        # One answer shape for every question: the wanted name mapped to its
-        # value — here a list of alternatives. A bare list is still taken.
+        # The answer maps the wanted name to a list of alternatives; a bare list is also taken.
         suggestions = answer.get(argument) if isinstance(answer, dict) else answer
         for candidate in (suggestions or [])[: self.MAX_REPAIRS]:
             retried, retry_failures = [], []
@@ -1392,15 +1293,13 @@ class SkillRunner:
             try:
                 result = self.execute(call["tool"], call["arguments"])
             except Exception as exc:                       # noqa: BLE001
-                # A broken tool must not end the procedure: one bot-blocked FDA
-                # endpoint ended a whole run under the model-driven loop.
+                # A broken tool must not end the run.
                 failures.append({"tool": call["tool"], "arguments": call["arguments"],
                                  "error": f"{type(exc).__name__}: {exc}"})
                 continue
             results.append(result)
             if is_upstream_failure(result):
-                # The source failed and said so inside its answer: a failed call, on record
-                # with the upstream status, never an empty extraction.
+                # A source failure reported inside the answer is a failed call, not an empty extraction.
                 failures.append({"tool": call["tool"], "arguments": call["arguments"],
                                  "error": upstream_failure_text(result)})
 
@@ -1422,9 +1321,8 @@ class SkillRunner:
                              items=loop_items(spec, step["calls"]), calls=step["calls"])
         delegated = spec.get("delegate") or []
         if delegated:
-            # Web search and code live on the agent, not in the registry. The run
-            # asks the agent to make these calls with its own tools and hands
-            # back the named facts — same pause as a judgement, results on record.
+            # Web search and code live on the agent, so the run asks it to make these
+            # calls with its own tools and hand back the named facts.
             wanted = spec.get("produces") or []
             try:
                 calls = delegated_calls(spec, run["facts"])
@@ -1436,13 +1334,9 @@ class SkillRunner:
                 question = question_for(step["id"], "delegate", wanted, dict(run["facts"]),
                                         calls=calls, notes=spec.get("notes"))
                 outcome = self._answered(spec, step, wanted, outcome, run, question)
-        # A judgement is for what the step could not resolve itself: a name an
-        # extraction or compute already supplied is never put to the model.
+        # A name an extraction or compute already supplied is never put to the model.
         wants = [n for n in (spec.get("judge") or []) if n not in outcome["facts"]]
         if wants:
-            # A judgement fact is asked for by name, after the step's own calls,
-            # with everything known so far — never inferred from what an
-            # extraction happened to miss.
             question = question_for(
                 step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
                 notes=spec.get("notes"),
@@ -1467,16 +1361,10 @@ class SkillRunner:
 
 
 def normalised_executor(dispatch: Callable[[dict], Any]) -> Callable[[str, dict], Any]:
-    """Wrap ToolUniverse's dispatch so the runner sees what the AGENT sees.
+    """Wrap ToolUniverse's dispatch so the runner sees what the agent sees.
 
-    `execute_tool` is not a second implementation — its class calls
-    `run_one_function` and then normalises: JSON-decode a string return, and wrap
-    any non-dict as {"result": ...}. Calling `run_one_function` directly skips
-    that, so the runner saw a bare list where every saved trace shows
-    {"result": [...]}, and an extraction path written from a trace missed.
-
-    One door. Extraction paths written against a trace work in the runner, and
-    vice versa.
+    `execute_tool` JSON-decodes a string return and wraps any non-dict as {"result": ...};
+    doing the same here means extraction paths written against a trace work in the runner.
     """
     def execute(tool: str, arguments: dict) -> Any:
         result = dispatch({"name": tool, "arguments": arguments})

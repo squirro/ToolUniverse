@@ -131,10 +131,9 @@ fi
 echo "      → served disease-research body (${#SKILL_TEXT} chars)"
 
 # ---------------------------------------------------------------------
-# Step 2c: run_skill (ADR-0016). Only when the deploy configures Temporal:
-# .env beside this script is what the container reads, so it is the truth.
-# Proves the tool is SERVED and a Skill Run yields its first tick — the
-# worker inside SMCP is polling and the process was read from GraphDB.
+# Step 2c: run_skill. Only when the deploy configures Temporal: the .env
+# beside this script is what the container reads. Proves the tool is
+# served and a Skill Run yields its first tick.
 # ---------------------------------------------------------------------
 if grep -qE '^TEMPORAL_ADDRESS=.+' "$(dirname "$0")/.env" 2>/dev/null; then
   echo "[2c] run_skill is configured — tools/list must advertise it …"

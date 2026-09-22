@@ -1,24 +1,10 @@
-"""A capped result must never be presented as a complete one (DSR-660).
+"""A capped result must never be presented as a complete one.
 
 Two paired guards. The first reads the source: a function that takes the first N of a
-collection and never mentions a total, a truncation, or what is available is handing the
-agent a partial list that looks whole. The second reads the registry: a tool that accepts a
-limit and declares no companion total in its return schema cannot tell the agent it was
-capped even if it wanted to.
-
-The reference implementation is FAERS, and its stated invariant is the useful one: **a full
-page is evidence of truncation, not of completeness.** Measured on LUTATHERA, the 1000th
-term still has count == 1, so terms remain beyond the cap. Reporting a capped distribution
-as the whole one is the same defect class as reporting a transport failure as a zero.
-
-The safety-relevant instance is a truncated toxicophore match list read as exhaustive.
-
-**The disclosure vocabulary is observed, not invented.** It was derived by reading what the
-complying half of the corpus actually writes. That is why ``remaining`` is absent: it reads
-like an obvious disclosure word and occurs in exactly zero slicing functions here, so
-including it would be guessing. Occurrences at the time of freezing, across the 599
-functions that take a first-N slice: ``total`` 226, ``available`` 76, ``truncat`` 26,
-``overflow`` 2, ``has_more`` 1, ``incomplete`` 1.
+collection and never mentions a total, a truncation, or what is available hands the agent a
+partial list that looks whole. The second reads the registry: a tool that accepts a limit
+and declares no companion total in its return schema cannot tell the agent it was capped
+even if it wanted to. A full page is evidence of truncation, not of completeness.
 """
 
 from __future__ import annotations
@@ -36,15 +22,14 @@ __all__ = [
     "tools_without_a_total",
 ]
 
-# Observed in the complying half of the corpus. Substrings, so `total_count`,
-# `total_found` and `truncation_warning` all match. See the module docstring for the
-# frequency of each and for why `remaining` is not here.
+# Observed in the complying half of the corpus, as substrings, so `total_count` and
+# `truncation_warning` both match. `remaining` is absent because no slicing function here
+# uses it, so including it would be guessing.
 DISCLOSURE_TERMS = ("total", "truncat", "available", "incomplete", "overflow",
                     "has_more", "next")
 
-# Input names that cap a result set. A tool taking one of these can return a short list for
-# two entirely different reasons -- the cap, or the data -- and the caller cannot tell them
-# apart without a companion field.
+# Input names that cap a result set. A short list then has two possible causes, the cap or
+# the data, and the caller cannot tell them apart without a companion field.
 LIMIT_INPUTS = ("limit", "max_results", "maxresults", "page_size", "size", "top_n",
                 "n_results", "max_records", "num_results", "retmax")
 
@@ -101,9 +86,9 @@ def _discloses(func: ast.AST) -> bool:
 def undisclosed_slices(root: Path | str) -> list[SliceFinding]:
     """Functions that cap a collection without disclosing it, one pass over the tree.
 
-    Judged per function rather than per slice. A function that caps three lists and reports
-    one total has disclosed; demanding a note beside every slice would report code that is
-    already doing the right thing, which is how a guard gets switched off.
+    Judged per function rather than per slice: a function that caps three lists and reports
+    one total has disclosed, and demanding a note beside every slice would report code that
+    is already right.
     """
     root = Path(root)
     findings: list[SliceFinding] = []
@@ -137,9 +122,8 @@ def _limit_inputs(properties: dict) -> list[str]:
 def tools_without_a_total(data_dir: Path | str) -> list[ToolFinding]:
     """Tools that accept a limit and declare no companion total, in name order.
 
-    The return schema is searched as text rather than by walking it: the shapes vary --
-    a top-level ``total_count``, a nested ``meta.total``, a ``truncated`` flag beside the
-    rows -- and any of them tells the agent what it needs.
+    The return schema is searched as text rather than walked: the shapes vary, and any of
+    them tells the agent what it needs.
     """
     data_dir = Path(data_dir)
     findings: list[ToolFinding] = []
@@ -147,9 +131,7 @@ def tools_without_a_total(data_dir: Path | str) -> list[ToolFinding]:
         try:
             defs = json.loads(path.read_text())
         except Exception:
-            # silent-swallow: a malformed definition file is test_no_duplicate_json_keys'
-            # problem; this guard must report what it can read, not fail for a file it
-            # cannot. Same reasoning as registry_tool_names in deploy/persona_lint.py.
+            # silent-swallow: a malformed file is another guard's problem; report what can be read.
             continue
         if not isinstance(defs, list):
             continue

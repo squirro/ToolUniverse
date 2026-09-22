@@ -1,9 +1,7 @@
 """Five of the eleven criteria measured by script, and the spread between two runs of one arm.
 
 A judge's opinion costs a turn and varies; a script over saved traces costs nothing and
-gives the same number every time. Every check of the pre-flight comes from a failure of
-2026-09-21: two agents on different models, a web tool "enabled" but absent at run time,
-a call that gave no links, a plugin that failed to load and told nobody.
+gives the same number every time. Each pre-flight check comes from a real run failure.
 """
 
 import sys

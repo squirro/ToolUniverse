@@ -1,19 +1,15 @@
-# adverse-event-detection as a process graph (DSR-696 tracer bullet).
+# adverse-event-detection as a process graph.
 #
-# The same nine phases the prose body carries, with the plan moved out of the
-# model's head. Each step names its calls and their arguments, says what to
-# extract, and declares what must be done before it. The gateways the body writes
-# in capital letters ("do not skip", "if no comparator, skip") are `when:`
-# conditions here, so skipping is a property of the graph rather than a judgement
-# the agent makes while holding 14k characters of instructions.
+# The nine phases of the prose body, with the plan moved out of the model's head.
+# Each step names its calls, what to extract and what must run before it. The
+# body's "do not skip" gateways are `when:` conditions here.
 #
 # Facts the agent feeds back: chembl_id, top_aes, requested_meddra, strong_signal, comparator.
 
 skill: adverse-event-detection
 inputs: [drug_name]
-# Optional, bound by the AGENT from the question, in the question's own words: the
-# reactions the user asked about by name. They are read onto FAERS terms by the
-# `requested_terms` step, never sent to FAERS as they stand.
+# Optional, bound by the agent from the question in its own words. The words are
+# read onto FAERS terms by the `requested_terms` step, never sent to FAERS as they stand.
 optional_inputs: [requested_aes]
 
 # What the agent gets whole. A table a later step reads must be a fact.
@@ -29,7 +25,7 @@ steps:
     calls:
       - tool: OpenTargets_get_drug_chembId_by_generic_name
         arguments: {drugName: "{drug_name}"}
-    # The first hit is the drug (recorded: aspirin -> CHEMBL25, then salts and neighbours).
+    # The first hit is the drug; salts and neighbours follow.
     extract: {chembl_id: "data.search.hits.0.id"}
     produces: [chembl_id]
     notes: >-
@@ -50,12 +46,10 @@ steps:
       - tool: FAERS_count_reactions_by_drug_event
         arguments: {medicinalproduct: "{drug_name}"}
     collect:
-      # The source's own vocabulary for this drug, whole: what a requested word is read
-      # onto, and what the reading is checked against.
+      # The source's own vocabulary for this drug, whole: what a requested word is read onto and checked against.
       faers_term_rows: {path: "result", flatten: true, fields: ["term", "count"]}
     extract:
-      # Coding noise and outcomes, not reactions: they top every raw FAERS count and
-      # carry no clinical information. Excluded before the cap; `excluded` says so.
+      # Coding noise and outcomes, not reactions. Excluded before the cap; `excluded` says so.
       top_aes:
         path: "result[].term"
         limit: 20
@@ -74,10 +68,8 @@ steps:
     requires: [reaction_terms]
     when: requested_aes
     calls: []
-    # The reading is the agent's judgement, shown and not trusted: each term is checked
-    # against `faers_term_rows`, then placed by an ontology under the concept the word
-    # names. The check proves membership, not meaning; the placing is the evidence for
-    # meaning; the report shows both.
+    # The reading is the agent's judgement, shown and not trusted: checked against
+    # `faers_term_rows` for membership, then placed by an ontology as evidence of meaning.
     judge: [requested_meddra]
     mapping:
       requested_meddra: {of: requested_aes, onto: {rows: faers_term_rows, field: term}}

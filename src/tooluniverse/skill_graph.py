@@ -1,24 +1,9 @@
-"""Skills as a process graph — the plan lives in data, not in the model's head.
+"""A skill's procedure as a process graph, held in data rather than in the model's head.
 
-A served skill body is a standing operating procedure written as prose: nine
-phases, each naming its tools, with gateways expressed in capital letters ("pick
-the first applicable, then STOP"). The agent is handed all of it at once and asked
-to remember it while doing the work. Measured on sr-dev on 2026-08-21 with three
-probes per skill, four of the first eight skills returned a different verdict
-across three identical runs, and a citation rule delivered on every single turn was
-ignored on 29 of 76 answers. Soft pressure has plateaued.
-
-This module holds the same procedure as a graph. `next_step` is pure and stateless:
-give it the graph, the step ids already done, and the facts gathered so far, and it
-returns the ONE step to run now — with the exact tool calls and their arguments
-already filled in. The agent stops planning and starts executing, which is the
-only class of technique that binds rather than persuades (the others being tool
-masking and schema-constrained arguments).
-
-Deliberately not a workflow engine. There is no server-side state: the caller
-passes back what it has done, exactly as an MCP tool call must. If this earns its
-keep on one skill, running the same graph under a durable engine is the next step,
-not a prerequisite.
+`next_step` is pure and stateless: given the graph, the step ids already done and the
+facts gathered so far, it returns the one step to run now with its tool calls already
+filled in. There is no server-side state; the caller passes back what it has done, as
+an MCP tool call must.
 """
 from __future__ import annotations
 
@@ -29,9 +14,7 @@ from typing import Any
 
 import yaml
 
-# Package data, not deploy/: the image installs `src` and nothing else, so a graph
-# under deploy/ would silently not exist in the container. Overridable for local
-# iteration and, later, for a projection compiled out of GraphDB.
+# Package data, not deploy/: the image installs only `src`.
 GRAPHS_DIR = Path(
     os.environ.get("TU_SKILL_GRAPHS_DIR")
     or Path(__file__).resolve().parent / "data" / "skill_graphs"
@@ -77,11 +60,9 @@ def has_graph(skill: str) -> bool:
 def graph_directive(skill: str, server_runs: bool = False) -> str:
     """The header prepended to a graphed skill's body, or "" when it has none.
 
-    A graph nobody is told about changes nothing. And two sets of instructions that
-    disagree are worse than either alone, so this states which one governs and
-    demotes the prose phases to reference. With `server_runs` (Temporal configured,
-    ADR-0016) the server executes the process and the model only starts it,
-    answers its questions, and writes the report.
+    It states which instructions govern and demotes the prose phases to reference. With
+    `server_runs` the server executes the process; the model starts it, answers its
+    questions and writes the report.
     """
     if not has_graph(skill):
         return ""
@@ -180,10 +161,9 @@ def _is_runnable(step: dict, done: set[str], facts: dict) -> bool:
         return False
     condition = step.get("when")
     if condition and not facts.get(condition):
-        # A gateway: the step is only on this path if the fact is present and true.
+        # A gateway: the fact must be present and true.
         return False
-    # An empty list means there is nothing to iterate: move on rather than demand
-    # a call that cannot be made.
+    # Nothing to iterate: move on rather than demand a call that cannot be made.
     return not _vacuous(step, facts)
 
 
@@ -209,10 +189,9 @@ def _expand_calls(step: dict, facts: dict) -> list[dict]:
 
 
 def delegated_calls(step: dict, facts: dict) -> list[dict]:
-    """The calls the agent makes itself for this step -- one per item when the step loops.
+    """The calls the agent makes itself for this step, one per item when the step loops.
 
-    Composed exactly like the server's own calls, so a loop over the queries the agent
-    wrote gives one search call per query, each argument filled and nothing else added.
+    Composed exactly like the server's own calls, so nothing is added beyond the filled arguments.
     """
     return _expand_calls({**step, "calls": step.get("delegate") or []}, facts)
 
@@ -272,13 +251,11 @@ def stalled_steps(graph: dict, done: list[str], facts: dict) -> list[dict]:
 def next_step(graph: dict, done: list[str], facts: dict) -> dict | None:
     """The one step to run now, or None when the procedure is finished.
 
-    Steps are offered in declaration order, so the graph reads top to bottom like
-    the body it replaces. A step whose gateway condition is absent is skipped, and
-    skipping it must never stall the procedure.
+    Steps are offered in declaration order, so the graph reads top to bottom like the
+    body it replaces. Skipping a closed gateway must never stall the procedure.
     """
     facts = facts or {}
-    # A loop with nothing to iterate is complete without running, so the steps
-    # that require it are not left waiting for a call that will never be made.
+    # A loop with nothing to iterate counts as done, so its dependants are not left waiting.
     done_set = _settled(graph, set(done or []) | {
         s["id"] for s in graph["steps"] if _vacuous(s, facts)}, facts)
     for step in graph["steps"]:

@@ -1,9 +1,8 @@
-"""A skill's grading prose becomes the server's arithmetic (rule 6, DSR-789).
+"""A skill's grading prose becomes the server's arithmetic (rule 6).
 
-drug-target-validation scores a target 0-100 from bands ("more than 100 publications: 10; 50-100:
-7 ..."), from closed-list judgements ("mouse knockout viable, no severe phenotype: 10 ... lethal:
-0") and from a sum with tiers. The prose body asked the model to apply these; a process declares
-them, the server applies them, and a judged option that is not on the list is refused.
+drug-target-validation scores a target 0-100 from bands, from closed-list judgements and from
+a sum with tiers. A process declares them, the server applies them, and a judged option that
+is not on the list is refused.
 """
 
 import pytest

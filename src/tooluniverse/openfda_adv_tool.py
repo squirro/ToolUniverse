@@ -211,8 +211,7 @@ class FDADrugAdverseEventTool(BaseTool):
         search_query = "+AND+".join(search_parts)
         search_encoded = urllib.parse.quote(search_query, safe='+:"')
 
-        # Build URL. openFDA counts the top 100 terms unless told otherwise, and
-        # allows more only with a key; the widest page it serves is 1000.
+        # Build URL. openFDA allows a limit above its default only with a key.
         limit = self._page_limit()
         if self.api_key:
             url = (f"{self.endpoint_url}?api_key={self.api_key}&search={search_encoded}"

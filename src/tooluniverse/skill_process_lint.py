@@ -1,8 +1,7 @@
 """A Skill Process names no entity: the lint a conversion must pass.
 
-Pure: a process in, violations out. What it cannot see is knowledge tied to a class of drug
-or disease that names no entity (an expression about tumours in a general safety skill); only
-a held-out question from another class shows that.
+Pure: a process in, violations out. It cannot see knowledge tied to a class of drug or
+disease that names no entity; only a held-out question from another class shows that.
 """
 
 from __future__ import annotations
@@ -81,7 +80,7 @@ def _prose(process: dict):
 
 
 def _named(text: str, entities: list[str]) -> list[str]:
-    """Entities the text names. A symbol in capitals is matched as written: IDS is a gene, IDs is not."""
+    """Entities the text names; a symbol in capitals is matched as written, so IDS is not IDs."""
     return [entity for entity in entities
             if re.search(r"(?<!\w)" + re.escape(entity) + r"(?!\w)", text,
                          0 if entity.isupper() else re.IGNORECASE)]

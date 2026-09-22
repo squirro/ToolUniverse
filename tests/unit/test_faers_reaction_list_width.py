@@ -1,9 +1,8 @@
 """The FAERS reaction list is fetched as wide as the source allows, and says when it is cut.
 
-`FDADrugAdverseEventTool` sent `count=` with no `limit`, so openFDA answered its default top
-100 terms. Live, "ototoxicity" could not be read onto any term of cisplatin's list because no
-ear term is in its top 100 -- the question's word was lost to a page size nobody wrote. The
-key rule is openFDA's: `limit>100` needs an api_key, so the width follows the key.
+Sending `count=` with no `limit` takes openFDA's default page, so a word the question asks
+about can be lost to a page size nobody wrote. The width follows the key, because openFDA
+needs an api_key for `limit>100`.
 """
 
 import json

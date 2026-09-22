@@ -1,14 +1,5 @@
-"""Spike: the SERVER runs the process, the way Novartis's navigator does.
-
-The gap we measured is not the notation, it is the runtime. In the Novartis PoC a
-Python navigator holds SessionState, calls `advance()`, evaluates every gateway
-with a predicate over state IT computed, and invokes the action functions itself —
-no LLM in the control loop. Our first port left all four of those with the model,
-and the model duly failed to start the loop (2 of 3 runs) or to finish it (1 of 3).
-
-SMCP can close that gap because it already holds the whole registry in-process:
-ExecuteTool is constructed with `tooluniverse=self`. So the server can run a step's
-calls itself and hand back only what the next step needs.
+"""The server runs the process: it holds the state, makes each step's calls and
+evaluates every gateway itself, with no model in the control loop.
 
 The executor is injected here, so these tests need no ToolUniverse and no network.
 """
@@ -96,8 +87,8 @@ def test_advancing_executes_the_step_s_calls_without_the_model():
 
 
 def test_what_a_step_extracts_composes_the_next_call():
-    """The chain that the model used to carry by hand: an id out of step one
-    becomes an argument of step two, without the model ever seeing it."""
+    """An id out of step one becomes an argument of step two, without the model
+    ever seeing it."""
     runner, calls = _runner(OK)
     run = runner.start({"drug_name": "cisplatin"})
     runner.advance(run["run_id"])          # resolve
@@ -136,8 +127,7 @@ def test_the_same_gateway_stays_shut_when_the_data_does_not_support_it():
 # --- failure and completion --------------------------------------------------
 
 def test_a_failing_call_is_recorded_and_the_run_carries_on():
-    """A broken tool is not a reason to abandon the procedure — that was the
-    fda_pharmacogenomic_biomarkers case, where one bot-blocked tool ended a run."""
+    """A broken tool is not a reason to abandon the procedure."""
     runner, _ = _runner(dict(OK, disproportionality=RuntimeError("HTTP 500")))
     run = runner.start({"drug_name": "cisplatin"})
     runner.advance(run["run_id"])
@@ -159,10 +149,7 @@ def test_the_run_finishes_when_every_runnable_step_is_done():
 
 
 # --- list mapping, from real payload shapes ---------------------------------
-# FAERS returns a bare list of {term, count}; the next step needs the term
-# STRINGS, in order, capped. The prose body spends five lines telling the model
-# not to retype them (MedDRA is case- and spelling-strict, "Haemorrhage" not
-# "hemorrhage") — carrying them mechanically is the whole point.
+# MedDRA terms are case- and spelling-strict, so the terms are carried, never retyped.
 
 FAERS_GRAPH = {
     "skill": "faers",
@@ -222,10 +209,6 @@ def test_a_dotted_path_into_the_first_record_still_works():
 
 
 # --- a step that cannot be built must not end the run ------------------------
-# Live: the FAERS extraction missed, so the next step's for_each list was absent
-# and SkillGraphError propagated out of advance(), killing a ten-step run at
-# step four. A navigator that dies because one value is missing is worse than the
-# model it replaced — Novartis's would have taken the other branch.
 
 BLOCKED_GRAPH = {
     "skill": "blocked",
@@ -265,10 +248,8 @@ def test_the_run_continues_past_a_blocked_step():
 
 
 # --- a gateway must not decide on data it never got --------------------------
-# Live on enzalutamide: `signals` failed to extract, so `strong_signal` derived
-# from an empty list and came out False — and the stratify step was skipped as if
-# the data had said "no strong signal". A missing input and a genuine negative
-# are different answers, and only one of them is safe to branch on.
+# A missing input and a genuine negative are different answers, and only one of
+# them is safe to branch on.
 
 DERIVE_GRAPH = {
     "skill": "d", "inputs": ["drug"],
@@ -309,9 +290,8 @@ def test_a_gateway_over_real_but_empty_rows_is_a_genuine_no():
 
 
 # --- gathering across a loop step's calls ------------------------------------
-# FAERS_calculate_disproportionality answers ONE metrics object per call —
-# data.metrics.PRR.value — and the step makes one call per reaction. `extract`
-# takes the first match, which is the wrong shape: the gateway needs every PRR.
+# One metrics object per call, so `extract` would take only the first: the
+# gateway needs every PRR.
 
 COLLECT_GRAPH = {
     "skill": "c", "inputs": ["drug"],
@@ -371,12 +351,7 @@ def test_no_value_reaching_the_threshold_is_a_genuine_negative():
 
 
 # --- one door, not two -------------------------------------------------------
-# execute_tool is not a second implementation: its class calls run_one_function
-# and then NORMALISES — JSON-decoding a string return and wrapping any non-dict
-# as {"result": ...}. Calling run_one_function directly skipped that, so the
-# runner saw a bare list where the agent (and every saved trace) sees
-# {"result": [...]}, and an extraction path written from a trace missed. The
-# runner goes through the same normalisation the agent does.
+# execute_tool normalises the return, so the runner sees what the agent sees.
 
 def test_a_bare_return_is_wrapped_the_way_execute_tool_wraps_it():
     from tooluniverse.skill_runner import normalised_executor
@@ -415,11 +390,8 @@ def test_the_call_is_passed_in_the_shape_run_one_function_expects():
 
 
 # --- the evidence has to survive the run -------------------------------------
-# The runner extracted what the NEXT step needed and threw the rest away, which
-# is fine for control and useless for the report: the model still has to see the
-# label text, the trial list, the papers. The run keeps them, per step, and hands
-# them over once at the end — so raw payloads never pass through the transcript
-# on the way, which is what makes this cheaper than the model relaying calls.
+# Payloads are kept per step and handed over once at the end, so they never pass
+# through the transcript on the way.
 
 def test_the_bundle_carries_the_facts_and_what_went_wrong():
     runner = SkillRunner(GRAPH, execute=lambda t, a: {"data": {"id": "CHEMBL88"}})
@@ -432,11 +404,8 @@ def test_the_bundle_carries_the_facts_and_what_went_wrong():
 
 
 # --- pulling a value out of a string, not just a path ------------------------
-# Measured: FAERS returns 3 reaction terms for "lutetium lu 177 dotatate" and 100
-# for "LUTATHERA" — case is irrelevant, the BRAND is what is indexed. The label
-# lookup already knows the brand: DailyMed's SPL title starts with it. So the
-# graph can chain brand -> FAERS instead of hoping the model remembers to retry,
-# which is what the prose body asks it to do.
+# FAERS indexes the brand and the SPL title starts with it, so the graph chains
+# brand -> FAERS instead of hoping the model retries.
 
 def test_a_regex_lifts_a_value_out_of_a_returned_string():
     graph = {"skill": "b", "inputs": ["drug_name"],
@@ -465,11 +434,8 @@ def test_a_value_falls_back_to_another_fact_when_the_lift_fails():
 
 
 # --- what the QUESTION asks for is an input, not a derivable ------------------
-# "What does FAERS show for Lutathera — especially myelodysplastic syndrome and
-# renal impairment?" Neither term is in the twelve the graph picks by report
-# count, so the run came back full of correct numbers that did not answer the
-# question. Those terms exist only in the question; they must be bound as an
-# input and UNIONED with the frequency-ranked ones.
+# A term that exists only in the question must be bound as an input and unioned
+# with the frequency-ranked ones.
 
 UNION_GRAPH = {
     "skill": "u", "inputs": ["drug_name", "requested_aes"],
@@ -519,15 +485,8 @@ def test_a_duplicate_between_requested_and_frequent_is_not_run_twice():
 
 
 # --- repair: ask the agent, then retry ---------------------------------------
-# Measured: the agent binds "lutetium Lu-177 dotatate" from the question, three
-# times identically — and DailyMed returns 0 SPLs for it, while "lutetium lu 177
-# dotatate" returns 1. A correct, repeatable binding would have produced a
-# confidently wrong report. The variant is world knowledge (Lu-177 is an isotope
-# notation), which the agent has and the server does not.
-#
-# So the server asks, but stays in charge: it decides the lookup failed, frames
-# the question, validates by re-querying, and gives up after two attempts. The
-# model is an oracle for one narrow thing, never the scheduler.
+# A name variant is world knowledge the agent has and the server does not, so the
+# model is an oracle for one narrow lookup; the server still decides and validates.
 
 REPAIR_GRAPH = {
     "skill": "r", "inputs": ["drug_name"],
@@ -601,11 +560,7 @@ def test_without_an_ask_callback_the_runner_behaves_exactly_as_before():
 
 
 # --- a declared value that never arrives must be recorded --------------------
-# Live, without the repair callback: the identity step declares it produces
-# `setid`, DailyMed returned nothing for the agent's binding, and the run carried
-# on with setid=None and blocked=[] — no trace anywhere. Everything downstream
-# then answered on the wrong drug form. Repair is the recovery; this is the
-# honesty when there is no recovery.
+# Repair is the recovery; this is the honesty when there is no recovery.
 
 MISS_GRAPH = {
     "skill": "m", "inputs": ["drug_name"],
@@ -648,10 +603,9 @@ def test_a_value_that_does_arrive_is_not_recorded_as_unresolved():
     assert runner.advance(run["run_id"])["unresolved"] == []
 
 
-# --- the pure pieces, shared with the Temporal host (DSR-707) ----------------
-# `absorb`, `resolved`, `substitute`, `trim` and `apply` never touch the network,
-# the clock or a random source, so an async driver can await the calls and hand
-# the results to the same functions the sync driver uses.
+# --- the pure pieces, shared with the Temporal host --------------------------
+# They never touch the network, the clock or a random source, so an async driver
+# can hand its results to the same functions the sync driver uses.
 
 from tooluniverse.skill_runner import absorb  # noqa: E402
 
@@ -752,12 +706,12 @@ def test_start_accepts_the_run_id_a_host_already_has():
     assert runner.state("skill-demo-42")["facts"] == {"drug_name": "x"}
 
 
-# --- judgement facts and matched collection (DSR-708) -------------------------
+# --- judgement facts and matched collection -----------------------------------
 
 
 def test_collect_with_match_keeps_the_first_matching_item_per_call():
-    """Live, get_HPO_ID_by_phenotype answers UPHENO:, MP:, then HP: — the human
-    phenotype is third. One HP id per symptom, mechanically."""
+    """The lookup answers UPHENO:, MP: and HP: ids; one HP id per symptom is
+    picked mechanically."""
     spec = {"id": "phenotypes",
             "collect": {"hpo_ids": {"path": "data.items[].id", "match": "^HP:"},
                         "everything": "data.items[].id"}}
@@ -825,8 +779,8 @@ def test_a_judge_step_asks_once_after_its_calls_and_keeps_the_answer():
 
 
 def test_a_judge_step_sees_what_its_own_calls_extracted():
-    """Phase 1: the HP ids come from the lookups; which two discriminate is judged,
-    and the judge must see the ids to choose among them."""
+    """The HP ids come from the lookups, and the judge must see them to choose
+    which two discriminate."""
     runner, asked = _judged_runner({"judge": {"primary_keyword": "k",
                                               "working_hypothesis": "h",
                                               "discriminating_hpo_ids": ["HP:0001433"]}})
@@ -912,14 +866,12 @@ def test_every_shipped_process_finishes_with_stub_tools_and_a_stub_oracle(skill)
 
 
 def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
-    """The skill that could not run server-side: three judgement points, one
-    mechanical HP id per symptom, genes looked up per resolved candidate, no
-    step blocked and no fact unresolved."""
+    """The rare-disease process end to end: three judgement points, one HP id per
+    symptom, genes per resolved candidate, no step blocked and no fact unresolved."""
     responses = {
         "get_HPO_ID_by_phenotype": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0001433"}]}},
-        # Real shapes as the runner sees them: the joint tool answers a bare list
-        # of names, which normalised_executor wraps as {"result": [...]}; Orphanet
-        # a results list with the code and the preferred term.
+        # Real shapes as the runner sees them: a bare list is wrapped as
+        # {"result": [...]}.
         "get_joint_associated_diseases_by_HPO_ID_list": {"result": ["Gaucher disease"]},
         "Orphanet_search_diseases": {"data": {"results": [
             {"ORPHAcode": 355, "Preferred term": "Gaucher disease"}]}},
@@ -987,12 +939,9 @@ def test_the_bundle_says_which_tools_the_server_called_per_step():
                      "stratify": ["stratify"], "report": []}
 
 
-# --- the author's judgement travels with the data (Rung 2, report quality) ------
-# Blind-judged 2026-09-03: the modelled reports printed FAERS coding noise as
-# signals because the step notes stayed on the server. The bundle now carries
-# every step's notes and the process's report guidance; extraction can exclude
-# what the author knows is noise; and a step can delegate calls to the agent's
-# own tools (web search, code) through the same pause the judgement uses.
+# --- the author's judgement travels with the data -------------------------------
+# The bundle carries every step's notes and the report guidance, so the writer
+# sees what the author knows is noise.
 
 
 def test_the_bundle_carries_step_notes_and_the_report_guidance():
@@ -1046,8 +995,8 @@ def test_a_delegated_step_asks_the_agent_to_make_the_calls_and_takes_the_answer(
 
 
 def test_a_question_carries_the_steps_notes_so_the_agent_knows_what_shape_to_answer_in():
-    """Live, a delegated web search came back as bare URLs: the notes asked for
-    {title, url, snippet}, and the agent never saw them."""
+    """A delegated call comes back in the wrong shape when the step's notes never
+    reach the agent."""
     graph = {"skill": "n", "inputs": [], "steps": [
         {"id": "web", "delegate": [{"tool": "exa_web_search", "arguments": {"query": "x"}}],
          "produces": ["web_context"], "notes": "Return a list of {title, url, snippet}."},
@@ -1064,11 +1013,8 @@ def test_a_question_carries_the_steps_notes_so_the_agent_knows_what_shape_to_ans
 
 # --- the shipped rare-disease process resolves its differential to Orphanet ----
 #
-# Live 2026-09-04: the HPO joint tool returns bare disease names, so the report
-# could link no ranked disease to Orphanet and said so. The process now looks
-# each decisive candidate up by name and carries the hit — name and code — so
-# every ranked disease gets its own link, and one Orphanet does not know is
-# reported as such rather than dropped by index misalignment.
+# The joint tool answers bare disease names, so each candidate is looked up by
+# name and its code carried, and a candidate with no hit is reported as such.
 
 def _rare_disease_run(orphanet_hits):
     from tooluniverse.skill_graph import load_graph
@@ -1172,9 +1118,8 @@ def test_every_decisive_candidate_is_looked_up_in_orphanet_by_name():
 
 # --- collect can flatten a list-of-lists into one gene set ---------------------
 #
-# Orphanet answers one gene list per disease. The gene panel loops over genes,
-# not over diseases, so the rows must fold into one list — and a gene shared by
-# two candidates must be characterised once, not twice.
+# One gene list per disease, but the panel loops over genes, so the rows fold
+# into one list and a shared gene is characterised once.
 
 def test_collect_can_flatten_one_list_per_call_into_one_list():
     spec = {"collect": {"genes": {"path": "data.genes[].Symbol", "flatten": True}}}
@@ -1203,10 +1148,8 @@ HITS = {"Hunter syndrome": [{"ORPHAcode": 580, "Preferred term": "Mucopolysaccha
 
 
 def test_genes_come_from_orphanet_per_resolved_candidate_never_from_the_model():
-    """DSR-730: the model answered four genes once and none twice on identical
-    data. A gene list is a claim the Run Record must vouch for, so it is an
-    extraction — one Orphanet lookup per resolved candidate, folded into one
-    de-duplicated list for the panel — and no step asks the model for it."""
+    """A gene list is a claim the Run Record must vouch for, so it is an
+    extraction, one lookup per resolved candidate, and never asked of the model."""
     state, calls = _rare_disease_run(HITS)
 
     looked_up = sorted(int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_genes")
@@ -1219,10 +1162,7 @@ def test_genes_come_from_orphanet_per_resolved_candidate_never_from_the_model():
 
 # --- a step that cannot be built is blamed by name, not by search ---------------
 #
-# Live 2026-09-04 (rare-disease, tools answering nothing): a loop whose list came
-# from a step that was itself blocked could not be built, and the runner marked
-# the NEXT two steps as blocked with its reason. The step that raised is the one
-# to record.
+# The step that raised is the one to record, not the steps after it.
 
 def test_a_step_that_cannot_be_built_is_the_one_recorded_as_blocked():
     from tooluniverse.skill_runner import next_runnable, new_run
@@ -1279,8 +1219,7 @@ def test_optimuskg_is_asked_once_as_a_delegated_call_on_the_top_candidate():
 
 # --- a failed loop iteration names the item it was for --------------------------
 #
-# Fourteen FAERS calls, one rate-limited: the report must say WHICH reaction is
-# missing, not only that "FAERS_calculate_disproportionality" failed once.
+# The report must say which item is missing, not only that the tool failed once.
 
 def test_a_failed_iteration_is_recorded_with_its_arguments():
     graph = {"skill": "loop", "inputs": ["terms"], "steps": [
@@ -1307,9 +1246,8 @@ def test_a_failed_iteration_is_recorded_with_its_arguments():
 
 # --- the run remembers what it asked and what it called, for the Run Record ------
 #
-# The bundle carries tool NAMES per step so the writer can cite; the record needs
-# the arguments too, and the questions with their answers — none of which the
-# agent's own trace shows once the run is over.
+# The record needs the arguments and the questions too, which the agent's own
+# trace no longer shows once the run is over.
 
 def test_the_run_keeps_every_call_with_its_arguments_per_step():
     graph = {"skill": "calls", "inputs": ["terms"], "steps": [
@@ -1354,8 +1292,8 @@ def test_an_unanswered_question_is_kept_with_its_empty_answer():
 
 # --- collect can project a large payload to the few fields the run keeps --------
 #
-# Orphanet answers ~10 KB of phenotypes per disease. The run needs the disease
-# and its HPO ids as one row, not the payload and not three aligned lists.
+# The run needs the disease and its HPO ids as one row, not the whole payload
+# and not three aligned lists.
 
 def test_collect_can_project_each_call_to_named_fields():
     spec = {"collect": {"disease_phenotypes": {
@@ -1398,11 +1336,8 @@ def test_overlap_and_grade_are_computed_by_the_server_without_a_question():
 
 # --- the bundle is a tool return the model must read: bounded per step ------------
 #
-# Live 2026-09-07: a rare-disease run finished all seventeen steps and the agent's
-# turn then died on "input exceeds the context window" — the bundle was 716 KB,
-# of which GTEx's twenty-eight payloads were 288 KB. A cap per payload cannot
-# bound a loop. Each step's results get a budget; the rows a loop collected are
-# in facts and are what the writer reads.
+# A cap per payload cannot bound a loop, so each step's results get a budget; the
+# rows a loop collected are in facts and are what the writer reads.
 
 def test_a_question_stubs_facts_larger_than_a_payload_cap():
     from tooluniverse.skill_runner import question_for
@@ -1423,9 +1358,8 @@ def test_the_gene_panel_collects_a_row_per_gene_for_the_writer():
 
 
 def test_a_stubbed_fact_says_it_travels_whole_in_the_questions_own_calls():
-    """Live 2026-09-07: the stub said "in the bundle" and the model, asked to compute
-    over rows the call's arguments carried whole, transcribed an empty list. The
-    stub must point at where the value is."""
+    """A stub must point at where the value is, or the model computes over rows
+    it cannot see."""
     from tooluniverse.skill_runner import question_for
     rows = [{"orpha_code": str(i), "hpo_ids": ["HP:%07d" % j for j in range(60)]} for i in range(20)]
     facts = {"hpo_ids": ["HP:0000280"], "disease_phenotypes": rows}
@@ -1440,11 +1374,8 @@ def test_a_stubbed_fact_says_it_travels_whole_in_the_questions_own_calls():
 
 # --- the differential is ranked by onset fit, prevalence, then overlap -------------
 #
-# DSR-729: both blinded judges marked the modelled reports down for ranking by
-# Orphanet annotation count, which put sialuria (five families worldwide) and an
-# adolescent-onset sialidosis above the mucopolysaccharidoses a four-year-old must
-# have excluded first. Ranking is arithmetic over rows the run holds — onset,
-# prevalence, overlap — so the runtime does it, with the author's rule.
+# Ranking is arithmetic over rows the run already holds, so the runtime does it,
+# with the author's rule.
 
 RANK_SPEC = {"compute": {"ranked_rows": {
     "op": "rank_differential",
@@ -1524,9 +1455,8 @@ def test_the_shipped_process_ranks_the_differential_on_the_server_from_its_rows(
 
 
 def test_prevalence_tier_is_the_class_most_studies_agree_on_not_one_outlier():
-    """Live 2026-09-07: Mucolipidosis II ranked first because ONE of six Orphanet
-    entries said 1-5 / 10 000 while five said 1 in a million. The tier is the
-    class most entries report; ties go to the commoner class."""
+    """The tier is the class most entries report, so one outlier entry cannot
+    rank a disease first; ties go to the commoner class."""
     from tooluniverse.skill_runner import _prevalence_tier
     assert _prevalence_tier(["1-9 / 1 000 000", "<1 / 1 000 000", "1-9 / 1 000 000",
                              "1-9 / 1 000 000", "<1 / 1 000 000", "1-5 / 10 000"])[0] == "1-9 / 1 000 000"
@@ -1536,9 +1466,8 @@ def test_prevalence_tier_is_the_class_most_studies_agree_on_not_one_outlier():
 
 
 def test_a_candidate_with_no_matching_phenotype_never_outranks_one_that_fits():
-    """Live 2026-09-07: Hermansky-Pudlak (0 of 4) ranked second on a prevalence
-    entry. Prevalence orders the candidates that match at all; zero overlap goes
-    to the bottom of its onset band."""
+    """Prevalence orders the candidates that match at all; zero overlap goes to
+    the bottom of its onset band."""
     facts = {"age_years": 4,
              "overlap_rows": [{"orpha_code": "1", "preferred_term": "Common but 0/4", "overlap_pct": 0, "grade": "T4"},
                               {"orpha_code": "2", "preferred_term": "Rare but 2/4", "overlap_pct": 50, "grade": "T3"}],
@@ -1552,10 +1481,8 @@ def test_a_candidate_with_no_matching_phenotype_never_outranks_one_that_fits():
 
 # --- overlap and grade are arithmetic, so the server computes them ----------------
 #
-# Delegated to the agent's code tool, the overlap came back empty twice and with
-# retyped inputs three times in fifteen runs (DSR-729/732). Counting shared HPO
-# ids is not a judgement; the runtime does it from the rows it already holds,
-# with the author's thresholds.
+# Counting shared HPO ids is not a judgement; the runtime does it from the rows
+# it already holds, with the author's thresholds.
 
 OVERLAP_SPEC = {"compute": {"overlap_rows": {
     "op": "overlap",
@@ -1597,9 +1524,8 @@ def test_overlap_without_its_source_rows_is_unresolved_not_empty():
 
 # --- a loop's rows keep the item they were made for ------------------------------
 #
-# HPO_get_diseases_by_phenotype answers {"diseases": [...]} without echoing the
-# term, so a collected count could not be paired with its symptom. A collect
-# field may name the loop item: "$item as term".
+# The tool does not echo the term, so a collect field may name the loop item:
+# "$item as term".
 
 def test_a_collected_row_can_keep_the_loop_item_it_was_made_for():
     graph = {"skill": "loop", "inputs": ["hpo_ids"], "steps": [
@@ -1622,10 +1548,8 @@ def test_a_collected_row_can_keep_the_loop_item_it_was_made_for():
 
 # --- the discriminating phenotypes are the ones annotated to the fewest diseases ---
 #
-# UI run 3e342e1a: asked for the 2-3 rarest phenotypes the model chose developmental
-# delay and seizures — the two commonest terms in the ontology — once in fifteen
-# runs, and the differential became a neurodevelopmental list. "Fewest annotated
-# diseases" is arithmetic; the model is asked only when the counts tie.
+# "Fewest annotated diseases" is arithmetic; the model is asked only when the
+# counts tie.
 
 FEWEST_SPEC = {"compute": {"discriminating_hpo_ids": {
     "op": "fewest", "rows": "term_counts", "id": "hpo_id", "count": "diseases", "take": 2}}}
@@ -1666,9 +1590,8 @@ def test_the_shipped_process_computes_the_discriminating_pair_and_asks_only_on_a
 
 
 def test_a_judged_name_a_compute_already_resolved_is_not_asked():
-    """Live: the discriminating pair was computed cleanly and the judge fired anyway,
-    and the model echoed the answer back. A judgement is for what the step could
-    not resolve itself; a name already in hand is never put to the model."""
+    """A judgement is for what the step could not resolve itself; a name already
+    in hand is never put to the model."""
     graph = {"skill": "j", "inputs": ["term_counts"], "steps": [
         {"id": "discriminating", "calls": [],
          "compute": {"pair": {"op": "fewest", "rows": "term_counts", "id": "hpo_id", "count": "diseases", "take": 2}},
@@ -1704,10 +1627,7 @@ def test_fewest_counts_distinct_ids_so_two_symptoms_on_one_term_do_not_make_a_pa
 
 # --- a candidate must carry the discriminating pair to rank above those that do ---
 #
-# DSR-729 v2: both judges named Sotos-first as the one clinical fault. Sotos fits
-# the age, is the commonest disease on the list, and carries three of the four case
-# phenotypes — but not hepatosplenomegaly, one of the two the run itself computed
-# as discriminating. The process computes the pair and then ranked without it.
+# The process computes the pair, so the ranking must gate on it.
 
 GATED_SPEC = {"compute": {"ranked_rows": {**RANK_SPEC["compute"]["ranked_rows"],
                                           "must_carry": "discriminating_hpo_ids",
@@ -1752,10 +1672,8 @@ def test_without_a_computed_pair_the_gate_is_not_applied_and_says_so():
 
 # --- a disease carries a case phenotype if it lists the term, all its parents, or a child
 #
-# Orphanet annotates Hurler and MPS II with Hepatomegaly and Splenomegaly as two
-# terms; the case's Hepatosplenomegaly is their conjunction (HPO lists both as its
-# parents). An exact-id match called that "not carried" and demoted the two diseases
-# every clinician puts first. The match is ontological, from rows the run fetches.
+# Hepatomegaly and Splenomegaly together are the case's Hepatosplenomegaly, so an
+# exact-id match is not enough: the match is ontological, from rows the run fetches.
 
 HIER = [  # one row per case term, from HPO_get_term_hierarchy (parents) and (children)
     {"hpo_id": "HP:0001433", "parents": ["HP:0002240", "HP:0001744"], "children": []},
@@ -1811,11 +1729,9 @@ def test_the_shipped_process_fetches_the_hierarchy_and_matches_ontologically():
 
 # --- check: a model answer is verified before it becomes a fact ------------------
 #
-# Measured 2026-09-09: a delegated compute step answered correctly 3/3 without ever
-# calling the code tool, and one report cited a sandbox that never ran. The server
-# cannot make the agent use a tool; it can refuse an answer that does not hold
-# against the rows it already has. A failing check is asked once more, with the
-# failure named; a second failure leaves the fact unresolved, never in facts.
+# The server cannot make the agent use a tool; it can refuse an answer that does
+# not hold against the rows it already has. A failing check is asked once more,
+# with the failure named; a second failure leaves the fact unresolved.
 
 from tooluniverse.skill_runner import check_facts  # noqa: E402
 
@@ -2138,8 +2054,8 @@ def test_a_mapped_term_that_is_not_in_the_sources_list_is_refused_and_asked_agai
 
 
 def test_the_mapping_question_carries_the_sources_whole_term_list_past_the_payload_cap():
-    """Live, the list grew to 1000 terms (55 KB) and the question showed it as "omitted":
-    the agent was asked to copy terms exactly from a list it could not see."""
+    """The agent must see the whole term list it is asked to copy from, however
+    long that list is."""
     terms = [f"REACTION TERM {n}" for n in range(1000)]
     wide = {"result": [{"term": t, "count": 1000 - n} for n, t in enumerate(terms)]}
     asked = []

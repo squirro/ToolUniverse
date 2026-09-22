@@ -1,10 +1,9 @@
-"""run_skill / continue_skill — the agent's view of a Skill Run (ADR-0016, DSR-712).
+"""run_skill / continue_skill: the agent's view of a Skill Run (ADR-0016).
 
-The agent never sees Temporal. It sees two tools whose return value is one of
-three shapes — finished with the bundle, waiting with a question, running with a
-progress line — and it keeps calling until the first. Every return is a tick the
-user can see; the user decided a tick lands on every step boundary. These tests
-drive the pure client over a scripted handle, so no server and no clock.
+The agent never sees Temporal. It sees two tools whose return value is one of three
+shapes (finished with the bundle, waiting with a question, running with a progress
+line) and it keeps calling until the first, so a tick lands on every step boundary.
+These tests drive the pure client over a scripted handle, so no server and no clock.
 """
 
 import sys
@@ -57,8 +56,7 @@ def test_missing_required_inputs_are_named_and_optional_ones_are_not():
 def test_the_three_shapes():
     finished = progress("r1", _status("a", [], finished=True), handover={"skill": "demo"})
     assert finished["status"] == "finished" and finished["handover"] == {"skill": "demo"}
-    # Live, the agent read the rule in three places and answered the user without handing
-    # in the draft. The reply it acts on says what comes next, in the reply itself.
+    # The reply the agent acts on has to say what comes next, in the reply itself.
     assert "submit_report(run_id=\"r1\"" in finished["next"] and "before you answer" in finished["next"]
     question = {"kind": "judge", "step": "a", "wants": ["k"], "context": {}}
     assert progress("r1", _status("a", [], waiting=question)) == {
@@ -251,7 +249,7 @@ def test_the_agent_asks_for_the_rows_most_relevant_to_its_own_words(tmp_path):
 
 @pytest.mark.asyncio
 async def test_an_input_name_the_process_does_not_declare_is_refused_with_the_declared_ones():
-    """Seen live: the agent invented `focus_adverse_events`, and nothing told it the name is not one."""
+    """An invented input name is refused with the declared ones, not silently ignored."""
     client = FakeClient(ScriptedHandle([_status("a", [])]))
 
     out = await start(client, FakeStore(PROCESS), "demo",

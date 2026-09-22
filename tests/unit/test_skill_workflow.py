@@ -1,4 +1,4 @@
-"""The Skill Process interpreter on Temporal (ADR-0016, DSR-710).
+"""The Skill Process interpreter on Temporal (ADR-0016).
 
 One workflow type runs every process; the process travels inside the run as input.
 Every tool call is an activity; the model's two holes — repair and judgement — are a
@@ -361,10 +361,9 @@ async def test_a_delegated_step_pauses_with_the_calls_and_the_answer_lands_in_th
 
 # --- fan-out: concurrent under a per-source ceiling, results in declared order ----
 #
-# Of 366 s inside Temporal on the Lutathera question, 345 s were fourteen FAERS
-# calls made one after another (ADR-0016). A loop's iterations are independent by
-# construction — the same call with one value substituted — so they run at once,
-# capped per source, and are gathered back in the order they were declared.
+# A loop's iterations are the same call with one value substituted, so they are
+# independent: they run at once, capped per source, and are gathered back in the
+# order they were declared.
 
 import threading
 import time
@@ -709,8 +708,8 @@ PAGES = [{"query": q, "title": f"page {n}", "url": f"https://example.org/{n}", "
 
 
 async def test_a_delegated_loop_asks_one_call_per_query_and_keeps_the_pages_as_evidence_on_temporal():
-    """The runner already does both; the host that serves composed no loop for a delegate and
-    left a judged evidence table in the facts, whole, instead of in the Working Record."""
+    """The host that serves must compose the loop for a delegate and keep a judged evidence
+    table in the Working Record, not whole in the facts."""
     seen = []
 
     async def answer_twice(handle, env):

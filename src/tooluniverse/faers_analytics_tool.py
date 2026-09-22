@@ -9,9 +9,7 @@ from .tool_registry import register_tool
 
 FDA_BASE_URL = "https://api.fda.gov/drug/event.json"
 
-# openFDA caps a count request at 1000 terms and rejects more with HTTP 400. It
-# also refuses limit>100 outright (403 API_KEY_MISSING) unless the caller is
-# authenticated, so the limit and the key have to travel together.
+# openFDA's widest count page; a limit above 100 needs an api_key.
 COUNT_PAGE_MAX = 1000
 
 
@@ -117,15 +115,10 @@ class FAERSAnalyticsTool(BaseTool):
                     "error": "Must provide drug_name and adverse_event",
                 }
 
-            # Resolve the drug ONCE, and remember which field knew it, so every
-            # count below describes the same population and the envelope can say
-            # which one. Searching only generic_name reported a brand name as no
-            # data at all.
+            # Resolve the drug once so every count below describes one population.
             resolved_field, drug_total = self._resolve_drug_field(drug_name)
 
-            # Every drug query below carries the field EXPLICITLY. Passing it via
-            # self would share it with concurrent calls on the same cached tool
-            # instance, which is what made b come back as exactly -a (DSR-693).
+            # The field is passed explicitly; the tool instance is shared across calls.
             # a = drug + event
             a = self._get_faers_count(drug_name, adverse_event, field=resolved_field)
 
@@ -143,9 +136,7 @@ class FAERSAnalyticsTool(BaseTool):
             total = self._get_faers_total_count()
             d = total - a - b - c
 
-            # A drug cannot have fewer reports than one of its own reactions. If
-            # that happens the two queries disagreed — say so, rather than
-            # reporting a negative cell as "insufficient data".
+            # A joint count above a marginal means the queries disagreed.
             if drug_reports < a or event_reports < a:
                 return {
                     "status": "error",
@@ -174,10 +165,7 @@ class FAERSAnalyticsTool(BaseTool):
             # Calculate ROR (Reporting Odds Ratio)
             ror = (a / b) / (c / d) if b > 0 and d > 0 else None
 
-            # Same analysis over the UNION of every spelling openFDA knows. This
-            # is a different cohort, not a better one -- reporting both is what
-            # stops a quoted ROR being ambiguous about which population it
-            # describes. Costs two extra calls: c and d derive from a.
+            # The same analysis over the union of every spelling: a different cohort, not a better one.
             sensitivity = self._population_sensitivity(
                 drug_name, adverse_event, resolved_field, ror, a, total
             )
@@ -209,10 +197,7 @@ class FAERSAnalyticsTool(BaseTool):
                 "status": "success",
                 "drug_name": drug_name,
                 "adverse_event": adverse_event,
-                # Which population this statistic actually describes. Without it
-                # a reader cannot tell a brand-only cohort from the union of every
-                # reported spelling -- and for this drug that is the difference
-                # between ROR 7.2 and 12.0.
+                # Which population the statistic describes.
                 "case_definition": {
                     "query_term": drug_name,
                     "resolved_field": resolved_field,
@@ -630,8 +615,7 @@ class FAERSAnalyticsTool(BaseTool):
                     "case_definition": self._case_definition(drug_name, resolved_field, drug_total),
                     "meddra_hierarchy": {
                         "PT_level": pt_level,
-                        # len(pt_level) here counted the 50-item display slice, so
-                        # this always read 50 for any drug with 50+ PTs.
+                        # Count the full result, not the display slice.
                         "total_unique_PTs": len(pt_results),
                     },
                     "note": "Full MedDRA hierarchy (HLT, SOC) requires MedDRA license. Showing Preferred Term (PT) level only.",
@@ -651,12 +635,7 @@ class FAERSAnalyticsTool(BaseTool):
 
     # Helper methods for statistical calculations
 
-    # Fields tried, in order, when turning a drug name into a query. `generic_name`
-    # stays first so existing numbers do not move; the rest exist because a BRAND
-    # name matched none of them before. Measured 2026-08-03:
-    #   generic_name:"Lutathera"           -> 404, no match
-    #   brand_name:"Lutathera"             -> 5,551
-    #   medicinalproduct.exact:"LUTATHERA" -> 5,550
+    # Fields tried in order; generic_name stays first so existing numbers do not move.
     DRUG_NAME_FIELDS = (
         "patient.drug.openfda.generic_name",
         "patient.drug.openfda.brand_name",
@@ -669,18 +648,10 @@ class FAERSAnalyticsTool(BaseTool):
 
     @staticmethod
     def synonyms_from_openfda(openfda_block) -> List[str]:
-        """Other names for the SAME product, taken from openFDA itself.
+        """Other names for the same product, from its openFDA block.
 
-        Counting names across a whole report conflates synonyms with
-        co-medications -- LUTATHERA's reports name LUTETIUM LU 177 DOTATATE 5,683
-        times (the same product) and OCTREOTIDE 314 times (a drug the patient also
-        took). Separating those by a co-occurrence threshold is a clinical
-        judgement. The ``openfda`` block on the matched DRUG ENTRY avoids the
-        question: it is the NDC-derived name set for that one product, so a
-        co-medication cannot appear in it at all.
-
-        Caveat worth knowing: only NDC-matched reports carry this block, so
-        as-reported spellings that never mapped are NOT reachable this way.
+        The block is the NDC-derived name set for one drug entry, so a
+        co-medication cannot appear in it. Only NDC-matched reports carry it.
         """
         if not openfda_block:
             return []
@@ -693,11 +664,7 @@ class FAERSAnalyticsTool(BaseTool):
 
     @staticmethod
     def expand_terms(drug_name: str, openfda_block) -> List[str]:
-        """The caller's term first, then the product's other names.
-
-        The caller's own spelling anchors the list because it defines the narrow
-        cohort that stays PRIMARY. Everything after it widens the union.
-        """
+        """The caller's term first (it defines the narrow cohort), then the product's other names."""
         terms = [drug_name]
         for name in FAERSAnalyticsTool.synonyms_from_openfda(openfda_block):
             if name.upper() != drug_name.upper():
@@ -706,12 +673,10 @@ class FAERSAnalyticsTool(BaseTool):
 
     @staticmethod
     def candidate_terms(field: str, drug_name: str) -> List[str]:
-        """Spellings worth probing for one field.
+        """Spellings to probe for one field.
 
-        ``.exact`` fields are case-STRICT and FAERS stores product names
-        uppercase, so `medicinalproduct.exact:"Lutathera"` is a 404 while
-        `"LUTATHERA"` returns 5,682 reports. Every other field matches either
-        casing, where a second probe would only cost a call.
+        ``.exact`` fields are case-strict and FAERS stores product names
+        uppercase; other fields match either casing.
         """
         terms = [drug_name]
         if field.endswith(".exact") and drug_name.upper() != drug_name:
@@ -720,19 +685,9 @@ class FAERSAnalyticsTool(BaseTool):
 
     @staticmethod
     def population_queries(matches: List[Tuple[str, str]]) -> Dict[str, str]:
-        """The two defensible cohorts, from ``(field, matched_term)`` pairs.
+        """The narrow (first matching field) and union (all fields OR'd) cohorts.
 
-        The term travels with the field because they disagree: `brand_name`
-        matches "Lutathera" while `medicinalproduct.exact` needs "LUTATHERA".
-
-        NARROW is the first field that knew the drug -- historically the only one
-        counted, and kept as the primary so published numbers do not move. UNION
-        is every spelling openFDA recognises, OR'd together. They are different
-        populations, and on LUTATHERA/myelodysplastic syndrome they disagree by
-        29 vs 50 cases (ROR 7.2 vs 12.0), so the choice cannot be silent.
-
-        With one matching field the two are identical, and callers must not imply
-        a comparison that does not exist.
+        The term travels with the field because ``.exact`` fields need a different casing.
         """
         narrow = f'{matches[0][0]}:"{matches[0][1]}"'
         union = "+OR+".join(f'{f}:"{t}"' for f, t in matches)
@@ -742,10 +697,7 @@ class FAERSAnalyticsTool(BaseTool):
     def divergence_note(primary: Dict[str, Any], sensitivity: Dict[str, Any]):
         """Flag a population choice that changes the conclusion, else None.
 
-        Two things are material: the signal crossing ROR 1.0 (present under one
-        cohort, absent under the other), and a ratio shift large enough to change
-        how the number reads. A stable estimate is NOT flagged -- noise here would
-        train the reader to ignore the field.
+        A stable estimate is not flagged, so the field stays meaningful.
         """
         p, s = primary.get("ROR"), sensitivity.get("ROR")
         if p is None or s is None or p <= 0 or s <= 0:
@@ -753,10 +705,7 @@ class FAERSAnalyticsTool(BaseTool):
         pc, sc = primary.get("cases") or 0, sensitivity.get("cases") or 0
         crosses = (p >= 1.0) != (s >= 1.0)
         ratio = max(p, s) / min(p, s)
-        # Case count is judged alongside the ROR, not instead of it. Measured on
-        # LUTATHERA/myelodysplastic syndrome, the union holds 48% more cases while
-        # the ROR ratio is only 1.44 -- under a ROR-only gate that read as
-        # agreement, which is the opposite of what a reader needs to know.
+        # The case count is judged alongside the ROR, not instead of it.
         case_shift = (max(pc, sc) / min(pc, sc)) if min(pc, sc) > 0 else 0
         if not crosses and ratio < 1.5 and case_shift < 1.2:
             return None
@@ -775,11 +724,7 @@ class FAERSAnalyticsTool(BaseTool):
     def _count_url(self, search_query: str, count_field: str) -> str:
         """A count URL asking for as many terms as this caller is allowed.
 
-        Without ``FDA_API_KEY`` openFDA answers 403 to any ``limit`` above 100, so
-        an unauthenticated caller must not send one at all: it would turn a
-        working-but-truncated call into a failed one. Authenticated, the ceiling
-        is 1000, which on a busy drug is ~29% more of the reaction distribution
-        than the unasked-for default of 100.
+        Without ``FDA_API_KEY`` openFDA rejects a ``limit`` above 100, so none is sent.
         """
         url = f"{FDA_BASE_URL}?search={search_query}&count={count_field}"
         api_key = os.getenv("FDA_API_KEY")
@@ -790,10 +735,7 @@ class FAERSAnalyticsTool(BaseTool):
     def _truncation_note(self, results: List[Dict[str, Any]]):
         """Say so when the distribution was cut off, else None.
 
-        A full page is evidence of truncation, not of completeness -- measured on
-        LUTATHERA, the 1000th term still has count == 1, so terms remain beyond the
-        cap. Reporting a capped distribution as the whole one is the same defect
-        class as reporting a transport failure as a zero.
+        A full page is evidence of truncation, not of completeness.
         """
         if len(results) < COUNT_PAGE_MAX:
             return None
@@ -804,10 +746,9 @@ class FAERSAnalyticsTool(BaseTool):
         )
 
     def _field_total(self, field: str, term: str):
-        """Report total for one field, or None when that field does not match.
+        """Report total for one field, or None when it does not match.
 
-        None means "this field has nothing", which is different from a transport
-        failure -- that is allowed to raise, so it cannot be mistaken for a zero.
+        A transport failure raises, so it cannot be mistaken for a zero.
         """
         url = f'{FDA_BASE_URL}?search={field}:"{term}"&limit=1'
         response = requests.get(url, timeout=30)
@@ -822,9 +763,7 @@ class FAERSAnalyticsTool(BaseTool):
     ):
         """Re-run the estimate over the union cohort, and say if it disagrees.
 
-        Never raises into the primary result: a failure here degrades to a stated
-        "not computed", because a sensitivity arm that breaks the main answer is
-        worse than no sensitivity arm.
+        Never raises into the primary result; a failure here degrades to "not computed".
         """
         try:
             fields = self._resolve_all_drug_fields(drug_name)
@@ -879,13 +818,7 @@ class FAERSAnalyticsTool(BaseTool):
             return {"computed": False, "reason": log_msg}
 
     def _resolve_all_drug_fields(self, drug_name: str) -> List[Tuple[str, str]]:
-        """Every ``(field, term)`` that knows this drug, not just the first.
-
-        The first is the narrow population; all of them together are the union.
-        Reporting both is what lets a reader see that the population choice moved
-        the estimate (LUTATHERA/MDS: ROR 7.2 vs 12.0). The matched TERM is kept
-        because `.exact` fields need a different casing than the rest.
-        """
+        """Every ``(field, term)`` that knows this drug: the first is the narrow cohort, all together the union."""
         matches = []
         for term in self.expand_terms(drug_name, self._openfda_block(drug_name)):
             for field in self.DRUG_NAME_FIELDS:
@@ -898,11 +831,7 @@ class FAERSAnalyticsTool(BaseTool):
         return matches
 
     def _openfda_block(self, drug_name: str):
-        """openFDA's NDC-derived name set for the entry matching this drug.
-
-        Returns None when nothing matches or the report carries no block -- both
-        are ordinary, not errors, and simply mean no expansion is available.
-        """
+        """openFDA's NDC-derived name set for the entry matching this drug, or None."""
         try:
             field, _ = self._resolve_drug_field(drug_name)
             if not field:
@@ -923,7 +852,7 @@ class FAERSAnalyticsTool(BaseTool):
                     return block
             return None
         except Exception:
-            # Expansion is an enhancement; never let it break the analysis.
+            # Expansion must not break the analysis.
             return None
 
     def _count_for_population(self, population_query: str, adverse_event: str = None) -> int:
@@ -941,19 +870,16 @@ class FAERSAnalyticsTool(BaseTool):
         try:
             response.raise_for_status()
         except requests.HTTPError as exc:
-            # 404 is openFDA's answer to a search matching nothing -- a real zero.
-            # Anything else is us failing to ask, and must not look like absence.
+            # openFDA answers 404 to a search matching nothing: a real zero.
             if exc.response is not None and exc.response.status_code == 404:
                 return 0
             raise
         return response.json().get("meta", {}).get("results", {}).get("total", 0)
 
     def _drug_clause(self, drug_name: str):
-        """The query clause for a drug, on the first field that knows it: (clause, field, total).
+        """The query clause for a drug on the first field that knows it: (clause, field, total).
 
-        Every operation names the drug this way, so one spelling gives one population
-        across counts, seriousness, stratification and trends. A name no field knows keeps
-        the first field's clause: the source then answers 404 and says so.
+        A name no field knows keeps the first field's clause, so the source answers 404.
         """
         field, total = self._resolve_drug_field(drug_name)
         field = field or self.DRUG_NAME_FIELDS[0]
@@ -967,9 +893,7 @@ class FAERSAnalyticsTool(BaseTool):
     def _resolve_drug_field(self, drug_name: str):
         """Find the first field that knows this drug. Returns (field, total).
 
-        Returning the field is the point: the caller reports it, so an agent can
-        state which population its statistic describes instead of implying that
-        every spelling of the drug was counted.
+        The caller reports the field, so the population of the statistic is stated.
         """
         for field in self.DRUG_NAME_FIELDS:
             total = self._field_total(field, drug_name)
@@ -985,10 +909,8 @@ class FAERSAnalyticsTool(BaseTool):
     ) -> int:
         """Get count of FAERS reports matching criteria.
 
-        ``field`` is an argument, never instance state: ToolUniverse caches ONE
-        instance per tool name, so a field stashed on ``self`` is shared with every
-        concurrent call. Reading it back mid-calculation counted one drug under
-        another drug's field and produced a negative contingency cell (DSR-693).
+        ``field`` is an argument, never instance state: the tool instance is shared
+        between concurrent calls.
         """
         try:
             query_parts = []
@@ -1014,11 +936,8 @@ class FAERSAnalyticsTool(BaseTool):
             return data.get("meta", {}).get("results", {}).get("total", 0)
 
         except requests.HTTPError as exc:
-            # openFDA answers 404 to a search that matches nothing. That IS a
-            # zero. Anything else -- timeout, connection reset, 5xx -- is us
-            # failing to ask, and must not be reported as an absent drug: a bare
-            # `except: return 0` here made a dead network indistinguishable from
-            # "Insufficient data".
+            # openFDA answers 404 to a search matching nothing: a real zero.
+            # Any other failure must not be reported as an absent drug.
             if exc.response is not None and exc.response.status_code == 404:
                 return 0
             raise

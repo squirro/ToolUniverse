@@ -1,4 +1,4 @@
-"""The code tool selects rows; a check verifies the selection (rule 6 of ADR-0018, DSR-783).
+"""The code tool selects rows; a check verifies the selection (rule 6 of ADR-0018).
 
 "Which completed phase 3 trials examined hearing protection?" -- a ranking by words finds the
 subject, but PHASE3 and COMPLETED are values of a closed list, not words to rank by. The fetch
@@ -38,7 +38,7 @@ def test_the_description_lists_the_values_and_counts_of_columns_with_few_distinc
     assert "nct_id" not in described["values"] and "title" not in described["values"]
 
 
-REGISTRY = [                       # the registry's own shape, recorded live 2026-09-21: phase is a LIST
+REGISTRY = [                       # the registry's own recorded shape: phase is a LIST
     {"nct_id": "NCT00064077", "phase": ["PHASE3"], "status": "COMPLETED"},
     {"nct_id": "NCT00002", "phase": ["PHASE2", "PHASE3"], "status": "COMPLETED"},
     {"nct_id": "NCT00003", "phase": ["PHASE2"], "status": "COMPLETED"},
@@ -48,7 +48,7 @@ REGISTRY = [                       # the registry's own shape, recorded live 202
 
 
 def test_a_list_valued_column_is_described_by_its_elements_and_selected_by_membership():
-    """Live, every exact row was refused: the check compared ["PHASE3"] to "PHASE3"."""
+    """A list-valued column compared to a bare string refuses every exact row."""
     record = WorkingRecord(tempfile.mkdtemp(prefix="working-records-"), "run-2")
     record.put_table("trial_rows", REGISTRY)
 
@@ -95,9 +95,7 @@ def test_a_row_that_is_not_in_the_table_fails():
 
 # --- identifiers, not rows: the agent names the rows by key, the server takes them from the table ---
 #
-# Measured 2026-09-21 on sr-dev: copying rows through the model held in 2 of 3 runs at 50 rows and
-# in none at 200 or 866 -- a title retyped, qualifying rows left out. A key cannot be retyped into
-# another row's prose; only the drop remains to check.
+# A key cannot be retyped into another row's prose, so only the drop remains to check.
 
 KEYED = {"selected_from": {"table": "trial_rows", "key": "nct_id",
                            "where": {"phase": "PHASE3", "status": "COMPLETED"}}}

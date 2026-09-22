@@ -1,9 +1,8 @@
 """The pack the blinded judges score: no arm marker, every cited abstract whole.
 
-Experiment 6 (2026-09-19) had two faults. The web agent's persona opens every answer with a
-"Research Plan" quoteblock naming its tools, so the judges saw two families of report and the
-blinding was gone. And citations were resolved by PMID only: the web reports cited PMC links,
-no abstract reached the pack, and their numbers scored "not verified".
+A persona that opens each answer with a plan block naming its tools gives the arm away,
+and resolving citations by PMID alone leaves PMC-linked reports with no abstract in the
+pack, so their numbers score "not verified".
 """
 
 import json
@@ -36,7 +35,7 @@ QUESTION = ("Pull together an end-to-end safety picture for cisplatin and look e
 
 
 def _recorded_fetch(url: str) -> str:
-    """The three services as they answered on 2026-09-21, keyed by what the URL asks for."""
+    """The three services as they answered, keyed by what the URL asks for."""
     if "idconv" in url and "PMC11673797" in url:
         return json.dumps(RECORDED["idconv/PMC11673797"])
     if "efetch" in url and "id=39765905" in url:
@@ -89,7 +88,7 @@ def test_each_kind_of_link_resolves_to_the_same_abstract_from_recorded_responses
 
 
 def test_a_long_abstract_is_in_the_pack_complete():
-    abstract = ("Finding. " * 375).strip()             # 3,374 characters, well past any cut
+    abstract = ("Finding. " * 375).strip()             # well past any cut
     xml = ("<PubmedArticleSet><PubmedArticle><MedlineCitation><PMID Version=\"1\">1</PMID><Article>"
            f"<ArticleTitle>Long</ArticleTitle><Abstract><AbstractText>{abstract}</AbstractText>"
            "</Abstract></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>")

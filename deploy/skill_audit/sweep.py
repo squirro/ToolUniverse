@@ -1,22 +1,14 @@
 """Coverage sweep over the served skills: one probe question each, trace-scored.
 
-Run it from this repo's ``deploy/`` directory, pointed at wherever the skills are
-deployed — sr-dev, sempart, anywhere an agent reaches an SMCP:
-
     cd deploy
     python -m skill_audit.sweep run --agent-id <id> --env-file <path/to/.env>
     python -m skill_audit.sweep rescore --run <run-dir>
     python -m skill_audit.sweep diff --old <run-a> --new <run-b>
 
-Each skill gets one fresh conversation (Squirro binds the MCP tool list per
-conversation, so re-using one would leak state between skills), one turn, and a
-verdict from `oracle`, which reads only the trace. A `retry` verdict — the
-provider's intermittent bio-risk refusal — is re-run once before being recorded.
-
-The run directory holds `results.jsonl` (one line per skill, appended as it
-finishes, so an interrupted sweep resumes), `traces/<skill>.json` so a scorer fix
-costs a `rescore` instead of another hour of cluster time, `answers/<skill>.md`
-for reading the suspicious ones by hand, and `report.md` sorted worst-first.
+Each skill gets one fresh conversation, one turn, and a verdict from `oracle`, which reads
+only the trace. The run directory holds `results.jsonl` (appended as skills finish, so an
+interrupted sweep resumes), `traces/` so a scorer fix costs a `rescore` and not a re-run,
+`answers/` and `report.md` sorted worst-first.
 """
 from __future__ import annotations
 
@@ -67,15 +59,8 @@ def rows_to_run(
 
 
 def fold_repeats(results: list[dict]) -> list[dict]:
-    """Collapse repeated probes of one skill into a single row, worst verdict wins.
-
-    One probe per skill cannot separate a real change from LLM variance: the
-    DSR-690 measurement returned 12 skills fixed and 10 regressed with total tool
-    calls flat, and `pharmacovigilance` flips between `pass` and `tool_error` on the
-    identical question. Worst-wins because a skill that fails one run in three is not
-    a skill you can demo. Provider refusals are dropped rather than folded — they say
-    nothing about the skill — and `runs` counts only the probes that actually ran.
-    """
+    """Collapse repeated probes of one skill into one row, worst verdict wins. Provider
+    refusals are dropped, not folded, and `runs` counts only the probes that ran."""
     grouped: dict[str, list[dict]] = {}
     for r in results:
         grouped.setdefault(r["skill"], []).append(r)
@@ -140,19 +125,14 @@ MAX_OUTPUT = 8_000
 
 
 def trim_actions(actions: list[dict]) -> list[dict]:
-    """Keep exactly what the oracle reads, with each output capped.
-
-    A raw turn carries megabytes of tool payload; the scorer only looks at the
-    tool name, the status, the call's parameters and the output text.
-    """
+    """Keep only what the oracle reads (tool name, status, parameters, output), each output capped."""
     kept = []
     for action in actions or []:
         content = action.get("content") or {}
         output = content.get("output")
         if not isinstance(output, str):
             output = json.dumps(output) if output is not None else ""
-        # The finished Skill Run bundle is the evidence the number check reads
-        # and is larger than the cap: it is kept whole.
+        # The finished bundle is what the number check reads, so it is kept whole.
         whole = (action.get("tool_name") in ("run_skill", "continue_skill")
                  and '"status": "finished"' in output[:200])
         kept.append({
@@ -165,7 +145,7 @@ def trim_actions(actions: list[dict]) -> list[dict]:
 
 
 def rescore_trace(path: Path, body: str | None) -> dict:
-    """Re-run the oracle over a saved trace — no cluster, no LLM, no cost."""
+    """Re-run the oracle over a saved trace; no cluster call."""
     trace = json.loads(Path(path).read_text())
     findings = score(trace["skill"], actions=trace.get("actions") or [],
                      answer=trace.get("answer") or "",
@@ -198,7 +178,7 @@ def _dispatched(actions: list[dict]) -> list[str]:
 
 
 def diff_runs(old: list[dict], new: list[dict]) -> dict:
-    """What changed between two sweeps — the regression gate."""
+    """What changed between two sweeps: the regression gate."""
     before = {r["skill"]: r["verdict"] for r in latest_per_skill(old)}
     after = {r["skill"]: r["verdict"] for r in latest_per_skill(new)}
     bad = {"fail"}
@@ -260,12 +240,8 @@ def _probe(client_factory, agent_id: str, row: dict, timeout: int) -> dict:
 
 
 def _load_dotenv(path: Path | None) -> None:
-    """Fill missing SQUIRRO_* vars from a dotenv file.
-
-    Parsed here rather than sourced in the shell: these files hold API keys with
-    characters bash tries to execute, and sourcing one prints secrets to stdout.
-    Anything already in the environment wins, so CI can inject secrets instead.
-    """
+    """Fill missing SQUIRRO_* vars from a dotenv file. Parsed, not sourced: the values hold
+    characters bash would execute. Anything already in the environment wins."""
     if path is None or not path.exists():
         return
     for line in path.read_text().splitlines():
@@ -312,8 +288,7 @@ def run(args) -> int:
     todo = rows_to_run(load_corpus(), done, retryable=retryable, only=args.only,
                        tier=args.tier, limit=args.limit)
     if args.repeat > 1:
-        # Probe each skill N times. A single probe cannot separate a real change
-        # from LLM variance; fold_repeats keeps the worst verdict of the N.
+        # fold_repeats keeps the worst verdict of the N probes.
         todo = [dict(row, repeat=i + 1) for row in todo for i in range(args.repeat)]
     if not todo:
         print(f"nothing to run (resumed {len(done)} from {run_dir})")
@@ -345,8 +320,7 @@ def run(args) -> int:
             (answers / f"{result['skill']}{_suffix(result)}.md").write_text(
                 f"# {result['skill']} — {result['verdict']}\n\n"
                 f"calls: {result.get('calls')}\n\n---\n\n{answer}\n")
-            # The trace is the expensive artefact: keeping it means a scorer fix
-            # costs a `rescore`, not another hour of cluster time.
+            # Keeping the trace means a scorer fix costs a `rescore`, not a re-run.
             (traces / f"{result['skill']}{_suffix(result)}.json").write_text(json.dumps({
                 "skill": result["skill"], "tier": result.get("tier"),
                 "note": result.get("note"), "error": result.get("error"),
@@ -384,17 +358,13 @@ def rescore(args) -> int:
 
 def load_run(path: Path | str) -> list[dict]:
     """Read a run from its directory, or from a bare results.jsonl.
-
-    The recorded baseline is committed as a single file; a fresh run is a
-    directory. Comparing the two is the whole point of the gate.
-    """
+    The committed baseline is a single file; a fresh run is a directory."""
     path = Path(path)
     if path.is_dir():
         path = path / "results.jsonl"
     rows = [json.loads(line) for line in path.read_text().splitlines()
             if line.strip()]
-    # A --repeat run stamps each probe; fold those to the worst verdict. Rows
-    # without the stamp are a resumed run, where the later probe supersedes.
+    # Stamped rows are repeats, folded to the worst; unstamped rows are a resume, the later wins.
     if any(r.get("repeat", 1) > 1 for r in rows):
         return fold_repeats(rows)
     return latest_per_skill(rows)

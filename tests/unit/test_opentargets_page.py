@@ -1,8 +1,7 @@
 """Open Targets serves association rows in pages; the disease-to-targets tool must be able to ask.
 
-Measured 2026-09-18: for Alzheimer's disease the response says `count: 13367` and the tool
-returns 25 rows -- the source's default page -- with no parameter to ask for more. The count
-was there; nothing could use it.
+The response carries the full count, but the tool returned the source's default page and had
+no parameter to ask for more, so the count was there and nothing could use it.
 """
 
 import json
@@ -70,8 +69,8 @@ DISEASES = next(t for t in CONFIGS if t["name"] == "OpenTargets_get_diseases_phe
 
 
 def test_the_diseases_by_target_tool_pages_too_and_carries_the_association_score():
-    """FOLR1 has 461 associated diseases; the tool answered 25 with per-source scores and no
-    overall score, so a process could neither reach the disease it was asked about nor grade it."""
+    """The tool answered one default page with per-source scores and no overall score, so a
+    process could neither reach the disease it was asked about nor grade it."""
     seen = {}
 
     def execute_query(endpoint_url, query, variables=None):

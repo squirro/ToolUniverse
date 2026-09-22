@@ -1,13 +1,8 @@
-"""Minimal Squirro GenAI chat client — enough to drive one turn against an agent.
+"""Minimal Squirro GenAI chat client: enough to drive one turn against an agent.
 
-Deliberately self-contained. The audit lives in this repo, beside the skill bodies
-it scores, so it cannot import the delivery repo's fuller `chat_sweep` client: a
-clean clone of this fork has no delivery repo beside it, and the dependency only
-runs one way (delivery installs this package, never the reverse).
-
-Two cluster quirks are encapsulated here. The token endpoint answers in XML, not
-JSON. And the chat endpoint is SSE — `_invoke` is broken platform-wide — so the
-result arrives as an `event: result` frame among a stream of others.
+Self-contained on purpose, so a clean clone of this fork needs no other repo beside it.
+The token endpoint answers in XML, and the chat endpoint is SSE, so the result arrives as
+an `event: result` frame among a stream of others.
 """
 from __future__ import annotations
 
@@ -60,13 +55,8 @@ def get_access_token(cluster: str, refresh_token: str, *, timeout: int = 30) -> 
 
 def payload_for(agent_id: str, instruction: str, conversation_id: str,
                 refresh_token: str, cluster: str, project_id: str) -> dict:
-    """The body of one streaming_chat turn.
-
-    The route builds the agent's runtime config from `runtime_config` alone (plus the path
-    variables and the agent's own config); the top-level `conversation_id` names the thread
-    for the history but never reaches a tool's `conversation_id` placeholder. Tools that need
-    the conversation -- the code container is keyed by it -- get it only from here.
-    """
+    """The body of one streaming_chat turn. Tools read the conversation id from
+    `runtime_config` only; the top-level one names the thread for the history."""
     return {
         "instruction": instruction,
         "agent_id": agent_id,
@@ -88,11 +78,8 @@ class SquirroChatClient:
         self._access = get_access_token(self.cluster, refresh_token)
 
     def ask(self, agent_id: str, instruction: str, *, timeout: int = 600) -> Turn:
-        """One question in a FRESH conversation.
-
-        Fresh every time on purpose: Squirro binds the MCP tool list per
-        conversation, so re-using one leaks a stale tool list between skills.
-        """
+        """One question in a fresh conversation: Squirro binds the MCP tool list per
+        conversation, so re-using one would leak a stale tool list between skills."""
         payload = payload_for(agent_id, instruction, str(uuid.uuid4()),
                               self._refresh, self.cluster, self.project_id)
         url = STREAMING_URL.format(cluster=self.cluster, project=self.project_id)
@@ -120,12 +107,8 @@ class SquirroChatClient:
 
 
 def lines_of(chunks) -> Iterator[str]:
-    """The lines of a byte stream, split on newline ONLY.
-
-    `iter_lines(decode_unicode=True)` splits like `str.splitlines()`: on U+2028 and its
-    relatives too. One such character in a tool output cut the result frame mid-JSON, and a
-    turn the service had logged as a success read as a dead one.
-    """
+    """The lines of a byte stream, split on newline only. `iter_lines(decode_unicode=True)`
+    also splits on U+2028 and its relatives, which cuts a result frame that holds one."""
     pending = b""
     for chunk in chunks:
         pending += chunk
@@ -137,11 +120,8 @@ def lines_of(chunks) -> Iterator[str]:
 
 
 def parse_sse(lines) -> tuple[dict | None, str]:
-    """Pull the `result` frame out of an SSE stream.
-
-    Returns (result, error). An `error` frame wins over a result: that is how a
-    provider refusal arrives, and it must not be mistaken for a thin answer.
-    """
+    """Pull the `result` frame out of an SSE stream as (result, error).
+    An `error` frame wins over a result: that is how a provider refusal arrives."""
     event = ""
     data: list[str] = []
     result: dict | None = None
@@ -202,12 +182,8 @@ STUDIO_PROXY_URL = "{cluster}/studio/genai_proxy/projects/{project}/streaming_ch
 
 
 class StudioProxyChatClient(SquirroChatClient):
-    """The same one-turn client, through the Studio genai proxy.
-
-    On swiss-rockets-dev.squirro.com the documented /service/genai route is blocked
-    by nginx (405); the UI goes through a Studio proxy plugin that authenticates with
-    the refresh token as a query parameter. Same SSE stream, same result frame.
-    """
+    """The same one-turn client, through the Studio genai proxy, for a cluster whose nginx
+    blocks /service/genai. The proxy takes the refresh token as a query parameter."""
 
     def __init__(self, cluster: str, refresh_token: str, project_id: str):
         self.cluster = cluster.rstrip("/")

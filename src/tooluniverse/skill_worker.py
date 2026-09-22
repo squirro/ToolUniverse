@@ -1,15 +1,8 @@
-"""The Temporal worker for Skill Runs, started inside the SMCP process (ADR-0016).
+"""The Temporal worker for Skill Runs, started inside the SMCP process.
 
-It lives here and not in its own container for one reason: the registry. SMCP
-loads ~2,278 tools once, applies the exclusion list, and installs the central
-repairs — transport status, the citation stamp, the id cue — on that instance. A
-worker in another container would carry a second copy of all of it, or none. So
-the activity is bound to SMCP's own instance through the same normalisation the
-agent's `execute_tool` uses: one door.
-
-The worker runs in a daemon thread with its own event loop, beside FastMCP's.
-It starts only when TEMPORAL_ADDRESS is set; otherwise SMCP is exactly as
-before and `run_skill` is simply not served.
+It lives here so the activity is bound to the registry SMCP already loaded, through
+the same normalisation the agent's `execute_tool` uses. It runs in a daemon thread
+with its own event loop and starts only when TEMPORAL_ADDRESS is set.
 """
 from __future__ import annotations
 
@@ -63,8 +56,7 @@ def build_worker(client: Client, tooluniverse: Any, *, task_queue: str = TASK_QU
     try:
         bind_recorder(Store.from_env())
     except RuntimeError:
-        # No GRAPHDB_ENDPOINT: run_skill cannot load a definition either, so the
-        # worker is only reached in tests; the record activity then fails soft.
+        # Without GRAPHDB_ENDPOINT the record activity fails soft.
         log.warning("skill worker: GRAPHDB_ENDPOINT unset; Run Records will not be written")
     return Worker(
         client,

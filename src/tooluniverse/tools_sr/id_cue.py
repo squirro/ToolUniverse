@@ -1,22 +1,11 @@
-"""Puts the required ID namespace into the description the model actually reads (DSR-662).
+"""Puts the required ID namespace into the tool description the model actually reads.
 
-155 served tools require an identifier in a specific namespace, document that in the
-*parameter* description, and never mention it in the *tool* description -- the only surface
-a model sees at every call. ``HPA_get_cancer_prognostics_by_gene`` advertises "prognostic
-value of a gene" while requiring ``ensembl_id``, which is why two skill bodies call it with
-a bare gene symbol and come back empty.
-
-Derived at load time rather than authored (ADR-0014): nothing goes stale, no file under
-``data/`` is modified, and tools upstream writes later inherit the behaviour.
-
-**The namespace is read from the parameter's own grammar, not matched against a list.**
-Parameter descriptions already say "Ensembl Gene **ID**", "UniProt **accession**", "MONDO
-**CURIE**", so the words before that noun name the namespace. A hardcoded list of databases
-would be wrong the moment upstream adds one, and this registry gains tools continuously.
-
-The derived phrasing is formulaic, which is fine: discovery here is permanently
-keyword-based (DSR-639 closed Won't Do), so what matters is that the namespace token is
-present, not that the prose reads well.
+Many tools require an identifier in a specific namespace, document that in the parameter
+description, and never mention it in the tool description, which is the only surface a
+model sees at every call. The namespace is read from the parameter's own grammar, the words
+before "ID", "accession" or "CURIE", rather than matched against a list of databases that
+would be wrong the moment upstream adds one. Cues are derived at load time, so nothing goes
+stale and no file under ``data/`` is modified.
 """
 
 from __future__ import annotations
@@ -35,9 +24,8 @@ _QUALIFIERS = {
     "target", "drug", "variant", "study", "trial", "pathway", "term", "entry",
     "primary", "unique", "valid", "internal", "external", "numeric", "stable",
 }
-# Words that end the search backwards -- nothing before them qualifies. The imperative
-# verbs matter: these descriptions routinely append guidance like "Find IDs using
-# biomodels_search", and "Find" is capitalised only because it starts a sentence.
+# Words that end the backwards search. The imperative verbs are here because guidance like
+# "Find IDs using ..." capitalises them only by starting a sentence.
 _STOPWORDS = {
     "the", "a", "an", "this", "that", "its", "their", "or", "and", "of", "for",
     "with", "to", "in", "on", "by", "as", "is", "be", "any", "each", "one", "two",
@@ -45,19 +33,18 @@ _STOPWORDS = {
     "find", "get", "search", "use", "using", "provide", "specify", "enter", "obtain",
     "retrieve", "see", "look", "pass", "supply", "accepts", "returns", "lookup",
 }
-# A parenthetical is a gloss, not the namespace: "The EFO (Experimental Factor Ontology)
-# ID" names EFO, and walking back from "ID" would otherwise land on "Ontology".
+# A parenthetical is a gloss, not the namespace, so the backwards walk must skip it.
 _PARENTHETICAL = re.compile(r"\([^)]*\)")
-# A quoted example value, e.g. 'ENSG00000141510' or 'CHEMBL25'.
+# A quoted example value.
 _EXAMPLE = re.compile(r"['\"]([A-Za-z]{2,}[:_]?\d[A-Za-z0-9:_.\-]*)['\"]")
 
 
 def namespaces(param_description: str) -> list[str]:
     """Namespaces the parameter pins, in order of first mention, de-duplicated.
 
-    Walks backwards from each "ID"/"accession"/"CURIE" noun rather than matching one
-    regex, because the words in between vary ("Ensembl Gene ID", "The ChEMBL ID", "a
-    MONDO CURIE") and a single pattern greedily swallows articles and qualifiers.
+    Walks backwards from each "ID", "accession" or "CURIE" noun rather than matching one
+    regex, because the words in between vary and a single pattern greedily swallows
+    articles and qualifiers.
     """
     text = param_description or ""
     found: list[str] = []
@@ -72,10 +59,9 @@ def namespaces(param_description: str) -> list[str]:
                 continue  # skip "Gene" in "Ensembl Gene ID"
             if lowered in _STOPWORDS:
                 break  # "The" in "The ID" -- no namespace here
-            # A namespace is a proper noun: capitalised, substantial, and not itself an
-            # example accession -- 'P04637 ID' names no database.
+            # A namespace is a proper noun: capitalised, substantial, and not an accession.
             if word[0].isupper() and len(word) >= 3 and not any(c.isdigit() for c in word):
-                # Keep the registry's own casing (ChEMBL, UniProt, MONDO).
+                # Keep the registry's own casing.
                 if word not in found:
                     found.append(word)
             break
@@ -121,9 +107,8 @@ def derive_cue(tool: dict) -> str | None:
     if all(re.search(rf"\b{re.escape(n)}\b", served, re.IGNORECASE) for n in found):
         return None
 
-    # Phrased so no indefinite article ever precedes the namespace. "a UniProt" and "an
-    # NCBI" are both right by sound and both wrong by first letter, and no cheap rule gets
-    # them all; putting the namespace after "in the" removes the question entirely.
+    # Phrased so no indefinite article precedes the namespace: "a UniProt" and "an NCBI"
+    # are right by sound and wrong by first letter, and no cheap rule gets them all.
     cue = f"Requires an identifier in the {' or '.join(found)} namespace"
     if example:
         cue += f" (e.g. {example})"
@@ -133,8 +118,8 @@ def derive_cue(tool: dict) -> str | None:
 def apply(tool: dict) -> dict:
     """Return the tool definition with the cue appended to its description.
 
-    Never mutates the input. These definitions are loaded from files under ``data/``, and
-    ADR-0014 requires that none of them be modified.
+    Never mutates the input: these definitions are loaded from files under ``data/``, which
+    must not be modified.
     """
     cue = derive_cue(tool)
     if cue is None:
@@ -150,8 +135,7 @@ def install(cls) -> None:
     """Rewrite served descriptions after the registry loads. Safe to call repeatedly.
 
     Wraps ``load_tools`` from outside rather than editing ``execute_function.py``, which
-    re-syncs from upstream (ADR-0014). The rewrite lands on the in-memory
-    ``all_tool_dict`` only -- nothing under ``data/`` is written.
+    re-syncs from upstream. The rewrite lands on the in-memory registry only.
     """
     original = cls.load_tools
     if getattr(original, "_sr_id_cue", False):

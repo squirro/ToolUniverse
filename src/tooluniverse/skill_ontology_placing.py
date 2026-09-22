@@ -1,10 +1,8 @@
-"""Where an ontology puts a mapped term, beside the agent's reason for it.
+"""Where an ontology puts a mapped term: evidence beside the agent's reason for it.
 
-A judged mapping is checked for membership in the source's list; that proves the term exists,
-not that it belongs. The placing adds evidence from the Ontology Lookup Service (OLS): placed
-under the concept the user named, not placed, or unknown. It never refuses a term.
-
-The pure half works on recorded responses; the live half fetches them.
+Membership in the source's list proves a term exists, not that it belongs, so the Ontology
+Lookup Service (OLS) placing adds placed, not placed or unknown and never refuses a term.
+The pure half reads recorded responses; the live half fetches them.
 """
 
 from __future__ import annotations
@@ -31,8 +29,7 @@ def _words_of(concept: Any) -> list[str]:
 def place(responses: dict[str, dict], concept: Any) -> dict:
     """The verdict for one term from its recorded OLS responses, one entry per ontology.
 
-    `concept`: words that name the branch the user meant (for ototoxicity: ear, hearing,
-    vestibular). Placed when any ontology puts the term under an ancestor whose label holds
+    `concept`: words that name the branch the user meant. Placed when an ancestor label holds
     one of them; not placed when an ontology knows the term but no ancestor does; unknown
     when no ontology knows it or the service failed.
     """

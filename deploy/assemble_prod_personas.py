@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
-"""Assemble + lint the single prod persona body (DSR-543).
+"""Assemble and lint the single prod persona body.
 
-Single source of truth: one ``persona-prod-base.md`` body (the High-Order Strategic
-Research Agent, lifted verbatim from prod and enriched with non-routing guidance + the
-neutral ToolUniverse pointer, binding rule, and Tool Balance) — supersedes the retired
-neutral/weighted A/B (DSR-544/DSR-545).
+``persona-prod-base.md`` is the source of truth. This emits one paste-ready Studio body
+prefixed with a documentation header, an HTML comment that does not count toward the
+char cap, then lints it and exits nonzero on any hard failure.
 
-Emits one paste-ready Studio body, prefixed with a documentation header (an HTML
-comment, which does not count toward the 10 000-char cap), then lints it. Exits nonzero
-on any hard failure so the assembler doubles as the static seam.
-
-    python assemble_prod_personas.py          # assemble + lint, report char budget
+    python assemble_prod_personas.py
 """
 
 from __future__ import annotations

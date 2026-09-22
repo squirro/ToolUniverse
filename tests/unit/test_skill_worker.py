@@ -1,4 +1,4 @@
-"""The Temporal worker that runs inside the SMCP process (ADR-0016, DSR-711).
+"""The Temporal worker that runs inside the SMCP process (ADR-0016).
 
 One door: the activity must reach the registry through the same instance and the
 same normalisation the agent's `execute_tool` uses, so a run sees exactly what the

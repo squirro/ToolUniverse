@@ -1,7 +1,7 @@
 """A Skill Process names no entity (rule 10): what the lint refuses, and what it lets through.
 
-Converting agents test on one question and write the fix in that question's words. The
-three shipped processes did exactly that, unseen through five judged experiments.
+Converting agents test on one question and write the fix in that question's words, so a
+process can carry one question's entity names unnoticed.
 """
 
 import sys
@@ -21,7 +21,7 @@ def _process(*steps, **top):
 
 
 def test_free_text_in_a_call_argument_is_refused_and_located():
-    """The defect as it shipped: one test question's words, sent for every drug."""
+    """One test question's words, sent as the query for every drug."""
     process = _process({"id": "web_context", "delegate": [
         {"tool": "exa_web_search",
          "arguments": {"query": "{drug_name} myelodysplastic syndrome renal impairment safety"}}]})
@@ -102,7 +102,7 @@ def _call(tool, **arguments):
 
 
 def test_a_limit_nobody_wrote_is_the_sources_default_and_is_refused():
-    """Ten trials of 866: `pageSize` was never set, so no written value could have been caught."""
+    """`pageSize` was never set, so no written value could have been caught."""
     process = _process({"id": "trials", "calls": [_call("search_clinical_trials")]})
 
     (found,) = violations(process, maxima=MAXIMA)
@@ -145,7 +145,7 @@ def test_the_shipped_processes_break_the_rules_exactly_where_the_known_list_says
 
 
 def test_a_row_that_packs_several_lists_is_refused_because_they_fall_out_of_step():
-    """198 DOIs against 200 PMIDs: `collect` drops a missing value, and every later pair is wrong."""
+    """`collect` drops a missing value, so parallel lists go out of step and every later pair is wrong."""
     packed = _process({"id": "literature", "calls": [], "collect": {"literature_rows": {
         "path": "", "fields": ["$item as reaction", "data[].pmid as pmids", "data[].doi_url as dois"]}}},
         tables={"literature_rows": "evidence"})

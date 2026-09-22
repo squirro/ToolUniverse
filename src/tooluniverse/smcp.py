@@ -972,11 +972,7 @@ class SMCP(FastMCP):
                 elif "Tool_Finder_LLM" in available_tool_names:
                     return "Tool_Finder_LLM"
 
-        # Every path must name a tool. This used to fall off the end for
-        # search_method="auto" with use_advanced_search=False -- an implicit None
-        # that surfaced downstream as "Missing or empty function name", i.e. a
-        # legitimate-looking call answering nothing and inviting a retry loop.
-        # use_advanced_search is an exposed parameter, so a model can trip it.
+        # Every path must name a tool; "auto" without advanced search lands here.
         return "Tool_Finder_Keyword"
 
     def _setup_smcp_tools(self):
@@ -1060,7 +1056,7 @@ class SMCP(FastMCP):
         )
 
         skills_dir = self.skills_dir
-        # Temporal configured => the server runs Skill Processes (ADR-0016).
+        # Temporal configured means the server runs Skill Processes.
         temporal_address = __import__("os").environ.get("TEMPORAL_ADDRESS") or None
         # Build the find_skill catalog index ONCE — the served set is fixed at container start.
         skill_index = build_index(skills_dir)
@@ -1114,9 +1110,6 @@ class SMCP(FastMCP):
 
             Args:
                 name: the skill id to load, e.g. "disease-research".
-
-            Args:
-                name: the skill id.
                 plain: serve the prose body only, without the process directive —
                     for comparison runs that must follow the phases themselves.
                     Leave unset in normal use.
@@ -1131,10 +1124,7 @@ class SMCP(FastMCP):
                 return f"ERROR: {exc}"
             if plain:
                 return body
-            # A skill that ships a process graph is DRIVEN, not read: the header
-            # says so and demotes the phases below it to reference. With Temporal
-            # configured the server runs it (run_skill); otherwise the model does
-            # (next_skill_step).
+            # A graphed skill is driven, not read: the header names who runs it.
             return graph_directive(normalize_skill_name(name),
                                    server_runs=bool(temporal_address)) + body
 
@@ -1244,12 +1234,10 @@ class SMCP(FastMCP):
         )
 
     def _add_skill_run_tools(self, temporal_address: str) -> None:
-        """run_skill / continue_skill: the server runs a Skill Process on Temporal.
+        """Register the Skill Run tools; the server runs a Skill Process on Temporal.
 
-        Registered only when TEMPORAL_ADDRESS is set — a missing setting is an
-        absent tool, never a silent fallback to the model-driven loop. The logic
-        is in `skill_run_client` (pure, tested over a scripted handle); these
-        wrappers only hold the Temporal client and the GraphDB store.
+        Only when TEMPORAL_ADDRESS is set: a missing setting is an absent tool, not a
+        silent fallback. The logic lives in `skill_run_client`.
         """
         import json
         import os
@@ -1854,9 +1842,8 @@ class SMCP(FastMCP):
             banner_thread = threading.Thread(target=delayed_banner, daemon=True)
             banner_thread.start()
 
-        # Skill Runs on Temporal (ADR-0016): the worker shares this process so its
-        # activity reaches the loaded registry — exclusions and central repairs
-        # included — through the same door as execute_tool. Only when configured.
+        # The skill worker shares this process so it reaches the same loaded
+        # registry as execute_tool. Only when configured.
         if not hasattr(self, "_skill_worker"):
             from .skill_worker import start_in_thread
 
@@ -2014,17 +2001,8 @@ class SMCP(FastMCP):
         if "oneOf" in param_info:
             return cls._resolve_oneof_type(param_info)
 
-        # No `type` and no `oneOf` means unconstrained, and JSON Schema says so: an absent
-        # `type` permits any type. Defaulting to `str` did the opposite -- it produced the
-        # tightest constraint available.
-        #
-        # That is not academic. DSR-627 removed execute_tool's `oneOf` deliberately, so a
-        # malformed call would reach the handler and be explained instead of being rejected
-        # at the schema layer, because a schema rejection surfaces as isError:true and kills
-        # the whole turn. The relaxation silently became "string only", which rejected the
-        # dict form of `arguments` that the tool's own description tells callers to send --
-        # and every one of the ~2,278 tools is reached through execute_tool. Measured on a
-        # local sweep: 2,186 of 2,194 tools failed with one identical validation error.
+        # An absent `type` permits any type in JSON Schema; defaulting to `str`
+        # would reject the dict `arguments` that execute_tool asks callers to send.
         if "type" not in param_info:
             return Any, extra
 

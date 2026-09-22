@@ -1,10 +1,9 @@
-"""drug-target-validation as a Skill Process (DSR-789): the skill's grading tables are the
-server's arithmetic, its judgements are options out of closed lists, and the question's disease
-is read onto the source's ids in a judged, checked mapping.
+"""drug-target-validation as a Skill Process: the skill's grading tables are the server's
+arithmetic, its judgements are options out of closed lists, and the question's disease is
+read onto the source's ids in a judged, checked mapping.
 
-The process is driven whole against the responses recorded on sr-dev for FOLR1 / ovarian
-cancer (tests/fixtures/dtv/); the agent's judgements are answered by a stub that reads them
-from the question, as the agent would.
+The process is driven whole against recorded responses; the agent's judgements are answered
+by a stub that reads them from the question, as the agent would.
 """
 import json
 from pathlib import Path
@@ -110,8 +109,7 @@ def test_the_wide_tables_are_evidence_and_the_loop_runs_over_the_sources_drug_na
     assert len(facts["disease_rows"]) == 461, "the whole association list, one page"
     looped = [a["drug_name"] for t, a in calls if t == "FDA_get_boxed_warning_info_by_drug_name"]
     assert looped == [r["name"] for r in facts["drug_rows"]] and looped[0] == "VINTAFOLIDE"
-    # the clinical judgement ("approved for THIS disease?") reads the drug's indications, held-out
-    # live it had only a stage column to read
+    # the clinical judgement ("approved for THIS disease?") reads the drug's indications
     assert "ovarian cancer" in facts["drug_rows"][0]["indications"]
     assert [r["drug"] for r in facts["boxed_rows"]] == looped
     assert all(r["boxed_warning"].startswith("WARNING") for r in facts["boxed_rows"])

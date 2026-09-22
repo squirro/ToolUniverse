@@ -151,7 +151,7 @@ WIDE = {
 
 
 def test_a_table_description_says_how_much_the_source_holds_or_that_it_is_unknown(tmp_path):
-    """Ten trials of 866 read as "this drug has ten trials" until the total stood beside them."""
+    """A few rows read as "this is all there is" until the source's total stands beside them."""
     def execute(tool, arguments):
         if tool == "search_trials":
             return {"total_count": 866, "studies": [{"nct": "NCT1"}, {"nct": "NCT2"}]}
@@ -198,7 +198,7 @@ def test_the_handover_carries_the_same_lines_of_discipline_for_every_skill(tmp_p
 
 
 def test_the_counts_a_fetch_reply_carries_count_as_received(tmp_path):
-    """Live, the agent wrote "420 matched" and the check refused the number it had been told."""
+    """A count the fetch reply gave the agent must count as received, not as invented."""
     _, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
     record = WorkingRecord(tmp_path, run_id)
 

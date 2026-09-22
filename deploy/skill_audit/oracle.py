@@ -1,21 +1,10 @@
 """Score one live agent turn against one served skill body, from the trace alone.
 
-A trace can FAIL a skill but never PASS one: if the skill never loaded, fired no
-tool, or every call died, the run is broken however well the prose reads — but a
-clean trace says nothing about whether the answer is any good. So the codes here
-split three ways.
-
-* ``fail``  — an unambiguous defect. Every one of these was observed by hand on
-  sr-dev in August 2026 and has an exact signature.
-* ``warn``  — suspicious, and worth a human's eyes, but a legitimate run can
-  produce it. Warnings rank the review queue; they do not fail anything.
-* ``retry`` — an environment artefact, not a skill defect. The provider's
-  intermittent bio-risk refusal is the only one so far: zero tool calls plus an
-  error at the very start of the turn.
-
-Ground truth for "which tools should have fired" is the skill body itself: every
-phase names its tools in backticks, and the mandatory ones sit on a ``**Primary**``
-line. The body is the spec, so no expectation has to be hand-written per question.
+A trace can fail a skill but never pass one: a clean trace says nothing about whether the
+answer is any good. Codes split into ``fail`` (an unambiguous defect), ``warn`` (suspicious,
+ranks the review queue) and ``retry`` (an environment artefact, not a skill defect). The
+skill body is the spec: it names its tools in backticks and the mandatory ones sit on a
+``**Primary**`` line, so no expectation is hand-written per question.
 """
 from __future__ import annotations
 
@@ -46,13 +35,7 @@ SEVERITY: dict[str, str] = {
 
 _RANK = {"pass": 0, "warn": 1, "retry": 2, "fail": 3}
 
-# Whose defect is it? A tool that breaks when the skill called it correctly is not
-# the skill misbehaving. Measured 2026-08-21: the graphed adverse-event-detection
-# runs did strictly more correct work than the prose runs and scored WORSE, because
-# doing more of the job means touching more tools and one of them was being
-# bot-blocked. Charging that to the skill makes every thoroughness improvement look
-# like a regression, so the verdict is computed from SKILL findings only and tool
-# findings are reported beside it.
+# Verdicts count skill findings only: a tool that breaks on a correct call is not the skill's defect.
 SUBJECT = {
     "tool_error": "tool",
     "provider_refusal": "environment",   # still forces a retry, just not a fail
@@ -65,10 +48,7 @@ META_TOOLS = frozenset({
     "list_tools", "grep_tools", "get_tool_info",
 })
 
-# Genuine outward searches. `paragraph_retriever` is deliberately NOT here: it is
-# Squirro's own retrieval step, fired before the agent chooses anything (it opened
-# 64 of 76 turns in the first full sweep), so treating it as a web batch would
-# condemn every skill for the platform's behaviour.
+# `paragraph_retriever` is absent on purpose: Squirro fires it before the agent chooses anything.
 WEB_TOOLS = frozenset({
     "exa_web_search", "exa_web_content_fetch", "perplexity_web_search_api",
     "openai web search", "openai_web_search", "web_search",
@@ -88,9 +68,7 @@ _SCHEMA_REJECT = re.compile(
     r"toolvalidationerror|missing required (parameter|argument)",
     re.IGNORECASE,
 )
-# The tool ran and answered: I do not hold that entity, or that identifier is not
-# in my format. The call is wrong, but nothing is broken — usually the agent
-# guessed an identifier (`sstr2_human`, PDB `7t11` for a question about 7T10).
+# The tool answered that it does not hold the entity: the call was wrong, nothing is broken.
 _LOOKUP_MISS = re.compile(
     r"not found:|entry not found|no data returned|not in (our|the) database|"
     r"unknown (accession|identifier|entry)|invalid (accession|identifier)",
@@ -148,16 +126,8 @@ def mentioned_tools(body: str) -> set[str]:
 
 
 def body_tool_coverage(body: str | None, fired: list[str]) -> dict:
-    """How much of what the body names actually ran — data, not a verdict.
-
-    `required_tools` only sees bodies that mark their mandatory calls
-    ``**Primary**``, and just 3 of 86 do, so it says nothing about the corpus.
-    Every body does name its tools in backticks, though, and comparing that set
-    against what ran locates a skill that quietly went its own way. It is NOT a
-    finding: a body legitimately names gated alternatives ("pick the first
-    applicable, then STOP"), so a low ratio is a reason to read the trace, not
-    evidence of a defect.
-    """
+    """How much of what the body names actually ran: data, not a verdict. A body may
+    name gated alternatives, so a low ratio is a reason to read the trace, not a defect."""
     if not body:
         return {}
     named = mentioned_tools(body)
@@ -218,13 +188,8 @@ def _is_empty_result(text: str) -> bool:
 
 
 def classify_call(text: str, status: str | None = None) -> str:
-    """One of: not_found | schema | error | empty | ok.
-
-    Trust the result envelope when there is one. ToolUniverse wraps results as
-    ``{"status": "success"|"error", ...}``, and a success payload can be pages of
-    free prose — drug-label text mentioning an exception or an HTTP error is not
-    a failed call. Only fall back to scanning raw text when no envelope exists.
-    """
+    """One of: not_found | schema | error | empty | ok. Trust the result envelope when there
+    is one: a success payload can be prose that mentions an error. Scan raw text only without one."""
     if status == "failed":
         return "error"
     stripped = (text or "").strip()
@@ -232,9 +197,7 @@ def classify_call(text: str, status: str | None = None) -> str:
         envelope = json.loads(stripped) if stripped else None
     except (ValueError, TypeError):
         envelope = None
-        # Squirro caps a tool's output, so a long result arrives as JSON cut
-        # mid-string. The head still says what happened; scanning the surviving
-        # prose does not (drug labels say "with the exception of").
+        # A capped output is JSON cut mid-string; its head still says what happened.
         head = _ENVELOPE_HEAD.match(stripped)
         if head:
             if head.group(1) == "success":
@@ -279,10 +242,9 @@ def classify_call(text: str, status: str | None = None) -> str:
 
 # --- numbers the bundle cannot vouch for ------------------------------------------
 
-# A standalone numeric token: not glued to a word or a dot on either side, so
-# HP:0001433, ORPHA:580, [^3^], v3 and 1.2.3 are names, not numbers.
+# A standalone numeric token; identifiers such as HP:0001433 or 1.2.3 are names, not numbers.
 _NUMERIC = re.compile(r"(?<![\w.:/^])(\d{1,6}(?:\.\d{1,4})?)(?![\w^/]|\.\d)")
-# The bundle side: a tool writes 0.3788304384 and the report writes 0.3788.
+# The bundle side keeps full precision; the report may round it.
 _NUMERIC_ANY = re.compile(r"(?<![\w.:/^])(\d+(?:\.\d+)?)(?![\w^/]|\.\d)")
 _URL = re.compile(r"\(?https?://\S+\)?")
 _MARKUP = re.compile(r"<sub>.*?</sub>", re.S)      # the renderer's attachment-size chips
@@ -295,12 +257,8 @@ def _rounded_forms(value: str) -> set[str]:
 
 
 def uncited_numbers(answer: str, bundle_text: str) -> list[dict]:
-    """Every number the report states that the bundle does not contain.
-
-    A number counts as cited when the bundle holds it in any rounding the
-    bundle value admits (393.41 may be written 393.4). Identifiers and links are
-    names, not numbers, and are never flagged.
-    """
+    """Every number the report states that the bundle does not hold in any rounding the
+    bundle value admits. Identifiers and links are names, not numbers, and are never flagged."""
     vouched: set[str] = set()
     for m in _NUMERIC_ANY.finditer(bundle_text or ""):
         vouched |= _rounded_forms(m.group(1))
@@ -374,8 +332,7 @@ def score(
              if names[i] == "execute_tool"
              and (skill_idx is None or i > skill_idx)]
 
-    # A modelled run makes its calls on the server; the finished bundle names
-    # them. That is the skill firing tools, by another door.
+    # A modelled run calls its tools on the server; the finished bundle is the evidence.
     served_run = finished_bundle(actions) is not None
     if skill_idx is not None and not execs and not served_run:
         findings.append(_finding(
@@ -435,10 +392,7 @@ def score(
 
 def finished_bundle(actions: list[dict]) -> str | None:
     """The text of the finished Skill Run bundle in a modelled trace, or None.
-
-    Only run_skill/continue_skill return one; a prose or bare trace has none,
-    so this is what makes the number check apply to modelled runs alone.
-    """
+    Only run_skill/continue_skill return one, so the number check applies to modelled runs alone."""
     for action in actions or []:
         if action.get("tool_name") not in ("run_skill", "continue_skill"):
             continue

@@ -1,24 +1,9 @@
-"""Descriptions promising a derived aggregate the return schema never declares (DSR-664).
+"""Descriptions that promise a derived aggregate the return schema never declares.
 
-An agent that reads "returns frequencies" and receives raw per-record rows with no
-denominator presents counts as rates. That is the defect, and it is not a schema problem the
-agent can see: the description is the only surface it reads before calling.
-
-**This reports; it never fails the build.** Detection is mechanical, adjudication is not --
-roughly four in five hits turn out truthful under a differently-named field, a nested block,
-or a word that is not a statistic at all ("clade distribution", "publication frequency").
-A gate on this would be red forever and would be switched off within a week.
-
-Two things the mechanical rule cannot do, both handled by hand below.
-
-It cannot see a promise made outside a returns-clause: ``GDC_get_mutation_frequency`` says
-"Get pan-cancer mutation frequency statistics" in its opening sentence and never repeats it.
-
-And it cannot see the canonical case at all. ``cBioPortal_get_mutations`` promises *nothing*
--- "Get mutation data for specific genes in a cancer study" -- and returns ``sampleId`` /
-``patientId`` / ``proteinChange`` rows with no denominator anywhere. The overclaim is in the
-silence: nothing tells the agent these are not frequencies, and the tool's subject matter
-invites exactly that reading. Named additions carry cases like that into the queue.
+An agent that reads "returns frequencies" and receives raw rows with no denominator
+presents counts as rates. This module reports and never fails the build, because most
+mechanical hits are truthful under another field name and must be adjudicated by hand;
+``NAMED_ADDITIONS`` carries the cases the returns-clause rule cannot see.
 """
 
 from __future__ import annotations
@@ -29,15 +14,12 @@ from pathlib import Path
 __all__ = ["ADJUDICATED", "AGGREGATES", "Claim", "NAMED_ADDITIONS", "genuine_overclaims",
            "review_queue", "unadjudicated"]
 
-# Words naming a derived quantity -- something computed over a set, which the caller cannot
-# recover from rows alone without the denominator.
+# Words naming a quantity computed over a set; rows alone cannot recover it.
 AGGREGATES = ("frequency", "frequencies", "prevalence", "rate", "rates", "enrichment",
               "proportion", "percentage", "incidence", "distribution", "ratio",
               "average", "mean", "median", "density", "score")
 
-# Forms the schemas actually use for the same quantity. Observed while adjudicating, not
-# guessed: `obsExp` for a ratio, `BAVER` for an average, `af` for allele frequency,
-# `casesPerOneMillion` for a rate.
+# Field-name forms the schemas use for the same quantity, observed while adjudicating.
 _SCHEMA_FORMS = {
     "frequency": ("freq", "maf", "af", "allele_freq"),
     "frequencies": ("freq", "maf", "af", "allele_freq"),
@@ -179,9 +161,7 @@ class Claim:
     def message(self) -> str:
         """The first eight declared fields, saying so when there are more.
 
-        A reader deciding whether the promised quantity is present under another name must
-        know the list was cut -- otherwise a truthful tool with a ninth field named
-        `allele_frequency` reads as an overclaim. Total shown for exactly that reason.
+        The reader must know the list was cut, or a truthful ninth field reads as an overclaim.
         """
         shown = self.declared[:8]
         total = len(self.declared)

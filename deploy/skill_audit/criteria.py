@@ -1,16 +1,9 @@
 """Five of the eleven benchmark criteria measured by script, the spread between two runs of one
 arm, and the pre-flight that must pass before the first run.
 
-A judge's opinion costs a turn and varies between judges; a script over saved traces costs
-nothing and gives the same number every time. The spread is the point of the two-run
-protocol: for each question and each arm, how far the two runs are apart -- in the judged
-total and in every number they both state -- and how often one run states a quantity the
-other does not.
-
-Every pre-flight check comes from a failure of 2026-09-21: the two agents on different
-models; a web tool "enabled" in the configuration but absent at run time because its key was
-missing; a web call that gave no links; a plugin that failed to load and told nobody but the
-genai log.
+A script over saved traces gives the same number every time, where a judge's opinion costs a
+turn and varies. The spread is the point of the two-run protocol: how far two runs of one arm
+are apart, in the judged total and in every number they both state.
 
     python -m skill_audit.criteria preflight --env-file ../.env --web-agent <id> --modelled-agent <id>
 """
@@ -24,8 +17,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-# A module import: `from tooluniverse import x` goes through the package's lazy tool
-# lookup and runs a full registry discovery when the name is not a tool.
+# Import the module, not the name: the package's lazy lookup would run a registry discovery.
 import tooluniverse.skill_report_check as rc  # noqa: E402
 
 WEB_ARM_LIMIT = ("Limit of the web arm: on sr-dev it has Exa, Perplexity and OpenAI web search; "
@@ -60,7 +52,7 @@ def stated_numbers(answer: str) -> list[str]:
 
 def traceability(answer: str, received: Any) -> dict:
     """The share of the numbers a report states that a stored row (or, for the web arm, a
-    page the judges can open) vouches for -- in any rounding the stored value admits."""
+    page the judges can open) vouches for, in any rounding the stored value admits."""
     stated = stated_numbers(answer)
     vouched_set = rc._vouched_numbers(received)
     vouched = [n for n in stated if n in vouched_set]
@@ -242,8 +234,8 @@ def preflight(agents: dict[str, dict], probe_turns: dict | list[dict],
     """Everything that must hold before the first run; an empty list means go.
 
     `agents`: {"web": agent, "modelled": agent} as the genai agents list returns them.
-    `probe_turns`: live turns of the web agent -- one per enabled web tool, each asked by name,
-    since one question cannot make an agent use every tool; a single turn is accepted.
+    `probe_turns`: live turns of the web agent, one per enabled web tool, each asked by name;
+    a single turn is accepted.
     `log_lines`: the genai service log since the probes; None when it could not be read.
     """
     failures = []

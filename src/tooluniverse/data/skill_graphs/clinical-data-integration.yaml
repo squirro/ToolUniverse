@@ -1,27 +1,22 @@
 # clinical-data-integration as a process graph — the multi-source join case.
 #
-# Chosen for the proof of concept because it is the join: label, FAERS,
-# pharmacogenomics, clinical trials and literature, assembled into one safety
-# picture. Its execution genuinely varies — 8, 10, 12, 10 and 16 execute_tool
-# calls across six recorded runs — so there is something for a harness to hold.
+# Label, FAERS, pharmacogenomics, clinical trials and literature, assembled into
+# one safety picture. Each step names its calls, what to extract and what must
+# run before it.
 #
-# Only TWO values actually chain, and the prose body spends most of its warnings
-# on exactly those two:
-#   setid   — a DailyMed UUID captured in Phase 0 and reused in Phase 1, with
-#             three lines warning that the parameter is `setid`, not `set_id`.
-#   top_aes — FAERS reaction terms that must be passed back VERBATIM, because
-#             MedDRA is case- and spelling-strict ("Haemorrhage", not
-#             "hemorrhage"). The body pleads "do NOT retype or guess"; here they
-#             are carried mechanically and cannot be retyped.
-# strong_signal is DERIVED by the server from returned PRR values, not asserted
-# by the model — the equivalent of Novartis's _gw_* predicates.
+# Two values chain, and the prose body warns about both:
+#   setid   — a DailyMed UUID captured in Phase 0 and reused in Phase 1. The
+#             parameter is `setid`, not `set_id`.
+#   top_aes — FAERS reaction terms, carried back verbatim because MedDRA is
+#             case- and spelling-strict ("Haemorrhage", not "hemorrhage"). Here
+#             they are carried mechanically and cannot be retyped.
+# strong_signal is derived by the server from returned PRR values, not asserted
+# by the model.
 
 skill: clinical-data-integration
 inputs: [drug_name]
-# How the report must read the evidence. Blind-judged 2026-09-03: the reports
-# written from the bundle alone printed FAERS coding noise as headline signals.
-# The numbers were right; the judgement the author wrote down never reached the
-# writer. It travels in the bundle now.
+# How the report must read the evidence. Without it the writer has the numbers
+# but not the judgement, and prints FAERS coding noise as headline signals.
 report: >-
   Lead with the inputs the question names, then the ranked signals. When the run
   holds `facts.requested_meddra`, show first how each requested word was read: one
@@ -75,11 +70,10 @@ report: >-
   this run. When `web_rows` holds no rows, or none for a subject, say that the web
   step found nothing for it. End with a Limitations section built from `failures`,
   `blocked`, `unresolved` and `excluded`.
-# Optional, and bound by the AGENT from the question, IN THE QUESTION'S OWN WORDS: the
-# reactions the user actually asked about. A named reaction is rarely in the top
-# twelve by report count, so without this the run returns correct numbers that do
-# not answer the question. The words are read onto FAERS terms by the
-# `requested_terms` step, never sent to FAERS as they stand.
+# Optional, bound by the agent from the question in its own words: the reactions
+# asked about are rarely among the top terms by report count, so without this the
+# run returns correct numbers that do not answer the question. The words are read
+# onto FAERS terms by the `requested_terms` step, never sent to FAERS as they stand.
 optional_inputs: [requested_aes]
 
 # What the agent gets whole (fact) and what it gets described and fetches from (evidence).
@@ -101,33 +95,26 @@ steps:
     label: "Phase 0 — drug identity and label handle"
     calls:
       - tool: DailyMed_search_spls
-        arguments: {drug_name: "{drug_name}"}   # NOT `query` — the prose body says query, the schema says drug_name
+        arguments: {drug_name: "{drug_name}"}   # NOT `query` — the schema says drug_name
       - tool: OpenFDA_get_approval_history
         arguments: {operation: "get_approval_history", drug_name: "{drug_name}"}
     repair:
-      # The agent binds "lutetium Lu-177 dotatate" from the question — correctly,
-      # and identically on three runs — and DailyMed returns 0 SPLs for it while
-      # "lutetium lu 177 dotatate" returns 1. The isotope notation is world
-      # knowledge the agent has and the data does not, so ask and retry rather
-      # than fail the whole run at step one.
+      # Isotope notation differs between the question and DailyMed, so a correctly
+      # bound drug name can still return no SPL. Ask and retry rather than fail
+      # the whole run at step one.
       argument: drug_name
       when_missing: setid
     extract:
       setid: "data.0.setid"
-      # FAERS indexes this drug family by BRAND, not by the generic INN the
-      # question uses: measured, "lutetium lu 177 dotatate" returns 3 reaction
-      # terms and "LUTATHERA" returns 100. Case is irrelevant, despite what the
-      # prose body says. DailyMed's SPL title starts with the brand, so lift it
-      # here and let every FAERS step use it.
+      # FAERS indexes by brand, not by the generic INN the question uses. The
+      # SPL title starts with the brand, so lift it here for every FAERS step.
       faers_name:
         path: "data.0.title"
         regex: "^([A-Za-z0-9-]{3,})"
         default_from: drug_name
-      # The INN, from the same title: "LUTATHERA (lutetium Lu 177 dotatate)". PubMed
-      # maps the INN to its substance record; the brand maps to the element and drew
-      # 177Lu-PSMA papers (live 2026-09-07, the agent bound "Lutathera": 5 of 10
-      # platelet papers and 12 of 29 renal papers were PSMA). The literature loop
-      # searches with this, never with what the agent typed.
+      # The INN, from the same title. PubMed maps the INN to its substance record;
+      # a brand name maps to the element and draws unrelated papers. The literature
+      # loop searches with this, never with what the agent typed.
       inn:
         path: "data.0.title"
         regex: "\\(([^)]+)\\)"
@@ -149,8 +136,8 @@ steps:
       - tool: FDA_get_indications_by_drug_name
         arguments: {drug_name: "{drug_name}"}
     extract:
-      # The label's own words for what the drug treats (recorded shape: results[].
-      # indications_and_usage[]). The indication step reads FAERS terms against this.
+      # The label's own words for what the drug treats. The indication step reads
+      # FAERS terms against this.
       indication_text: "results.0.indications_and_usage.0"
     produces: [indication_text]
     notes: >-
@@ -164,8 +151,7 @@ steps:
       - tool: FAERS_count_reactions_by_drug_event
         arguments: {medicinalproduct: "{faers_name}"}
     extract:
-      # Coding noise and outcomes, not reactions: they top every raw FAERS count
-      # and carry no clinical information. Excluded before the cap, and the
+      # Coding noise and outcomes, not reactions. Excluded before the cap; the
       # bundle records what was set aside so the report can say so.
       top_aes:
         path: "result[].term"
@@ -188,12 +174,9 @@ steps:
     requires: [faers_counts]
     when: requested_aes
     calls: []
-    # The reading is the agent's judgement, and it is shown, not trusted: each term is
-    # checked against `faers_term_rows` (a term FAERS never coded for this drug is
-    # refused), then placed by an ontology under the concept the word names. Live, one
-    # word was read in the agent's head onto two terms of a different body system and
-    # both passed, because both were FAERS terms: the check proves membership, not
-    # meaning. The placing is the evidence for meaning; the report shows both.
+    # The reading is the agent's judgement, shown and not trusted: each term is
+    # checked against `faers_term_rows` for membership, then placed by an ontology
+    # as evidence of meaning. Membership is not meaning; the report shows both.
     judge: [requested_meddra]
     mapping:
       requested_meddra: {of: requested_aes, onto: {rows: faers_term_rows, field: term}}
@@ -228,9 +211,8 @@ steps:
       - tool: FAERS_calculate_disproportionality
         arguments: {drug_name: "{faers_name}", adverse_event: "{adverse_event}"}
     collect:
-      # One row per reaction: term, value and the link of its own query together. The
-      # parallel lists that stood beside the rows are gone — a reaction without a PRR
-      # dropped out of one list and not the other.
+      # One row per reaction: term, value and the link of its own query together.
+      # Not parallel lists: a reaction without a PRR falls out of one and not the other.
       prr_rows: {path: "", fields: ["$item as term", "data.metrics.PRR.value as prr", "source_url as url"]}
     derive:
       strong_signal: {from: prr_rows, field: prr, op: ">=", value: 5, mode: any}
@@ -284,12 +266,12 @@ steps:
     requires: [identity]
     calls:
       - tool: search_clinical_trials
-        # The source's own maximum. Unset, the default returned ten trials of 866 and
-        # nothing said so.
+        # The source's own maximum; unset, the default returns a few of many and
+        # nothing says so.
         arguments: {query_term: "{drug_name}", pageSize: 1000}
     total: "data.total_count"
     collect:
-      # One row for each trial, not four lists cut at ten.
+      # One row for each trial, not parallel lists.
       trial_rows: {path: "data.studies", flatten: true,
                    fields: ["NCT ID as nct_id", "brief_title as title",
                             "overall_status as status", "phase", "condition"]}
@@ -301,32 +283,25 @@ steps:
   - id: literature
     label: "Phase 5 — published safety evidence, one search per flagged reaction"
     requires: [compute]
-    # One field-tagged query per flagged reaction: "what has been written about this
-    # drug and this reaction". This is the shape the prose arm already used, and why
-    # it found six relevant papers where one drug-wide query found two.
+    # One query per flagged reaction: what has been written about this drug and
+    # this reaction. A single drug-wide query finds far less.
     for_each: flagged_aes
     as: reaction
     calls:
       - tool: PubMed_search_articles
-        # UNTAGGED on purpose. Untagged, PubMed maps the INN to its substance record
-        # ("lutetium lu 177 dotatate"[Supplementary Concept]) and the MedDRA reaction
-        # to its MeSH heading, whatever spelling the abstract uses. Tagged
-        # [Title/Abstract], "Lutathera AND myelodysplastic syndrome" found 0 papers
-        # where the record finds 12 (probed 2026-09-07; renal impairment 0 → 11).
-        # The reaction term anchors the search, so the 177Lu-PSMA noise that a bare
-        # "adverse events" query drew does not return. The brand name stays OUT: it
-        # maps to the element and brings that noise back (1,126 PSMA papers) — hence
-        # `inn` from the label title, not `drug_name` as the agent bound it.
-        # PubMed's own relevance order: unset, it answers newest first, and "the first
-        # papers" were the newest, not the ones that answer the question.
+        # Untagged on purpose: PubMed maps the INN to its substance record and the
+        # reaction to its MeSH heading, whatever spelling the abstract uses, while a
+        # [Title/Abstract] tag loses both. The reaction term anchors the search. The
+        # brand name stays out; it maps to the element and draws unrelated papers,
+        # hence `inn` from the label title. Sort by relevance, or the source answers
+        # newest first.
         arguments: {query: "{inn} AND {reaction}", limit: 200, sort: "relevance"}
     total: "metadata.total"
     narrowed: >-
       200 is the most this tool documents for one call; the source's total for each
       reaction is recorded beside the rows, and the report states it.
     collect:
-      # One row for each paper. Parallel lists per reaction fell out of step at the first
-      # paper without a DOI, and a fetch could not narrow inside a cell.
+      # One row for each paper, not parallel lists per reaction.
       literature_rows: {path: "data", flatten: true,
                         fields: ["$item as reaction", "pmid", "title", "pub_year as year",
                                  "journal", "article_type", "url", "doi_url as doi", "abstract"]}
@@ -340,10 +315,9 @@ steps:
     label: "Phase 5b — the web queries, written by the agent for this question"
     requires: [requested_terms, compute]
     calls: []
-    # The process holds no query text: the one it held was its first test question's
-    # words, searched for every drug. The subjects are the run's own -- the words the
-    # question named and the signals the run computed -- and the agent writes one
-    # query for each, in the words that will find a published value or a review.
+    # The process holds no query text. The subjects are the run's own: the words the
+    # question named and the signals the run computed. The agent writes one query
+    # for each, in the words that will find a published value or a review.
     combine:
       web_subjects: {union: [requested_aes, flagged_aes]}
     judge: [web_queries]
@@ -362,8 +336,7 @@ steps:
     for_each: web_queries
     as: query
     # The agent's web tool is not in the registry: the run composes one call per
-    # query and the agent makes them. The pages come back as rows of an evidence
-    # table, read later with the ranked fetch like the literature.
+    # query and the agent makes them. The pages come back as evidence-table rows.
     delegate:
       - tool: exa_web_search
         arguments: {action: "search", query: "{query}", contents: true}
@@ -380,12 +353,10 @@ steps:
     label: "Phase 5b.2 — the drug's own indication, read onto the source's terms"
     requires: [label, faers_counts]
     calls: []
-    # The disease a drug treats, and its course, top the raw FAERS counts for that
-    # drug and are reported disease, not drug signals. Which terms those are is the
-    # drug's own: a fixed cancer pattern hid true cancer signals for other drugs and
-    # kept a diabetes drug's own disease among its signals. So the indication is
-    # judged from the label's Indications section, checked against the FAERS list,
-    # placed, and shown — the same judged mapping as `requested_terms`.
+    # The disease a drug treats, and its course, top the raw FAERS counts and are
+    # reported disease, not drug signals. Which terms those are is the drug's own,
+    # so a fixed word list will not do: the indication is judged from the label,
+    # checked against the FAERS list and shown — as `requested_terms` is.
     judge: [indication_meddra]
     mapping:
       indication_meddra: {of: indication_text, onto: {rows: faers_term_rows, field: term}}
@@ -405,12 +376,10 @@ steps:
   - id: compute
     label: "Phase 5c — ranked signal table (agent's arithmetic, server-checked)"
     requires: [disproportionality, indication_terms]
-    # The sort, threshold and selection are the agent's (its code tool, or the model
-    # itself — the runtime cannot tell, measured 2026-09-09: 3/3 exact without a
-    # code call). The rows travel whole in the question, and the server refuses an
-    # answer that does not hold against them: nothing invented, nothing dropped,
-    # order and flags as declared. One re-ask with the failure named, then
-    # unresolved.
+    # The sort, threshold and selection are the agent's; the runtime cannot tell a
+    # code tool from the model itself. The rows travel whole in the question and the
+    # server refuses an answer that does not hold against them: nothing invented,
+    # nothing dropped, order and flags as declared. One re-ask, then unresolved.
     delegate:
       - tool: OpenAI_Code_Interpreter
         arguments:

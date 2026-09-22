@@ -64,10 +64,7 @@ def _words(value: Any) -> list[str]:
 
 def ranked_rows(rows: list[dict], query: str) -> list[tuple[float, int]]:
     """BM25 of each row's text against the query: (score, row index), best first.
-
-    Only rows that share a word with the query are returned. Ties keep the table's order, so
-    the same query always gives the same sequence and an offset continues it.
-    """
+    Only rows sharing a word with the query are returned; ties keep table order so an offset continues."""
     documents = [_words(list(row.values())) for row in rows]
     terms = set(_words(query))
     average = (sum(len(d) for d in documents) / len(documents)) or 1.0
@@ -160,11 +157,8 @@ class WorkingRecord:
         return self._rows(name)
 
     def describe(self, name: str) -> dict:
-        """What a table holds, without its rows: the agent reads this before it fetches.
-
-        A column with few distinct values is a closed list (a phase, a status): its values
-        and their counts are listed, for reading -- the selection is the code tool's.
-        """
+        """What a table holds, without its rows. A column with few distinct values is a
+        closed list; its values and their counts are listed."""
         rows = self._rows(name)
         columns = list(dict.fromkeys(column for row in rows for column in row))
         values: dict[str, dict] = {}
@@ -172,7 +166,7 @@ class WorkingRecord:
             counts: dict = {}
             for row in rows:
                 value = row.get(column)
-                # A list-valued cell (a trial's phases) is a closed list too: each element counts.
+                # A list-valued cell is a closed list too: each element counts.
                 members = value if isinstance(value, list) else [value]
                 if all(_closed_list_value(m) for m in members):
                     for member in members:
@@ -202,11 +196,8 @@ class WorkingRecord:
 
     def fetch(self, table: str, columns: list[str] | None = None,
               limit: int | None = None, offset: int = 0, rank_by: str | None = None) -> dict:
-        """Rows of one table. A wrong name is answered with the right ones, never with nothing.
-
-        `rank_by` is plain words: the rows that share a word with it come back best first,
-        each with its `_score`. Text in, ranked rows out; it is not a query language.
-        """
+        """Rows of one table; a wrong name is answered with the right ones. `rank_by` is plain
+        words, not a query language: matching rows come back best first with a `_score`."""
         rows = self._rows(table)
         if not rows:
             return {"status": "unknown_table", "table": table, "tables": self.tables()}
@@ -222,8 +213,7 @@ class WorkingRecord:
         out = {"status": "ok", "table": table, "total_rows": len(rows), "offset": offset}
         scores: dict[int, float] = {}
         if rank_by:
-            # One record can arrive under several calls (one paper, many reaction searches):
-            # rows equal in the columns asked for are one record, and its best copy is kept.
+            # Rows equal in the requested columns are one record; its best copy is kept.
             ranked, seen = [], set()
             for score, n in ranked_rows(rows, rank_by):
                 same = json.dumps({c: rows[n].get(c) for c in (columns or known)},

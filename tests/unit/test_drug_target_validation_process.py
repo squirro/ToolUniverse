@@ -106,7 +106,13 @@ def test_the_wide_tables_are_evidence_and_the_loop_runs_over_the_sources_drug_na
     described = {t["table"] for t in handed["tables"]}
     for evidence in ("literature_rows", "trial_rows", "gwas_rows"):
         assert evidence not in facts and evidence in described
-    assert len(facts["disease_rows"]) == 461, "the whole association list, one page"
+    # Every row the source served arrives, whatever its width. The count is read from
+    # the recording rather than written here, and the recording is kept above any
+    # plausible page size so a cap would fail this.
+    served = (RECORDED["OpenTargets_get_diseases_phenotypes_by_target_ensembl"]
+              ["data"]["target"]["associatedDiseases"]["rows"])
+    assert len(served) > 100, "the recording must exceed a plausible cap to catch one"
+    assert len(facts["disease_rows"]) == len(served), "the whole association list, one page"
     looped = [a["drug_name"] for t, a in calls if t == "FDA_get_boxed_warning_info_by_drug_name"]
     assert looped == [r["name"] for r in facts["drug_rows"]] and looped[0] == "VINTAFOLIDE"
     # the clinical judgement ("approved for THIS disease?") reads the drug's indications

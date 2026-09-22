@@ -61,6 +61,9 @@ def to_bbo(graph: dict, git_commit: str | None = None) -> str:
         g.add((process, SRP.reportGuidance, Literal(graph["report"])))
     if graph.get("tables"):
         g.add((process, SRP.tablesSpec, Literal(json.dumps(graph["tables"], sort_keys=True))))
+    if graph.get("constants"):
+        # The process's closed lists and fixed values: facts from the first step.
+        g.add((process, SRP.constantsSpec, Literal(json.dumps(graph["constants"], sort_keys=True))))
     if git_commit:
         g.add((process, SRP.gitCommit, Literal(git_commit)))
 
@@ -292,6 +295,8 @@ def from_bbo(g: Graph) -> dict:
         out["report"] = str(guidance)
     if (tables := g.value(process, SRP.tablesSpec)) is not None:
         out["tables"] = json.loads(str(tables))
+    if (constants := g.value(process, SRP.constantsSpec)) is not None:
+        out["constants"] = json.loads(str(constants))
     inputs = sorted(g.objects(process, SRP.hasInput),
                     key=lambda n: int(g.value(n, SRP.order) or 0))
     required = [str(g.value(n, RDFS.label)) for n in inputs

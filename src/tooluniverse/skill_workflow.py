@@ -255,7 +255,7 @@ class SkillWorkflow:
     @workflow.run
     async def run(self, inp: SkillRunInput) -> dict:
         self._process = inp.process
-        self._run = new_run(inp.inputs)
+        self._run = new_run({**(inp.process.get("constants") or {}), **inp.inputs})
         run, process = self._run, self._process
         while True:
             step = next_runnable(process, run)

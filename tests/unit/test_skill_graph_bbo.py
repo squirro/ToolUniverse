@@ -188,6 +188,16 @@ def test_the_declared_tables_survive_the_round_trip():
     assert back["tables"] == {"prr_rows": "fact", "papers": "evidence"}
 
 
+def test_the_declared_constants_survive_the_round_trip():
+    """A closed list a judgement is checked against must reach the store whole and in order."""
+    process = {**GRAPH, "constants": {"ko_options": ["viable_no_phenotype", "viable_mild", "lethal"],
+                                      "critical_tissues": ["Heart", "Liver", "Kidney"]}}
+
+    back = from_bbo(Graph().parse(data=to_bbo(process), format="turtle"))
+
+    assert back["constants"] == process["constants"]
+
+
 def test_the_reason_for_a_narrowed_call_survives_the_round_trip():
     process = {"skill": "d", "inputs": ["drug_name"], "steps": [
         {"id": "literature",

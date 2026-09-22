@@ -356,10 +356,56 @@ def _pluck_all(rule: dict, facts: dict) -> list | None:
             if (row.get(where) if where else True) and row.get(rule["field"]) is not None]
 
 
+class _Refused:
+    """A compute that cannot proceed on what it was given -- named, so the run says why."""
+
+    def __init__(self, reason: str):
+        self.reason = reason
+
+
+def _number(value: Any) -> float | None:
+    try:
+        return None if value is None or isinstance(value, bool) else float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _band(rule: dict, facts: dict) -> Any:
+    """Points from a number by the first threshold it reaches: a skill's grading prose
+    ("more than 100 publications: 10; 50-100: 7") as a table the server applies."""
+    value = _number(_dig(facts, rule["from"]))
+    if value is None:
+        return None
+    for threshold, points in rule["bands"]:
+        if value >= float(threshold):
+            return points
+    return None
+
+
+def _map(rule: dict, facts: dict) -> Any:
+    """Points from a judged option out of a closed list; an option off the list is refused
+    by name, with the list, so the judgement is asked again or left unresolved."""
+    option = facts.get(rule["from"])
+    if option is None:
+        return None
+    table = rule["table"]
+    if option in table:
+        return table[option]
+    return _Refused(f"{rule['from']} is {option!r}, not one of {sorted(table)}")
+
+
+def _sum(rule: dict, facts: dict) -> Any:
+    """The named parts added; a part that never arrived is not a zero."""
+    parts = [_number(facts.get(name)) for name in rule["of"]]
+    return None if any(p is None for p in parts) else (
+        int(sum(parts)) if all(float(p).is_integer() for p in parts) else sum(parts))
+
+
 _COMPUTE_OPS: dict[str, Callable[[dict, dict], Any]] = {"rank_differential": _rank_differential,
                                                        "overlap": _overlap, "fewest": _fewest,
                                                        "hierarchy": _hierarchy_rows,
-                                                       "flag": _flag, "pluck": _pluck}
+                                                       "flag": _flag, "pluck": _pluck,
+                                                       "band": _band, "map": _map, "sum": _sum}
 
 
 def _compute(rule: dict, facts: dict) -> Any:
@@ -1115,11 +1161,18 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
     # produces, and a store hands the rules back in its own order, not the
     # author's (GraphDB: alphabetical, and the literature loop lost its list).
     pending = dict(spec.get("compute") or {})
+    blocked: list[dict] = []
+    refused: list[str] = []
     while pending:
         settled = []
         for name, rule in pending.items():
             value = _compute(rule, {**facts, **extracted})
-            if value is not None:
+            if isinstance(value, _Refused):
+                # The server cannot apply the rule to what it was given: said, not skipped.
+                blocked.append({"step": spec["id"], "reason": f"cannot compute {name}: {value.reason}"})
+                refused.append(name)
+                settled.append(name)
+            elif value is not None:
                 extracted[name] = value
                 settled.append(name)
                 if rule.get("exclude_pattern"):
@@ -1130,9 +1183,9 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
             break
         for name in settled:
             pending.pop(name)
-    computed_missing = list(pending)
+    computed_missing = list(pending) + refused
 
-    blocked, undecided = [], []
+    undecided = []
     known = {**facts, **extracted}
     for name, rule in (spec.get("derive") or {}).items():
         decided = _derive(rule, known)
@@ -1181,7 +1234,10 @@ class SkillRunner:
         # A host that already names its runs (Temporal) passes the id in; the
         # in-memory host is the only one that mints its own.
         run_id = run_id or uuid.uuid4().hex
-        self._runs[run_id] = {**new_run(inputs), "run_id": run_id}
+        # A process's closed lists and fixed values are facts from the first step: the
+        # questions show them, the checks read them, and no step has to produce them.
+        self._runs[run_id] = {**new_run({**(self.graph.get("constants") or {}), **inputs}),
+                              "run_id": run_id}
         return {"run_id": run_id, "step": self._peek(run_id)}
 
     def state(self, run_id: str) -> dict:

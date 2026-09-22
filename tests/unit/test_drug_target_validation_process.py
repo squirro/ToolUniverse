@@ -53,13 +53,14 @@ def _agent(question, first_answers):
     return answer
 
 
-def _drive(records, disease="ovarian cancer", first_answers=None):
+def _drive(records, disease="ovarian cancer", first_answers=None, responses=None):
     calls, asked = [], []
     first_answers = dict(first_answers or {})
+    served = {**RECORDED, **(responses or {})}
 
     def execute(tool, arguments):
         calls.append((tool, arguments))
-        return RECORDED[tool]
+        return served[tool]
 
     def agent(question):
         asked.append(question)
@@ -106,12 +107,10 @@ def test_the_wide_tables_are_evidence_and_the_loop_runs_over_the_sources_drug_na
     described = {t["table"] for t in handed["tables"]}
     for evidence in ("literature_rows", "trial_rows", "gwas_rows"):
         assert evidence not in facts and evidence in described
-    # Every row the source served arrives, whatever its width. The count is read from
-    # the recording rather than written here, and the recording is kept above any
-    # plausible page size so a cap would fail this.
+    # Every row the source served arrives; the width comes from the recording, not from
+    # a number written here. A cap is caught by the wide-table test below.
     served = (RECORDED["OpenTargets_get_diseases_phenotypes_by_target_ensembl"]
               ["data"]["target"]["associatedDiseases"]["rows"])
-    assert len(served) > 100, "the recording must exceed a plausible cap to catch one"
     assert len(facts["disease_rows"]) == len(served), "the whole association list, one page"
     looped = [a["drug_name"] for t, a in calls if t == "FDA_get_boxed_warning_info_by_drug_name"]
     assert looped == [r["name"] for r in facts["drug_rows"]] and looped[0] == "VINTAFOLIDE"
@@ -146,3 +145,28 @@ def test_without_a_disease_the_disease_bound_steps_are_skipped_and_no_total_is_c
     assert {"total", "disease_association"} <= unresolved
     assert handed["facts"]["druggability_total"] == 20, "the dimensions that need no disease are scored"
     assert "stalled" not in handed
+
+
+# --- a wide table is not capped on its way to the evidence store -----------------
+#
+# The shape is the recorded one; the width is made here, so the guard costs no fixture
+# and can sit above any page size a future change might introduce.
+
+def test_a_wide_association_table_arrives_whole(tmp_path):
+    import copy
+
+    wide = copy.deepcopy(RECORDED["OpenTargets_get_diseases_phenotypes_by_target_ensembl"])
+    table = wide["data"]["target"]["associatedDiseases"]
+    template = table["rows"][0]
+    table["rows"] = [
+        {**copy.deepcopy(template),
+         "disease": {**template["disease"], "id": f"MONDO_{n:07d}", "name": f"disease {n}"}}
+        for n in range(300)
+    ]
+    table["count"] = 300
+
+    handed, _, _ = _drive(
+        tmp_path,
+        responses={"OpenTargets_get_diseases_phenotypes_by_target_ensembl": wide})
+
+    assert len(handed["facts"]["disease_rows"]) == 300, "a cap trimmed the source's table"

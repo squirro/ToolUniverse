@@ -684,7 +684,7 @@ def source_total(spec: dict, results: list, items: list | None) -> Any:
 def absorb_recorded(record: WorkingRecord, tables: dict | None, spec: dict,
                     calls: list[dict], facts: dict) -> dict:
     """`absorb` over the step's recorded results, so no result has to travel to the caller."""
-    results = record.results(spec["id"])
+    results = record.results(spec["id"], expected=len(calls))
     outcome = absorb(spec, results, facts, items=loop_items(spec, calls), calls=calls)
     outcome["evidence"] = keep_evidence(record, tables, outcome)
     if results:
@@ -1293,9 +1293,11 @@ class SkillRunner:
             try:
                 result = self.execute(call["tool"], call["arguments"])
             except Exception as exc:                       # noqa: BLE001
-                # A broken tool must not end the run.
+                # A broken tool must not end the run, and its empty slot stays, so the
+                # calls after it keep their own loop item.
                 failures.append({"tool": call["tool"], "arguments": call["arguments"],
                                  "error": f"{type(exc).__name__}: {exc}"})
+                results.append(None)
                 continue
             results.append(result)
             if is_upstream_failure(result):

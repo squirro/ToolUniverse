@@ -86,3 +86,23 @@ async def test_a_result_larger_than_temporal_allows_goes_through_and_stays_out_o
     assert "truncated" not in json.dumps(handover)
     assert len(history.to_json()) < 200_000
     assert WorkingRecord(tmp_path, "run-big").fetch("papers", limit=1)["total_rows"] == 1000
+
+
+# --- a call whose activity never returned keeps its slot -------------------------
+#
+# Closing the gap slides every later payload onto the call before it.
+
+def test_a_call_that_recorded_no_result_keeps_its_slot(tmp_path):
+    record = WorkingRecord(tmp_path, "run-gap")
+    record.put_result("prr", 0, "T", {"event": "rash"}, {"prr": 1.0})
+    record.put_result("prr", 2, "T", {"event": "fever"}, {"prr": 3.0})
+
+    assert record.results("prr", expected=3) == [{"prr": 1.0}, None, {"prr": 3.0}]
+
+
+def test_without_an_expected_width_the_recorded_results_are_returned_as_they_are(tmp_path):
+    record = WorkingRecord(tmp_path, "run-plain")
+    record.put_result("prr", 0, "T", {"event": "rash"}, {"prr": 1.0})
+    record.put_result("prr", 1, "T", {"event": "fever"}, {"prr": 3.0})
+
+    assert record.results("prr") == [{"prr": 1.0}, {"prr": 3.0}]

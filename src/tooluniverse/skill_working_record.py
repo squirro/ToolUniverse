@@ -116,17 +116,25 @@ class WorkingRecord:
         finally:
             db.close()
 
-    def results(self, step: str) -> list:
-        """The step's results, whole and in call order; a repaired step gives its last attempt."""
+    def results(self, step: str, expected: int | None = None) -> list:
+        """The step's results, whole and in call order; a repaired step gives its last attempt.
+
+        A call whose activity never returned recorded nothing. With `expected`, its slot
+        is kept as None, so the calls after it keep their own loop item.
+        """
         db = self._open()
         try:
             rows = db.execute(
-                "SELECT payload FROM result WHERE step = ?1 AND attempt = "
+                "SELECT call_n, payload FROM result WHERE step = ?1 AND attempt = "
                 "(SELECT MAX(attempt) FROM result WHERE step = ?1) ORDER BY call_n",
                 (step,)).fetchall()
         finally:
             db.close()
-        return [json.loads(payload) for (payload,) in rows]
+        by_call = {call_n: json.loads(payload) for call_n, payload in rows}
+        width = expected if expected is not None else len(by_call)
+        if width == len(by_call):
+            return [by_call[n] for n in sorted(by_call)]
+        return [by_call.get(n) for n in range(width)]
 
     def put_table(self, name: str, rows: list) -> None:
         rows = [r if isinstance(r, dict) else {"value": r} for r in rows]

@@ -13,7 +13,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from tooluniverse.skill_runner import SkillRunner, normalised_executor
+from tooluniverse.skill_runner import SkillRunner, normalised_executor, source_total
 
 pytestmark = pytest.mark.unit
 
@@ -1242,6 +1242,47 @@ def test_a_failed_iteration_is_recorded_with_its_arguments():
     assert state["failures"] == [{"tool": "FAERS_calculate_disproportionality",
                                   "arguments": {"drug": "x", "event": "nausea"},
                                   "error": "RuntimeError: 429 Too Many Requests", "step": "prr"}]
+
+
+# --- a failed call keeps its slot, so the items after it keep their own label ----
+#
+# Dropping the result shifts every later row onto the previous item and loses the last.
+
+def _loop_graph(fields: list[str]) -> dict:
+    return {"skill": "loop", "inputs": ["terms"], "steps": [
+        {"id": "prr", "for_each": "terms", "as": "term",
+         "calls": [{"tool": "FAERS_calculate_disproportionality",
+                    "arguments": {"drug": "x", "event": "{term}"}}],
+         "total": "data.reports",
+         "collect": {"rows": {"path": "data", "fields": fields}}}]}
+
+
+def _one_term_fails(tool, arguments):
+    if arguments["event"] == "nausea":
+        raise RuntimeError("429 Too Many Requests")
+    return {"data": {"prr": {"rash": 1.0, "fever": 3.0}[arguments["event"]],
+                     "reports": {"rash": 11, "fever": 33}[arguments["event"]]}}
+
+
+@pytest.mark.parametrize("field", ["$item as term", "$call.event as term"])
+def test_a_failed_iteration_does_not_relabel_the_items_after_it(field):
+    runner = SkillRunner(_loop_graph([field, "prr"]), execute=_one_term_fails)
+    run_id = runner.start({"terms": ["rash", "nausea", "fever"]})["run_id"]
+    runner.advance(run_id)
+
+    assert runner.state(run_id)["facts"]["rows"] == [
+        {"term": "rash", "prr": 1.0},
+        {"term": "fever", "prr": 3.0},
+    ]
+
+
+def test_the_total_of_a_failed_call_is_unknown_and_the_others_keep_theirs():
+    """A missing slot must not slide the next item's total onto the failed one."""
+    assert source_total(
+        {"total": "data.reports"},
+        [{"data": {"reports": 11}}, None, {"data": {"reports": 33}}],
+        ["rash", "nausea", "fever"],
+    ) == {"rash": 11, "nausea": "unknown", "fever": 33}
 
 
 # --- the run remembers what it asked and what it called, for the Run Record ------

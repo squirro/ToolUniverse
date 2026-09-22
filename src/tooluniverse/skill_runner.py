@@ -401,11 +401,23 @@ def _sum(rule: dict, facts: dict) -> Any:
         int(sum(parts)) if all(float(p).is_integer() for p in parts) else sum(parts))
 
 
+def _lookup(rule: dict, facts: dict) -> Any:
+    """One row's value from a fact table, by the key another fact names: the pair's score."""
+    rows, wanted = facts.get(rule["rows"]), facts.get(rule["equals"])
+    if rows is None or wanted is None:
+        return None
+    for row in rows:
+        if isinstance(row, dict) and _same(row.get(rule["key"]), wanted):
+            return row.get(rule["field"])
+    return _Refused(f"no row of {rule['rows']} has {rule['key']} = {wanted!r}")
+
+
 _COMPUTE_OPS: dict[str, Callable[[dict, dict], Any]] = {"rank_differential": _rank_differential,
                                                        "overlap": _overlap, "fewest": _fewest,
                                                        "hierarchy": _hierarchy_rows,
                                                        "flag": _flag, "pluck": _pluck,
-                                                       "band": _band, "map": _map, "sum": _sum}
+                                                       "band": _band, "map": _map, "sum": _sum,
+                                                       "lookup": _lookup}
 
 
 def _compute(rule: dict, facts: dict) -> Any:

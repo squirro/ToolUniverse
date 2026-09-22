@@ -54,6 +54,20 @@ def test_sum_adds_the_named_points_and_band_gives_the_tier():
     assert "total" in absorb(spec, [], {"a": 28, "b": 24})["unresolved"], "a missing part is not a zero"
 
 
+def test_lookup_takes_one_rows_value_from_a_fact_table_by_the_key_another_fact_names():
+    """The pair's Open Targets score: the row of `disease_rows` whose id is the mapped disease."""
+    rows = [{"disease_id": "MONDO_0013110", "score": 0.95}, {"disease_id": "MONDO_0008170", "score": 0.63}]
+    spec = {"id": "score", "calls": [], "compute": {
+        "disease_score": {"op": "lookup", "rows": "disease_rows", "key": "disease_id", "equals": "efo_id",
+                          "field": "score"}}}
+
+    assert absorb(spec, [], {"disease_rows": rows, "efo_id": "MONDO_0008170"})["facts"]["disease_score"] == 0.63
+    missing = absorb(spec, [], {"disease_rows": rows, "efo_id": "MONDO_9999999"})
+    assert "disease_score" not in missing["facts"]
+    assert any("MONDO_9999999" in b["reason"] for b in missing["blocked"]), "an absent row is said, not zero"
+    assert "disease_score" in absorb(spec, [], {"disease_rows": rows})["unresolved"], "no key yet: unresolved"
+
+
 def test_a_process_declares_its_closed_lists_as_constants_the_checks_can_read():
     process = {
         "skill": "scored", "inputs": ["target"],

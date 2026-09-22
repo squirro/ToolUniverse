@@ -58,6 +58,28 @@ def get_access_token(cluster: str, refresh_token: str, *, timeout: int = 30) -> 
     return match.group(1)
 
 
+def payload_for(agent_id: str, instruction: str, conversation_id: str,
+                refresh_token: str, cluster: str, project_id: str) -> dict:
+    """The body of one streaming_chat turn.
+
+    The route builds the agent's runtime config from `runtime_config` alone (plus the path
+    variables and the agent's own config); the top-level `conversation_id` names the thread
+    for the history but never reaches a tool's `conversation_id` placeholder. Tools that need
+    the conversation -- the code container is keyed by it -- get it only from here.
+    """
+    return {
+        "instruction": instruction,
+        "agent_id": agent_id,
+        "conversation_id": conversation_id,
+        "runtime_config": {
+            "squirro_refresh_token": refresh_token,
+            "squirro_cluster": cluster,
+            "squirro_project_id": project_id,
+            "conversation_id": conversation_id,
+        },
+    }
+
+
 class SquirroChatClient:
     def __init__(self, cluster: str, refresh_token: str, project_id: str):
         self.cluster = cluster.rstrip("/")
@@ -71,16 +93,8 @@ class SquirroChatClient:
         Fresh every time on purpose: Squirro binds the MCP tool list per
         conversation, so re-using one leaks a stale tool list between skills.
         """
-        payload = {
-            "instruction": instruction,
-            "agent_id": agent_id,
-            "conversation_id": str(uuid.uuid4()),
-            "runtime_config": {
-                "squirro_refresh_token": self._refresh,
-                "squirro_cluster": self.cluster,
-                "squirro_project_id": self.project_id,
-            },
-        }
+        payload = payload_for(agent_id, instruction, str(uuid.uuid4()),
+                              self._refresh, self.cluster, self.project_id)
         url = STREAMING_URL.format(cluster=self.cluster, project=self.project_id)
         for attempt in (1, 2):
             headers = {"Content-Type": "application/json",

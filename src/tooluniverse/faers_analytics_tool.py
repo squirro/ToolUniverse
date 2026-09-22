@@ -5,6 +5,7 @@ import requests
 import math
 from typing import Dict, Any, List, Tuple
 from .base_tool import BaseTool
+from .http_utils import error_from_exception
 from .tool_registry import register_tool
 
 FDA_BASE_URL = "https://api.fda.gov/drug/event.json"
@@ -243,6 +244,8 @@ class FAERSAnalyticsTool(BaseTool):
                 "note": "Disproportionality analysis indicates potential safety signal. Does NOT prove causation. Requires clinical evaluation.",
             }
 
+        except requests.exceptions.RequestException as e:
+            return error_from_exception(e, "openFDA request")
         except Exception as e:
             return {
                 "status": "error",
@@ -337,7 +340,7 @@ class FAERSAnalyticsTool(BaseTool):
             return payload
 
         except requests.exceptions.RequestException as e:
-            return {"status": "error", "error": f"API request failed: {str(e)}"}
+            return error_from_exception(e, "openFDA request")
         except Exception as e:
             return {"status": "error", "error": f"Stratification failed: {str(e)}"}
 
@@ -421,7 +424,7 @@ class FAERSAnalyticsTool(BaseTool):
             return {"status": "success", "data": result}
 
         except requests.exceptions.RequestException as e:
-            return {"status": "error", "error": f"API request failed: {str(e)}"}
+            return error_from_exception(e, "openFDA request")
         except Exception as e:
             return {
                 "status": "error",
@@ -497,6 +500,8 @@ class FAERSAnalyticsTool(BaseTool):
                 "note": "Direct comparison of safety signals. Both drugs may show signals due to different baseline risks.",
             }
 
+        except requests.exceptions.RequestException as e:
+            return error_from_exception(e, "openFDA request")
         except Exception as e:
             return {"status": "error", "error": f"Drug comparison failed: {str(e)}"}
 
@@ -574,7 +579,7 @@ class FAERSAnalyticsTool(BaseTool):
             }
 
         except requests.exceptions.RequestException as e:
-            return {"status": "error", "error": f"API request failed: {str(e)}"}
+            return error_from_exception(e, "openFDA request")
         except Exception as e:
             return {"status": "error", "error": f"Temporal analysis failed: {str(e)}"}
 
@@ -629,7 +634,7 @@ class FAERSAnalyticsTool(BaseTool):
             }
 
         except requests.exceptions.RequestException as e:
-            return {"status": "error", "error": f"API request failed: {str(e)}"}
+            return error_from_exception(e, "openFDA request")
         except Exception as e:
             return {"status": "error", "error": f"MedDRA rollup failed: {str(e)}"}
 

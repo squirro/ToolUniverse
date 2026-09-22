@@ -3,6 +3,7 @@ import copy
 import requests
 import urllib.parse
 from .base_tool import BaseTool
+from .http_utils import error_from_exception
 from .tool_registry import register_tool
 
 COUNT_PAGE_WITH_KEY = 1000      # the widest count page openFDA serves; needs an api_key
@@ -112,6 +113,9 @@ class FDADrugAdverseEventTool(BaseTool):
         reaction_filter = arguments.get("reactionmeddraverse")
 
         response = self._search(arguments)
+        if isinstance(response, dict) and response.get("status") == "error":
+            # A failed source is not a drug with no adverse events.
+            return response
         out = {"result": self._post_process(response, reaction_filter=reaction_filter)}
         limit = self._page_limit()
         if limit and isinstance(response, list) and len(response) >= limit:
@@ -240,7 +244,7 @@ class FDADrugAdverseEventTool(BaseTool):
                 response = response["results"]
             return response
         except requests.exceptions.RequestException as e:
-            return [{"error": f"API request failed: {str(e)}"}]
+            return error_from_exception(e, "openFDA request")
 
     def _map_value(self, param_name, value):
         # Special handling for seriousness fields: if value is "No", skip this field
@@ -374,7 +378,7 @@ class FDACountAdditiveReactionsTool(FDADrugAdverseEventTool):
             results = self._post_process(results)
             return results
         except requests.exceptions.RequestException as e:
-            return {"status": "error", "error": f"API request failed: {str(e)}"}
+            return error_from_exception(e, "openFDA request")
 
 
 @register_tool("FDADrugAdverseEventDetailTool")
@@ -542,7 +546,7 @@ class FDADrugAdverseEventDetailTool(BaseTool):
 
             return results
         except requests.exceptions.RequestException as e:
-            return [{"error": f"API request failed: {str(e)}"}]
+            return error_from_exception(e, "openFDA request")
 
     def _extract_essential_fields(self, report):
         """
@@ -884,7 +888,7 @@ class FDADrugInteractionDetailTool(BaseTool):
 
             return results
         except requests.exceptions.RequestException as e:
-            return [{"error": f"API request failed: {str(e)}"}]
+            return error_from_exception(e, "openFDA request")
 
     def _extract_essential_fields(self, report):
         """

@@ -16,6 +16,25 @@ import requests
 
 RetryStatuses = Sequence[int]
 
+DEFAULT_RETRY_STATUSES = (408, 429, 500, 502, 503, 504)
+
+
+def upstream_error(message: str, status: Optional[int], *, retryable: bool) -> dict:
+    """A service failure reported as an error, never as an empty answer.
+
+    The shape a caller tests for: a `status` of "error" plus the typed details a run
+    reads to tell a failed source from a source with nothing to say.
+    """
+    return {"status": "error", "error": message, "upstream_status": status, "retryable": retryable,
+            "error_details": {"type": "UpstreamServiceError", "retriable": retryable}}
+
+
+def error_from_exception(exc: Exception, what: str) -> dict:
+    """The same envelope for a raised request, carrying the status when there was one."""
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    return upstream_error(f"{what} failed: {type(exc).__name__}: {exc}", status,
+                          retryable=status is None or status in DEFAULT_RETRY_STATUSES)
+
 
 def _jittered_sleep(backoff_seconds: float, attempt: int) -> None:
     """Sleep with exponential backoff and a small random jitter."""

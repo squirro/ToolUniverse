@@ -1,18 +1,12 @@
 from .graphql_tool import GraphQLTool, remove_none_and_empty_values
 import requests
 import copy
-from .http_utils import request_with_retry
+from .http_utils import request_with_retry, upstream_error as _upstream_error
 from .tool_registry import register_tool
 
 _SESSION = requests.Session()
 RETRY_STATUSES = (408, 429, 500, 502, 503, 504)
 BACKOFF_SECONDS = 0.5
-
-
-def _upstream_error(message: str, status: int | None, *, retryable: bool) -> dict:
-    """A service failure reported as an error, never as an empty answer."""
-    return {"status": "error", "error": message, "upstream_status": status, "retryable": retryable,
-            "error_details": {"type": "UpstreamServiceError", "retriable": retryable}}
 
 
 def execute_RESTful_query(endpoint_url, variables=None):

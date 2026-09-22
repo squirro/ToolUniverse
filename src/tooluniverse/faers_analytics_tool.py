@@ -293,10 +293,9 @@ class FAERSAnalyticsTool(BaseTool):
             count_field = field_map[stratify_by]
 
             # Feature-121A-003: adverse_event is optional — filter by drug alone if omitted
+            base_query, resolved_field, drug_total = self._drug_clause(drug_name)
             if adverse_event:
-                base_query = f'patient.drug.openfda.generic_name:"{drug_name}"+AND+patient.reaction.reactionmeddrapt:"{adverse_event}"'
-            else:
-                base_query = f'patient.drug.openfda.generic_name:"{drug_name}"'
+                base_query += f'+AND+patient.reaction.reactionmeddrapt:"{adverse_event}"'
 
             url = self._count_url(base_query, count_field)
 
@@ -342,6 +341,7 @@ class FAERSAnalyticsTool(BaseTool):
                 "drug_name": drug_name,
                 "adverse_event": adverse_event,
                 "stratified_by": stratify_by,
+                "case_definition": self._case_definition(drug_name, resolved_field, drug_total),
                 "total_reports": total_count,
                 "stratification": sorted(
                     stratified_data, key=lambda x: x["count"], reverse=True
@@ -369,7 +369,7 @@ class FAERSAnalyticsTool(BaseTool):
                 return {"status": "error", "error": "Must provide drug_name"}
 
             # Build query for serious events
-            base_query = f'patient.drug.openfda.generic_name:"{drug_name}"'
+            base_query, resolved_field, drug_total = self._drug_clause(drug_name)
 
             # Add specific reaction filter if provided
             if adverse_event:
@@ -424,6 +424,7 @@ class FAERSAnalyticsTool(BaseTool):
             result: Dict[str, Any] = {
                 "drug_name": drug_name,
                 "seriousness_type": seriousness_type,
+                "case_definition": self._case_definition(drug_name, resolved_field, drug_total),
                 "total_serious_events": total_serious,
                 "top_serious_reactions": serious_reactions,
                 "note": f"Serious events: {'All' if seriousness_type == 'all' else seriousness_type.replace('_', ' ')}",
@@ -524,10 +525,9 @@ class FAERSAnalyticsTool(BaseTool):
                 return {"status": "error", "error": "Must provide drug_name"}
 
             # Build base query
+            search_query, resolved_field, drug_total = self._drug_clause(drug_name)
             if adverse_event:
-                search_query = f'patient.drug.openfda.generic_name:"{drug_name}"+AND+patient.reaction.reactionmeddrapt:"{adverse_event}"'
-            else:
-                search_query = f'patient.drug.openfda.generic_name:"{drug_name}"'
+                search_query += f'+AND+patient.reaction.reactionmeddrapt:"{adverse_event}"'
 
             # Get counts by receive date (year)
             url = self._count_url(search_query, "receivedate")
@@ -577,6 +577,7 @@ class FAERSAnalyticsTool(BaseTool):
                 "status": "success",
                 "drug_name": drug_name,
                 "adverse_event": adverse_event or "All events",
+                "case_definition": self._case_definition(drug_name, resolved_field, drug_total),
                 "temporal_data": temporal_data,
                 "trend_analysis": {
                     "trend": trend,
@@ -601,7 +602,7 @@ class FAERSAnalyticsTool(BaseTool):
                 return {"status": "error", "error": "Must provide drug_name"}
 
             # Get preferred term (PT) level reactions
-            search_query = f'patient.drug.openfda.generic_name:"{drug_name}"'
+            search_query, resolved_field, drug_total = self._drug_clause(drug_name)
             url = self._count_url(
                 search_query, "patient.reaction.reactionmeddrapt.exact"
             )
@@ -626,6 +627,7 @@ class FAERSAnalyticsTool(BaseTool):
                 "status": "success",
                 "data": {
                     "drug_name": drug_name,
+                    "case_definition": self._case_definition(drug_name, resolved_field, drug_total),
                     "meddra_hierarchy": {
                         "PT_level": pt_level,
                         # len(pt_level) here counted the 50-item display slice, so
@@ -945,6 +947,22 @@ class FAERSAnalyticsTool(BaseTool):
                 return 0
             raise
         return response.json().get("meta", {}).get("results", {}).get("total", 0)
+
+    def _drug_clause(self, drug_name: str):
+        """The query clause for a drug, on the first field that knows it: (clause, field, total).
+
+        Every operation names the drug this way, so one spelling gives one population
+        across counts, seriousness, stratification and trends. A name no field knows keeps
+        the first field's clause: the source then answers 404 and says so.
+        """
+        field, total = self._resolve_drug_field(drug_name)
+        field = field or self.DRUG_NAME_FIELDS[0]
+        return f'{field}:"{drug_name}"', field, total
+
+    @staticmethod
+    def _case_definition(drug_name: str, field: str, total) -> Dict[str, Any]:
+        return {"query_term": drug_name, "resolved_field": field, "drug_report_total": total,
+                "note": "Reports matched on this single openFDA field."}
 
     def _resolve_drug_field(self, drug_name: str):
         """Find the first field that knows this drug. Returns (field, total).

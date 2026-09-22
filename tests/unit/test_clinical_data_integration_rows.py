@@ -1,16 +1,18 @@
 """The FAERS signal table travels to the writer as rows, and the literature search is
-one query per flagged reaction.
-
-Parallel lists let a footnote be mis-indexed; a row cannot be.
+one query per flagged reaction. Parallel lists let a footnote be mis-indexed; a row cannot.
 """
 import json
-import re
+import tempfile
 from pathlib import Path
 
 import pytest
 
-from tooluniverse.skill_graph import load_graph
-from tooluniverse.skill_runner import SkillRunner, _COMPUTE_OPS, loop_items
+from tooluniverse.skill_graph import GRAPHS_DIR, load_graph
+from tooluniverse.skill_runner import SkillRunner, _COMPUTE_OPS, absorb, loop_items, source_total
+
+
+def _records():
+    return tempfile.mkdtemp(prefix="working-records-")
 
 TERMS = ["MYELODYSPLASTIC SYNDROME", "NAUSEA", "RENAL IMPAIRMENT"]
 PRR = {"MYELODYSPLASTIC SYNDROME": 7.5, "NAUSEA": 1.1, "RENAL IMPAIRMENT": 2.3}
@@ -18,9 +20,6 @@ PRR = {"MYELODYSPLASTIC SYNDROME": 7.5, "NAUSEA": 1.1, "RENAL IMPAIRMENT": 2.3}
 
 def _url(term):
     return f"https://api.fda.gov/drug/event.json?search={term.replace(' ', '+')}"
-
-
-_INDICATION = re.compile(r"TUMOU?R|NEOPLASM|CARCINOMA|CANCER|METASTA|PROGRESSION", re.I)
 
 
 RECORDED_SEARCH = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "web"
@@ -63,12 +62,12 @@ def _indication_mapping(question, indication):
          "concept": ["disease", "treated"]} for t in indication if t in listed]}
 
 
+RECORDED_PLACING = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "ols"
+                               / "placing_probe_2026-09-21.json").read_text())
+
+
 def _recorded_lookup(term):
-    import json
-    from pathlib import Path
-    recorded = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "ols"
-                           / "placing_probe_2026-09-21.json").read_text())
-    return recorded.get(term, {})
+    return RECORDED_PLACING.get(term, {})
 
 
 def _mapping(question):
@@ -159,8 +158,7 @@ def test_each_signal_row_carries_the_term_its_prr_its_flag_and_its_own_query_url
 
 
 def test_the_signals_travel_as_rows_only_and_the_gateway_reads_the_rows():
-    """A reaction without a PRR drops out of one parallel list and not the other, so the
-    rows carry term, value and link together."""
+    """A reaction without a PRR drops out of one parallel list and not the other."""
     state, _, _ = _drive()
     facts = state["facts"]
     assert facts["signal_aes"] == TERMS
@@ -171,8 +169,7 @@ def test_the_signals_travel_as_rows_only_and_the_gateway_reads_the_rows():
 
 
 def test_seriousness_and_the_sex_split_reach_the_report_as_facts_tagged_by_their_call():
-    """A step that runs and produces no fact leaves the report with no section on serious
-    outcomes, so the rows travel as facts, each tagged with the call that made it."""
+    """The rows travel as facts, each tagged with the call that made it."""
     state, calls, _ = _drive()
     facts = state["facts"]
 
@@ -191,8 +188,7 @@ def test_seriousness_and_the_sex_split_reach_the_report_as_facts_tagged_by_their
 # --- the question's words are read onto the source's terms, and the reading is shown ----
 
 def test_a_requested_reaction_is_mapped_onto_faers_terms_before_any_loop_sees_it():
-    """Reading the question's word onto the source's terms is a judged step: checked
-    against the source's own list, placed by an ontology, and handed over."""
+    """Reading the word onto the source's terms is judged: checked, placed, handed over."""
     terms = ["NAUSEA", "DEAFNESS", "FALL"]
     prr = {"NAUSEA": 1.1, "DEAFNESS": 17.7, "FALL": 2.5}
     state, calls, asked = _drive(prr=prr, terms=terms, requested_aes=["ototoxicity"])
@@ -238,23 +234,30 @@ def test_no_flagged_reaction_means_no_literature_search():
 
 # --- the two compute ops ---------------------------------------------------------
 
-def test_flag_sorts_the_rows_by_the_field_and_flags_at_the_threshold():
-    rows = [{"term": "a", "prr": 1.1}, {"term": "b", "prr": 7.5}, {"term": "c", "prr": 2.0}]
-    out = _COMPUTE_OPS["flag"]({"rows": "r", "field": "prr", "threshold": 2}, {"r": rows})
-    assert out == [{"term": "b", "prr": 7.5, "flagged": True},
-                   {"term": "c", "prr": 2.0, "flagged": True},
-                   {"term": "a", "prr": 1.1, "flagged": False}]
+FLAGGABLE = [{"term": "a", "prr": 1.1}, {"term": "b", "prr": 7.5}, {"term": "c", "prr": 2.0}]
+PLUCKABLE = [{"term": "b", "flagged": True}, {"term": "a", "flagged": False}, {"term": "c", "flagged": True}]
+EXCLUDABLE = [{"term": "NEUROENDOCRINE TUMOUR", "flagged": True}, {"term": "MDS", "flagged": True},
+              {"term": "METASTASES TO LIVER", "flagged": True}, {"term": "NAUSEA", "flagged": False}]
 
 
-def test_flag_is_unresolved_when_the_rows_never_arrived():
-    assert _COMPUTE_OPS["flag"]({"rows": "r", "field": "prr", "threshold": 2}, {}) is None
+@pytest.mark.parametrize("op, rule, store, expected", [
+    # flag sorts by the field and flags at the threshold
+    ("flag", {"rows": "r", "field": "prr", "threshold": 2}, {"r": FLAGGABLE},
+     [{"term": "b", "prr": 7.5, "flagged": True}, {"term": "c", "prr": 2.0, "flagged": True},
+      {"term": "a", "prr": 1.1, "flagged": False}]),
+    ("flag", {"rows": "r", "field": "prr", "threshold": 2}, {}, None),   # the rows never arrived
+    # pluck takes one field from the rows that pass
+    ("pluck", {"rows": "r", "field": "term", "where": "flagged"}, {"r": PLUCKABLE}, ["b", "c"]),
+    ("pluck", {"rows": "r", "field": "term"}, {"r": PLUCKABLE}, ["b", "a", "c"]),
+    ("pluck", {"rows": "r", "field": "term"}, {}, None),
+    # the reported disease is set aside: pluck drops the rows its pattern matches
+    ("pluck", {"rows": "r", "field": "term", "where": "flagged", "exclude_pattern": "TUMOU?R|METASTA"},
+     {"r": EXCLUDABLE}, ["MDS"]),
+])
+def test_a_compute_op_reads_the_rows_it_names_and_is_unresolved_without_them(op, rule, store, expected):
+    out = _COMPUTE_OPS[op](rule, store)
 
-
-def test_pluck_takes_one_field_from_the_rows_that_pass():
-    rows = [{"term": "b", "flagged": True}, {"term": "a", "flagged": False}, {"term": "c", "flagged": True}]
-    assert _COMPUTE_OPS["pluck"]({"rows": "r", "field": "term", "where": "flagged"}, {"r": rows}) == ["b", "c"]
-    assert _COMPUTE_OPS["pluck"]({"rows": "r", "field": "term"}, {"r": rows}) == ["b", "a", "c"]
-    assert _COMPUTE_OPS["pluck"]({"rows": "r", "field": "term"}, {}) is None
+    assert out == expected and (out is None) == (expected is None)
 
 
 # --- the loop item inside a longer template --------------------------------------
@@ -271,9 +274,7 @@ def test_the_loop_item_is_recovered_when_its_marker_sits_inside_a_longer_argumen
 # --- compute rules resolve regardless of the order a store hands them back -------
 
 def test_a_compute_that_reads_another_compute_resolves_whatever_the_declared_order():
-    """The store hands the rules back alphabetically, so a rule can be reached before
-    the fact it reads exists."""
-    from tooluniverse.skill_runner import absorb
+    """The store hands the rules back alphabetically, so a rule can be reached first."""
     spec = {"id": "compute", "calls": [],
             "compute": {"flagged_aes": {"op": "pluck", "rows": "prr_table", "field": "term", "where": "flagged"},
                         "prr_table": {"op": "flag", "rows": "prr_rows", "field": "prr", "threshold": 2}}}
@@ -294,8 +295,7 @@ def test_the_process_read_back_from_the_store_still_searches_per_flagged_reactio
 
 
 def test_the_literature_search_uses_the_inn_from_the_label_even_when_the_agent_bound_the_brand():
-    """Untagged, a brand name maps to the element and the wrong papers come back, so
-    the query uses the INN the label title carries."""
+    """Untagged, a brand name maps to the element, so the query uses the label's INN."""
     _, calls, _ = _drive(drug_name="Lutathera")
     queries = [a["query"] for tool, a in calls if tool == "PubMed_search_articles"]
     assert queries == ["lutetium Lu 177 dotatate AND MYELODYSPLASTIC SYNDROME",
@@ -304,17 +304,8 @@ def test_the_literature_search_uses_the_inn_from_the_label_even_when_the_agent_b
 
 # --- reported disease is not searched as an adverse event -------------------------
 
-def test_pluck_sets_aside_the_rows_whose_field_matches_the_exclude_pattern():
-    rows = [{"term": "NEUROENDOCRINE TUMOUR", "flagged": True}, {"term": "MDS", "flagged": True},
-            {"term": "METASTASES TO LIVER", "flagged": True}, {"term": "NAUSEA", "flagged": False}]
-    rule = {"rows": "r", "field": "term", "where": "flagged", "exclude_pattern": "TUMOU?R|METASTA"}
-    assert _COMPUTE_OPS["pluck"](rule, {"r": rows}) == ["MDS"]
-
-
 def test_the_literature_loop_skips_indication_terms_and_the_bundle_says_which():
-    """Neuroendocrine tumour and liver metastases top Lutathera's PRR table: they are the
-    disease treated, not adverse events. They stay in the table, flagged; the loop does
-    not spend a search on them, and `excluded` names them."""
+    """The disease treated stays in the table, flagged; the loop spends no search on it."""
     terms = ["NEUROENDOCRINE TUMOUR", "METASTASES TO LIVER", "MYELODYSPLASTIC SYNDROME", "NAUSEA"]
     prr = {"NEUROENDOCRINE TUMOUR": 393.4, "METASTASES TO LIVER": 21.4, "MYELODYSPLASTIC SYNDROME": 7.5, "NAUSEA": 1.1}
     state, calls, _ = _drive(prr=prr, terms=terms,
@@ -330,8 +321,7 @@ def test_the_literature_loop_skips_indication_terms_and_the_bundle_says_which():
 # --- the indication is the drug's own, judged from its label, not a fixed cancer pattern ---
 
 def test_a_flagged_cancer_term_of_a_non_cancer_drug_stays_a_signal_and_its_indication_is_set_aside():
-    """A fixed cancer pattern calls every drug's tumour terms reported disease, so a
-    drug for another disease keeps its own indication as a signal."""
+    """A fixed cancer pattern would call another drug's own indication a signal."""
     terms = ["BLOOD GLUCOSE INCREASED", "NAUSEA", "PANCREATIC CARCINOMA", "DIABETES MELLITUS INADEQUATE CONTROL"]
     prr = {"BLOOD GLUCOSE INCREASED": 3.1, "NAUSEA": 1.1, "PANCREATIC CARCINOMA": 2.4,
            "DIABETES MELLITUS INADEQUATE CONTROL": 4.0}
@@ -351,7 +341,6 @@ def test_a_flagged_cancer_term_of_a_non_cancer_drug_stays_a_signal_and_its_indic
 
 
 def test_the_process_carries_no_fixed_disease_pattern_and_no_cancer_wording():
-    from tooluniverse.skill_graph import GRAPHS_DIR
     source = (GRAPHS_DIR / "clinical-data-integration.yaml").read_text()
     process = load_graph("clinical-data-integration")
 
@@ -375,10 +364,8 @@ def test_covid_19_is_not_on_the_fixed_noise_list_of_either_process():
 # --- web search inside the process: the agent writes the queries, the pages become rows ------
 
 def test_the_agents_queries_reach_the_delegated_calls_unchanged_one_per_subject():
-    """The agent writes one query per subject, so the query is not fixed text in the
-    process; with no input named, the subjects are the signals."""
-    import tempfile
-    state, _, asked = _drive(records=tempfile.mkdtemp(prefix="working-records-"))
+    """The query is not fixed text in the process; with no input named, the subjects are the signals."""
+    state, _, asked = _drive(records=_records())
 
     (queries,) = [q for q in asked if "web_queries" in q["wants"]]
     assert queries["context"]["web_subjects"] == ["MYELODYSPLASTIC SYNDROME", "RENAL IMPAIRMENT"]
@@ -392,18 +379,16 @@ def test_the_agents_queries_reach_the_delegated_calls_unchanged_one_per_subject(
 
 
 def test_a_requested_word_gets_its_own_query_beside_the_signals():
-    import tempfile
     state, _, _ = _drive(terms=["NAUSEA", "DEAFNESS", "FALL"],
                          prr={"NAUSEA": 1.1, "DEAFNESS": 17.7, "FALL": 2.5},
-                         requested_aes=["ototoxicity"], records=tempfile.mkdtemp(prefix="working-records-"))
+                         requested_aes=["ototoxicity"], records=_records())
 
     assert state["facts"]["web_subjects"] == ["ototoxicity", "DEAFNESS", "FALL"]
 
 
 def test_each_page_of_a_recorded_search_result_is_one_row_of_the_web_evidence_table():
-    import tempfile
     from tooluniverse.skill_working_record import WorkingRecord
-    records = tempfile.mkdtemp(prefix="working-records-")
+    records = _records()
     state, _, _ = _drive(records=records)
 
     (described,) = [t for t in state["handover"]["tables"] if t["table"] == "web_rows"]
@@ -415,8 +400,7 @@ def test_each_page_of_a_recorded_search_result_is_one_row_of_the_web_evidence_ta
 
 
 def test_an_empty_search_result_is_a_table_with_no_rows_not_a_failure():
-    import tempfile
-    state, _, _ = _drive(web_pages=[], records=tempfile.mkdtemp(prefix="working-records-"))
+    state, _, _ = _drive(web_pages=[], records=_records())
 
     (described,) = [t for t in state["handover"]["tables"] if t["table"] == "web_rows"]
     assert described["rows"] == 0
@@ -459,8 +443,6 @@ def test_the_process_names_where_each_wide_source_reports_its_total():
 
 def test_the_declared_paths_find_the_totals_in_the_recorded_payloads(tmp_path):
     """A path that matches an invented payload proves nothing about the real one."""
-    from tooluniverse.skill_runner import source_total
-
     process = load_graph("clinical-data-integration")
     literature = next(s for s in process["steps"] if s["id"] == "literature")
     trials = next(s for s in process["steps"] if s["id"] == "trials")

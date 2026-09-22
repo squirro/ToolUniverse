@@ -1,22 +1,13 @@
 """A tool's schema must let a model construct a valid call before it makes one.
 
-Every tool below demands, at runtime, a parameter its schema never marks
-required. Each was observed failing over SMCP in the audit baseline
-(`.scratch/tool-audit/audit_mcp_complete.jsonl`, verdict
-`error_schema_mismatch`).
+Every tool below demands, at runtime, a parameter its schema never marks required. Each was
+observed failing over SMCP in the audit baseline (`.scratch/tool-audit/audit_mcp_complete
+.jsonl`, verdict `error_schema_mismatch`). The runtime messages are excellent, but they
+arrive *after* a failed call, so a model reading the schema guesses, fails, and burns a turn.
 
-The runtime messages are not the problem -- they are excellent, and name the
-alternatives. The problem is that they arrive *after* a failed call. A model
-reading the schema has no way to know, so it guesses, fails, and burns a turn on
-an error it could not have predicted.
-
-Two shapes, two fixes:
-
-* A parameter the tool always needs belongs in `required`. Nothing else is
-  needed; the schema can express it exactly.
-* "At least one of X, Y or Z" cannot be expressed by a flat `required` list at
-  all, so that contract has to live in the description -- the only other surface
-  the model reads before calling.
+Two shapes, two fixes: a parameter the tool always needs belongs in `required`; "at least
+one of X, Y or Z" cannot be expressed by a flat `required` list at all, so that contract has
+to live in the description -- the only other surface the model reads before calling.
 """
 
 import glob
@@ -115,11 +106,8 @@ def _tool(name):
 @pytest.mark.unit
 @pytest.mark.parametrize("name,param", ALWAYS_REQUIRED)
 def test_unconditionally_demanded_parameter_is_declared_required(name, param):
-    """If the tool always needs it, `required` must say so.
-
-    This is the case the schema CAN express exactly, so there is no excuse for
-    leaving the model to discover it by failing.
-    """
+    """The case the schema CAN express exactly, so there is no excuse for leaving the
+    model to discover it by failing."""
     required = (_tool(name).get("parameter") or {}).get("required") or []
     assert param in required, (
         f"{name} rejects any call without {param!r}, but its schema requires "
@@ -130,14 +118,9 @@ def test_unconditionally_demanded_parameter_is_declared_required(name, param):
 @pytest.mark.unit
 @pytest.mark.parametrize("name,alternatives", ONE_OF)
 def test_conditional_requirement_is_stated_in_the_description(name, alternatives):
-    """"At least one of X or Y" has to be prose; `required` cannot hold it.
-
-    Asserted against the description only. The parameter NAMES appear in
-    `properties` by definition, so checking there would pass without any fix
-    while the model still learns the contract from a failed call.
-    """
-    tool = _tool(name)
-    description = (tool.get("description") or "").lower()
+    """Asserted against the description only: the parameter NAMES appear in `properties`
+    by definition, so checking there would pass without any fix."""
+    description = (_tool(name).get("description") or "").lower()
 
     missing = [a for a in alternatives if a.lower() not in description]
     assert not missing, (
@@ -150,9 +133,9 @@ def test_conditional_requirement_is_stated_in_the_description(name, alternatives
     )
 
 
-# A description that names a filter the schema does not declare sends the model
-# to construct a call it has no way to validate. Same defect as the two above,
-# arriving from the opposite direction: the prose is ahead of the contract.
+# A description that names a filter the schema does not declare sends the model to
+# construct a call it has no way to validate. Same defect as the two above, arriving from
+# the opposite direction: the prose is ahead of the contract.
 FILTER_TOKEN = re.compile(r"\b([a-z][a-z0-9]*(?:_[a-z0-9]+)*__[a-z]+)\b")
 
 
@@ -170,15 +153,10 @@ def _undeclared_filters(tool) -> list[str]:
 def test_no_description_names_a_filter_its_schema_does_not_declare():
     """Django-style `field__operator` filters read as instructions, not prose.
 
-    ChEMBL_search_activities told the model to "prefer starting from a known
-    target (`target_chembl_id__exact`)" while declaring `target_chembl_id`.
-    Both work upstream -- verified equivalent, 3,570 activities for CHEMBL298 --
-    so the tool was never broken; the model was pointed at a name it cannot find
-    in its own schema, which is the same defect as an undeclared requirement
-    arriving from the opposite direction.
-
-    Checked in one pass over every definition rather than per tool: 2,400
-    parametrised cases to name one offender is a lot of test for one fact.
+    ChEMBL_search_activities told the model to prefer `target_chembl_id__exact` while
+    declaring `target_chembl_id`. Both work upstream, so the tool was never broken; the
+    model was pointed at a name it cannot find in its own schema. Checked in one pass
+    rather than per tool: 2,400 parametrised cases to name one offender is a lot of test.
     """
     offenders = {
         name: undeclared
@@ -192,20 +170,26 @@ def test_no_description_names_a_filter_its_schema_does_not_declare():
 
 
 # --- the same rule, widened past filter tokens (DSR-665) ---
-# The narrow rule above holds the line on Django-style `field__operator` names and is kept
-# as a regression gate. This widens it to parameter names generally, so the class stays
-# closed as new tools arrive rather than only for the one shape already seen.
-#
-# Widening naively is unusable: 62 hits, and reading them shows most name something real
-# that simply is not an input to this tool. Four subtractions, each earned by inspecting
-# the hits -- return-schema fields, registry tool names, the base of a declared filter, and
-# a token whose sentence names another tool -- take that to 4. All four were read by hand
-# and are enumerated values of a declared parameter, so they are waived by name.
-#
-# The finding is that this corpus has no true positive of this class today. The rule ships
-# blocking at zero, and its whole value is in what it stops arriving.
+# The narrow rule above is kept as a regression gate; this widens it to parameter names
+# generally. Widening naively is unusable: 62 hits, most naming something real that simply
+# is not an input to this tool. Four subtractions -- return-schema fields, registry tool
+# names, the base of a declared filter, and a token whose sentence names another tool --
+# take that to 4, all waived by name. The corpus has no true positive of this class today;
+# the rule ships blocking at zero, and its whole value is in what it stops arriving.
 
 from tooluniverse.tools_sr import description_contract  # noqa: E402
+
+
+def _thing(description, properties=("query",), **extra):
+    return {
+        "name": "Thing_search",
+        "description": description,
+        "parameter": {"properties": {p: {} for p in properties}},
+        **extra,
+    }
+
+
+_OTHER_GET_GENE = {"name": "Other_get_gene", "parameter": {"properties": {"x": {}}}}
 
 
 @pytest.mark.unit
@@ -216,106 +200,41 @@ def test_no_description_names_a_parameter_its_schema_does_not_declare():
 
 
 @pytest.mark.unit
-def test_a_new_tool_describing_an_undeclared_parameter_is_reported():
-    """Proof the widened rule can fail. Green over a corpus it was tuned on means little
-    on its own."""
-    tools = {"Thing_search": {
-        "name": "Thing_search",
-        "description": "Search things. Pass `organism_name` to restrict the species.",
-        "parameter": {"properties": {"query": {}}},
-    }}
-
+@pytest.mark.parametrize(
+    "tools,expected",
+    [
+        # Proof the widened rule can fail. Green over a corpus it was tuned on means little.
+        ({"Thing_search": _thing("Search things. Pass `organism_name` to restrict it.")},
+         [("Thing_search", "organism_name")]),
+        # A single backticked word is usually prose -- allowing them all adds `only`, `null`
+        # and `df`. The registry decides: a one-word token counts only if some tool
+        # declares a parameter by that name.
+        ({"Other_search": {"name": "Other_search",
+                           "parameter": {"properties": {"organism": {}}}},
+          "Thing_search": _thing("Search things. Pass `organism` to restrict it.")},
+         [("Thing_search", "organism")]),
+        ({"Thing_search": _thing(
+            "Returns `null` when nothing matches; use `only` one filter.")}, []),
+        # Describing what comes back is not an instruction to pass it.
+        ({"Thing_search": _thing("Search things. The response carries `total_count`.",
+                                 return_schema={"properties": {"total_count": {}}})}, []),
+        # `pref_name` beside a declared `pref_name__contains` is the field being explained.
+        ({"Thing_search": _thing("Note that `pref_name` coverage is incomplete.",
+                                 properties=("pref_name__contains",))}, []),
+        # A hand-off names its destination.
+        ({"Other_get_gene": _OTHER_GET_GENE,
+          "Thing_search": _thing("Use `Other_get_gene` to find a gene's `canonical_id`.")},
+         []),
+        # A description that merely borrows a name leaves the model nowhere to send it.
+        ({"Other_get_gene": _OTHER_GET_GENE,
+          "Thing_search": _thing("Resolve the gene first, then pass its `canonical_id`.")},
+         [("Thing_search", "canonical_id")]),
+    ],
+)
+def test_a_description_may_only_name_parameters_its_schema_declares(tools, expected):
     findings = description_contract.undeclared_parameters(tools)
 
-    assert [f.token for f in findings] == ["organism_name"]
-
-
-@pytest.mark.unit
-def test_a_one_word_parameter_is_caught_when_the_registry_declares_it_somewhere():
-    """A single backticked word is usually prose -- allowing them all adds `only`, `null`
-    and `df`. The registry decides instead of a stopword list: a one-word token counts only
-    if some tool declares a parameter by that name."""
-    tools = {
-        "Other_search": {"name": "Other_search",
-                         "parameter": {"properties": {"organism": {}}}},
-        "Thing_search": {
-            "name": "Thing_search",
-            "description": "Search things. Pass `organism` to restrict it.",
-            "parameter": {"properties": {"query": {}}},
-        },
-    }
-
-    findings = description_contract.undeclared_parameters(tools)
-
-    assert [(f.tool, f.token) for f in findings] == [("Thing_search", "organism")]
-
-
-@pytest.mark.unit
-def test_a_backticked_english_word_is_not_read_as_a_parameter():
-    tools = {"Thing_search": {
-        "name": "Thing_search",
-        "description": "Returns `null` when nothing matches; use `only` one filter.",
-        "parameter": {"properties": {"query": {}}},
-    }}
-
-    assert description_contract.undeclared_parameters(tools) == []
-
-
-@pytest.mark.unit
-def test_a_return_schema_field_is_not_read_as_an_input():
-    """Describing what comes back is not an instruction to pass it."""
-    tools = {"Thing_search": {
-        "name": "Thing_search",
-        "description": "Search things. The response carries `total_count`.",
-        "parameter": {"properties": {"query": {}}},
-        "return_schema": {"properties": {"total_count": {}}},
-    }}
-
-    assert description_contract.undeclared_parameters(tools) == []
-
-
-@pytest.mark.unit
-def test_the_base_of_a_declared_filter_is_not_a_second_parameter():
-    """`pref_name` beside a declared `pref_name__contains` is the field being explained."""
-    tools = {"Thing_search": {
-        "name": "Thing_search",
-        "description": "Note that `pref_name` coverage is incomplete.",
-        "parameter": {"properties": {"pref_name__contains": {}}},
-    }}
-
-    assert description_contract.undeclared_parameters(tools) == []
-
-
-@pytest.mark.unit
-def test_naming_another_tools_field_is_a_hand_off_when_the_tool_is_named():
-    tools = {
-        "Other_get_gene": {"name": "Other_get_gene", "parameter": {"properties": {"x": {}}}},
-        "Thing_search": {
-            "name": "Thing_search",
-            "description": "Use `Other_get_gene` to find a gene's `canonical_id`.",
-            "parameter": {"properties": {"query": {}}},
-        },
-    }
-
-    assert description_contract.undeclared_parameters(tools) == []
-
-
-@pytest.mark.unit
-def test_naming_another_tools_parameter_without_saying_which_tool_is_reported():
-    """The distinction the acceptance criteria turn on. A hand-off names its destination;
-    a description that just borrows a name leaves the model with nowhere to send it."""
-    tools = {
-        "Other_get_gene": {"name": "Other_get_gene", "parameter": {"properties": {"x": {}}}},
-        "Thing_search": {
-            "name": "Thing_search",
-            "description": "Resolve the gene first, then pass its `canonical_id`.",
-            "parameter": {"properties": {"query": {}}},
-        },
-    }
-
-    findings = description_contract.undeclared_parameters(tools)
-
-    assert [f.token for f in findings] == ["canonical_id"]
+    assert [(f.tool, f.token) for f in findings] == expected
 
 
 @pytest.mark.unit

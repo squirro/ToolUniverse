@@ -96,6 +96,22 @@ def _drive(prr=PRR, graph=None, drug_name="lutetium Lu 177 dotatate", terms=TERM
         if tool == "FAERS_calculate_disproportionality":
             ae = a["adverse_event"]
             return {"data": {"metrics": {"PRR": {"value": prr[ae]}}}, "source_url": _url(ae)}
+        if tool == "FAERS_filter_serious_events":
+            # the shape recorded from the live tool on sr-dev, 2026-09-22 (LUTATHERA)
+            kind = a["seriousness_type"]
+            return {"status": "success", "source_url": _url(kind), "data": {
+                "drug_name": a["drug_name"], "seriousness_type": kind,
+                "case_definition": {"resolved_field": "patient.drug.openfda.brand_name", "drug_report_total": 5683},
+                "total_serious_events": {"hospitalization": 694, "death": 439}[kind],
+                "top_serious_reactions": [{"reaction": "ILL-DEFINED DISORDER", "count": 100},
+                                          {"reaction": "MALIGNANT NEOPLASM PROGRESSION", "count": 94}]
+                if kind == "hospitalization" else [{"reaction": "DEATH", "count": 439}]}}
+        if tool == "FAERS_stratify_by_demographics":
+            return {"status": "success", "source_url": _url("sex"), "data": {
+                "drug_name": a["drug_name"], "stratified_by": "sex", "total_reports": 1851,
+                "case_definition": {"resolved_field": "patient.drug.openfda.brand_name", "drug_report_total": 5683},
+                "stratification": [{"group": "Male", "count": 957, "percentage": 51.7},
+                                   {"group": "Female", "count": 894, "percentage": 48.3}]}}
         if tool == "PubMed_search_articles":
             # the shape recorded from the live tool on sr-dev, 2026-09-21
             return {"status": "success",
@@ -153,6 +169,26 @@ def test_the_signals_travel_as_rows_only_and_the_gateway_reads_the_rows():
     assert [(r["term"], r["prr"], r["url"]) for r in facts["prr_rows"]] == [
         (t, PRR[t], _url(t)) for t in TERMS]
     assert facts["strong_signal"] is True
+
+
+def test_seriousness_and_the_sex_split_reach_the_report_as_facts_tagged_by_their_call():
+    """Live 2026-09-22 (a user's UI run): the seriousness and stratify steps ran and produced
+    nothing -- no fact, no mention in the report. Once the calls succeeded the reply had no
+    section on serious outcomes at all. The rows travel as facts, each serious row tagged with
+    the call that made it, because the record flattens hospitalisation and death into one list."""
+    state, calls, _ = _drive()
+    facts = state["facts"]
+
+    assert [(r["seriousness"], r["reaction"], r["count"]) for r in facts["serious_rows"]] == [
+        ("hospitalization", "ILL-DEFINED DISORDER", 100),
+        ("hospitalization", "MALIGNANT NEOPLASM PROGRESSION", 94),
+        ("death", "DEATH", 439)]
+    assert [(r["seriousness"], r["reports"], r["url"]) for r in facts["serious_totals"]] == [
+        ("hospitalization", 694, _url("hospitalization")), ("death", 439, _url("death"))]
+    assert facts["strong_signal"] is True
+    assert [(r["group"], r["count"], r["percentage"]) for r in facts["sex_rows"]] == [
+        ("Male", 957, 51.7), ("Female", 894, 48.3)]
+    assert facts["sex_reports"] == 1851
 
 
 # --- the question's words are read onto the source's terms, and the reading is shown ----

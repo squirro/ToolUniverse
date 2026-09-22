@@ -40,7 +40,12 @@ report: >-
   from the label's Indications section — list each with its `reason` and its
   placing, say that they dominate raw report counts and were set aside, and never
   present them as signals. A flagged term that is not the indication stays a
-  signal, whatever disease it names. Name the FAERS cohort (the brand name used). Take every PRR
+  signal, whatever disease it names. Name the FAERS cohort (the brand name used). Then how
+  seriously the events were reported: `facts.serious_totals` gives, per seriousness
+  (hospitalization, death), how many reports and the query's `url` to cite; `facts.serious_rows`
+  gives the top reactions in each, tagged by `seriousness`. When the run holds `facts.sex_rows`,
+  give the sex split of the `facts.sex_reports` reports. These are counts of reports, never
+  rates; when the run holds none of these facts, say the seriousness calls failed. Take every PRR
   from its row in `facts.prr_table` and cite it with that row's `url`, one link
   per term — never one footnote for the whole table (`facts.signal_aes` lists the same terms; cite from the rows). Cite label numbers with the `source_url` of
   their result. Literature is the table `literature_rows`, one row per paper
@@ -84,6 +89,9 @@ tables:
   requested_meddra: fact    # the mapping itself: shown in the report, row by row
   indication_meddra: fact   # the drug's indication read onto FAERS terms: the compute step reads it
   prr_rows: fact            # the compute step reads it
+  serious_rows: fact        # top reactions among reports with hospitalisation / death, tagged by call
+  serious_totals: fact      # one row per seriousness type: reports and the query's url
+  sex_rows: fact            # the sex split of the reports, when a signal is strong
   literature_rows: evidence # wide, and no step reads it
   trial_rows: evidence      # wide, and no step reads it
   web_rows: evidence        # the pages the agent's searches returned, one row each
@@ -236,6 +244,14 @@ steps:
         arguments: {drug_name: "{faers_name}", seriousness_type: "hospitalization"}
       - tool: FAERS_filter_serious_events
         arguments: {drug_name: "{faers_name}", seriousness_type: "death"}
+    # One list per call: the record flattens both into one table, so each row carries the
+    # seriousness the call asked for, and each total its own query link.
+    collect:
+      serious_rows: {path: "data.top_serious_reactions", flatten: true,
+                     fields: ["$call.seriousness_type as seriousness", "reaction", "count"]}
+      serious_totals: {path: "", fields: ["$call.seriousness_type as seriousness",
+                                          "data.total_serious_events as reports", "source_url as url"]}
+    produces: [serious_rows, serious_totals]
 
   - id: stratify
     label: "Phase 2d — which reported subgroups a strong signal sits in"
@@ -244,6 +260,11 @@ steps:
     calls:
       - tool: FAERS_stratify_by_demographics
         arguments: {drug_name: "{faers_name}", stratify_by: "sex"}
+    extract:
+      sex_reports: "data.total_reports"
+    collect:
+      sex_rows: {path: "data.stratification", flatten: true, fields: ["group", "count", "percentage"]}
+    produces: [sex_reports, sex_rows]
     notes: Sex codes are 0 unknown, 1 male, 2 female. Skipped when no signal is strong.
 
   - id: pharmacogenomics

@@ -831,14 +831,38 @@ def _check_only_in(name: str, value: Any, facts: dict) -> str | None:
     return f"not in {name}: {misses}" if misses else None
 
 
+def _rows_by_key(rule: dict, keys: list, table: list) -> tuple[list, str | None]:
+    """The table's own rows for a selection answered as keys; a key the table lacks is named."""
+    key = rule["key"]
+    by_key = {row.get(key): row for row in table if isinstance(row, dict)}
+    rows, seen = [], set()
+    for k in keys:
+        if k not in by_key:
+            return [], f"key not in {rule['table']}.{key}: {k!r}"
+        if k not in seen:
+            seen.add(k)
+            rows.append(by_key[k])
+    return rows, None
+
+
 def _check_selected_from(rule: dict, value: Any, facts: dict) -> str | None:
     """A selection the code tool made: every row from the table, every row meeting the
-    condition, and no row of the table that meets it left out. The first breach is named."""
+    condition, and no row of the table that meets it left out. The first breach is named.
+
+    Answered as keys (when the rule names a `key`), the rows are the table's own, so no prose
+    can be retyped; answered as rows, each must be a row of the table unchanged.
+    """
     table = facts.get(rule["table"])
     if not isinstance(table, list):
         return f"{rule['table']} is not a list of rows"
-    if not isinstance(value, list) or not all(isinstance(r, dict) for r in value):
-        return "not a list of rows"
+    if not isinstance(value, list):
+        return "not a list"
+    if rule.get("key") and all(not isinstance(v, dict) for v in value):
+        value, problem = _rows_by_key(rule, value, table)
+        if problem:
+            return problem
+    if not all(isinstance(r, dict) for r in value):
+        return "not a list of rows" + (f" or of {rule['key']} keys" if rule.get("key") else "")
     where = rule.get("where") or {}
 
     def holds(cell: Any, wanted: Any) -> bool:
@@ -880,6 +904,26 @@ def tables_checked(rules: dict | None) -> list[str]:
             if isinstance(rule, dict) and "selected_from" in rule:
                 names.append(rule["selected_from"]["table"])
     return list(dict.fromkeys(names))
+
+
+def materialised(rules: dict, produced: dict, facts: dict,
+                 tables: Callable[[str], list] | None = None) -> dict:
+    """The produced facts answered as keys, as the table's own rows -- what the run keeps."""
+    known = dict(facts)
+    for name in tables_checked(rules):
+        if name not in known and tables is not None:
+            known[name] = tables(name)
+    out = {}
+    for name, spec in (rules or {}).items():
+        value = produced.get(name)
+        for rule in (spec if isinstance(spec, list) else [spec]):
+            selected = rule.get("selected_from") if isinstance(rule, dict) else None
+            if (selected and selected.get("key") and isinstance(value, list)
+                    and all(not isinstance(v, dict) for v in value)):
+                rows, problem = _rows_by_key(selected, value, known.get(selected["table"]) or [])
+                if not problem:
+                    out[name] = rows
+    return out
 
 
 def check_facts(rules: dict, produced: dict, facts: dict,
@@ -927,7 +971,8 @@ def without_failed(outcome: dict, failures: list[dict], step_id: str) -> dict:
 
 def checked(spec: dict, step_id: str, wants: list[str], outcome: dict, facts: dict,
             answered: bool, tables: Callable[[str], list] | None = None,
-            failures: list[dict] | None = None) -> tuple[dict, str | None]:
+            failures: list[dict] | None = None,
+            rows_by_key: dict | None = None) -> tuple[dict, str | None]:
     """Apply the step's checks to what the answer supplied.
 
     Returns the outcome and, when a re-ask is warranted, the problem to name in
@@ -941,8 +986,10 @@ def checked(spec: dict, step_id: str, wants: list[str], outcome: dict, facts: di
     produced = {n: outcome["facts"][n] for n in wants if n in outcome["facts"]}
     if failures is None:
         failures = check_facts(rules, produced, facts, tables=tables)
+        rows_by_key = materialised(rules, produced, facts, tables=tables)
     if not failures:
-        return outcome, None
+        # A selection answered as keys is kept as the table's own rows.
+        return {**outcome, "facts": {**outcome["facts"], **(rows_by_key or {})}}, None
     if answered:
         return outcome, check_problem(failures)
     return without_failed(outcome, failures, step_id), None

@@ -647,6 +647,25 @@ async def test_a_selection_is_checked_against_the_evidence_table_without_the_row
     assert handed["facts"]["selected"] == wanted and "trial_rows" not in handed["facts"]
     assert "NCT0201" not in history.to_json(), "the table's rows never entered the history"
 
+
+async def test_a_selection_answered_as_keys_becomes_the_tables_rows_on_temporal_too():
+    keyed = {**SELECTING, "steps": [SELECTING["steps"][0], {**SELECTING["steps"][1], "check": {"selected": [
+        {"selected_from": {"table": "trial_rows", "key": "nct_id",
+                           "where": {"phase": "PHASE3", "status": "COMPLETED"}}}]}}]}
+    wanted = [r for r in TRIALS if r["phase"] == "PHASE3" and r["status"] == "COMPLETED"]
+
+    async def answer_keys(handle, env):
+        await _wait_for_question(handle)
+        await handle.signal(SkillWorkflow.answer, {"selected": [r["nct_id"] for r in wanted]})
+
+    responses = {"search_clinical_trials": {"data": {"studies": TRIALS}}}
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        handed, _ = await _run(env, responses, keyed, {"drug_name": "cisplatin"}, "run-select-keys",
+                               before_result=answer_keys)
+
+    assert handed["facts"]["selected"] == wanted
+    assert handed["unresolved"] == [] and handed["blocked"] == []
+
 UPSTREAM = {"status": "error", "error": "Monarch answered HTTP 502 (Bad Gateway)", "upstream_status": 502,
             "retryable": True, "error_details": {"type": "ToolServerError", "retriable": True}}
 FAILING_UPSTREAM = {

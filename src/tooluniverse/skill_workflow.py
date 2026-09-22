@@ -55,6 +55,7 @@ from .skill_runner import (
     keep_evidence,
     mapping_choices,
     mapping_problem,
+    materialised,
     new_run,
     next_runnable,
     placed_mapping,
@@ -173,11 +174,12 @@ class AnswerToCheck:
 
 
 @activity.defn(name="check_answer")
-def check_answer(answer: AnswerToCheck) -> list:
-    """A check that reads an Evidence table runs beside the record; only the failures return,
-    so the table's rows stay out of the history."""
-    return check_facts(answer.rules, answer.produced, answer.facts,
-                       tables=_record_of(answer.run_id).rows)
+def check_answer(answer: AnswerToCheck) -> dict:
+    """A check that reads an Evidence table runs beside the record. Back go the failures and,
+    for a selection answered as keys, the table's own rows for those keys -- never the table."""
+    tables = _record_of(answer.run_id).rows
+    return {"failures": check_facts(answer.rules, answer.produced, answer.facts, tables=tables),
+            "rows_by_key": materialised(answer.rules, answer.produced, answer.facts, tables=tables)}
 
 
 @dataclass
@@ -347,16 +349,20 @@ class SkillWorkflow:
         """Ask, fold the answer in, check it; a failing check is asked once more."""
         answer = await self._ask(question)
         outcome = judged(outcome, wants, answer)
+        beside = await self._checked_beside_record(spec, wants, outcome)
         outcome, problem = checked(spec, step["id"], wants, outcome, self._run["facts"],
                                    answered=answer is not None,
-                                   failures=await self._checked_beside_record(spec, wants, outcome))
+                                   failures=beside["failures"] if beside else None,
+                                   rows_by_key=beside["rows_by_key"] if beside else None)
         problem = problem or mapping_problem(spec, outcome, self._run["facts"])
         if problem:
             answer = await self._ask({**question, "problem": problem})
             outcome = judged(outcome, wants, answer)
+            beside = await self._checked_beside_record(spec, wants, outcome)
             outcome, _ = checked(spec, step["id"], wants, outcome, self._run["facts"],
                                  answered=False,
-                                 failures=await self._checked_beside_record(spec, wants, outcome))
+                                 failures=beside["failures"] if beside else None,
+                                 rows_by_key=beside["rows_by_key"] if beside else None)
             if mapping_problem(spec, outcome, self._run["facts"]):
                 for name in spec.get("mapping") or {}:
                     outcome["facts"].pop(name, None)

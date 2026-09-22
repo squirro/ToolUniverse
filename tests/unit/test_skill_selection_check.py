@@ -93,6 +93,58 @@ def test_a_row_that_is_not_in_the_table_fails():
     assert "not in trial_rows" in failure["reason"] and "NCT9999" in failure["reason"]
 
 
+# --- identifiers, not rows: the agent names the rows by key, the server takes them from the table ---
+#
+# Measured 2026-09-21 on sr-dev: copying rows through the model held in 2 of 3 runs at 50 rows and
+# in none at 200 or 866 -- a title retyped, qualifying rows left out. A key cannot be retyped into
+# another row's prose; only the drop remains to check.
+
+KEYED = {"selected_from": {"table": "trial_rows", "key": "nct_id",
+                           "where": {"phase": "PHASE3", "status": "COMPLETED"}}}
+
+
+def test_a_selection_answered_as_keys_is_materialised_into_the_tables_own_rows():
+    from tooluniverse.skill_runner import materialised
+
+    keys = [r["nct_id"] for r in WANTED]
+
+    assert check_facts({"selected": [KEYED]}, {"selected": keys}, {}, tables=_rows) == []
+    assert materialised({"selected": [KEYED]}, {"selected": keys}, {}, tables=_rows) == {"selected": WANTED}
+
+
+def test_a_key_that_is_not_in_the_table_fails_and_is_named():
+    (failure,) = check_facts({"selected": [KEYED]}, {"selected": ["NCT0000", "NCT9999"]}, {}, tables=_rows)
+
+    assert "NCT9999" in failure["reason"] and "not in trial_rows" in failure["reason"]
+
+
+def test_a_key_whose_row_does_not_meet_the_condition_fails_and_is_named():
+    keys = [r["nct_id"] for r in WANTED] + ["NCT0100"]
+
+    (failure,) = check_facts({"selected": [KEYED]}, {"selected": keys}, {}, tables=_rows)
+
+    assert "NCT0100" in failure["reason"] and "does not meet" in failure["reason"]
+
+
+def test_a_dropped_key_still_fails():
+    (failure,) = check_facts({"selected": [KEYED]}, {"selected": ["NCT0001", "NCT0002"]}, {}, tables=_rows)
+
+    assert "dropped" in failure["reason"] and "NCT0000" in failure["reason"]
+
+
+def test_in_a_run_the_keys_the_agent_answers_become_the_tables_rows_in_the_facts():
+    keyed_process = {**PROCESS, "steps": [PROCESS["steps"][0],
+                                          {**PROCESS["steps"][1], "check": {"selected": [KEYED]}}]}
+    runner = SkillRunner(keyed_process, execute=lambda tool, a: {"data": {"studies": TRIALS}},
+                         ask=lambda q: {"selected": [r["nct_id"] for r in WANTED]},
+                         records=tempfile.mkdtemp(prefix="working-records-"))
+    run_id = runner.start({"drug_name": "cisplatin"})["run_id"]
+    while not runner.advance(run_id)["finished"]:
+        pass
+
+    assert runner.handover(run_id)["facts"]["selected"] == WANTED
+
+
 # --- in a run: the table is evidence, the agent answers from its code tool, the server checks --
 
 PROCESS = {

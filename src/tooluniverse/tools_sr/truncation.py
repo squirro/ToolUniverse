@@ -67,9 +67,31 @@ class ToolFinding:
         return f"<ToolFinding {self.name}>"
 
 
+# A value that is a string where it is sliced. Shortening one of these makes a message or
+# an identifier readable; it does not hand back part of a collection.
+_STRING_CALLS = {"str", "repr", "join", "dumps", "format", "hexdigest"}
+_STRING_ATTRS = {"text", "hex", "stdout", "stderr"}
+
+
+def _is_string_expression(node: ast.AST) -> bool:
+    """Is this a string, so that slicing it shortens prose rather than a result?"""
+    if isinstance(node, ast.JoinedStr):
+        return True
+    if isinstance(node, ast.Constant):
+        return isinstance(node.value, str)
+    if isinstance(node, ast.Call):
+        return (getattr(node.func, "attr", None) or getattr(node.func, "id", None)) in _STRING_CALLS
+    if isinstance(node, ast.Attribute):
+        return node.attr in _STRING_ATTRS
+    return False
+
+
 def _takes_first_n(node: ast.AST) -> bool:
-    """``x[:N]`` -- a post-hoc cap. Not ``x[a:b]``, not ``x[::2]``, not ``x[:]``."""
+    """``x[:N]`` -- a post-hoc cap. Not ``x[a:b]``, not ``x[::2]``, not ``x[:]``, and not a
+    shortened string, which caps prose rather than a collection."""
     if not isinstance(node, ast.Subscript) or not isinstance(node.slice, ast.Slice):
+        return False
+    if _is_string_expression(node.value):
         return False
     sl = node.slice
     return sl.lower is None and sl.step is None and sl.upper is not None

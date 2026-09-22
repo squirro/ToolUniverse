@@ -37,9 +37,6 @@ WAIVED: dict[str, dict[str, str]] = {
         "indications_and_usage": "a 'common choices' value for the declared `field`",
         "dosage_and_administration": "a 'common choices' value for the declared `field`",
     },
-    "gnomad_get_variant": {
-        "gnomad_r3": "the documented default value of the declared `dataset` parameter",
-    },
 }
 
 
@@ -110,6 +107,21 @@ def _prose(tool: dict) -> str:
     return " ".join(parts)
 
 
+def _offered_values(properties: dict) -> set[str]:
+    """The values the schema itself offers: each parameter's default and enum entries.
+
+    Prose that quotes one of these is naming a value, not another parameter.
+    """
+    offered: set[str] = set()
+    for spec in properties.values():
+        if not isinstance(spec, dict):
+            continue
+        if isinstance(spec.get("default"), str):
+            offered.add(spec["default"])
+        offered.update(v for v in (spec.get("enum") or []) if isinstance(v, str))
+    return offered
+
+
 def _sentence_around(text: str, start: int, end: int) -> str:
     opens = text.rfind(".", 0, start) + 1
     closes = text.find(".", end)
@@ -130,6 +142,7 @@ def undeclared_parameters(tools: dict[str, dict]) -> list[Finding]:
         declared = set(properties)
         # A filter base beside its declared filter is the field being explained, not a parameter.
         filter_bases = {key.split("__")[0] for key in declared if "__" in key}
+        offered = _offered_values(properties)
         returns = _return_fields(tool)
         waived = WAIVED.get(tool_name, {})
         prose = _prose(tool)
@@ -141,6 +154,8 @@ def undeclared_parameters(tools: dict[str, dict]) -> list[Finding]:
                 continue  # a backticked English word, not a parameter reference
             if token in seen or token in declared or token in filter_bases:
                 continue
+            if token in offered:
+                continue  # a value this schema offers, quoted as prose
             if token in returns or token in names or token in waived:
                 continue
             sentence = _sentence_around(prose, match.start(), match.end())

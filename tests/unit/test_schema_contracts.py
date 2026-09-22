@@ -254,3 +254,13 @@ def test_no_waiver_has_gone_stale():
         prose = description_contract._prose(tool)
         for token in tokens:
             assert f"`{token}`" in prose, (tool_name, token)
+
+
+def test_a_value_the_schema_itself_offers_is_prose_not_a_parameter_reference():
+    """`gnomad_r4` in "defaults to `gnomad_r4`" is the declared parameter's own default."""
+    tools = {"t": {"description": "picks a set; defaults to `gnomad_r4`, or try `gnomad_r3`.",
+                   "parameter": {"properties": {
+                       "dataset": {"default": "gnomad_r4",
+                                   "enum": ["gnomad_r4", "gnomad_r3"]}}}}}
+
+    assert description_contract.undeclared_parameters(tools) == []

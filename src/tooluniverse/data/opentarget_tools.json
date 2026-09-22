@@ -58,7 +58,8 @@
                   "type": "object",
                   "properties": {
                     "count": {
-                      "type": "integer"
+                      "type": "integer",
+                      "description": "the total available at the source, which exceeds the rows returned when `size` capped the page; compare it with the row count to see whether the table is complete"
                     },
                     "rows": {
                       "type": "array",
@@ -150,7 +151,8 @@
                   "type": "object",
                   "properties": {
                     "count": {
-                      "type": "integer"
+                      "type": "integer",
+                      "description": "the total available at the source, which exceeds the rows returned when `size` capped the page; compare it with the row count to see whether the table is complete"
                     },
                     "rows": {
                       "type": "array",

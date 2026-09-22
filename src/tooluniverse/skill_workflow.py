@@ -60,6 +60,7 @@ from .skill_runner import (
     next_runnable,
     placed_mapping,
     question_for,
+    recomputed,
     substitute,
     tables_checked,
     upstream_failure_text,
@@ -372,7 +373,7 @@ class SkillWorkflow:
                 place_mapping, MappingToPlace(spec, outcome),
                 start_to_close_timeout=PLACING_TIMEOUT,
                 retry_policy=RetryPolicy(maximum_attempts=2))
-        return outcome
+        return recomputed(spec, outcome, self._run["facts"])
 
     async def _checked_beside_record(self, spec: dict, wants: list[str], outcome: dict) -> list | None:
         """The step's checks, run beside the Working Record when one reads an Evidence table;

@@ -395,15 +395,29 @@ def _map(rule: dict, facts: dict) -> Any:
 
 
 def _sum(rule: dict, facts: dict) -> Any:
-    """The named parts added; a part that never arrived is not a zero."""
+    """The named parts added, capped when the rule says so; a missing part is not a zero."""
     parts = [_number(facts.get(name)) for name in rule["of"]]
-    return None if any(p is None for p in parts) else (
-        int(sum(parts)) if all(float(p).is_integer() for p in parts) else sum(parts))
+    if any(p is None for p in parts):
+        return None
+    total = sum(parts)
+    if rule.get("cap") is not None:
+        total = min(total, float(rule["cap"]))
+    return int(total) if float(total).is_integer() else total
+
+
+def _first(rule: dict, facts: dict) -> Any:
+    """The one value a list fact holds first -- a judged mapping's `_terms` as the id to call with."""
+    values = facts.get(rule["of"])
+    if values is None:
+        return None
+    return values[0] if isinstance(values, list) and values else (None if isinstance(values, list) else values)
 
 
 def _lookup(rule: dict, facts: dict) -> Any:
     """One row's value from a fact table, by the key another fact names: the pair's score."""
     rows, wanted = facts.get(rule["rows"]), facts.get(rule["equals"])
+    if isinstance(wanted, list):
+        wanted = wanted[0] if wanted else None      # a judged mapping's `_terms`: the first id
     if rows is None or wanted is None:
         return None
     for row in rows:
@@ -417,7 +431,7 @@ _COMPUTE_OPS: dict[str, Callable[[dict, dict], Any]] = {"rank_differential": _ra
                                                        "hierarchy": _hierarchy_rows,
                                                        "flag": _flag, "pluck": _pluck,
                                                        "band": _band, "map": _map, "sum": _sum,
-                                                       "lookup": _lookup}
+                                                       "lookup": _lookup, "first": _first}
 
 
 def _compute(rule: dict, facts: dict) -> Any:
@@ -426,6 +440,57 @@ def _compute(rule: dict, facts: dict) -> Any:
     if op is None:
         raise SkillGraphError(f"unknown compute op {rule.get('op')!r}")
     return op(rule, facts)
+
+
+def _computed(spec: dict, pending: dict, facts: dict, extracted: dict,
+              excluded: dict) -> tuple[list[dict], list[str], dict]:
+    """Apply `pending` rules to a fixpoint, adding what resolves to `extracted`.
+
+    Returns (blocked, refused, still pending). A rule may read what another rule in the
+    same pass produces; a rule whose source is absent waits; a rule the server cannot
+    apply to what it was given is refused by name, said and not skipped.
+    """
+    blocked: list[dict] = []
+    refused: list[str] = []
+    while pending:
+        settled = []
+        for name, rule in pending.items():
+            value = _compute(rule, {**facts, **extracted})
+            if isinstance(value, _Refused):
+                blocked.append({"step": spec["id"], "reason": f"cannot compute {name}: {value.reason}"})
+                refused.append(name)
+                settled.append(name)
+            elif value is not None:
+                extracted[name] = value
+                settled.append(name)
+                if rule.get("exclude_pattern"):
+                    dropped = _pluck_excluded(rule, {**facts, **extracted})
+                    if dropped:
+                        excluded[name] = dropped
+        if not settled:
+            break
+        for name in settled:
+            pending.pop(name)
+    return blocked, refused, pending
+
+
+def recomputed(spec: dict, outcome: dict, facts: dict) -> dict:
+    """The compute rules a judgement left waiting, applied now that the judged facts are in.
+
+    Pure. The arithmetic over an option the agent chose -- the points its table gives, the
+    one id a mapping's `_terms` holds -- belongs to the step that asked, not to a step of
+    its own. Only the rules still unresolved run; what resolves leaves `unresolved`.
+    """
+    waiting = {name: rule for name, rule in (spec.get("compute") or {}).items()
+               if name in outcome["unresolved"]}
+    if not waiting:
+        return outcome
+    values: dict = {}
+    excluded = dict(outcome.get("excluded") or {})
+    blocked, _, _ = _computed(spec, waiting, {**facts, **outcome["facts"]}, values, excluded)
+    return {**outcome, "facts": {**outcome["facts"], **values},
+            "unresolved": [n for n in outcome["unresolved"] if n not in values],
+            "blocked": list(outcome.get("blocked") or []) + blocked, "excluded": excluded}
 
 
 def _derive(spec: dict, facts: dict) -> bool | None:
@@ -479,8 +544,10 @@ def is_upstream_failure(result: Any) -> bool:
         return False
     details = result.get("error_details") or {}
     status = result.get("upstream_status")
+    # Some tools carry the exception only in text (`detail: "ReadTimeout(...)"`).
+    typed = " ".join(str(result.get(k, "")) for k in ("detail", "error")) + str(details.get("type", ""))
     return bool(details.get("retriable") or result.get("retryable")
-                or any(t in str(details.get("type", "")) for t in _SERVER_ERROR_TYPES)
+                or any(t in typed for t in _SERVER_ERROR_TYPES)
                 or (isinstance(status, int) and (status >= 500 or status in (408, 429))))
 
 
@@ -1172,29 +1239,7 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
     # Resolved in passes: a rule may read what another rule in the same step
     # produces, and a store hands the rules back in its own order, not the
     # author's (GraphDB: alphabetical, and the literature loop lost its list).
-    pending = dict(spec.get("compute") or {})
-    blocked: list[dict] = []
-    refused: list[str] = []
-    while pending:
-        settled = []
-        for name, rule in pending.items():
-            value = _compute(rule, {**facts, **extracted})
-            if isinstance(value, _Refused):
-                # The server cannot apply the rule to what it was given: said, not skipped.
-                blocked.append({"step": spec["id"], "reason": f"cannot compute {name}: {value.reason}"})
-                refused.append(name)
-                settled.append(name)
-            elif value is not None:
-                extracted[name] = value
-                settled.append(name)
-                if rule.get("exclude_pattern"):
-                    dropped = _pluck_excluded(rule, {**facts, **extracted})
-                    if dropped:
-                        excluded[name] = dropped
-        if not settled:
-            break
-        for name in settled:
-            pending.pop(name)
+    blocked, refused, pending = _computed(spec, dict(spec.get("compute") or {}), facts, extracted, excluded)
     computed_missing = list(pending) + refused
 
     undecided = []
@@ -1326,7 +1371,7 @@ class SkillRunner:
                 for name in spec.get("mapping") or {}:
                     outcome["facts"].pop(name, None)
                     outcome["unresolved"].append(name)
-        return placed_mapping(spec, outcome, self.lookup)
+        return recomputed(spec, placed_mapping(spec, outcome, self.lookup), run["facts"])
 
     def _peek_safe(self, run_id: str):
         return next_runnable(self.graph, self._runs[run_id])

@@ -68,6 +68,66 @@ def test_lookup_takes_one_rows_value_from_a_fact_table_by_the_key_another_fact_n
     assert "disease_score" in absorb(spec, [], {"disease_rows": rows})["unresolved"], "no key yet: unresolved"
 
 
+def test_first_takes_the_one_value_a_mapping_produced_and_sum_caps_an_additive_score():
+    """A judged mapping yields `<name>_terms`, a list; the calls that follow need the one id.
+    The genetic sub-score adds four parts (6 + 2 + 2 + 2) but the skill caps it at 10."""
+    spec = {"id": "s", "calls": [], "compute": {
+        "efo_id": {"op": "first", "of": "efo_choice_terms"},
+        "genetic_points": {"op": "sum", "of": ["a", "b", "c", "d"], "cap": 10}}}
+
+    out = absorb(spec, [], {"efo_choice_terms": ["MONDO_0008170", "MONDO_0004992"], "a": 6, "b": 2, "c": 2, "d": 2})
+    assert out["facts"]["efo_id"] == "MONDO_0008170" and out["facts"]["genetic_points"] == 10
+    assert "efo_id" in absorb(spec, [], {"efo_choice_terms": []})["unresolved"], "an empty list yields nothing"
+
+
+def test_lookup_accepts_a_list_key_and_uses_its_first_value():
+    rows = [{"disease_id": "MONDO_0008170", "score": 0.53}]
+    spec = {"id": "s", "calls": [], "compute": {
+        "disease_score": {"op": "lookup", "rows": "disease_rows", "key": "disease_id",
+                          "equals": "efo_choice_terms", "field": "score"}}}
+
+    assert absorb(spec, [], {"disease_rows": rows, "efo_choice_terms": ["MONDO_0008170"]})["facts"]["disease_score"] == 0.53
+
+
+def test_a_compute_over_the_steps_own_judged_fact_resolves_once_the_judgement_is_in():
+    """The judge is asked after the step's calls, and the arithmetic over the option chosen
+    belongs to the same step: `ko_class` is judged, `ko_points` is its table applied. A
+    mapping's `_terms` list likewise feeds a `first` in the step that judged it."""
+    process = {
+        "skill": "scored", "inputs": ["target"],
+        "steps": [
+            {"id": "ko", "calls": [], "judge": ["ko_class"],
+             "compute": {"ko_points": {"op": "map", "from": "ko_class", "table": {"lethal": 0, "viable": 10}}},
+             "produces": ["ko_class", "ko_points"]},
+        ],
+    }
+    runner = SkillRunner(process, execute=lambda t, a: {}, ask=lambda q: {"ko_class": "viable"})
+    run_id = runner.start({"target": "FOLR1"})["run_id"]
+    out = runner.advance(run_id)
+
+    assert out["extracted"]["ko_points"] == 10
+    assert out["unresolved"] == [] and out["blocked"] == []
+    assert runner.handover(run_id)["facts"]["ko_points"] == 10
+
+
+def test_a_judged_option_the_table_lacks_is_a_named_block_not_a_silent_gap():
+    process = {
+        "skill": "scored", "inputs": ["target"],
+        "steps": [
+            {"id": "ko", "calls": [], "judge": ["ko_class"],
+             "compute": {"ko_points": {"op": "map", "from": "ko_class", "table": {"lethal": 0, "viable": 10}}},
+             "produces": ["ko_class", "ko_points"]},
+        ],
+    }
+    runner = SkillRunner(process, execute=lambda t, a: {}, ask=lambda q: {"ko_class": "mostly fine"})
+    run_id = runner.start({"target": "FOLR1"})["run_id"]
+    out = runner.advance(run_id)
+
+    assert "ko_points" not in out["extracted"]
+    assert any("mostly fine" in b["reason"] for b in out["blocked"])
+    assert [u["fact"] for u in out["unresolved"]] == ["ko_points"]
+
+
 def test_a_process_declares_its_closed_lists_as_constants_the_checks_can_read():
     process = {
         "skill": "scored", "inputs": ["target"],

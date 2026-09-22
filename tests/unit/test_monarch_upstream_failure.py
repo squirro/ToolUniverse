@@ -115,6 +115,11 @@ def test_what_counts_as_an_upstream_failure():
     assert is_upstream_failure(UPSTREAM)
     assert is_upstream_failure({"status": "error", "error": "x", "error_details": {"type": "ToolServerError"}})
     assert is_upstream_failure({"status": "error", "error": "x", "upstream_status": 503})
+    # ChEMBL's envelope as recorded: no type, no code, the timeout only in the text
+    assert is_upstream_failure({
+        "status": "error", "url": "https://www.ebi.ac.uk/chembl/api/data/target.json",
+        "error": "ChEMBL API request failed: HTTPSConnectionPool(host='www.ebi.ac.uk', port=443): Read timed out. (read timeout=30)",
+        "detail": "ReadTimeout(ReadTimeoutError(\"...Read timed out.\"))"})
     assert not is_upstream_failure(NOT_FOUND)
     assert not is_upstream_failure({"status": "success", "data": []})
     assert not is_upstream_failure(["a", "list"])

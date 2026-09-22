@@ -287,7 +287,8 @@ steps:
     total: "data.target.drugAndClinicalCandidates.count"
     collect:
       drug_rows: {path: "data.target.drugAndClinicalCandidates.rows", flatten: true,
-                  fields: ["drug.id as chembl_id", "drug.name as name", "maxClinicalStage as stage"]}
+                  fields: ["drug.id as chembl_id", "drug.name as name", "maxClinicalStage as stage",
+                           "diseases[].disease.name as indications"]}
       drug_names: {path: "data.target.drugAndClinicalCandidates.rows[].drug.name", flatten: true}
     produces: [drug_rows, drug_names]
     notes: >-
@@ -395,9 +396,10 @@ steps:
       clinical_points: {op: map, from: clinical_class, table: {approved_same_disease: 15, approved_other_disease: 12, phase_3: 10, phase_2: 7, phase_1: 5, preclinical_only: 3, none: 0}}
     produces: [clinical_class, clinical_reason, clinical_points]
     notes: >-
-      From `drug_rows` (stage and the diseases each drug is listed for) and the `trial_rows`
-      description: the highest stage reached on this target, and whether an approval is for
-      the disease named. `clinical_reason` names the drug or trial that sets the stage.
+      From `drug_rows` (each drug's `stage` and its `indications`, the diseases the source lists
+      it for) and the `trial_rows` description: the highest stage reached on this target, and
+      whether an approval's `indications` include the disease named -- `approved_same_disease`
+      only when a row says so. `clinical_reason` names the drug or trial that sets the stage.
 
   - id: pathways
     label: "Phase 6a -- pathways"

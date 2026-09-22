@@ -110,6 +110,9 @@ def test_the_wide_tables_are_evidence_and_the_loop_runs_over_the_sources_drug_na
     assert len(facts["disease_rows"]) == 461, "the whole association list, one page"
     looped = [a["drug_name"] for t, a in calls if t == "FDA_get_boxed_warning_info_by_drug_name"]
     assert looped == [r["name"] for r in facts["drug_rows"]] and looped[0] == "VINTAFOLIDE"
+    # the clinical judgement ("approved for THIS disease?") reads the drug's indications, held-out
+    # live it had only a stage column to read
+    assert "ovarian cancer" in facts["drug_rows"][0]["indications"]
     assert [r["drug"] for r in facts["boxed_rows"]] == looped
     assert all(r["boxed_warning"].startswith("WARNING") for r in facts["boxed_rows"])
     # ChEMBL timed out when recorded: a recorded failure, not a silent gap, and the

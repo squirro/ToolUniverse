@@ -1,27 +1,28 @@
 """The Skill Process interpreter on Temporal (ADR-0016).
 
-One workflow type runs every process; the process travels inside the run as input.
-Every tool call is an activity; the model's two holes — repair and judgement — are a
-`status` query the caller polls and an `answer` signal it sends. These tests drive the
-workflow the way the agent will, through a client, under Temporal's time-skipping
-environment with a stub activity registered under the real activity's name — so the
-one-hour ceiling costs nothing to test and no server is needed.
+One workflow type runs every process; every tool call is an activity; the model's two
+holes — repair and judgement — are a `status` query the caller polls and an `answer`
+signal it sends. Driven through a client under the time-skipping environment with stub
+activities registered under the real names, so the one-hour ceiling costs nothing.
 """
 
+import asyncio
 import sys
 import tempfile
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
 from temporalio import activity
-from temporalio.client import Client
 from temporalio.exceptions import ApplicationError
 from temporalio.testing import WorkflowEnvironment
-from temporalio.worker import Worker
+from temporalio.worker import Replayer, Worker
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
+from tooluniverse.skill_graph import GRAPHS_DIR, load_graph  # noqa: E402
 from tooluniverse.skill_runner import SkillRunner  # noqa: E402
 from tooluniverse.skill_workflow import (  # noqa: E402
     WORKFLOW_RUNNER,
@@ -68,21 +69,28 @@ OK = {
 }
 
 
+def _respond(responses, tool, arguments):
+    value = responses[tool]
+    return value(ToolCall(tool, arguments)) if callable(value) else value
+
+
+def _records_dir():
+    return tempfile.mkdtemp(prefix="working-records-")
+
+
 def _stub(responses, record=None):
     """The real tool activities over a bound executor (tool -> payload), and a record sink."""
     calls, records = [], []
 
     def execute(tool, arguments):
         calls.append((tool, arguments))
-        value = responses[tool]
-        if callable(value):
-            value = value(ToolCall(tool, arguments))
+        value = _respond(responses, tool, arguments)
         if isinstance(value, Exception):
             raise ApplicationError(str(value), non_retryable=True)
         return value
 
     bind_executor(execute)
-    bind_records(tempfile.mkdtemp(prefix="working-records-"))
+    bind_records(_records_dir())
 
     @activity.defn(name="record_run")
     def record_run(skel: dict) -> str:
@@ -95,7 +103,8 @@ def _stub(responses, record=None):
             record_run, calls, records)
 
 
-async def _run(env, responses, process, inputs, run_id="run-1", before_result=None, record=None):
+async def _run(env, responses, process, inputs, run_id="run-1", before_result=None,
+               record=None, history=False, **extra):
     execute, record_activity, calls, records = _stub(responses, record)
     async with Worker(env.client, task_queue=QUEUE, workflows=[SkillWorkflow],
                       activities=[*execute, record_activity],
@@ -103,22 +112,48 @@ async def _run(env, responses, process, inputs, run_id="run-1", before_result=No
                       workflow_runner=WORKFLOW_RUNNER):
         handle = await env.client.start_workflow(
             SkillWorkflow.run,
-            SkillRunInput(skill=process["skill"], process=process, inputs=inputs),
+            SkillRunInput(skill=process["skill"], process=process, inputs=inputs, **extra),
             id=run_id, task_queue=QUEUE)
         if before_result:
             await before_result(handle, env)
         bundle = await handle.result()
-        bundle["_records"] = records          # test-only: what the sink received
-        return bundle, calls
+        if history:
+            bundle["_history"] = await handle.fetch_history()
+    bundle["_records"] = records          # test-only: what the sink received
+    return bundle, calls
 
 
-def _in_memory(responses, process, inputs):
-    runner = SkillRunner(process, execute=lambda tool, a: responses[tool],
-                         records=tempfile.mkdtemp(prefix="working-records-"))
+def _handed(bundle):
+    """The bundle minus what only the Temporal host adds, for parity comparisons."""
+    return {k: v for k, v in bundle.items() if k not in ("record", "run_id") and k[0] != "_"}
+
+
+def _in_memory(responses, process, inputs, **kw):
+    kw.setdefault("execute", lambda tool, a: _respond(responses, tool, a))
+    runner = SkillRunner(process, records=_records_dir(), **kw)
     run_id = runner.start(inputs)["run_id"]
     while not runner.advance(run_id)["finished"]:
         pass
     return runner.handover(run_id)
+
+
+async def _wait_for_question(handle, tries=200):
+    """Poll `status` the way run_skill will, until the run is waiting on the model."""
+    for _ in range(tries):
+        state = await handle.query(SkillWorkflow.status)
+        if state["waiting_for"] or state["finished"]:
+            return state
+        await asyncio.sleep(0.05)
+    raise AssertionError("the run never asked")
+
+
+async def _answer(handle, *replies, seen=None):
+    """Wait for each question in turn, keep the status if asked to, and signal the reply."""
+    for reply in replies:
+        state = await _wait_for_question(handle)
+        if seen is not None:
+            seen.append(state)
+        await handle.signal(SkillWorkflow.answer, reply)
 
 
 async def test_the_workflow_returns_the_bundle_the_in_memory_runner_returns():
@@ -126,23 +161,10 @@ async def test_the_workflow_returns_the_bundle_the_in_memory_runner_returns():
     async with await WorkflowEnvironment.start_time_skipping() as env:
         bundle, calls = await _run(env, OK, GRAPH, {"drug_name": "cisplatin"})
 
-    # record: the Run Record is written by the Temporal host only.
-    assert {k: v for k, v in bundle.items() if k not in ("record", "run_id", "_records")} \
-        == _in_memory(OK, GRAPH, {"drug_name": "cisplatin"})
+    assert _handed(bundle) == _in_memory(OK, GRAPH, {"drug_name": "cisplatin"})
     assert [tool for tool, _ in calls] == ["resolve_drug", "disproportionality", "stratify"]
     assert bundle["facts"]["strong_signal"] is True
     assert bundle["steps_done"] == ["resolve", "signals", "stratify", "report"]
-
-
-async def _wait_for_question(handle, tries=200):
-    """Poll `status` the way run_skill will, until the run is waiting on the model."""
-    import asyncio
-    for _ in range(tries):
-        state = await handle.query(SkillWorkflow.status)
-        if state["waiting_for"] or state["finished"]:
-            return state
-        await asyncio.sleep(0.05)
-    raise AssertionError("the run never asked")
 
 
 async def test_a_failing_tool_is_a_recorded_failure_and_the_run_goes_on():
@@ -163,8 +185,7 @@ async def test_a_step_that_cannot_be_built_is_blocked_not_fatal():
         bundle, calls = await _run(env, no_id, GRAPH, {"drug_name": "x"}, "run-blocked")
 
     assert [tool for tool, _ in calls] == ["resolve_drug"]
-    # signals cannot be composed; report needs no fact, so it still runs, and
-    # stratify's gate never opens. Same rule as the in-memory runner.
+    # report needs no fact, so it still runs, and stratify's gate never opens.
     assert bundle["steps_done"] == ["resolve", "report"]
     assert bundle["unresolved"] == [{"step": "resolve", "fact": "chembl_id"}]
     assert [b["step"] for b in bundle["blocked"]] == ["signals"]
@@ -185,7 +206,7 @@ REPAIRED = {
 
 
 async def test_a_repair_is_asked_for_by_signal_and_the_second_suggestion_resolves_it():
-    seen = []
+    seen, asked = [], []
 
     def dailymed(call):
         seen.append(call.arguments["drug_name"])
@@ -193,20 +214,15 @@ async def test_a_repair_is_asked_for_by_signal_and_the_second_suggestion_resolve
         return {"data": [{"setid": "72d1"}] if found else []}
 
     responses = {"DailyMed_search_spls": dailymed, "DailyMed_parse": {"data": "label"}}
-
-    async def answer_the_repair(handle, env):
-        state = await _wait_for_question(handle)
-        question = state["waiting_for"]
-        assert question["kind"] == "repair" and question["wants"] == ["drug_name"]
-        assert question["value"] == "lutetium Lu-177 dotatate"
-        await handle.signal(SkillWorkflow.answer,
-                            {"drug_name": ["lutetium lu 177 dotatate", "Lutathera"]})
-
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        bundle, _ = await _run(env, responses, REPAIRED,
-                               {"drug_name": "lutetium Lu-177 dotatate"}, "run-repair",
-                               before_result=answer_the_repair)
+        bundle, _ = await _run(
+            env, responses, REPAIRED, {"drug_name": "lutetium Lu-177 dotatate"}, "run-repair",
+            before_result=lambda h, e: _answer(
+                h, {"drug_name": ["lutetium lu 177 dotatate", "Lutathera"]}, seen=asked))
 
+    question = asked[0]["waiting_for"]
+    assert question["kind"] == "repair" and question["wants"] == ["drug_name"]
+    assert question["value"] == "lutetium Lu-177 dotatate"
     assert seen == ["lutetium Lu-177 dotatate", "lutetium lu 177 dotatate", "Lutathera"]
     assert bundle["calls"] == {"identity": ["DailyMed_search_spls"] * 3,
                                "label": ["DailyMed_parse"]}, "retries are on the record"
@@ -214,7 +230,6 @@ async def test_a_repair_is_asked_for_by_signal_and_the_second_suggestion_resolve
     assert bundle["facts"]["setid"] == "72d1"
     assert bundle["steps_done"] == ["identity", "label"]
     assert bundle["blocked"] == []
-
 
 
 JUDGED = {
@@ -225,22 +240,20 @@ JUDGED = {
          "calls": [{"tool": "orphanet", "arguments": {"query": "{keyword}"}}]},
     ],
 }
+KEYWORD = {"keyword": "storage disorder"}
 
 
 async def test_a_judgement_is_asked_for_by_signal_and_carried_into_the_next_call():
-    async def judge(handle, env):
-        state = await _wait_for_question(handle)
-        question = state["waiting_for"]
-        assert question == {"kind": "judge", "step": "hypothesis", "wants": ["keyword"],
-                            "context": {"symptoms": ["hepatosplenomegaly"]}}
-        assert state["step_id"] == "hypothesis" and state["done"] == []
-        await handle.signal(SkillWorkflow.answer, {"keyword": "storage disorder"})
-
+    asked = []
     async with await WorkflowEnvironment.start_time_skipping() as env:
         bundle, calls = await _run(env, {"orphanet": {"data": []}}, JUDGED,
                                    {"symptoms": ["hepatosplenomegaly"]}, "run-judge",
-                                   before_result=judge)
+                                   before_result=lambda h, e: _answer(h, KEYWORD, seen=asked))
 
+    assert asked[0]["waiting_for"] == {"kind": "judge", "step": "hypothesis",
+                                       "wants": ["keyword"],
+                                       "context": {"symptoms": ["hepatosplenomegaly"]}}
+    assert asked[0]["step_id"] == "hypothesis" and asked[0]["done"] == []
     assert calls == [("orphanet", {"query": "storage disorder"})]
     assert bundle["facts"]["keyword"] == "storage disorder"
     assert bundle["unresolved"] == [] and bundle["blocked"] == []
@@ -260,30 +273,16 @@ async def test_a_question_nobody_answers_closes_the_step_as_blocked_after_the_ce
 
 
 async def test_the_history_holds_the_process_the_answer_and_replays_deterministically():
-    """The Run Record: the definition in the started event, the model's answer as a
-    signal event, and a history the interpreter replays without a determinism error."""
-    from temporalio.worker import Replayer
-
-    async def judge(handle, env):
-        await _wait_for_question(handle)
-        await handle.signal(SkillWorkflow.answer, {"keyword": "storage disorder"})
-
-    stub, record_activity, _, _ = _stub({"orphanet": {"data": []}})
+    """The definition in the started event, the answer as a signal event, and a history
+    the interpreter replays without a determinism error."""
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        async with Worker(env.client, task_queue=QUEUE, workflows=[SkillWorkflow],
-                          activities=[*stub, record_activity],
-                          activity_executor=ThreadPoolExecutor(2),
-                          workflow_runner=WORKFLOW_RUNNER):
-            handle = await env.client.start_workflow(
-                SkillWorkflow.run,
-                SkillRunInput(skill="judged", process=JUDGED, inputs={"symptoms": ["x"]},
-                              definition_iri="https://data.swissrockets.com/skills/judged",
-                              definition_hash="abc123"),
-                id="run-history", task_queue=QUEUE)
-            await judge(handle, env)
-            await handle.result()
-            history = await handle.fetch_history()
+        bundle, _ = await _run(
+            env, {"orphanet": {"data": []}}, JUDGED, {"symptoms": ["x"]}, "run-history",
+            before_result=lambda h, e: _answer(h, KEYWORD), history=True,
+            definition_iri="https://data.swissrockets.com/skills/judged",
+            definition_hash="abc123")
 
+    history = bundle["_history"]
     events = history.events
     started = events[0].workflow_execution_started_event_attributes
     first_input = started.input.payloads[0].data.decode()
@@ -298,13 +297,8 @@ async def test_the_history_holds_the_process_the_answer_and_replays_deterministi
                    workflow_runner=WORKFLOW_RUNNER).replay_workflow(history)
 
 
-from tooluniverse.skill_graph import GRAPHS_DIR, load_graph  # noqa: E402
-
-
 @pytest.mark.parametrize("skill", sorted(p.stem for p in GRAPHS_DIR.glob("*.yaml")))
 async def test_every_shipped_process_finishes_on_temporal_with_a_signalling_oracle(skill):
-    import asyncio
-
     process = load_graph(skill)
     tools = {c["tool"] for s in process["steps"] for c in s.get("calls", [])}
 
@@ -340,33 +334,27 @@ DELEGATED = {
 
 
 async def test_a_delegated_step_pauses_with_the_calls_and_the_answer_lands_in_the_bundle():
-    async def do_the_search(handle, env):
-        state = await _wait_for_question(handle)
-        q = state["waiting_for"]
-        assert q["kind"] == "delegate" and q["wants"] == ["web_context"]
-        assert q["calls"] == [{"tool": "exa_web_search", "arguments": {"query": "Lutathera safety"}}]
-        await handle.signal(SkillWorkflow.answer, {"web_context": [{"title": "hit", "url": "https://x"}]})
-
+    asked = []
+    hit = [{"title": "hit", "url": "https://x"}]
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        bundle, calls = await _run(env, {"label_tool": {"data": "label"}}, DELEGATED,
-                                   {"drug_name": "Lutathera"}, "run-delegate",
-                                   before_result=do_the_search)
+        bundle, calls = await _run(
+            env, {"label_tool": {"data": "label"}}, DELEGATED, {"drug_name": "Lutathera"},
+            "run-delegate",
+            before_result=lambda h, e: _answer(h, {"web_context": hit}, seen=asked))
 
+    q = asked[0]["waiting_for"]
+    assert q["kind"] == "delegate" and q["wants"] == ["web_context"]
+    assert q["calls"] == [{"tool": "exa_web_search",
+                           "arguments": {"query": "Lutathera safety"}}]
     assert calls == [("label_tool", {"q": "Lutathera"})], "the server made only its own call"
-    assert bundle["facts"]["web_context"] == [{"title": "hit", "url": "https://x"}]
+    assert bundle["facts"]["web_context"] == hit
     assert bundle["calls"] == {"label": ["label_tool"], "web_context": ["exa_web_search"]}
     assert bundle["notes"] == {"label": "The label is ground truth."}
     assert bundle["report"] == "Say what the web adds."
 
 
-# --- fan-out: concurrent under a per-source ceiling, results in declared order ----
-#
-# A loop's iterations are the same call with one value substituted, so they are
-# independent: they run at once, capped per source, and are gathered back in the
-# order they were declared.
-
-import threading
-import time
+# --- fan-out: a loop's iterations are independent, so they run at once, capped per
+# source, and are gathered back in the order they were declared. ------------------
 
 LOOP = {
     "skill": "loop",
@@ -438,13 +426,7 @@ async def test_the_fan_out_changes_nothing_the_in_memory_runner_returns():
     async with await WorkflowEnvironment.start_time_skipping() as env:
         bundle, _ = await _run(env, responses, LOOP, {"terms": ["x", "y", "z"]})
 
-    sync = SkillRunner(LOOP, execute=lambda tool, a: {"data": {"term": a["term"]}},
-                       records=tempfile.mkdtemp(prefix="working-records-"))
-    run_id = sync.start({"terms": ["x", "y", "z"]})["run_id"]
-    while not sync.advance(run_id)["finished"]:
-        pass
-    assert {k: v for k, v in bundle.items() if k not in ("record", "run_id", "_records")} \
-        == sync.handover(run_id)
+    assert _handed(bundle) == _in_memory(responses, LOOP, {"terms": ["x", "y", "z"]})
 
 
 async def test_a_delegated_step_is_handed_to_the_agent_whole_never_fanned_out():
@@ -452,38 +434,28 @@ async def test_a_delegated_step_is_handed_to_the_agent_whole_never_fanned_out():
         {"id": "web",
          "delegate": [{"tool": "exa_web_search", "arguments": {"query": "{names}"}}],
          "produces": ["hits"]}]}
-
-    async def answer_when_asked(handle, env):
-        while True:
-            status = await handle.query(SkillWorkflow.status)
-            if status["waiting_for"]:
-                break
-            await env.sleep(1)
-        assert status["waiting_for"]["kind"] == "delegate"
-        await handle.signal(SkillWorkflow.answer, {"hits": ["ok"]})
+    asked = []
 
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        bundle, calls = await _run(env, {}, process, {"names": ["p", "q"]},
-                                   before_result=answer_when_asked)
+        bundle, calls = await _run(
+            env, {}, process, {"names": ["p", "q"]},
+            before_result=lambda h, e: _answer(h, {"hits": ["ok"]}, seen=asked))
 
+    assert asked[0]["waiting_for"]["kind"] == "delegate"
     assert calls == []                      # no execute_tool activity ran
     assert bundle["facts"]["hits"] == ["ok"]
 
 
 async def test_the_workflow_run_keeps_calls_with_arguments_and_the_questions():
     """Both hosts remember the same things for the Run Record."""
-    async def judge(handle, env):
-        await _wait_for_question(handle)
-        await handle.signal(SkillWorkflow.answer, {"keyword": "storage disorder"})
-
     async with await WorkflowEnvironment.start_time_skipping() as env:
         bundle, _ = await _run(env, {"orphanet": {"data": []}}, JUDGED, {"symptoms": ["x"]},
-                               before_result=judge)
+                               before_result=lambda h, e: _answer(h, KEYWORD))
 
     skel = bundle["record"]["skeleton"]
     hypothesis = next(s for s in skel["steps"] if s["id"] == "hypothesis")
     assert hypothesis["questions"] == [{"kind": "judge", "wants": ["keyword"],
-                                        "answer": {"keyword": "storage disorder"}}]
+                                        "answer": KEYWORD}]
     search = next(s for s in skel["steps"] if s["id"] == "search")
     assert search["calls"] == [{"tool": "orphanet", "arguments": {"query": "storage disorder"}}]
 
@@ -501,7 +473,8 @@ async def test_the_run_record_is_written_once_when_the_run_finishes():
     assert skel["run_id"] == "run-rec"
     assert [(s["id"], s["outcome"]) for s in skel["steps"]] == [
         ("resolve", "done"), ("signals", "done"), ("stratify", "done"), ("report", "done")]
-    assert skel["steps"][0]["calls"] == [{"tool": "resolve_drug", "arguments": {"name": "cisplatin"}}]
+    assert skel["steps"][0]["calls"] == [{"tool": "resolve_drug",
+                                          "arguments": {"name": "cisplatin"}}]
     assert "rows" not in str(skel)                # no payload: the FAERS rows never reach it
 
 
@@ -529,27 +502,23 @@ CHECKED = {
     ],
 }
 ROWS = [{"term": "A", "prr": 1.0}, {"term": "B", "prr": 5.0}]
-GOOD_TABLE = [{"term": "B", "prr": 5.0, "flagged": True}, {"term": "A", "prr": 1.0, "flagged": False}]
+GOOD_TABLE = [{"term": "B", "prr": 5.0, "flagged": True},
+              {"term": "A", "prr": 1.0, "flagged": False}]
 
 
 async def test_a_failing_check_re_asks_once_with_the_failure_named_and_the_record_keeps_both():
     seen = []
-
-    async def answer_twice(handle, env):
-        state = await _wait_for_question(handle)
-        seen.append(state["waiting_for"])
-        await handle.signal(SkillWorkflow.answer, {"prr_table": GOOD_TABLE + [{"term": "Z", "prr": 9.0}]})
-        state = await _wait_for_question(handle)
-        seen.append(state["waiting_for"])
-        await handle.signal(SkillWorkflow.answer, {"prr_table": GOOD_TABLE})
-
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        bundle, calls = await _run(env, {}, CHECKED, {"prr_rows": ROWS}, "run-check",
-                                   before_result=answer_twice)
+        bundle, calls = await _run(
+            env, {}, CHECKED, {"prr_rows": ROWS}, "run-check",
+            before_result=lambda h, e: _answer(
+                h, {"prr_table": GOOD_TABLE + [{"term": "Z", "prr": 9.0}]},
+                {"prr_table": GOOD_TABLE}, seen=seen))
 
+    asked = [s["waiting_for"] for s in seen]
     assert calls == [], "the server made no call of its own"
-    assert [q["kind"] for q in seen] == ["delegate", "delegate"]
-    assert "problem" not in seen[0] and "rows_of" in seen[1]["problem"]
+    assert [q["kind"] for q in asked] == ["delegate", "delegate"]
+    assert "problem" not in asked[0] and "rows_of" in asked[1]["problem"]
     assert bundle["facts"]["prr_table"] == GOOD_TABLE
     assert bundle["unresolved"] == [] and bundle["blocked"] == []
     skel = bundle["record"]["skeleton"]
@@ -558,14 +527,10 @@ async def test_a_failing_check_re_asks_once_with_the_failure_named_and_the_recor
 
 
 async def test_a_second_failure_leaves_the_fact_unresolved_and_the_run_finishes():
-    async def answer_badly_twice(handle, env):
-        for _ in range(2):
-            await _wait_for_question(handle)
-            await handle.signal(SkillWorkflow.answer, {"prr_table": [{"term": "A", "prr": 1.0}]})
-
+    bad = {"prr_table": [{"term": "A", "prr": 1.0}]}
     async with await WorkflowEnvironment.start_time_skipping() as env:
         bundle, _ = await _run(env, {}, CHECKED, {"prr_rows": ROWS}, "run-check-bad",
-                               before_result=answer_badly_twice)
+                               before_result=lambda h, e: _answer(h, bad, bad))
 
     assert "prr_table" not in bundle["facts"]
     assert bundle["unresolved"] and bundle["unresolved"][0]["fact"] == "prr_table"
@@ -591,11 +556,10 @@ async def test_a_closed_gateway_strands_nothing_on_temporal_either():
 
     assert [tool for tool, _ in calls] == ["count_reactions", "signal"]
     assert handed["steps_skipped"] == [{"step": "map_terms", "gate": "requested"}]
-    assert {k: v for k, v in handed.items() if k not in ("record", "run_id", "_records")} \
-        == _in_memory(responses, gated, {"drug_name": "x"})
+    assert _handed(handed) == _in_memory(responses, gated, {"drug_name": "x"})
 
 
-# --- a selection the code tool made is checked against the whole table, beside the record ----
+# --- a selection the code tool made is checked against the whole table -------------
 
 TRIALS = ([{"nct_id": f"NCT{n:04d}", "phase": "PHASE3", "status": "COMPLETED"} for n in range(3)]
           + [{"nct_id": "NCT0100", "phase": "PHASE3", "status": "RECRUITING"}]
@@ -603,70 +567,55 @@ TRIALS = ([{"nct_id": f"NCT{n:04d}", "phase": "PHASE3", "status": "COMPLETED"} f
 SELECTING = {
     "skill": "selection", "inputs": ["drug_name"], "tables": {"trial_rows": "evidence"},
     "steps": [
-        {"id": "trials", "calls": [{"tool": "search_clinical_trials", "arguments": {"q": "{drug_name}"}}],
+        {"id": "trials",
+         "calls": [{"tool": "search_clinical_trials", "arguments": {"q": "{drug_name}"}}],
          "collect": {"trial_rows": {"path": "data.studies", "flatten": True,
                                     "fields": ["nct_id", "phase", "status"]}}},
         {"id": "select", "requires": ["trials"],
          "delegate": [{"tool": "OpenAI_Code_Interpreter",
-                       "arguments": {"task": "keep phase PHASE3 and status COMPLETED", "table": "trial_rows"}}],
+                       "arguments": {"task": "keep phase PHASE3 and status COMPLETED",
+                                     "table": "trial_rows"}}],
          "produces": ["selected"],
          "check": {"selected": [{"selected_from": {"table": "trial_rows",
-                                                   "where": {"phase": "PHASE3", "status": "COMPLETED"}}}]}},
+                                                   "where": {"phase": "PHASE3",
+                                                             "status": "COMPLETED"}}}]}},
     ],
 }
+WANTED = [r for r in TRIALS if r["phase"] == "PHASE3" and r["status"] == "COMPLETED"]
+STUDIES = {"search_clinical_trials": {"data": {"studies": TRIALS}}}
 
 
 async def test_a_selection_is_checked_against_the_evidence_table_without_the_rows_entering_the_history():
-    wanted = [r for r in TRIALS if r["phase"] == "PHASE3" and r["status"] == "COMPLETED"]
     asked = []
-
-    async def answer_wrong_then_right(handle, env):
-        state = await _wait_for_question(handle)
-        asked.append(state["waiting_for"])
-        await handle.signal(SkillWorkflow.answer, {"selected": wanted[1:]})
-        state = await _wait_for_question(handle)
-        asked.append(state["waiting_for"])
-        await handle.signal(SkillWorkflow.answer, {"selected": wanted})
-
-    responses = {"search_clinical_trials": {"data": {"studies": TRIALS}}}
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        execute, record_activity, _, _ = _stub(responses)
-        async with Worker(env.client, task_queue=QUEUE, workflows=[SkillWorkflow],
-                          activities=[*execute, record_activity],
-                          activity_executor=ThreadPoolExecutor(4), workflow_runner=WORKFLOW_RUNNER):
-            handle = await env.client.start_workflow(
-                SkillWorkflow.run, SkillRunInput(skill="selection", process=SELECTING,
-                                                 inputs={"drug_name": "cisplatin"}),
-                id="run-select", task_queue=QUEUE)
-            await answer_wrong_then_right(handle, env)
-            handed = await handle.result()
-            history = await handle.fetch_history()
+        handed, _ = await _run(
+            env, STUDIES, SELECTING, {"drug_name": "cisplatin"}, "run-select", history=True,
+            before_result=lambda h, e: _answer(h, {"selected": WANTED[1:]},
+                                               {"selected": WANTED}, seen=asked))
 
-    assert "dropped" in asked[1]["problem"] and "NCT0000" in asked[1]["problem"]
-    assert handed["facts"]["selected"] == wanted and "trial_rows" not in handed["facts"]
-    assert "NCT0201" not in history.to_json(), "the table's rows never entered the history"
+    problem = asked[1]["waiting_for"]["problem"]
+    assert "dropped" in problem and "NCT0000" in problem
+    assert handed["facts"]["selected"] == WANTED and "trial_rows" not in handed["facts"]
+    assert "NCT0201" not in handed["_history"].to_json(), "the rows never entered the history"
 
 
 async def test_a_selection_answered_as_keys_becomes_the_tables_rows_on_temporal_too():
-    keyed = {**SELECTING, "steps": [SELECTING["steps"][0], {**SELECTING["steps"][1], "check": {"selected": [
-        {"selected_from": {"table": "trial_rows", "key": "nct_id",
-                           "where": {"phase": "PHASE3", "status": "COMPLETED"}}}]}}]}
-    wanted = [r for r in TRIALS if r["phase"] == "PHASE3" and r["status"] == "COMPLETED"]
+    keyed = {**SELECTING, "steps": [SELECTING["steps"][0], {**SELECTING["steps"][1], "check": {
+        "selected": [{"selected_from": {"table": "trial_rows", "key": "nct_id",
+                                        "where": {"phase": "PHASE3", "status": "COMPLETED"}}}]}}]}
 
-    async def answer_keys(handle, env):
-        await _wait_for_question(handle)
-        await handle.signal(SkillWorkflow.answer, {"selected": [r["nct_id"] for r in wanted]})
-
-    responses = {"search_clinical_trials": {"data": {"studies": TRIALS}}}
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        handed, _ = await _run(env, responses, keyed, {"drug_name": "cisplatin"}, "run-select-keys",
-                               before_result=answer_keys)
+        handed, _ = await _run(
+            env, STUDIES, keyed, {"drug_name": "cisplatin"}, "run-select-keys",
+            before_result=lambda h, e: _answer(h, {"selected": [r["nct_id"] for r in WANTED]}))
 
-    assert handed["facts"]["selected"] == wanted
+    assert handed["facts"]["selected"] == WANTED
     assert handed["unresolved"] == [] and handed["blocked"] == []
 
-UPSTREAM = {"status": "error", "error": "Monarch answered HTTP 502 (Bad Gateway)", "upstream_status": 502,
-            "retryable": True, "error_details": {"type": "ToolServerError", "retriable": True}}
+
+UPSTREAM = {"status": "error", "error": "Monarch answered HTTP 502 (Bad Gateway)",
+            "upstream_status": 502, "retryable": True,
+            "error_details": {"type": "ToolServerError", "retriable": True}}
 FAILING_UPSTREAM = {
     "skill": "upstream", "inputs": ["hpo_ids"],
     "steps": [
@@ -681,13 +630,14 @@ FAILING_UPSTREAM = {
 async def test_an_upstream_failure_in_a_result_is_recorded_as_a_failed_call_on_temporal_too():
     responses = {"monarch": UPSTREAM, "orphanet": {"data": {}}}
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        handed, _ = await _run(env, responses, FAILING_UPSTREAM, {"hpo_ids": ["HP:1"]}, "run-upstream")
+        handed, _ = await _run(env, responses, FAILING_UPSTREAM, {"hpo_ids": ["HP:1"]},
+                               "run-upstream")
 
     (failure,) = handed["failures"]
-    assert failure["tool"] == "monarch" and "502" in failure["error"] and failure["step"] == "differential"
+    assert failure["tool"] == "monarch" and "502" in failure["error"]
+    assert failure["step"] == "differential"
     assert "monarch" in handed["blocked"][0]["reason"]
-    assert {k: v for k, v in handed.items() if k not in ("record", "run_id", "_records")} \
-        == _in_memory(responses, FAILING_UPSTREAM, {"hpo_ids": ["HP:1"]})
+    assert _handed(handed) == _in_memory(responses, FAILING_UPSTREAM, {"hpo_ids": ["HP:1"]})
 
 
 # --- a delegated loop: one call per query the agent wrote; its answer is an evidence table ---
@@ -698,7 +648,8 @@ SEARCHED = {
     "steps": [
         {"id": "web_queries", "calls": [], "judge": ["web_queries"], "produces": ["web_queries"]},
         {"id": "web_search", "requires": ["web_queries"], "for_each": "web_queries", "as": "query",
-         "delegate": [{"tool": "exa_web_search", "arguments": {"action": "search", "query": "{query}"}}],
+         "delegate": [{"tool": "exa_web_search",
+                       "arguments": {"action": "search", "query": "{query}"}}],
          "produces": ["web_rows"]},
     ],
 }
@@ -711,39 +662,30 @@ async def test_a_delegated_loop_asks_one_call_per_query_and_keeps_the_pages_as_e
     """The host that serves must compose the loop for a delegate and keep a judged evidence
     table in the Working Record, not whole in the facts."""
     seen = []
-
-    async def answer_twice(handle, env):
-        state = await _wait_for_question(handle)
-        seen.append(state["waiting_for"])
-        await handle.signal(SkillWorkflow.answer, {"web_queries": QUERIES})
-        state = await _wait_for_question(handle)
-        seen.append(state["waiting_for"])
-        await handle.signal(SkillWorkflow.answer, {"web_rows": PAGES})
-
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        handed, _ = await _run(env, {}, SEARCHED, {"drug_name": "cisplatin"}, "run-searched",
-                               before_result=answer_twice)
+        handed, _ = await _run(
+            env, {}, SEARCHED, {"drug_name": "cisplatin"}, "run-searched",
+            before_result=lambda h, e: _answer(h, {"web_queries": QUERIES},
+                                               {"web_rows": PAGES}, seen=seen))
 
-    assert [c["arguments"]["query"] for c in seen[1]["calls"]] == QUERIES
-    assert seen[1]["kind"] == "delegate" and seen[1]["wants"] == ["web_rows"]
+    question = seen[1]["waiting_for"]
+    assert [c["arguments"]["query"] for c in question["calls"]] == QUERIES
+    assert question["kind"] == "delegate" and question["wants"] == ["web_rows"]
     assert "web_rows" not in handed["facts"]
     (described,) = [t for t in handed["tables"] if t["table"] == "web_rows"]
     assert described["rows"] == 6 and "url" in described["columns"]
     assert handed["unresolved"] == [] and handed["blocked"] == []
 
     answers = iter([{"web_queries": QUERIES}, {"web_rows": PAGES}])
-    runner = SkillRunner(SEARCHED, execute=lambda tool, a: {}, ask=lambda q: next(answers),
-                         records=tempfile.mkdtemp(prefix="working-records-"))
-    run_id = runner.start({"drug_name": "cisplatin"})["run_id"]
-    while not runner.advance(run_id)["finished"]:
-        pass
+    sync = _in_memory({}, SEARCHED, {"drug_name": "cisplatin"},
+                      execute=lambda tool, a: {}, ask=lambda q: next(answers))
 
     def columns_as_sets(handover):
         # Temporal's payload converter sorts dict keys; the agent's row keys carry no order.
-        return {**handover, "tables": [{**t, "columns": sorted(t["columns"])} for t in handover["tables"]]}
+        return {**handover,
+                "tables": [{**t, "columns": sorted(t["columns"])} for t in handover["tables"]]}
 
-    assert columns_as_sets({k: v for k, v in handed.items() if k not in ("record", "run_id", "_records")}) \
-        == columns_as_sets(runner.handover(run_id))
+    assert columns_as_sets(_handed(handed)) == columns_as_sets(sync)
 
 
 # --- a judged mapping: checked against the source's list, placed by an ontology ---------
@@ -770,6 +712,7 @@ MAPPING = {"requested_meddra": [
      "concept": ["ear", "hearing", "vestibular"]},
     {"of": "ototoxicity", "term": "FALL", "reason": "may follow from dizziness",
      "concept": ["ear", "hearing", "vestibular"]}]}
+MAPPED_INPUTS = {"drug_name": "x", "requested_aes": ["ototoxicity"]}
 
 
 def _recorded_lookup(term):
@@ -780,33 +723,21 @@ def _recorded_lookup(term):
 
 
 async def test_a_judged_mapping_is_checked_and_placed_on_temporal_too():
-    """The runner's rule, on the host that serves: an invented term is asked again, and
-    every accepted term arrives in the hand-over with its placing."""
-    asked, answers = [], iter([STRAY, MAPPING])
-
-    async def map_twice(handle, env):
-        for _ in range(2):
-            state = await _wait_for_question(handle)
-            asked.append(state["waiting_for"])
-            await handle.signal(SkillWorkflow.answer, next(answers))
-
+    """An invented term is asked again, and every accepted term arrives in the hand-over
+    with its placing."""
+    asked = []
     bind_lookup(_recorded_lookup)
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        handed, _ = await _run(env, {"count_reactions": FAERS_TERMS}, MAPPED,
-                               {"drug_name": "x", "requested_aes": ["ototoxicity"]},
-                               "run-mapped", before_result=map_twice)
+        handed, _ = await _run(
+            env, {"count_reactions": FAERS_TERMS}, MAPPED, MAPPED_INPUTS, "run-mapped",
+            before_result=lambda h, e: _answer(h, STRAY, MAPPING, seen=asked))
 
-    assert "HEARING DAMAGE" in asked[1]["problem"]
+    assert "HEARING DAMAGE" in asked[1]["waiting_for"]["problem"]
     assert [(r["of"], r["term"], r["placing"]) for r in handed["facts"]["requested_meddra"]] == [
         ("ototoxicity", "DEAFNESS", "placed"), ("ototoxicity", "FALL", "not placed")]
     assert handed["facts"]["requested_meddra_terms"] == ["DEAFNESS", "FALL"]
     assert handed["mappings"] == ["requested_meddra"]
 
     replies = iter([STRAY, MAPPING])
-    runner = SkillRunner(MAPPED, execute=lambda tool, a: FAERS_TERMS, ask=lambda q: next(replies),
-                         lookup=_recorded_lookup, records=tempfile.mkdtemp(prefix="working-records-"))
-    run_id = runner.start({"drug_name": "x", "requested_aes": ["ototoxicity"]})["run_id"]
-    while not runner.advance(run_id)["finished"]:
-        pass
-    assert {k: v for k, v in handed.items() if k not in ("record", "run_id", "_records")} \
-        == runner.handover(run_id)
+    assert _handed(handed) == _in_memory({"count_reactions": FAERS_TERMS}, MAPPED, MAPPED_INPUTS,
+                                         ask=lambda q: next(replies), lookup=_recorded_lookup)

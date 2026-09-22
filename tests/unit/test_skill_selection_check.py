@@ -16,22 +16,35 @@ from tooluniverse.skill_working_record import WorkingRecord
 
 pytestmark = pytest.mark.unit
 
-TRIALS = ([{"nct_id": f"NCT{n:04d}", "title": f"Trial {n}", "phase": "PHASE3", "status": "COMPLETED"}
-           for n in range(3)]
-          + [{"nct_id": "NCT0100", "title": "Phase 3, still running", "phase": "PHASE3", "status": "RECRUITING"}]
-          + [{"nct_id": f"NCT02{n:02d}", "title": f"Early {n}", "phase": "PHASE2", "status": "COMPLETED"}
-             for n in range(5)])
+TRIALS = ([{"nct_id": f"NCT{n:04d}", "title": f"Trial {n}", "phase": "PHASE3",
+            "status": "COMPLETED"} for n in range(3)]
+          + [{"nct_id": "NCT0100", "title": "Phase 3, still running", "phase": "PHASE3",
+              "status": "RECRUITING"}]
+          + [{"nct_id": f"NCT02{n:02d}", "title": f"Early {n}", "phase": "PHASE2",
+              "status": "COMPLETED"} for n in range(5)])
 WANTED = [r for r in TRIALS if r["phase"] == "PHASE3" and r["status"] == "COMPLETED"]
-RULE = {"selected_from": {"table": "trial_rows", "where": {"phase": "PHASE3", "status": "COMPLETED"}}}
+WHERE = {"phase": "PHASE3", "status": "COMPLETED"}
+RULE = {"selected_from": {"table": "trial_rows", "where": WHERE}}
+# Identifiers, not rows: a key cannot be retyped into another row's prose.
+KEYED = {"selected_from": {"table": "trial_rows", "key": "nct_id", "where": WHERE}}
+INVENTED = {"nct_id": "NCT9999", "title": "Made up", "phase": "PHASE3", "status": "COMPLETED"}
+
+
+def _check(rule, selected, rows=TRIALS):
+    return check_facts({"selected": [rule]}, {"selected": selected}, {},
+                       tables=lambda name: {"trial_rows": rows}[name])
+
+
+def _record(name, rows):
+    record = WorkingRecord(tempfile.mkdtemp(prefix="working-records-"), name)
+    record.put_table("trial_rows", rows)
+    return record
 
 
 # --- the description tells the reader what values a column takes, and how often -------------
 
 def test_the_description_lists_the_values_and_counts_of_columns_with_few_distinct_values():
-    record = WorkingRecord(tempfile.mkdtemp(prefix="working-records-"), "run-1")
-    record.put_table("trial_rows", TRIALS)
-
-    described = record.describe("trial_rows")
+    described = _record("run-1", TRIALS).describe("trial_rows")
 
     assert described["values"] == {"phase": {"PHASE3": 4, "PHASE2": 5},
                                    "status": {"COMPLETED": 8, "RECRUITING": 1}}
@@ -49,56 +62,34 @@ REGISTRY = [                       # the registry's own recorded shape: phase is
 
 def test_a_list_valued_column_is_described_by_its_elements_and_selected_by_membership():
     """A list-valued column compared to a bare string refuses every exact row."""
-    record = WorkingRecord(tempfile.mkdtemp(prefix="working-records-"), "run-2")
-    record.put_table("trial_rows", REGISTRY)
+    assert _record("run-2", REGISTRY).describe("trial_rows")["values"]["phase"] == {
+        "PHASE3": 3, "PHASE2": 2}
 
-    assert record.describe("trial_rows")["values"]["phase"] == {"PHASE3": 3, "PHASE2": 2}
-    wanted = [REGISTRY[0], REGISTRY[1]]
-    rule = {"selected_from": {"table": "trial_rows", "where": {"phase": "PHASE3", "status": "COMPLETED"}}}
-    assert check_facts({"selected": [rule]}, {"selected": wanted}, {}, tables=lambda n: REGISTRY) == []
-    (failure,) = check_facts({"selected": [rule]}, {"selected": wanted[:1]}, {}, tables=lambda n: REGISTRY)
+    wanted = REGISTRY[:2]
+    assert _check(RULE, wanted, REGISTRY) == []
+    (failure,) = _check(RULE, wanted[:1], REGISTRY)
     assert "dropped" in failure["reason"] and "NCT00002" in failure["reason"]
 
 
 # --- the check, over the whole table ---------------------------------------------------------
 
-def _rows(name):
-    return {"trial_rows": TRIALS}[name]
-
-
 def test_a_correct_selection_passes():
-    assert check_facts({"selected": [RULE]}, {"selected": WANTED}, {}, tables=_rows) == []
+    assert _check(RULE, WANTED) == []
 
 
-def test_a_row_that_does_not_meet_the_condition_fails_and_is_named():
-    wrong = WANTED + [TRIALS[3]]                       # PHASE3 but RECRUITING
-
-    (failure,) = check_facts({"selected": [RULE]}, {"selected": wrong}, {}, tables=_rows)
+@pytest.mark.parametrize("rule,selected,named", [
+    (RULE, WANTED + [TRIALS[3]], ["status", "NCT0100"]),       # PHASE3 but RECRUITING
+    (RULE, WANTED[1:], ["dropped", "NCT0000"]),
+    (RULE, WANTED + [INVENTED], ["not in trial_rows", "NCT9999"]),
+    (KEYED, ["NCT0000", "NCT9999"], ["not in trial_rows", "NCT9999"]),
+    (KEYED, [r["nct_id"] for r in WANTED] + ["NCT0100"], ["does not meet", "NCT0100"]),
+    (KEYED, ["NCT0001", "NCT0002"], ["dropped", "NCT0000"]),
+])
+def test_a_selection_that_breaks_the_rule_fails_and_names_the_row(rule, selected, named):
+    (failure,) = _check(rule, selected)
 
     assert failure["check"] == "selected_from"
-    assert "status" in failure["reason"] and "NCT0100" in failure["reason"]
-
-
-def test_a_dropped_row_that_meets_the_condition_fails_and_is_named():
-    (failure,) = check_facts({"selected": [RULE]}, {"selected": WANTED[1:]}, {}, tables=_rows)
-
-    assert "dropped" in failure["reason"] and "NCT0000" in failure["reason"]
-
-
-def test_a_row_that_is_not_in_the_table_fails():
-    invented = WANTED + [{"nct_id": "NCT9999", "title": "Made up", "phase": "PHASE3", "status": "COMPLETED"}]
-
-    (failure,) = check_facts({"selected": [RULE]}, {"selected": invented}, {}, tables=_rows)
-
-    assert "not in trial_rows" in failure["reason"] and "NCT9999" in failure["reason"]
-
-
-# --- identifiers, not rows: the agent names the rows by key, the server takes them from the table ---
-#
-# A key cannot be retyped into another row's prose, so only the drop remains to check.
-
-KEYED = {"selected_from": {"table": "trial_rows", "key": "nct_id",
-                           "where": {"phase": "PHASE3", "status": "COMPLETED"}}}
+    assert all(part in failure["reason"] for part in named), failure["reason"]
 
 
 def test_a_selection_answered_as_keys_is_materialised_into_the_tables_own_rows():
@@ -106,41 +97,9 @@ def test_a_selection_answered_as_keys_is_materialised_into_the_tables_own_rows()
 
     keys = [r["nct_id"] for r in WANTED]
 
-    assert check_facts({"selected": [KEYED]}, {"selected": keys}, {}, tables=_rows) == []
-    assert materialised({"selected": [KEYED]}, {"selected": keys}, {}, tables=_rows) == {"selected": WANTED}
-
-
-def test_a_key_that_is_not_in_the_table_fails_and_is_named():
-    (failure,) = check_facts({"selected": [KEYED]}, {"selected": ["NCT0000", "NCT9999"]}, {}, tables=_rows)
-
-    assert "NCT9999" in failure["reason"] and "not in trial_rows" in failure["reason"]
-
-
-def test_a_key_whose_row_does_not_meet_the_condition_fails_and_is_named():
-    keys = [r["nct_id"] for r in WANTED] + ["NCT0100"]
-
-    (failure,) = check_facts({"selected": [KEYED]}, {"selected": keys}, {}, tables=_rows)
-
-    assert "NCT0100" in failure["reason"] and "does not meet" in failure["reason"]
-
-
-def test_a_dropped_key_still_fails():
-    (failure,) = check_facts({"selected": [KEYED]}, {"selected": ["NCT0001", "NCT0002"]}, {}, tables=_rows)
-
-    assert "dropped" in failure["reason"] and "NCT0000" in failure["reason"]
-
-
-def test_in_a_run_the_keys_the_agent_answers_become_the_tables_rows_in_the_facts():
-    keyed_process = {**PROCESS, "steps": [PROCESS["steps"][0],
-                                          {**PROCESS["steps"][1], "check": {"selected": [KEYED]}}]}
-    runner = SkillRunner(keyed_process, execute=lambda tool, a: {"data": {"studies": TRIALS}},
-                         ask=lambda q: {"selected": [r["nct_id"] for r in WANTED]},
-                         records=tempfile.mkdtemp(prefix="working-records-"))
-    run_id = runner.start({"drug_name": "cisplatin"})["run_id"]
-    while not runner.advance(run_id)["finished"]:
-        pass
-
-    assert runner.handover(run_id)["facts"]["selected"] == WANTED
+    assert _check(KEYED, keys) == []
+    assert materialised({"selected": [KEYED]}, {"selected": keys}, {},
+                        tables=lambda name: {"trial_rows": TRIALS}[name]) == {"selected": WANTED}
 
 
 # --- in a run: the table is evidence, the agent answers from its code tool, the server checks --
@@ -149,28 +108,38 @@ PROCESS = {
     "skill": "selection", "inputs": ["drug_name"],
     "tables": {"trial_rows": "evidence"},
     "steps": [
-        {"id": "trials", "calls": [{"tool": "search_clinical_trials", "arguments": {"q": "{drug_name}"}}],
+        {"id": "trials",
+         "calls": [{"tool": "search_clinical_trials", "arguments": {"q": "{drug_name}"}}],
          "collect": {"trial_rows": {"path": "data.studies", "flatten": True,
                                     "fields": ["nct_id", "title", "phase", "status"]}}},
         {"id": "select", "requires": ["trials"],
          "delegate": [{"tool": "OpenAI_Code_Interpreter",
-                       "arguments": {"task": "keep the rows where phase is PHASE3 and status is COMPLETED",
+                       "arguments": {"task": "keep the rows where phase is PHASE3 and "
+                                             "status is COMPLETED",
                                      "table": "trial_rows"}}],
          "produces": ["selected"], "check": {"selected": [RULE]}},
     ],
 }
 
 
-def _drive(answers):
-    replies = iter(answers)
-    asked = []
-    runner = SkillRunner(PROCESS, execute=lambda tool, a: {"data": {"studies": TRIALS}},
+def _drive(answers, process=PROCESS):
+    replies, asked = iter(answers), []
+    runner = SkillRunner(process, execute=lambda tool, a: {"data": {"studies": TRIALS}},
                          ask=lambda q: asked.append(q) or {"selected": next(replies)},
                          records=tempfile.mkdtemp(prefix="working-records-"))
     run_id = runner.start({"drug_name": "cisplatin"})["run_id"]
     while not runner.advance(run_id)["finished"]:
         pass
     return runner.handover(run_id), asked
+
+
+def test_in_a_run_the_keys_the_agent_answers_become_the_tables_rows_in_the_facts():
+    keyed = {**PROCESS, "steps": [PROCESS["steps"][0],
+                                  {**PROCESS["steps"][1], "check": {"selected": [KEYED]}}]}
+
+    handed, _ = _drive([[r["nct_id"] for r in WANTED]], keyed)
+
+    assert handed["facts"]["selected"] == WANTED
 
 
 def test_a_correct_selection_becomes_a_fact_and_the_table_stays_evidence():

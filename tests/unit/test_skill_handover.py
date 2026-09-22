@@ -40,20 +40,20 @@ RESPONSES = {
 }
 
 
-def _finished_run(tmp_path, process=PROCESS, responses=RESPONSES):
-    runner = SkillRunner(process, execute=lambda tool, arguments: responses[tool],
-                         records=tmp_path)
-    run_id = runner.start({"drug_name": "cisplatin"})["run_id"]
+def _finished_run(tmp_path, process=PROCESS, responses=RESPONSES, execute=None, inputs=None):
+    """Runs a process to the end; hands back the runner, the run id and its record."""
+    runner = SkillRunner(process, records=tmp_path,
+                         execute=execute or (lambda tool, arguments: responses[tool]))
+    run_id = runner.start(inputs or {"drug_name": "cisplatin"})["run_id"]
     while not runner.advance(run_id)["finished"]:
         pass
-    return runner, run_id
+    return runner, run_id, WorkingRecord(tmp_path, run_id)
 
 
 def test_a_finished_run_keeps_every_tool_result_in_the_working_record_not_in_the_handover(tmp_path):
-    runner, run_id = _finished_run(tmp_path)
+    runner, run_id, record = _finished_run(tmp_path)
 
     handover = runner.handover(run_id)
-    record = WorkingRecord(tmp_path, run_id)
 
     assert "results" not in handover
     assert handover["facts"]["chembl_id"] == "CHEMBL88"
@@ -83,7 +83,7 @@ WITH_PAPERS = {
 
 
 def test_a_fact_table_arrives_whole_and_an_evidence_table_arrives_as_a_description(tmp_path):
-    runner, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
+    runner, run_id, _ = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
 
     handover = runner.handover(run_id)
 
@@ -96,8 +96,7 @@ def test_a_fact_table_arrives_whole_and_an_evidence_table_arrives_as_a_descripti
 
 
 def test_the_agent_fetches_the_rows_and_columns_it_asks_for(tmp_path):
-    _, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
-    record = WorkingRecord(tmp_path, run_id)
+    _, _, record = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
 
     out = record.fetch("papers", columns=["pmid", "url"], limit=2, offset=1)
 
@@ -109,8 +108,7 @@ def test_the_agent_fetches_the_rows_and_columns_it_asks_for(tmp_path):
 
 
 def test_a_fetch_that_names_what_does_not_exist_is_told_what_does(tmp_path):
-    _, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
-    record = WorkingRecord(tmp_path, run_id)
+    _, _, record = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
 
     no_table = record.fetch("trials")
     no_column = record.fetch("papers", columns=["pmid", "doi"])
@@ -125,8 +123,7 @@ def test_a_fetch_that_names_what_does_not_exist_is_told_what_does(tmp_path):
 
 def test_what_a_step_fetched_and_did_not_collect_is_still_there_to_fetch(tmp_path):
     """The label text, the trial list: not in front of the agent, and never out of its reach."""
-    runner, run_id = _finished_run(tmp_path)
-    record = WorkingRecord(tmp_path, run_id)
+    runner, run_id, record = _finished_run(tmp_path)
 
     described = {t["table"]: t for t in runner.handover(run_id)["tables"]}
     out = record.fetch("results.signals", columns=["term", "prr"])
@@ -160,14 +157,14 @@ def test_a_table_description_says_how_much_the_source_holds_or_that_it_is_unknow
                     "data": [{"pmid": "1"}]}
         return {"data": {"setid": "s1"}}
 
-    runner = SkillRunner(WIDE, execute=execute, records=tmp_path)
-    run_id = runner.start({"drug_name": "x", "reactions": ["DEAFNESS", "TINNITUS"]})["run_id"]
-    while not runner.advance(run_id)["finished"]:
-        pass
+    runner, run_id, _ = _finished_run(
+        tmp_path, WIDE, execute=execute,
+        inputs={"drug_name": "x", "reactions": ["DEAFNESS", "TINNITUS"]})
 
     described = {t["table"]: t for t in runner.handover(run_id)["tables"]}
 
-    assert (described["results.trials"]["rows"], described["results.trials"]["source_total"]) == (2, 866)
+    assert (described["results.trials"]["rows"],
+            described["results.trials"]["source_total"]) == (2, 866)
     assert described["results.literature"]["source_total"] == {"DEAFNESS": 4120, "TINNITUS": 77}
     assert described["results.label"]["source_total"] == "unknown"
 
@@ -176,8 +173,7 @@ def test_a_table_description_says_how_much_the_source_holds_or_that_it_is_unknow
 
 def test_the_record_keeps_what_it_served_so_the_report_can_be_checked_against_it(tmp_path):
     """"Cite only what you read" needs the server to know what was read."""
-    runner, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
-    record = WorkingRecord(tmp_path, run_id)
+    _, _, record = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
 
     record.fetch("papers", columns=["pmid", "url"], limit=2)
     record.fetch("results.signals", columns=["term", "prr"], limit=1)
@@ -185,11 +181,11 @@ def test_the_record_keeps_what_it_served_so_the_report_can_be_checked_against_it
 
     assert [row["pmid"] for row in served["papers"]] == ["101", "102"]
     assert served["results.signals"] == [{"term": "DEAFNESS", "prr": 17.7}]
-    assert "abstract" not in served["papers"][0], "only the columns the agent asked for were served"
+    assert "abstract" not in served["papers"][0], "only the columns the agent asked for"
 
 
 def test_the_handover_carries_the_same_lines_of_discipline_for_every_skill(tmp_path):
-    runner, run_id = _finished_run(tmp_path)
+    runner, run_id, _ = _finished_run(tmp_path)
 
     lines = runner.handover(run_id)["write_the_report"]
 
@@ -199,8 +195,7 @@ def test_the_handover_carries_the_same_lines_of_discipline_for_every_skill(tmp_p
 
 def test_the_counts_a_fetch_reply_carries_count_as_received(tmp_path):
     """A count the fetch reply gave the agent must count as received, not as invented."""
-    _, run_id = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
-    record = WorkingRecord(tmp_path, run_id)
+    _, _, record = _finished_run(tmp_path, WITH_TABLES, WITH_PAPERS)
 
     reply = record.fetch("papers", columns=["pmid"], limit=1, rank_by="hearing loss dosing")
     served = record.served()

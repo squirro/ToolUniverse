@@ -2,6 +2,7 @@ from graphql import build_schema
 from graphql.language import parse
 from graphql.validation import validate
 from .base_tool import BaseTool
+from .http_utils import DEFAULT_RETRY_STATUSES, error_from_exception, upstream_error
 from .tool_registry import register_tool
 import requests
 import copy
@@ -54,30 +55,41 @@ def remove_none_and_empty_values(json_obj):
 
 
 def execute_query(endpoint_url, query, variables=None):
-    response = requests.post(
-        endpoint_url, json={"query": query, "variables": variables}, timeout=30
-    )
+    """The query's result, None when the source holds nothing, an error envelope when
+    the source failed. A caller must tell the last two apart before reading the data."""
+    try:
+        response = requests.post(
+            endpoint_url, json={"query": query, "variables": variables}, timeout=30
+        )
+    except requests.exceptions.RequestException as exc:
+        return error_from_exception(exc, f"{endpoint_url} request")
     try:
         if not response.ok:
-            print(f"HTTP {response.status_code} from API: {response.text[:200]}")
-            return None
+            return upstream_error(
+                f"{endpoint_url} answered HTTP {response.status_code}: "
+                f"{(response.text or '')[:120]}",
+                response.status_code,
+                retryable=response.status_code in DEFAULT_RETRY_STATUSES)
         result = response.json()
         result = remove_none_and_empty_values(result)
-        # Check if the response contains errors
+        # An error from the query itself: a real failure, not an empty answer.
         if "errors" in result:
-            print("Invalid Query: ", result["errors"])
-            return None
-        # Feature-94A-002: always return result when data key is present,
-        # even if all values are empty/null (e.g. disease not found = {"data": {}}).
-        # Callers distinguish empty results from errors via status envelope.
+            return upstream_error(f"{endpoint_url} answered an error: {result['errors']}",
+                                  response.status_code, retryable=False)
+        # A data key with empty values is a source that holds nothing, and is returned.
         elif "data" not in result:
-            print("No data returned")
             return None
         else:
             return result
     except requests.exceptions.JSONDecodeError:
-        print("JSONDecodeError: Could not decode the response as JSON")
-        return None
+        return upstream_error(
+            f"{endpoint_url} answered HTTP {response.status_code} with a body that is not JSON",
+            response.status_code, retryable=True)
+
+
+def _failed(result) -> bool:
+    """Did the source fail, as opposed to holding nothing?"""
+    return isinstance(result, dict) and result.get("status") == "error"
 
 
 class GraphQLTool(BaseTool):
@@ -98,6 +110,8 @@ class GraphQLTool(BaseTool):
         result = execute_query(
             endpoint_url=self.endpoint_url, query=self.query_schema, variables=arguments
         )
+        if _failed(result):
+            return result
         if result is None:
             return {"status": "error", "error": "No data returned from API"}
         return {"status": "success", "data": result.get("data", result)}
@@ -119,7 +133,7 @@ def _ot_resolve_id(endpoint_url: str, query_string: str, entity: str) -> str | N
         _OT_SEARCH_QUERY,
         {"q": query_string, "entity": [entity]},
     )
-    if result:
+    if result and not _failed(result):
         hits = result.get("data", {}).get("search", {}).get("hits", [])
         if hits:
             return hits[0]["id"]
@@ -242,6 +256,9 @@ class OpentargetToolDrugNameMatch(GraphQLTool):
         results = execute_query(
             endpoint_url=self.endpoint_url, query=self.query_schema, variables=arguments
         )
+        if _failed(results):
+            # A failed source is not a drug whose brand name needs swapping.
+            return results
         if results is None:
             print(
                 "No results found for the drug brand name. Trying with the generic name."
@@ -272,6 +289,8 @@ class OpentargetToolDrugNameMatch(GraphQLTool):
                     query=self.query_schema,
                     variables=arguments,
                 )
+        if _failed(results):
+            return results
         if results is None:
             return {"status": "error", "error": "No data returned from API"}
         return {"status": "success", "data": results.get("data", results)}
@@ -357,6 +376,9 @@ class DiseaseTargetScoreTool(GraphQLTool):
             response_data = execute_query(
                 self.endpoint_url, self.query_schema, variables
             )
+            if _failed(response_data):
+                # A page that failed is not the end of the results.
+                return response_data
             if not response_data or "data" not in response_data:
                 break
 

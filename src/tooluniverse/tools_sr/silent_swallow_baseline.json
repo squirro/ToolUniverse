@@ -1,0 +1,11 @@
+{
+  "_what": "Frozen count of broad exception handlers that return nothing and say nothing (DSR-659).",
+  "_why_a_ratchet": "Containment, not remediation. Almost all of this is upstream code that re-syncs from mims-harvard:main, so rewriting it would conflict on every sync. The count may fall, never rise.",
+  "_how_to_lower_it": "Make the handler tell the caller what failed -- return or assign something naming the error, status or reason -- or re-raise. Adding a log does not count: server logs are not the agent's channel.",
+  "_how_to_waive_one": "Put '# silent-swallow: <reason>' inside the handler. The reason is required. Optional-dependency probes need no pragma; a try block that only imports is exempt structurally.",
+  "_measured": "2026-08-12",
+  "_note": "The ticket's figure of 245 across 110 modules did not reproduce. The corpus has grown, and treating logging as transparent counts the log-and-fall-through shape that a literal reading of 'reduces to pass' misses.",
+  "root": "src/tooluniverse",
+  "count": 295,
+  "modules": 118
+}

@@ -111,7 +111,7 @@ The best human evidence comes from longevity GWAS and centenarian studies.
 - PRIMARY (trait-centric): `gwas_search_associations(query="telomere length")` — note "longevity"
   is NOT a standard EFO trait; try "lifespan", "telomere length", "parental longevity", or a
   specific age-related disease.
-- AGGREGATED human evidence: `OpenTargets_get_associated_targets_by_disease_efoId(efoId="EFO_0004847", limit=20)`
+- AGGREGATED human evidence: `OpenTargets_get_associated_targets_by_disease_efoId(efoId="EFO_0004847")`
   → ranked gene list with association scores for longevity. (UNDERSCORE efoId — see ID FORMAT above.)
 - ESSENTIAL supplement: `PubMed_search_articles(query="FOXO3 GWAS longevity centenarian meta-analysis", limit=20)`
   — many FOXO3 longevity studies (Willcox 2008, Flachsbart 2009) used targeted genotyping, NOT GWAS
@@ -247,7 +247,7 @@ the range, note the largest/most recent study.
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Subject} with the actual gene / disease / trait / drug queried. The parenthesized column
@@ -289,5 +289,4 @@ Answer ALL of these as labelled sentences — do not skip any:
 ## 8. Research Gaps
 (prose: what interventional data would resolve the causal question + honest data-limits)
 
-## References
-| # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

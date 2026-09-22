@@ -16,6 +16,10 @@ class DatasetTool(BaseTool):
     def __init__(self, tool_config):
         super().__init__(tool_config)
         self.dataset = None
+        # Why the load failed, kept for the caller. Printing it leaves the
+        # runtime message saying only "not loaded or is empty", which names no
+        # cause anyone can act on -- and a container log nobody reads.
+        self._load_error = None
         self.query_schema = tool_config[
             "query_schema"
         ]  # TODO: Move query_schema to BaseTool
@@ -23,6 +27,18 @@ class DatasetTool(BaseTool):
             "properties"
         ]  # TODO: Move parameters to BaseTool
         self._load_dataset()
+
+    def _empty_dataset_error(self) -> str:
+        """The message a caller sees when there is nothing to search."""
+        if self._load_error:
+            return f"Dataset not loaded: {self._load_error}"
+        return "Dataset not loaded or is empty"
+
+    def _failed_to_load(self, reason: str):
+        """Record why there is no dataset, and leave an empty frame behind."""
+        self._load_error = reason
+        self.dataset = pd.DataFrame()
+        print(f"Failed to load dataset: {reason}")
 
     def _load_dataset(self):
         """Load the drugbank vocabulary CSV dataset."""
@@ -32,8 +48,9 @@ class DatasetTool(BaseTool):
                 result = download_from_hf(self.tool_config)
 
                 if not result.get("success", False):
-                    print(f"Failed to download dataset: {result.get('error')}")
-                    self.dataset = pd.DataFrame()
+                    self._failed_to_load(
+                        f"could not download the dataset: {result.get('error')}"
+                    )
                     return
 
                 # Load the downloaded CSV
@@ -51,8 +68,7 @@ class DatasetTool(BaseTool):
                     dataset_path = os.path.join(project_root, dataset_path)
 
             else:
-                print("No dataset path provided in tool configuration")
-                self.dataset = pd.DataFrame()
+                self._failed_to_load("no dataset path in the tool configuration")
                 return
 
             # Load the CSV file
@@ -67,7 +83,14 @@ class DatasetTool(BaseTool):
             elif dataset_path.endswith(".pkl"):
                 self.dataset = pd.read_pickle(dataset_path)
             elif dataset_path.endswith(".parquet"):
+                # Needs pyarrow or fastparquet; the served image installs
+                # neither, which is the whole of drugbank_full_search's failure.
                 self.dataset = pd.read_parquet(dataset_path)
+            else:
+                self._failed_to_load(
+                    f"unsupported dataset format: {os.path.basename(dataset_path)}"
+                )
+                return
 
             # Clean column names
             self.dataset.columns = self.dataset.columns.str.strip()
@@ -78,13 +101,12 @@ class DatasetTool(BaseTool):
             print(f"Loaded dataset with {len(self.dataset)} records")
 
         except Exception as e:
-            print(f"Error loading dataset: {e}")
-            self.dataset = pd.DataFrame()
+            self._failed_to_load(f"{type(e).__name__}: {e}")
 
     def run(self, arguments):
         """Main entry point for the tool."""
         if self.dataset is None or self.dataset.empty:
-            return {"status": "error", "error": "Dataset not loaded or is empty"}
+            return {"status": "error", "error": self._empty_dataset_error()}
 
         query_params = deepcopy(self.query_schema)
         expected_param_names = self.parameters.keys()
@@ -383,7 +405,7 @@ class DatasetTool(BaseTool):
     def get_dataset_info(self):
         """Get information about the loaded dataset."""
         if self.dataset is None or self.dataset.empty:
-            return {"status": "error", "error": "Dataset not loaded or is empty"}
+            return {"status": "error", "error": self._empty_dataset_error()}
 
         return {
             "total_records": len(self.dataset),

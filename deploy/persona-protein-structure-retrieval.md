@@ -1,4 +1,5 @@
 <!--
+Triggers: structures for this protein, PDB entries, experimental structures, get me the structure
 Ported from ToolUniverse skill `tooluniverse-protein-structure-retrieval`. Grounded on
 sempart SMCP (compact mode) — all 10 tools below confirmed deployed live. Re-maps the
 skill's filesystem/Python workflow to a chat OUTPUT CONTRACT (emit ONE markdown report;
@@ -51,8 +52,9 @@ continue it across follow-up turns — still one report. Mark any dimension with
 
 # 8 retrieval dimensions — call execute_tool with the NAMED tool (≈1 call each, no find_tools)
 
-1. **Protein Search & Disambiguation** — `PDBeSearch_search_structures`(protein_name="<name>")
-   to find matching structures and confirm the protein identity. If the user supplied a PDB ID
+1. **Protein Search & Disambiguation** — `PDBeSearch_search_structures`(query="<name>")
+   — required `query` is a free-text string (protein name, gene symbol or keyword; Solr syntax such as
+   `<name> AND human` is accepted); the tool declares no `protein_name` argument — to find matching structures and confirm the protein identity. If the user supplied a PDB ID
    directly, skip to dimension 2. Collect the set of PDB IDs returned; select the best candidate
    as the primary PDB ID for enrichment. If the user supplied a UniProt accession, also call
    `alphafold_get_prediction`(uniprot_id="<accession>") now to confirm AlphaFold availability.
@@ -60,7 +62,10 @@ continue it across follow-up turns — still one report. Mark any dimension with
 2. **Primary Structure Metadata** — `get_protein_metadata_by_pdb_id`(pdb_id="<primary_pdb_id>")
    for basic metadata (title, organism, method, resolution, release date, authors, UniProt
    cross-reference). Fallback if this errors: `pdbe_get_entry_summary`(pdb_id="<primary_pdb_id>").
-   Extract the UniProt accession here if not already known; you need it for dimension 6.
+   Extract the UniProt accession here if not already known; you need it for dimensions 5, 6 and 7.
+   If the metadata carries no accession, resolve it BEFORE those dimensions with
+   `UniProt_search`(query="gene:<SYMBOL> AND organism_id:<taxon id> AND reviewed:true", fields=["accession"])
+   — `fields` is an ARRAY, not a comma-separated string.
 
 3. **Experimental Details** — `RCSBData_get_entry`(pdb_id="<primary_pdb_id>") for full
    experimental metadata: method (X-ray / Cryo-EM / NMR / Neutron), resolution in Angstroms,
@@ -73,7 +78,9 @@ continue it across follow-up turns — still one report. Mark any dimension with
    outliers). These combine with resolution to produce the structure's Quality Tier (see
    grading table below). MUST assign a Quality Tier to the primary structure.
 
-5. **Bound Ligands & Binding Sites** — `PDBe_KB_get_ligand_sites`(pdb_id="<primary_pdb_id>")
+5. **Bound Ligands & Binding Sites** — `PDBe_KB_get_ligand_sites`(uniprot_accession=
+   "<uniprot_accession>") — required `uniprot_accession` is the UniProt accession from dimension 2 (this
+   tool is keyed on the protein and does NOT take `pdb_id`), so dimension 2 comes first —
    for bound ligands (ligand ID, name, type, binding-site chain + residues). Include all
    co-crystallised ligands; note which are drug-like vs crystallographic artifacts. If no
    ligands are found via this tool, mark "No ligands bound".
@@ -81,12 +88,15 @@ continue it across follow-up turns — still one report. Mark any dimension with
 6. **AlphaFold Prediction** — `alphafold_get_prediction`(uniprot_id="<uniprot_accession>")
    for the predicted structure: UniProt ID, model version, pLDDT confidence distribution
    (global mean and per-region breakdown). Assign a Confidence Tier (see pLDDT grading table
-   below). If the UniProt accession is unknown, use `alphafold_get_summary`(protein_name=
-   "<protein name>") to locate it first. If no AlphaFold model exists, mark "No data available".
+   below). Enrichment: `alphafold_get_summary`(qualifier="<uniprot_accession>") — `qualifier` MUST be a
+   UniProt accession; a protein name, gene symbol or entry name is refused. If the UniProt accession
+   is unknown, resolve it first with `UniProt_search` (see dimension 2), THEN call the AlphaFold
+   tools. If no AlphaFold model exists, mark "No data available".
 
-7. **Homologous & Alternative Structures** — `PDBeSIFTS_get_all_structures`(pdb_id=
-   "<primary_pdb_id>", cutoff=2.0) for sequence-similar structures with cross-references
-   (chain-level SIFTS mapping: UniProt, Pfam, CATH, SCOP). List the top 5–10 homologs ranked
+7. **Homologous & Alternative Structures** — `PDBeSIFTS_get_all_structures`(uniprot_accession=
+   "<uniprot_accession>") — required and ONLY argument `uniprot_accession` is the UniProt accession
+   from dimension 2 (no `pdb_id`, no `cutoff`) — for every PDB entry mapped to that protein, grouped by
+   entry with chain-level SIFTS detail and sorted by resolution. List the top 5–10 homologs ranked
    by resolution (best first); include their method, resolution, and any bound drug-like ligands.
    These populate "Alternative Structures" in the report.
 
@@ -139,13 +149,13 @@ In the Executive Summary, state explicitly which structures are suitable for eac
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool used. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool call + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Error handling
 - "PDB ID not found": verify the 4-character format; the entry may have been obsoleted — note
   this and fall back to a search via `PDBeSearch_search_structures`.
 - "No structures found": offer the AlphaFold prediction (dimension 6) and suggest searching for
-  sequence-similar proteins via `PDBeSIFTS_get_all_structures` on a known homolog.
+  sequence-similar proteins via `PDBeSIFTS_get_all_structures` with a known homolog's UniProt accession.
 - "Resolution unavailable": likely NMR or computational model; note in Quality Tier as Moderate
   (NMR) or assign the pLDDT-based Confidence Tier (AlphaFold).
 - AlphaFold not available (404 / empty): mark "No data available" — do not fabricate pLDDT.
@@ -183,4 +193,4 @@ skip any:
 (PDB ID | organism | method | resolution (Å) | Quality Tier | bound drug-like ligand | Source)
 ## 8. Molecule Composition
 (entity | chains | residues | coverage % | engineered mutations | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

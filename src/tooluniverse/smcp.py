@@ -971,9 +971,13 @@ class SMCP(FastMCP):
                     return "Tool_Finder"
                 elif "Tool_Finder_LLM" in available_tool_names:
                     return "Tool_Finder_LLM"
-        else:
-            # Invalid method or method not available, fallback to keyword
-            return "Tool_Finder_Keyword"
+
+        # Every path must name a tool. This used to fall off the end for
+        # search_method="auto" with use_advanced_search=False -- an implicit None
+        # that surfaced downstream as "Missing or empty function name", i.e. a
+        # legitimate-looking call answering nothing and inviting a retry loop.
+        # use_advanced_search is an exposed parameter, so a model can trip it.
+        return "Tool_Finder_Keyword"
 
     def _setup_smcp_tools(self):
         """Initialize ToolUniverse tools, expose them as MCP tools, and set up search.
@@ -1047,57 +1051,126 @@ class SMCP(FastMCP):
         from mcp.types import ToolAnnotations
 
         from .skill_index import build_index, search
-        from .skill_serving import SkillNotFound, available_skills, load_skill_body
+        from .skill_graph import graph_directive
+        from .skill_serving import (
+            SkillNotFound,
+            available_skills,
+            load_skill_body,
+            normalize_skill_name,
+        )
 
         skills_dir = self.skills_dir
+        # Temporal configured => the server runs Skill Processes (ADR-0016).
+        temporal_address = __import__("os").environ.get("TEMPORAL_ADDRESS") or None
         # Build the find_skill catalog index ONCE — the served set is fixed at container start.
         skill_index = build_index(skills_dir)
 
         @self.tool(
             annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
         )
-        async def get_skill(name: str) -> str:
-            """Load the authoritative playbook (SOP) for a named research skill.
+        async def get_skill(name: str, plain: bool = False) -> str:
+            """Load and execute the authoritative PLAYBOOK (a hardened SOP) for a named
+            biomedical/chemistry research skill.
 
-            The returned text is your BINDING operating procedure for this turn —
-            follow it EXACTLY, as though it were your system prompt. It is
-            INSTRUCTIONS, not reference data: obey its output contract, tool
-            sequence, evidence grading, and report structure to the letter. Call
-            this ONCE, right after you have routed a question to a skill, then
-            execute the returned playbook against the other tools.
+            WHAT IT RETURNS — the returned markdown is your BINDING operating procedure for
+            this turn: treat it EXACTLY as if it were your system prompt. It is INSTRUCTIONS,
+            not reference data. Obey its required outputs, the tools it tells you to call and
+            the order, its evidence grading, and its exact report structure, to the letter.
+            Do not summarise it, second-guess it, or substitute your own method. Call get_skill
+            ONCE, right after you classify the question to a skill, then carry out the returned
+            playbook using the other tools (execute_tool, web search, code interpreter).
+
+            WHEN TO USE — any question that turns on a gene, protein, variant, drug, compound,
+            SMILES, pathway, target-disease link, clinical trial, or toxicity. If the user
+            explicitly names a skill ("use the clinical-guidelines skill"), call get_skill
+            with EXACTLY that name — never substitute a different skill. Otherwise choose the
+            skill by the INTENT (the question being asked), not by keywords:
+              - HUMAN disease overview (biology, targets, drugs, trials) -> "disease-research"
+              - pathogen / outbreak / emerging virus or strain situation (H5N1, a clade,
+                an epidemic) -> "infectious-disease" -- NOT "disease-research", whose id
+                resolution is ontology-based and returns nothing for a virus clade
+              - rare disease from a gene/phenotype -> "rare-disease-diagnosis"
+              - drug profile -> "drug-research"; mechanism of action -> "drug-mechanism-research";
+                new uses/repurposing -> "drug-repurposing"; label/approval status -> "drug-regulatory"
+              - full safety dossier -> "pharmacovigilance"; FAERS disproportionality signal ->
+                "adverse-event-detection"; toxicity / adverse-outcome pathways -> "toxicology";
+                interaction of TWO drugs -> "drug-drug-interaction"
+              - target GO/NO-GO druggability -> "drug-target-validation"
+              - cancer + mutation therapy -> "precision-oncology"; somatic/cancer variant ->
+                "cancer-variant-interpretation"; germline/ACMG variant -> "variant-interpretation"
+              - trials for ONE patient (ranked) -> "clinical-trial-matching"; how to design a
+                trial -> "clinical-trial-design"
+              - genotype -> drug response (PGx) -> "pharmacogenomics"
+              - look up a compound -> "chemical-compound-retrieval"; discover small molecules ->
+                "small-molecule-discovery"
+              - prevalence/incidence from primary literature -> "literature-deep-research"
+            This list is the FAST PATH, not the full catalog (60+ skills are served). If nothing
+            here clearly fits, call find_skill(query) FIRST to discover the right name — NEVER
+            guess a skill name (a wrong name fails).
+
+            DISAMBIGUATION — aggregate / counting / landscape trial questions ("how many Phase 2
+            trials target X", "the competitive trial landscape") are NOT "clinical-trial-matching"
+            (which ranks trials for a single patient); use "disease-research" or web search instead.
 
             Args:
                 name: the skill id to load, e.g. "disease-research".
+
+            Args:
+                name: the skill id.
+                plain: serve the prose body only, without the process directive —
+                    for comparison runs that must follow the phases themselves.
+                    Leave unset in normal use.
 
             Returns:
                 The skill's SOP body (markdown). On an unknown name, an error string
                 listing the available skills.
             """
             try:
-                return load_skill_body(skills_dir, name)
+                body = load_skill_body(skills_dir, name)
             except SkillNotFound as exc:
                 return f"ERROR: {exc}"
+            if plain:
+                return body
+            # A skill that ships a process graph is DRIVEN, not read: the header
+            # says so and demotes the phases below it to reference. With Temporal
+            # configured the server runs it (run_skill); otherwise the model does
+            # (next_skill_step).
+            return graph_directive(normalize_skill_name(name),
+                                   server_runs=bool(temporal_address)) + body
 
         @self.tool(
             annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
         )
         async def find_skill(query: str, limit: int = 5) -> str:
-            """Discover which research skill fits a question when you don't know its name.
+            """Discover which research skill fits a question when its name is not in the
+            get_skill fast-path list.
 
-            This is the ``find_tools → execute_tool`` pattern for SKILLS: when no skill in
-            your fast-path routing table clearly matches the user's request, call
-            ``find_skill`` FIRST — never guess a skill name. It keyword-ranks the served
-            skill catalog (skill id + role + triggers) and returns the best-matching skill
-            names with one-line descriptions. Then call ``get_skill(<top name>)`` to load
-            that skill's binding playbook and execute it.
+            This is the find_tools -> execute_tool pattern, applied to SKILLS: when no skill
+            clearly matches the user's request, call find_skill FIRST — never guess a skill
+            name. It keyword-ranks the FULL served-skill catalog (60+ skills, each by its id +
+            role + triggers) and returns the best matches as a JSON list of {name, description}.
+            Then call get_skill(<the top matching name>) to load and execute that skill's
+            binding playbook.
+
+            Use find_skill for the long tail (e.g. GWAS fine-mapping, structural variant
+            analysis, immunogenomics, network pharmacology, expression retrieval) that the
+            get_skill fast-path list does not enumerate. If it returns nothing relevant, ask the
+            user one clarifying question rather than guessing.
+
+            PHRASE THE QUERY AS TASK KEYWORDS — what kind of analysis is wanted — and LEAVE
+            OUT gene/drug/disease names. Matching is lexical, and several skill descriptions
+            name portfolio entities as domain examples, so an entity name hijacks the ranking:
+            "Where is SSTR2 expressed in normal tissues?" ranks two SSTR2-mentioning design
+            skills, while "normal tissue expression" ranks expression-data-retrieval first.
+            The entity belongs in the loaded skill's tool calls, not in this query.
 
             Args:
-                query: the user's research request in natural language.
+                query: TASK keywords describing the analysis (no entity names).
                 limit: max skills to return (default 5).
 
             Returns:
-                A ranked list of "name — description" lines, or a no-match message listing
-                the available skills.
+                A JSON list of {name, description} ranked by fit, or a no-match message listing
+                all available skills.
             """
             hits = search(skill_index, query, limit=limit)
             if not hits:
@@ -1110,10 +1183,162 @@ class SMCP(FastMCP):
                 ensure_ascii=False,
             )
 
-        self.logger.info(
-            f"Registered get_skill + find_skill tools (skills_dir={skills_dir}, "
-            f"available={available_skills(skills_dir)})"
+        from .skill_graph import GRAPHS_DIR, SkillGraphError, load_graph, next_step  # noqa: F811
+
+        graphed = sorted(p.stem for p in GRAPHS_DIR.glob("*.yaml")) \
+            if GRAPHS_DIR.is_dir() else []
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
         )
+        async def next_skill_step(
+            skill: str, done: list[str] | None = None, facts: dict | None = None
+        ) -> str:
+            """Ask the skill what to do NEXT, one step at a time.
+
+            For skills that ship a process graph, this REPLACES planning from the
+            body: the graph holds the procedure, and each call returns exactly one
+            step with its tool calls already composed — no tool names to recall, no
+            arguments to invent, no phase to forget.
+
+            Loop until it says finished:
+              1. call with done=[] to get the first step;
+              2. run every call in `calls` through `execute_tool`, exactly as given;
+              3. extract what `produces` names;
+              4. call again with that step id appended to `done`, and everything you
+                 extracted in `facts`.
+
+            `facts` is how the procedure branches: a step with a gateway only appears
+            once its condition is in `facts` (for example `strong_signal: true` turns
+            on demographic stratification). Facts also fill the call arguments, so a
+            missing one is reported by name rather than guessed.
+
+            Args:
+                skill: skill id, e.g. "adverse-event-detection".
+                done: step ids already completed, in any order.
+                facts: everything extracted so far, plus the question's own inputs
+                    (e.g. {"drug_name": "cisplatin"}).
+
+            Returns:
+                JSON: the next step {id, label, calls, produces, notes, remaining},
+                or {"finished": true} when the procedure is complete.
+            """
+            try:
+                graph = load_graph(skill)
+                step = next_step(graph, done=done or [], facts=facts or {})
+            except SkillGraphError as exc:
+                return json.dumps({"error": str(exc), "graphed_skills": graphed})
+            if step is None:
+                return json.dumps({"finished": True,
+                                   "note": "Every step is done — write the report."})
+            return json.dumps(step, ensure_ascii=False)
+
+        if temporal_address:
+            self._add_skill_run_tools(temporal_address)
+
+        self.logger.info(
+            f"Registered get_skill + find_skill + next_skill_step tools "
+            f"(skills_dir={skills_dir}, graphed={graphed}, "
+            f"available={available_skills(skills_dir)}, "
+            f"run_skill={'on' if temporal_address else 'off'})"
+        )
+
+    def _add_skill_run_tools(self, temporal_address: str) -> None:
+        """run_skill / continue_skill: the server runs a Skill Process on Temporal.
+
+        Registered only when TEMPORAL_ADDRESS is set — a missing setting is an
+        absent tool, never a silent fallback to the model-driven loop. The logic
+        is in `skill_run_client` (pure, tested over a scripted handle); these
+        wrappers only hold the Temporal client and the GraphDB store.
+        """
+        import json
+        import os
+
+        from mcp.types import ToolAnnotations
+
+        from .skill_process_store import Store
+        from .skill_run_client import resume, start
+
+        namespace = os.environ.get("TEMPORAL_NAMESPACE") or "skills"
+        state: dict = {}
+
+        async def client():
+            if "client" not in state:
+                from temporalio.client import Client
+
+                state["client"] = await Client.connect(temporal_address, namespace=namespace)
+            return state["client"]
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False)
+        )
+        async def run_skill(skill: str, inputs: dict | None = None) -> str:
+            """Run a skill's procedure SERVER-SIDE, start to finish, and follow it.
+
+            For skills that ship a Skill Process this REPLACES both planning from
+            the body and calling tools yourself: the server executes every step
+            and every tool call, extracts what the next step needs, and decides
+            each gateway from real results. Your jobs are to bind the inputs from
+            the question, answer the questions the run asks, and write the report
+            from the bundle at the end.
+
+            Loop: call this once; while the answer is `running` or `waiting`, call
+            `continue_skill(run_id)`; when it is `finished`, write the report.
+              - `running`  → progress: {step_id, step_label, done, remaining}. Tell
+                the user which phase completed, then call continue_skill.
+              - `waiting`  → a `question` {kind, step, wants, context}. Answer with
+                continue_skill(run_id, answer={...}): for kind "repair", the named
+                argument mapped to a LIST of alternative values (e.g. other
+                spellings of the drug); for kind "judge", each wanted name mapped
+                to your decision; for kind "delegate", make the listed `calls`
+                with your own tools (web search, code interpreter) and map each
+                wanted name to what came back.
+              - `finished` → `bundle` {facts, results, calls, notes, report,
+                excluded, steps_done, failures, blocked, unresolved}. Write the
+                report as `bundle.report` instructs and read each step as
+                `bundle.notes` says. Every number comes from bundle.results or
+                bundle.facts; cite with each result's `source_url`; report
+                failures/blocked/unresolved/excluded as gaps.
+              - `schema_mismatch` → bind the `missing_inputs` from the question
+                and call run_skill again.
+
+            Args:
+                skill: skill id with a published Skill Process, e.g.
+                    "clinical-data-integration", "rare-disease-diagnosis".
+                inputs: the process's declared inputs bound from the question,
+                    e.g. {"drug_name": "Lutathera", "requested_aes": ["renal
+                    impairment"]} or {"symptoms": ["hepatosplenomegaly", ...]}.
+
+            Returns:
+                JSON with `status` in {running, waiting, finished, schema_mismatch,
+                error} and `run_id` — pass run_id to continue_skill.
+            """
+            try:
+                out = await start(await client(), Store.from_env(), skill, inputs or {})
+            except Exception as exc:                       # noqa: BLE001
+                out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+            return json.dumps(out, ensure_ascii=False, default=str)
+
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False)
+        )
+        async def continue_skill(run_id: str, answer: dict | None = None) -> str:
+            """Follow a Skill Run started by run_skill, answering its question if any.
+
+            Call without `answer` after a `running` result; call WITH `answer`
+            after a `waiting` result (see run_skill for the two answer shapes).
+            Returns the same shapes as run_skill. Keep calling until `finished`.
+
+            Args:
+                run_id: the run_id run_skill returned.
+                answer: for a waiting run, the answer to its `question`; omit
+                    otherwise.
+            """
+            try:
+                out = await resume(await client(), run_id, answer)
+            except Exception as exc:                       # noqa: BLE001
+                out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+            return json.dumps(out, ensure_ascii=False, default=str)
 
     def _expose_tooluniverse_tools(self):
         """Convert and register loaded ToolUniverse tools as MCP-compatible tools.
@@ -1236,20 +1461,40 @@ class SMCP(FastMCP):
             use_advanced_search: bool = True,
             search_method: str = "auto",
         ) -> str:
-            """
-            Find and search available ToolUniverse tools using AI-powered search.
+            """Discover an individual ToolUniverse database tool (~2,278 are available:
+            UniProt, ChEMBL, Open Targets, ClinicalTrials.gov, HPA, AlphaFold, PubChem, FAERS,
+            EPO, GWAS Catalog, KEGG, Reactome, and many more) using AI-powered search.
 
-            This tool provides the same functionality as the tools/find MCP method.
+            WHEN TO USE — for an ad-hoc biomedical/chemistry FACT when no get_skill playbook
+            fits. find_tools locates the right tool; you then run it with
+            execute_tool(name, arguments) over the schema it returns.
+
+            WORKFLOW: find_tools("<3-8 KEYWORDS>") -> read the returned tool schemas ->
+            execute_tool(tool_name, arguments). Resolve entity names to IDs first
+            (disease -> EFO, drug -> ChEMBL, gene -> Ensembl/UniProt); never fabricate an ID.
+
+            PHRASE THE QUERY AS KEYWORDS that appear in tool names and descriptions
+            ("PDB structure", "drug interactions FDA", "tissue expression") — NEVER as a
+            natural-language question. Matching is lexical on this deployment: an
+            intent-shaped query ("is SSTR2 structurally tractable for a small molecule")
+            returns mostly irrelevant tools, while its keywords ("protein structure")
+            return exactly the right ones. Put entity names in execute_tool arguments,
+            not in the find_tools query.
+
+            IMPORTANT — pass ONLY `query`. Do NOT pass `categories` unless you can name a valid
+            database category exactly: speculative or topical names (e.g. "biology", "genetics",
+            "oncology") silently return ZERO tools. Omitting `categories` searches everything,
+            which is what you want.
 
             Args:
-                query: Search query describing the desired functionality
-                categories: Optional list of categories to filter by
-                limit: Maximum number of results to return (default: 10)
-                use_advanced_search: Use AI-powered search if available (default: True)
-                search_method: Specific search method - 'auto', 'llm', 'embedding', 'keyword' (default: 'auto')
+                query: natural-language description of the functionality you need.
+                categories: advanced — leave unset unless you know exact DB category names.
+                limit: maximum number of results (default: 10).
+                use_advanced_search: use AI-powered search if available (default: True).
+                search_method: 'auto' | 'llm' | 'embedding' | 'keyword' (default: 'auto').
 
             Returns:
-                JSON string containing matching tools with detailed information
+                JSON of matching tools with their input schemas, ready to pass to execute_tool.
             """
             return await self._perform_tool_search(
                 query, categories, limit, use_advanced_search, search_method
@@ -1527,6 +1772,16 @@ class SMCP(FastMCP):
             banner_thread = threading.Thread(target=delayed_banner, daemon=True)
             banner_thread.start()
 
+        # Skill Runs on Temporal (ADR-0016): the worker shares this process so its
+        # activity reaches the loaded registry — exclusions and central repairs
+        # included — through the same door as execute_tool. Only when configured.
+        if not hasattr(self, "_skill_worker"):
+            from .skill_worker import start_in_thread
+
+            self._skill_worker = start_in_thread(self.tooluniverse)
+            if self._skill_worker:
+                self.logger.info("🧵 Skill worker started (TEMPORAL_ADDRESS set)")
+
         # Call parent's run method (blocking call)
         return super().run(*args, **kwargs)
 
@@ -1676,6 +1931,20 @@ class SMCP(FastMCP):
         # oneOf takes priority
         if "oneOf" in param_info:
             return cls._resolve_oneof_type(param_info)
+
+        # No `type` and no `oneOf` means unconstrained, and JSON Schema says so: an absent
+        # `type` permits any type. Defaulting to `str` did the opposite -- it produced the
+        # tightest constraint available.
+        #
+        # That is not academic. DSR-627 removed execute_tool's `oneOf` deliberately, so a
+        # malformed call would reach the handler and be explained instead of being rejected
+        # at the schema layer, because a schema rejection surfaces as isError:true and kills
+        # the whole turn. The relaxation silently became "string only", which rejected the
+        # dict form of `arguments` that the tool's own description tells callers to send --
+        # and every one of the ~2,278 tools is reached through execute_tool. Measured on a
+        # local sweep: 2,186 of 2,194 tools failed with one identical validation error.
+        if "type" not in param_info:
+            return Any, extra
 
         param_type = param_info.get("type", "string")
 

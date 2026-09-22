@@ -16,7 +16,7 @@ from typing import Dict, Any
 from .base_tool import BaseTool
 from .tool_registry import register_tool
 
-BGEE_BASE_URL = "https://www.bgee.org/api"
+BGEE_BASE_URL = "https://www.bgee.org/api/"
 
 
 @register_tool("BgeeTool")

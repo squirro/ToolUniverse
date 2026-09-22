@@ -7,7 +7,8 @@ and status breakdown for a given indication.
 Score 0-1 where higher = more validated (more evidence of drugability).
 """
 from __future__ import annotations
-import json, logging
+import json
+import logging
 
 log = logging.getLogger(__name__)
 
@@ -237,7 +238,8 @@ def assess_validation(gene_symbol, max_phase, trial_data):
 def exec_validation_level(arguments, input_table, output_table, db_path):
     """Assess clinical validation level for target genes. Combines OpenTargets
     max phase with ClinicalTrials.gov trial data."""
-    import sqlite3, time
+    import sqlite3
+    import time
     from concurrent.futures import ThreadPoolExecutor as _TPE, as_completed
 
     indication = arguments.get("indication", arguments.get("disease_name", ""))

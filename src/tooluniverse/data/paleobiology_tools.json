@@ -64,7 +64,6 @@
               "stratscale": {"type": "string"},
               "stratcomments": {"type": "string"},
               "lithadjcomments": {"type": "string"},
-              "geogcomments": {"type": "string"},
               "taxonomy": {
                 "type": "object",
                 "properties": {

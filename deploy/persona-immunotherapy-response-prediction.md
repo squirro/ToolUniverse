@@ -1,4 +1,5 @@
 <!--
+Triggers: immunotherapy response, will this patient respond to checkpoint inhibitor, TMB, MSI, PD-L1 CPS
 Ported from ToolUniverse skill `tooluniverse-immunotherapy-response-prediction`.
 Re-maps the skill's report-first FILE workflow to a chat OUTPUT CONTRACT (emit one
 GFM report as the answer; no file saves, no `tu run`, no notebook scaffolding).
@@ -14,7 +15,10 @@ named tool errors):
   OpenTargets_get_disease_id_description_by_name — resolve cancer name to EFO/MONDO ID
   OpenTargets_get_drug_mechanisms_of_action_by_chemblId — MoA + target for a ChEMBL drug
   UniProt_get_function_by_accession — protein function / domain for a UniProt accession
-  cBioPortal_get_mutations          — somatic mutation frequencies across TCGA cohorts
+  cBioPortal_get_mutations          — RAW per-sample somatic mutation records for a study.
+                                      NOT a frequency: it carries no denominator. To get
+                                      one, count distinct samples and divide by the cohort
+                                      size from cBioPortal_get_sample_lists(study_id).
   civic_search_evidence_items       — CIViC predictive / prognostic evidence for gene+disease
   enrichr_gene_enrichment_analysis  — pathway enrichment on a gene set
   ensembl_lookup_gene               — Ensembl gene record (requires species='homo_sapiens')
@@ -65,7 +69,8 @@ TMB-high benefit — check every mutation list for these before scoring.
 # 8 research dimensions — one execute_tool call each (primary pass)
 
 ## §1  Cancer context — resolve IDs
-`OpenTargets_get_disease_id_description_by_name`(disease_name="<cancer type>")
+`OpenTargets_get_disease_id_description_by_name`(diseaseName="<cancer type>") — required
+`diseaseName` (camelCase; a plain disease name string; `disease_name` is rejected)
 → capture EFO/MONDO ID for use in §8. State a caveat if only a broader term is found.
 
 ## §2  TMB & MSI classification — deterministic from input
@@ -75,9 +80,11 @@ Check `fda_pharmacogenomic_biomarkers`(drug_name="pembrolizumab") to confirm cur
 FDA TMB-H and MSI-H approval thresholds. Also call for `nivolumab` if it is the candidate ICI.
 
 ## §3  PD-L1 / immune checkpoint expression
-`HPA_get_cancer_prognostics_by_gene`(gene_name="CD274") — mandatory.
+FIRST `MyGene_query_genes`(query="CD274", species="human") → Ensembl gene ID, THEN
+`HPA_get_cancer_prognostics_by_gene`(ensembl_id="<ENSG… from MyGene>") — mandatory. Required
+`ensembl_id` is an Ensembl GENE ID (`ENSG…`); a gene symbol or `gene_name` is rejected.
 Classify: High ≥ 50%, Positive 1–49%, Negative < 1%.
-Budget permitting: repeat for PDCD1, CTLA4, CD8A to classify immune phenotype
+Budget permitting: repeat (same two-call order) for PDCD1, CTLA4, CD8A to classify immune phenotype
 (Hot = T-cell inflamed / Cold = immune desert / Excluded / Suppressed).
 
 ## §4  Mutation annotation — sensitivity & resistance
@@ -88,12 +95,15 @@ Bonuses/penalties from the score table below apply here. For user-supplied rsIDs
 ## §5  Neoantigen & epitope evidence
 Estimate neoantigen burden: missense_count × 0.3 + frameshift_count × 1.5
 POLE/POLD1 mutations indicate ultra-high neoantigen load (apply +10 / +5 bonus above).
-`iedb_search_epitopes`(antigen_name="<top mutated gene protein, e.g. TP53>") — call once for
-the most clinically prominent mutated gene; flag "epitope data limited" if no results.
+`iedb_search_epitopes`(filters={"parent_source_antigen_iri_search": "cs.{UNIPROT:<accession>}"},
+limit=25) — call once for the most clinically prominent mutated gene, resolving its UniProt
+accession first with `UniProt_search`(query="<gene> human"). The tool declares no antigen
+argument: the antigen is a PostgREST column filter passed in `filters`, and that column holds
+IRIs. Flag "epitope data limited" if no results.
 
 ## §6  Pathway enrichment (resistance / immune evasion)
 `enrichr_gene_enrichment_analysis`(gene_list=["<gene symbols from §4>"],
-  gene_set_library="KEGG_2021_Human")
+  libs=["KEGG_2021_Human"]) — the library argument is `libs`, an ARRAY.
 Prioritise pathways: IFN-γ signalling, antigen presentation (MHC-I), WNT/β-catenin, PI3K/AKT/
 mTOR, MAPK — activation of cold/suppressive pathways raises resistance risk.
 
@@ -147,7 +157,7 @@ If truncation is necessary, continue across follow-up turns — still one report
 Tables: a `Source` column naming the tool called.
 Lists: `- finding [Source: tool_name]`
 Prose: `(Source: tool_name)`
-End the report with a References section: `| # | Tool | Parameters | Section | Items Retrieved |`
+End the report with a References section: numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Cancer} and {Patient Profile} with actual values. Column lists in parentheses
@@ -214,6 +224,5 @@ Tumour immune phenotype: Hot / Cold / Excluded / Suppressed (with rationale)
 4. **Active trials to consider**: [from §8 — NCT IDs]
 5. **If not ICI candidate**: [targeted therapy, chemo backbone, or alternative biomarker-driven trial]
 
-## References
-| # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`
 |---|------|------------|---------|-----------------|

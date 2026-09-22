@@ -1,7 +1,7 @@
 [
   {
     "name": "OmniPath_get_ligand_receptor_interactions",
-    "description": "Get ligand-receptor interaction pairs from OmniPath, the largest integrated intercellular communication database. Combines data from CellPhoneDB, CellChatDB, CellTalkDB, connectomeDB, Ramilowski2015, Guide2Pharma, HPMR, and 20+ other curated resources. Returns source/target proteins with directionality, stimulation/inhibition flags, supporting databases, and curation effort scores. Essential for cell-cell communication analysis in single-cell transcriptomics (CellPhoneDB/CellChat/LIANA workflows). Example: querying TGFB1 returns 30 ligand-receptor interactions including TGFB1->TGFBR2 (135 curation effort, 34 databases), TGFB1->ACVRL1 (14 curation effort, 26 databases); querying CD274 (PD-L1) finds CD274->PDCD1 immune checkpoint interaction supported by 22 databases.",
+    "description": "Get ligand-receptor interaction pairs from OmniPath, the largest integrated intercellular communication database. Combines data from CellPhoneDB, CellChatDB, CellTalkDB, connectomeDB, Ramilowski2015, Guide2Pharma, HPMR, and 20+ other curated resources. Returns source/target proteins with directionality, stimulation/inhibition flags, supporting databases, and curation effort scores. Essential for cell-cell communication analysis in single-cell transcriptomics (CellPhoneDB/CellChat/LIANA workflows). Example: querying TGFB1 returns 30 ligand-receptor interactions including TGFB1->TGFBR2 (135 curation effort, 34 databases), TGFB1->ACVRL1 (14 curation effort, 26 databases); querying CD274 (PD-L1) finds CD274->PDCD1 immune checkpoint interaction supported by 22 databases. At least one of partners, sources, or targets is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -346,7 +346,7 @@
   },
   {
     "name": "OmniPath_get_signaling_interactions",
-    "description": "Get intracellular signaling pathway interactions from OmniPath's curated datasets. Supports querying the main OmniPath signaling network (literature-curated, directed PPI), pathwayextra (activity flow from Reactome/KEGG/WikiPathways), kinaseextra (kinase-substrate from PhosphoSite/dbPTM), and more. Returns directed, signed interactions with stimulation/inhibition annotations and supporting evidence. Useful for reconstructing signaling cascades downstream of receptor activation. Example: NOTCH1 has 110 directed signaling interactions; SRC kinase connects to 200+ downstream substrates; TP53 has 500+ pathway interactions.",
+    "description": "Get intracellular signaling pathway interactions from OmniPath's curated datasets. Supports querying the main OmniPath signaling network (literature-curated, directed PPI), pathwayextra (activity flow from Reactome/KEGG/WikiPathways), kinaseextra (kinase-substrate from PhosphoSite/dbPTM), and more. Returns directed, signed interactions with stimulation/inhibition annotations and supporting evidence. Useful for reconstructing signaling cascades downstream of receptor activation. Example: NOTCH1 has 110 directed signaling interactions; SRC kinase connects to 200+ downstream substrates; TP53 has 500+ pathway interactions. At least one of partners, sources, or targets is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -798,7 +798,7 @@
   },
   {
     "name": "OmniPath_get_enzyme_substrate",
-    "description": "Get enzyme-substrate (post-translational modification) interactions from OmniPath. Integrates data from PhosphoSite, phosphoELM, dbPTM, SIGNOR, HPRD, KEA, and other PTM databases. Returns kinase/phosphatase->substrate relationships with specific residue positions, modification types, and supporting evidence. Critical for understanding signaling cascades downstream of receptor activation (e.g., RTK->SRC->downstream phosphorylation targets). Example: SRC kinase (P12931) has 200+ substrates with phosphorylation sites; LCK (P06239) phosphorylates SOCS3 at Y204 and Y221.",
+    "description": "Get enzyme-substrate (post-translational modification) interactions from OmniPath. Integrates data from PhosphoSite, phosphoELM, dbPTM, SIGNOR, HPRD, KEA, and other PTM databases. Returns kinase/phosphatase->substrate relationships with specific residue positions, modification types, and supporting evidence. Critical for understanding signaling cascades downstream of receptor activation (e.g., RTK->SRC->downstream phosphorylation targets). Example: SRC kinase (P12931) has 200+ substrates with phosphorylation sites; LCK (P06239) phosphorylates SOCS3 at Y204 and Y221. At least one of enzymes or substrates is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -953,7 +953,7 @@
   {
     "name": "OmniPath_get_tf_target_interactions",
     "type": "OmniPathTool",
-    "description": "Get transcription factor (TF) to target gene interactions from OmniPath DoRothEA and CollecTRI regulons. Returns directed TF-target pairs with mode of regulation (activation/repression), DoRothEA confidence levels (A-E), and supporting evidence. Query by TF gene symbol or target gene. Use for: TF activity inference, regulatory network construction, identifying TF targets for VIPER/decoupleR analysis.",
+    "description": "Get transcription factor (TF) to target gene interactions from OmniPath DoRothEA and CollecTRI regulons. Returns directed TF-target pairs with mode of regulation (activation/repression), DoRothEA confidence levels (A-E), and supporting evidence. Query by TF gene symbol or target gene. Use for: TF activity inference, regulatory network construction, identifying TF targets for VIPER/decoupleR analysis. At least one of tf_gene or target_gene is required; a call providing none of them returns an error.",
     "fields": {
       "endpoint": "tf_target"
     },

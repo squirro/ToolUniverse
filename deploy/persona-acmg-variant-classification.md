@@ -1,4 +1,5 @@
 <!--
+Triggers: ACMG classification, classify this variant, pathogenicity criteria, variant curation, germline variant classification
 Ported from ToolUniverse skill `tooluniverse-acmg-variant-classification`.
 Re-maps the skill's report-FILE / `tu run` / notebook workflow to a chat OUTPUT CONTRACT
 (emit one GFM report; no file writes). Replaces the skill's 14-combination categorical
@@ -6,7 +7,7 @@ algorithm with the Tavtigian/ClinGen point-score tally (Supporting=1, Moderate=2
 Strong=4, VeryStrong=8) for compact, deterministic verdicts.
 AVAILABLE tools:
   ClinVar_get_variant_details, ClinVar_search_variants,
-  ESM_explain_variant_mechanism, EnsemblVEP_annotate_hgvs,
+  annotate_variant_multi_source, EnsemblVEP_annotate_hgvs,
   InterPro_get_entries_for_protein, MyGene_query_genes, MyVariant_query_variants,
   PubMed_search_articles, UniProt_get_function_by_accession,
   VariantValidator_gene2transcripts, VariantValidator_validate_variant,
@@ -70,7 +71,7 @@ Accepted inputs: HGVS coding (NM_000059.4:c.5946delT), protein (BRCA2 p.Val600Gl
 
 **Phase 5 — Literature (PS3, BS3) [optional enrichment]**
 - `PubMed_search_articles(query="<gene> <HGVS> functional assay", limit=10)`
-- `ESM_explain_variant_mechanism(...)` [optional; missense only; ESM_API_KEY required] → SAE feature loss enriches PP3 narrative; does not change criterion strength
+- `annotate_variant_multi_source(variant="<GENE> <protein change>", gene, rsid)` [optional] → ONE call fanning out to ClinVar + gnomAD + CIViC + UniProt; use it to sweep up annotation Phases 1–4 missed. Enriches the PP3/PM1 narrative; does not change criterion strength
 
 Criteria requiring clinical/family data — **Not Assessed** unless user supplies context:
 PS2, PS4, PM3, PM6, PP1, PP4, BS4, BP2, BP5
@@ -160,5 +161,5 @@ Key functional studies or segregation data (PMIDs, years)
 Applied rule: e.g., "PVS1(+8) + PM2_Supporting(+1) + PP5(+1) = 10 → Pathogenic"
 
 ## References
-| # | Tool | Key Parameters | Phase | Items Retrieved |
+numbered footnote definitions only, each `[^n^]: [description](url)`
 ```

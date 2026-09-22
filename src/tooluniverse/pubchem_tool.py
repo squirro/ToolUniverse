@@ -182,12 +182,17 @@ class PubChemRESTTool(BaseTool):
         # 4. Check HTTP status code
         if resp.status_code != 200:
             error_detail = resp.text
+            fault_code = None
             try:
                 error_json = resp.json()
                 if "Fault" in error_json:
                     error_detail = error_json["Fault"].get("Message", error_detail)
+                    fault_code = error_json["Fault"].get("Code")
             except Exception:
                 pass
+            # PubChem holds no such record. An answer, not a failure.
+            if resp.status_code == 404 and fault_code == "PUGREST.NotFound":
+                return {"status": "success", "data": None, "note": error_detail}
             return {
                 "status": "error",
                 "error": f"PubChem API returned HTTP {resp.status_code}",

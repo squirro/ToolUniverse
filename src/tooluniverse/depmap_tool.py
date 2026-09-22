@@ -347,15 +347,51 @@ class DepMapTool(BaseTool):
                 "page[size]": 100,
             }
 
-            # Scan through pages to find matching genes
-            # With sorted results, we search up to 5 pages (500 genes)
+            # BINARY SEARCH over the sorted page space, not a scan from page 1.
+            # The catalogue is ~45,750 symbols in ~458 pages; scanning the first
+            # five saw only as far as "ABCD3" and then declared everything else
+            # absent. Sorting is reliable and total, so ~9 requests locate any
+            # symbol's page.
             genes = []
             query_upper = query.upper()
-            for page_num in range(1, 6):
-                params["page[number]"] = page_num
-                response = requests.get(url, params=params, timeout=self.timeout)
-                response.raise_for_status()
-                data = response.json()
+            page_size = int(params["page[size]"])
+
+            def _page(number):
+                params["page[number]"] = number
+                resp = requests.get(url, params=params, timeout=self.timeout)
+                resp.raise_for_status()
+                return resp.json()
+
+            first = _page(1)
+            total = (first.get("meta") or {}).get("count") or 0
+            last_page = max(1, -(-int(total) // page_size)) if total else 1
+
+            # Find the first page whose LAST symbol is >= the query; that page,
+            # and the one after it, hold every possible match.
+            lo, hi = 1, last_page
+            target_page = 1
+            while lo <= hi:
+                mid = (lo + hi) // 2
+                rows = (_page(mid).get("data") or []) if mid != 1 else (
+                    first.get("data") or []
+                )
+                if not rows:
+                    hi = mid - 1
+                    continue
+                last_sym = str(
+                    rows[-1].get("attributes", {}).get("symbol", "")
+                ).upper()
+                if last_sym < query_upper:
+                    lo = mid + 1
+                else:
+                    target_page, hi = mid, mid - 1
+
+            # A prefix match can straddle a page boundary, so read the located
+            # page and its neighbour.
+            for page_num in (target_page, target_page + 1):
+                if page_num > last_page:
+                    break
+                data = first if page_num == 1 else _page(page_num)
 
                 for item in data.get("data", []):
                     attrs = item.get("attributes", {})
@@ -379,7 +415,9 @@ class DepMapTool(BaseTool):
                 if any(g["exact_match"] for g in genes):
                     break
 
-                # Check if we've gone past alphabetically
+                # Still correct alongside the binary search, and saves the second
+                # request: if this page already runs past every possible prefix
+                # match, the neighbour cannot hold one.
                 page_data = data.get("data", [])
                 if page_data:
                     last_sym = page_data[-1].get("attributes", {}).get("symbol", "")

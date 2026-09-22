@@ -494,8 +494,8 @@
     "version": "1.0.0",
     "test_examples": [
       {
-        "term_iri": "http://www.ebi.ac.uk/efo/EFO_0000384",
-        "ontology": "efo",
+        "term_iri": "http://purl.obolibrary.org/obo/MONDO_0005011",
+        "ontology": "mondo",
         "include_obsolete": false,
         "size": 20
       }
@@ -593,8 +593,8 @@
     "version": "1.0.0",
     "test_examples": [
       {
-        "term_iri": "http://www.ebi.ac.uk/efo/EFO_0000384",
-        "ontology": "efo",
+        "term_iri": "http://purl.obolibrary.org/obo/MONDO_0005011",
+        "ontology": "mondo",
         "include_obsolete": false,
         "size": 20
       }
@@ -690,8 +690,8 @@
     "version": "1.0.0",
     "test_examples": [
       {
-        "term_iri": "http://www.ebi.ac.uk/efo/EFO_0000384",
-        "ontology": "efo",
+        "term_iri": "http://purl.obolibrary.org/obo/MONDO_0005011",
+        "ontology": "mondo",
         "size": 10
       }
     ],

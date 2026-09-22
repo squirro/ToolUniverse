@@ -1,0 +1,13 @@
+{
+  "_what": "Frozen counts for the two truncation-disclosure guards (DSR-660).",
+  "_why_a_ratchet": "A capped result presented as a complete one is the same defect class as a transport failure reported as a zero. Almost all of this is upstream code that re-syncs from mims-harvard:main, so it is contained rather than rewritten. Both counts may fall, never rise.",
+  "_how_to_lower_slices": "Make the function say what it cut: return a total, a truncated flag, or what is available alongside the capped list. The reference is FAERS _truncation_note -- a full page is evidence of truncation, not of completeness.",
+  "_how_to_lower_tools": "Declare a companion total or truncated field in the tool's return_schema. A tool that accepts a limit and returns a short list gives the agent no way to tell the cap from the data.",
+  "_vocabulary": "Observed, not invented. Derived from the complying half of the corpus: total 226, available 76, truncat 26, overflow 2, has_more 1, incomplete 1 (across the 599 functions taking a first-N slice). 'remaining' reads like an obvious term and occurs zero times, so it is deliberately excluded.",
+  "_measured": "2026-08-12",
+  "_note": "The ticket's figures were 833 slices with 421 undisclosed, and did not reproduce: 875 first-N slices across 599 functions, of which 313 disclose nothing.",
+  "source_root": "src/tooluniverse",
+  "data_root": "src/tooluniverse/data",
+  "undisclosed_slicing_functions": 313,
+  "tools_accepting_a_limit_without_a_total": 300
+}

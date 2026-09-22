@@ -15,7 +15,9 @@ Performance considerations:
 Arguments:
   tool_configs (list[dict]) REQUIRED
   max_tools (int) optional limit for debugging
-  output_path (str) path to write resulting graph JSON (default './tool_relationship_graph.json')
+  output_path (str) path to write resulting graph JSON (default 'tool_relationship_graph.json'
+      in the ToolUniverse cache directory; a relative path resolves there, an
+      absolute one is used as given)
   save_intermediate_every (int) checkpoint frequency (default 5000 pairs processed)
 
 Return:
@@ -28,6 +30,10 @@ import json
 import os
 import time
 from typing import Any, Dict, List
+
+# Absolute: ComposeTool loads this file by path as `compose_module`, which has
+# no parent package, so a relative import raises at call time.
+from tooluniverse.utils import get_user_cache_dir, resolve_writable_path
 
 
 DETECTOR_NAME = "ToolRelationshipDetector"
@@ -42,7 +48,14 @@ def compose(arguments, tooluniverse, call_tool):  # noqa: D401
     if isinstance(max_tools, int) and max_tools > 0:
         tool_configs = tool_configs[:max_tools]
 
-    output_path = arguments.get("output_path", "./tool_relationship_graph.json")
+    # A relative path resolves into the cache directory: the server runs as a
+    # non-root uid whose working directory is not writable, and this graph was
+    # computed in full and then discarded on the write more than once.
+    output_path = resolve_writable_path(
+        arguments.get("output_path", "tool_relationship_graph.json"),
+        get_user_cache_dir(),
+    )
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     checkpoint_every = int(arguments.get("save_intermediate_every", 5000))
 
     # Prepare nodes list (unique tool names)

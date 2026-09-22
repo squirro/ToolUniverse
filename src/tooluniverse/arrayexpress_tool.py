@@ -205,9 +205,18 @@ class ArrayExpressRESTTool(BaseTool):
         """Extract files from a BioStudies section"""
         files = []
 
-        # Add files from current section
+        # Add files from current section. BioStudies wraps these in a list of
+        # lists exactly as it does subsections below -- `files: [[{...}]]` -- so
+        # flatten one level before reading. Keeping only the entries that were
+        # already dicts silently dropped every file of every study.
         if "files" in section and isinstance(section["files"], list):
+            entries = []
             for file_obj in section["files"]:
+                if isinstance(file_obj, list):
+                    entries.extend(file_obj)
+                else:
+                    entries.append(file_obj)
+            for file_obj in entries:
                 if isinstance(file_obj, dict):
                     files.append(
                         {

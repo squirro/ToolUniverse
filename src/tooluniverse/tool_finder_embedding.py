@@ -37,6 +37,14 @@ class ToolFinderEmbedding(BaseTool):
             tool_config (dict): Configuration dictionary for the tool
         """
         super().__init__(tool_config)
+        # Kept here, not only in load_tool_desc_embedding: that method is
+        # reached through load_rag_model, which raises ImportError wherever the
+        # embedding extra is not installed -- the served image, deliberately.
+        # The object then survived without a registry and failed three layers
+        # later with "'ToolFinderEmbedding' object has no attribute
+        # 'tooluniverse'", which names an attribute instead of the missing
+        # package the caller can actually do something about.
+        self.tooluniverse = tooluniverse
         self.rag_model = None
         self.tool_desc_embedding = None
         self.tool_name = None
@@ -422,8 +430,13 @@ class ToolFinderEmbedding(BaseTool):
             AssertionError: If both message and picked_tool_names are None
         """
         extra_factor = 1.5  # Factor to retrieve more than rag_num
-        if picked_tool_names is None:
-            assert picked_tool_names is not None or message is not None
+        # [] means "no preselection", not "select nothing" -- see
+        # tool_finder_keyword.find_tools for the full reasoning.
+        if not picked_tool_names:
+            assert message is not None, (
+                "find_tools needs a message to search for, or a non-empty "
+                "picked_tool_names"
+            )
             picked_tool_names = self.rag_infer(
                 message, top_k=int(rag_num * extra_factor)
             )

@@ -1,4 +1,5 @@
 <!--
+Triggers: expression, normal tissue expression, where is this gene expressed, GTEx, HPA, tissue levels, mRNA vs protein
 Ported from ToolUniverse skill `tooluniverse-expression-data-retrieval`. Research-safe
 domain (gene/protein expression-dataset retrieval — descriptive omics-repository search,
 no safety content). Re-maps the skill's report-FILE workflow to a chat OUTPUT CONTRACT
@@ -62,11 +63,11 @@ continue it across follow-up turns — still one report. Mark any dimension with
    accession, organism, type, platform, sample count, date, title for each hit. If 0 results, broaden
    keywords / drop the species filter / try an alias, then FALL BACK to §3 BioStudies.
 3. **BioStudies & Multi-Omics (primary)** — `biostudies_search`(query=[the search string from §1],
-   limit=10) for multi-omics studies (transcriptomics + proteomics + metabolomics under one
-   accession). For the TOP 1–3 BioStudies hits AND the TOP ArrayExpress experiment, ENRICH:
-   `arrayexpress_get_experiment`(accession=[an E-MTAB-… accession returned by §2]) for full
-   metadata/design, `arrayexpress_get_experiment_samples`(accession=[that same E-MTAB-… accession])
-   for sample groups/replicate count, `arrayexpress_get_experiment_files`(accession=[that same
+   pageSize=10) for multi-omics studies (transcriptomics + proteomics + metabolomics under one
+   accession). The page-size argument is `pageSize`; there is no `limit`. For the TOP 1–3 BioStudies hits AND the TOP ArrayExpress experiment, ENRICH:
+   `arrayexpress_get_experiment`(experiment_id=[an E-MTAB-… accession returned by §2]) for full
+   metadata/design, `arrayexpress_get_experiment_samples`(experiment_id=[that same E-MTAB-… accession])
+   for sample groups/replicate count, `arrayexpress_get_experiment_files`(experiment_id=[that same
    E-MTAB-… accession]) for downloadable raw/processed files, and `biostudies_get_study`(accession=
    [an S-BSST… accession returned by §3]) + `biostudies_get_study_files`(accession=[that same S-BSST…
    accession]) for BioStudies. Replicate count + processed-data presence DRIVE the quality grade
@@ -78,7 +79,9 @@ continue it across follow-up turns — still one report. Mark any dimension with
 5. **Cross-Repository Aggregation (primary)** — `OmicsDI_search_datasets`([the search string from §1])
    to sweep GEO + ArrayExpress + PRIDE + MassIVE in one call (catches proteomics/metabolomics
    depositions the transcriptomics searches miss). For sequencing STUDY-level coverage, also call
-   `ENAPortal_search_studies`(query with description=[the search string from §1]). For single-cell
+   `ENAPortal_search_studies`(query='description="[the search string from §1]"'). The single
+   declared search argument is `query`, and plain keywords in it return HTTP 400, so always wrap
+   them in description="…". For single-cell
    datasets, call `CxGDisc_search_datasets`([the exact disease ontology term, if you have one]) — it
    needs an EXACT ontology term, so only call it when you have one (else note "single-cell: exact
    ontology term required").
@@ -137,7 +140,7 @@ incomplete)". TU has no per-study prevalence/effect-size tool — never invent q
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Subject} with the actual gene / disease / tissue / accession searched. The parenthesized
@@ -169,4 +172,4 @@ Best dataset for the stated purpose; alternatives; integration / batch-correctio
 (Title | PMID | Year | Linked dataset | Source) — REAL papers from PubMed, not dataset listings.
 ## 8. Data Access
 Download links and repository URLs for the recommended datasets; note any access restrictions.
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

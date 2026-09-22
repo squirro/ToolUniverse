@@ -23,6 +23,18 @@ import requests
 from .base_tool import BaseTool
 from .tool_registry import register_tool
 
+# zeep is an optional dependency, and the SOAP handlers below catch its Fault.
+# The name has to be bound BEFORE the try blocks that reference it: an exception
+# class imported inside a try is unbound if that import is what fails, and Python
+# still evaluates the except clause -- raising UnboundLocalError over the real,
+# fixable cause ("zeep is required ... pip install zeep").
+try:
+    from zeep.exceptions import Fault
+except ImportError:  # pragma: no cover - exercised only when zeep is absent
+
+    class Fault(Exception):
+        """Stand-in so `except Fault` stays bindable without zeep installed."""
+
 BRENDA_WSDL = "https://www.brenda-enzymes.org/soap/brenda_zeep.wsdl"
 
 
@@ -121,8 +133,6 @@ class BRENDATool(BaseTool):
         organism = arguments.get("organism", "")
 
         try:
-            from zeep.exceptions import Fault
-
             client = _get_client()
             raw = client.service.getKmValue(
                 email=email,
@@ -179,8 +189,6 @@ class BRENDATool(BaseTool):
         organism = arguments.get("organism", "")
 
         try:
-            from zeep.exceptions import Fault
-
             client = _get_client()
             raw = client.service.getTurnoverNumber(
                 email=email,
@@ -241,8 +249,6 @@ class BRENDATool(BaseTool):
         organism = arguments.get("organism", "")
 
         try:
-            from zeep.exceptions import Fault
-
             client = _get_client()
             raw = client.service.getInhibitors(
                 email=email,
@@ -295,8 +301,6 @@ class BRENDATool(BaseTool):
         email, pw_hash = creds
 
         try:
-            from zeep.exceptions import Fault
-
             client = _get_client()
             raw = client.service.getSystematicName(
                 email=email,
@@ -523,8 +527,6 @@ class BRENDATool(BaseTool):
         creds = self._credentials()
         if creds:
             try:
-                from zeep.exceptions import Fault
-
                 email, pw_hash = creds
                 client = _get_client()
 

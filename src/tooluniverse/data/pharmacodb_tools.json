@@ -46,7 +46,7 @@
   {
     "name": "PharmacoDB_get_compound",
     "type": "PharmacoDBTool",
-    "description": "Get detailed information about a compound/drug from PharmacoDB, including chemical annotations (SMILES, InChIKey, PubChem CID, ChEMBL ID, FDA approval status), the datasets it has been profiled in, and its known molecular targets with associated genes. Look up by compound name or PharmacoDB compound ID. Useful for characterizing drug properties and identifying which pharmacogenomics datasets include a specific compound. Example: get details for Paclitaxel, Erlotinib, or Lapatinib.",
+    "description": "Get detailed information about a compound/drug from PharmacoDB, including chemical annotations (SMILES, InChIKey, PubChem CID, ChEMBL ID, FDA approval status), the datasets it has been profiled in, and its known molecular targets with associated genes. Look up by compound name or PharmacoDB compound ID. Useful for characterizing drug properties and identifying which pharmacogenomics datasets include a specific compound. Example: get details for Paclitaxel, Erlotinib, or Lapatinib. At least one of compound_name or compound_id is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -112,7 +112,7 @@
   {
     "name": "PharmacoDB_get_cell_line",
     "type": "PharmacoDBTool",
-    "description": "Get detailed information about a cancer cell line from PharmacoDB, including tissue of origin, disease annotations, dataset-specific synonyms, and accession IDs. Look up by cell line name or PharmacoDB cell ID. PharmacoDB harmonizes cell line identifiers across 10 pharmacogenomics datasets. Example: get details for MCF-7 breast cancer or A549 lung cancer cell line.",
+    "description": "Get detailed information about a cancer cell line from PharmacoDB, including tissue of origin, disease annotations, dataset-specific synonyms, and accession IDs. Look up by cell line name or PharmacoDB cell ID. PharmacoDB harmonizes cell line identifiers across 10 pharmacogenomics datasets. Example: get details for MCF-7 breast cancer or A549 lung cancer cell line. At least one of cell_name or cell_id is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -160,7 +160,7 @@
   {
     "name": "PharmacoDB_get_experiments",
     "type": "PharmacoDBTool",
-    "description": "Get drug sensitivity experiments from PharmacoDB with dose-response curves and pharmacological profiles. Returns experiment data including raw dose-response measurements and fitted parameters (IC50, EC50, AAC, Hill slope, Einf, DSS1/2/3). Filter by compound name, cell line name, and/or dataset. Integrates data from CCLE, CTRPv2, FIMM, GDSC1, GDSC2, GRAY, NCI60, PRISM, UHNBreast, and gCSI. Essential for comparing drug sensitivity across cell lines and datasets. Example: get Paclitaxel dose-response data across all cell lines.",
+    "description": "Get drug sensitivity experiments from PharmacoDB with dose-response curves and pharmacological profiles. Returns experiment data including raw dose-response measurements and fitted parameters (IC50, EC50, AAC, Hill slope, Einf, DSS1/2/3). Filter by compound name, cell line name, and/or dataset. Integrates data from CCLE, CTRPv2, FIMM, GDSC1, GDSC2, GRAY, NCI60, PRISM, UHNBreast, and gCSI. Essential for comparing drug sensitivity across cell lines and datasets. Example: get Paclitaxel dose-response data across all cell lines. At least one of compound_name or cell_line_name is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -282,7 +282,7 @@
   {
     "name": "PharmacoDB_get_biomarker_assoc",
     "type": "PharmacoDBTool",
-    "description": "Get gene-compound biomarker associations from PharmacoDB showing how gene expression or other molecular features correlate with drug sensitivity. Returns statistical associations including effect estimate, p-values, FDR, sensitivity statistic (AAC/IC50), molecular data type (rna/cnv/mutation), sample size, and tissue/dataset context. Filter by compound, gene (Ensembl ID), tissue, and molecular data type. Useful for pharmacogenomics biomarker discovery and validating drug sensitivity predictors. Example: find genes associated with Paclitaxel sensitivity in breast cancer.",
+    "description": "Get gene-compound biomarker associations from PharmacoDB showing how gene expression or other molecular features correlate with drug sensitivity. Returns statistical associations including effect estimate, p-values, FDR, sensitivity statistic (AAC/IC50), molecular data type (rna/cnv/mutation), sample size, and tissue/dataset context. Filter by compound, gene (Ensembl ID), tissue, and molecular data type. Useful for pharmacogenomics biomarker discovery and validating drug sensitivity predictors. Example: find genes associated with Paclitaxel sensitivity in breast cancer. At least one of compound_name or compound_id is required; a call providing none of them returns an error.",
     "parameter": {
       "type": "object",
       "properties": {

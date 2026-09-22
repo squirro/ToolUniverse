@@ -1,4 +1,5 @@
 <!--
+Triggers: somatic variant, tumour mutation meaning, driver or passenger, oncogenic variant, actionable mutation
 Ported from tooluniverse-cancer-variant-interpretation. OUTPUT CONTRACT replaces report-file
 workflow. DrugBank/ESM unavailable — ChEMBL+FDA+OT substitute for DrugBank; driver scoring
 notes ESM unavailability. Targets production 10000-char persona field.
@@ -58,9 +59,10 @@ The report is the deliverable (PDF-exportable). Mark dimensions with no data "No
 4. Therapeutic Associations
    `OpenTargets_target_disease_evidence`(gene_symbol="<GENE>", disease_name="<cancer_type>") →
    gene–disease evidence + drug candidates. Use efoId (underscore form, e.g. EFO_0001663) if resolved.
-   For top 3–5 drugs: `ChEMBL_get_drug_mechanisms`(drug_name="<drug>") → mechanism + target.
+   For top 3–5 drugs: FIRST `OpenTargets_get_drug_chembId_by_generic_name`(drugName="<drug>") → ChEMBL ID,
+   THEN `ChEMBL_get_drug_mechanisms`(drug_chembl_id="<ChEMBL ID>") → mechanism + target. `drug_chembl_id`
+   (a ChEMBL molecule ID, `CHEMBL…`) is REQUIRED; a call carrying only `drug_name` is rejected.
    For top 1–2 approved drugs: `FDA_get_indications_by_drug_name`(drug_name="<drug>") → label.
-   `OpenTargets_get_drug_chembId_by_generic_name`(drugName="<drug>") if ChEMBL ID needed.
 
 5. Resistance Mechanisms
    From §2 CIViC variants already retrieved: filter evidence_type="Predictive" + clinical_significance
@@ -139,4 +141,4 @@ Answer ALL FIVE synthesis questions — do not skip any:
 ## 6. Clinical Trials (NCT ID | title | phase | status | intervention | Source)
 ## 7. Prognostic Impact & Pathway Context
 ## 8. Literature & Research Activity
-## References — | # | Tool | Parameters | Section | Items Retrieved |
+## References — numbered footnote definitions only, each `[^n^]: [description](url)`

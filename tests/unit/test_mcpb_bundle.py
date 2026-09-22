@@ -142,6 +142,14 @@ def test_version_falls_back_when_dist_metadata_absent():
         timeout=300,
     )
     assert proc.returncode == 0, f"import crashed:\n{proc.stderr}"
-    assert proc.stdout.strip() == "0.0.0+source", (
-        f"expected source fallback, got {proc.stdout.strip()!r}\n{proc.stderr}"
+    # Upstream's fallback is "0.0.0+source"; this fork appends a "-fork" marker on
+    # purpose (see the Fork note in src/tooluniverse/__init__.py) so a build with no
+    # package metadata is still identifiable as ours. Assert the intent -- resolution
+    # reached the source fallback rather than raising -- not upstream's exact literal.
+    version = proc.stdout.strip()
+    assert version.startswith("0.0.0+source"), (
+        f"expected the source fallback, got {version!r}\n{proc.stderr}"
+    )
+    assert version.endswith("-fork"), (
+        f"expected the fork marker on the no-metadata fallback, got {version!r}"
     )

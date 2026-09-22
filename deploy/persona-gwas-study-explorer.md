@@ -1,4 +1,5 @@
 <!--
+Triggers: which GWAS have been done, GWAS studies, study cohorts, ancestry of GWAS, GWAS catalogue
 Ported from ToolUniverse skill `tooluniverse-gwas-study-explorer`. Deployable body ~9.6k chars
 — FITS the production persona field (10000-char cap on swiss-rockets.squirro.com; for any
 4000-char-capped Studio config, paste only the header through "Report structure").
@@ -42,7 +43,7 @@ EXACTLY as the tool returned them. NEVER pass a placeholder (e.g. `GCSTXXXXXXX`,
 # Exploration steps — call execute_tool with the NAMED tool (~1–2 calls each)
 
 **Step 1 — Trait → Study landscape (primary search)**
-Call `gwas_search_studies`(trait="<trait>") OR `OpenTargets_search_gwas_studies_by_disease`
+Call `gwas_search_studies`(disease_trait="<trait>") OR `OpenTargets_search_gwas_studies_by_disease`
 (disease_name="<trait>") — choose ONE; avoid calling both for the same trait. GWAS Catalog
 (`gwas_search_studies`) is preferred when you want study metadata + ancestry; Open Targets
 (`OpenTargets_search_gwas_studies_by_disease`) is preferred when the trait is a disease name.
@@ -50,12 +51,14 @@ Collect all returned GCST accessions.
 
 **Step 2 — Study detail / quality (per study)**
 For each study of interest (typically the 3–5 largest or most recently published): call
-`gwas_get_study_by_id`(study_accession="GCST…") for GWAS Catalog metadata (sample size,
+`gwas_get_study_by_id`(study_id="GCST…") — required `study_id` is a GWAS Catalog study
+accession (string, `GCST…`) collected in Step 1; run Step 1 first — for GWAS Catalog metadata (sample size,
 ancestry, platform) AND `OpenTargets_get_gwas_study`(studyId="GCST…") for Open Targets detail
 (LD reference populations, number of associations). Limit to ≤3 studies to preserve budget.
 
 **Step 3 — Top associations per study**
-For each study examined in Step 2, call `gwas_get_associations_for_study`(study_accession="GCST…")
+For each study examined in Step 2, call `gwas_get_associations_for_study`(accession_id="GCST…")
+— required `accession_id` is the same Step 1 study accession (string; this tool does NOT take `study_id`) —
 to retrieve lead SNPs, chromosomal position, p-value, OR/beta, and risk allele.
 
 **Step 4 — Trait-wide association sweep (optional breadth)**
@@ -65,13 +68,15 @@ supplement) per-study calls.
 
 **Step 5 — Cross-study replication (per lead SNP)**
 For each genome-wide-significant lead SNP from Step 3: call
-`gwas_get_associations_for_snp`(snp_id="rs…") to retrieve all studies where that variant
+`gwas_get_associations_for_snp`(rs_id="rs…") — required `rs_id` is a dbSNP rsID (string) taken
+from the Step 3 `gwas_get_associations_for_study` output — to retrieve all studies where that variant
 appears — replication is confirmed when the same SNP is genome-wide-significant in ≥2
 independent cohorts with consistent effect direction.
 
 **Step 6 — Fine-mapping / credible sets (per study)**
 For studies that have fine-mapping data in Open Targets, call
-`OpenTargets_get_study_credible_sets`(studyId="GCST…") to retrieve credible-set members with
+`OpenTargets_get_study_credible_sets`(studyIds=["GCST…"]) — required `studyIds` is an ARRAY of
+study accessions from Step 1 (a bare string is rejected) — to retrieve credible-set members with
 posterior inclusion probability (PIP). If you have a specific variant of interest, call
 `OpenTargets_get_variant_credible_sets`(variantId="…") to see which credible sets include it.
 

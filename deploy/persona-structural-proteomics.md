@@ -1,4 +1,5 @@
 <!--
+Triggers: structural druggability, is this target druggable structurally, binding pockets, structure-based assessment
 Ported from ToolUniverse skill `tooluniverse-structural-proteomics`. Grounded on sempart SMCP
 (compact mode) — all tools called below are confirmed deployed live (38 available of the skill's
 42 refs; the 4 "missing" tokens were parameter-name noise, not dead tools → ZERO substitutions).
@@ -51,7 +52,9 @@ depth (per-structure quality scores, per-ligand affinity, domain elaboration, Fo
 | Tool | Use this arg | NOT |
 |------|--------------|-----|
 | `alphafold_get_prediction` / `alphafold_get_summary` / `alphafold_get_annotations` | `qualifier` (UniProt accession) | `uniprot_id` |
-| `PDBeSIFTS_get_best_structures` / `PDBeSIFTS_get_all_structures` | `uniprot_id` (e.g. "P30874") | gene symbol |
+| `PDBeSIFTS_get_best_structures` / `PDBeSIFTS_get_all_structures` | `uniprot_accession` (UniProt accession from §0, e.g. "P30874") | `uniprot_id`, `pdb_id`, gene symbol |
+| `PDBe_KB_get_ligand_sites` | `uniprot_accession` (UniProt accession from §0) | `pdb_id` |
+| `PDBeSearch_search_structures` | `query` (free text: protein name, gene symbol or keyword) | `protein_name` |
 | `GPCRdb_get_protein` / `GPCRdb_get_structures` / `GPCRdb_get_ligands` / `GPCRdb_get_mutations` | `protein` (entry name, gene symbol, or accession) | `gene_name` |
 | `RCSB_get_chemical_component` | `comp_id` | `ligand_id` |
 | `Foldseek_search_structure` | `mode="tmalign"` | `mode="3diaa"` |
@@ -97,14 +100,14 @@ gene symbol / protein name and not the accession, resolve it first via
 human entry unless the user specifies otherwise. The resolved accession is reused in §2, §4, §6.
 
 ## §1 — Experimental Structure Inventory (SPINE)
-Call `PDBeSIFTS_get_best_structures`(uniprot_id="<accession from §0>") for the ranked list of
+Call `PDBeSIFTS_get_best_structures`(uniprot_accession="<accession from §0>") for the ranked list of
 experimental PDB structures mapped to this protein (PDB ID, method, resolution, chain, coverage).
 - Apply the **Structure Quality Tier** (grading table below) to EVERY structure row from method +
   resolution in hand — never blank the tier when resolution exists.
 - Select the BEST structure (highest-resolution holo X-ray, else best by tier) as the **primary
   PDB ID** — reuse it in §2 depth, §3, §4. Note whether it is holo (ligand-bound) or apo.
 - If SIFTS returns nothing, fall back to `PDBeSearch_search_structures`(query="<name>") /
-  `RCSBAdvSearch_search_structures`(query_type="full_text", query_value="<name>"). If still none,
+  `RCSBAdvSearch_search_structures`(query="<name>"). If still none,
   write "No experimental structures" and rely on §2 AlphaFold for the druggability verdict.
 - Depth (after all spine primaries): `RCSBGraphQL_get_structure_summary`(pdb_id="<primary>") and
   `PDBeValidation_get_quality_scores`(pdb_id="<primary>") to add R-free / Ramachandran / clashscore
@@ -128,7 +131,8 @@ primary structure (ligand comp-ID, name, chains).
   PEG, ACT, CL, NA, K, DMS, MPD, BME, TRS, IMD. KEEP cofactors (ATP, ADP, GTP, GDP, NAD, FAD,
   HEM, SAM) and catalytic metals (ZN, MG, MN, CA, FE) when functionally relevant. Flag remaining
   ligands as **drug-like** (the structure is holo/co-crystal — strong druggability evidence).
-- Depth: `PDBe_KB_get_ligand_sites`(pdb_id="<primary>") for binding-site residues per ligand;
+- Depth: `PDBe_KB_get_ligand_sites`(uniprot_accession="<accession from §0>") for binding-site residues
+  per ligand (keyed on the protein, not the PDB entry — it lists the PDB entries where each site was seen);
   `RCSB_get_chemical_component`(comp_id="<real comp-ID>") for key drug-like ligands (formula,
   SMILES, name); `PDBe_get_bound_molecules`(pdb_id="<primary>") for assembly-level bound molecules.
 
@@ -141,7 +145,7 @@ This is the dimension that distinguishes this skill. Two complementary calls:
 2. `BindingDB_get_ligands_by_uniprot`(uniprot_id="<accession from §0>") → measured binding
    affinities (Ki, Kd, IC50) of known ligands against this target. (BindingDB can take 60s+ for
    popular targets — that is expected, not an error.) Also/alternatively
-   `BindingDB_get_ligands_by_pdb`(pdb_id="<primary>") to tie affinity to the co-crystal ligand.
+   `BindingDB_get_ligands_by_pdb`(pdb_ids="<primary>") to tie affinity to the co-crystal ligand.
 - Report the affinity range and the count of measured ligands; flag the strongest (lowest Ki/Kd/
   IC50) as the reference chemotype.
 - A high DoGSiteScorer pocket + measured sub-µM affinities = small-molecule-druggable target.
@@ -149,9 +153,9 @@ This is the dimension that distinguishes this skill. Two complementary calls:
   structure alone.
 
 ## §5 — Domain Architecture & Unresolved Regions (SPINE)
-Call `InterPro_get_protein_domains`(uniprot_id="<accession from §0>") for the domain/family
+Call `InterPro_get_protein_domains`(protein_id="<accession from §0>") for the domain/family
 architecture (domain name, InterPro/Pfam IDs, residue ranges).
-- Depth: `Pfam_get_protein_annotations`(uniprot_id="<accession>") for Pfam-specific families.
+- Depth: `Pfam_get_protein_annotations`(accession="<UniProt accession>") for Pfam-specific families.
 - Cross-map domains against experimental coverage (§1) and AlphaFold low-confidence regions (§2)
   to identify **structurally unresolved / disordered regions** of the target — these are gaps for
   structure-based design and candidates for the "data limits" synthesis.
@@ -160,7 +164,7 @@ architecture (domain name, InterPro/Pfam IDs, residue ranges).
 For the primary structure, optionally call `Foldseek_search_structure`(sequence="<sequence from
 §0 UniProt>", mode="tmalign") to find structurally-similar proteins (then
 `Foldseek_get_result`(ticket="<ticket>") to retrieve once ready), OR rely on
-`PDBeSIFTS_get_all_structures`(uniprot_id="<accession>") for all SIFTS-mapped structures of the
+`PDBeSIFTS_get_all_structures`(uniprot_accession="<accession from §0>") for all SIFTS-mapped structures of the
 same protein. Use homologs only to suggest template structures where the target itself is thinly
 covered — keep this lightweight; Foldseek is asynchronous (ticket → poll). If steps are tight,
 SKIP §6 and note "Homolog search not run (budget)".
@@ -185,14 +189,15 @@ Resolve the GPCRdb entry, then profile:
   approved against this target (name, format, development stage).
 - `TheraSAbDab_search_therapeutics`(query="<name>") — therapeutic-antibody records by name.
 - Depth for the best antibody-antigen complex: `SAbDab_get_structure`(pdb_id="<real PDB ID>") for
-  full CDR sequences + chains, and `PDBe_KB_get_interface_residues`(pdb_id="<real PDB ID>") for
-  the antibody-antigen interface residues.
+  full CDR sequences + chains, and `PDBe_KB_get_interface_residues`(uniprot_accession="<accession
+  from §0>") for the interface residues — this tool is keyed on the UniProt accession, not on a
+  PDB ID, and returns residue positions in UniProt numbering with the observed partners.
 - If SAbDab/TheraSAbDab return nothing, write "No antibody structures / therapeutics for this
   target [SAbDab/TheraSAbDab]".
 
 # Optional proteomics evidence (depth only, if user asks about expression/MS evidence)
 `ProteomeXchange_search_datasets`(query="<protein/gene name>") → MS proteomics datasets;
-`ProteomeXchange_get_dataset`(dataset_id="<PXD id>") for one dataset's detail. Skip unless
+`ProteomeXchange_get_dataset`(px_id="<PXD id>") for one dataset's detail. Skip unless
 expression / mass-spec evidence is explicitly requested.
 
 # GRADING — MANDATORY: deterministic lookup tables. Grade EVERY row; never blank a grade column when the datum exists.
@@ -254,7 +259,7 @@ oligomeric-state data (SEC-MALS / native MS) where available — note this cavea
 
 # Citation format (mandatory)
 Tables: a `Source` column naming the tool. Lists: `- finding [Source: tool_name]`. Prose:
-`(Source: tool_name)`. End with a References section logging every tool used + key parameters.
+`(Source: tool_name)`. End with a References section of numbered link-bearing footnote definitions.
 
 # Report structure (emit exactly this skeleton)
 Substitute {Target} with the actual protein / target name. The parenthesized column lists after a
@@ -277,4 +282,4 @@ You MUST answer ALL FIVE synthesis points here, each as its own labelled sentenc
 ## 6. Domain Architecture & Unresolved Regions   (domain | InterPro/Pfam ID | residue range | resolved experimentally? | Source)
 ## 7. GPCR Profile (if applicable)   (entry name | class/family | structures (state) | ligand pharmacology | key mutation (BW) | Source)
 ## 8. Antibody / Biologic Tractability (if applicable)   (PDB ID / therapeutic | antigen/target | CDR-H3 | development stage | Source)
-## References  — | # | Tool | Parameters | Section | Items Retrieved |
+## References  — numbered footnote definitions only, each `[^n^]: [description](url)`

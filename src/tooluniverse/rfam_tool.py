@@ -329,13 +329,17 @@ class RfamTool(BaseTool):
 
         url = f"{RFAM_BASE_URL}/family/{family_id}/structures"
 
-        headers = {}
+        # This route ignores the Accept header and answers 500 with an HTML
+        # error page unless the format is given as a query parameter. Its
+        # /family/{id} sibling accepts either form, which is why the two
+        # near-identical methods behaved differently.
+        params = {}
         if format_type == "json":
-            headers["Accept"] = "application/json"
+            params["content-type"] = "application/json"
         elif format_type == "xml":
-            headers["Accept"] = "text/xml"
+            params["content-type"] = "text/xml"
 
-        response = requests.get(url, headers=headers, timeout=30)
+        response = requests.get(url, params=params, timeout=30)
 
         if response.status_code == 200:
             if format_type == "json":

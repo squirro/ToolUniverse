@@ -25,7 +25,7 @@
       ]
     },
     "fields": {
-      "endpoint": "https://www.ebi.ac.uk/intact/ws/interactor/{identifier}",
+      "endpoint": "https://www.ebi.ac.uk/intact/ws/interactor/findInteractor/{identifier}",
       "return_format": "JSON"
     },
     "return_schema": {
@@ -165,7 +165,7 @@
       ]
     },
     "fields": {
-      "endpoint": "https://www.ebi.ac.uk/intact/ws/interaction/{interaction_id}",
+      "endpoint": "https://www.ebi.ac.uk/intact/ws/interaction/findInteractions/{interaction_id}",
       "return_format": "JSON"
     },
     "return_schema": {
@@ -174,7 +174,7 @@
     },
     "test_examples": [
       {
-        "interaction_id": "EBI-10000001"
+        "interaction_id": "EBI-61242268"
       }
     ]
   },

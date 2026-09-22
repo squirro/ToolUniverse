@@ -330,9 +330,12 @@ class ProtVarPopulationTool(BaseTool):
         except Exception as e:
             return {"status": "error", "error": f"ProtVar API error: {e}"}
 
-        # Parse co-located variants
+        # Parse co-located variants. `variants` is what ProtVar actually returns;
+        # neither of the two legacy keys appears in the response, so this always
+        # fell through to an empty list even for positions with data. The fields
+        # read inside each entry were right all along.
         variants = []
-        for key in ("proteinColocatedVariant", "genomicColocatedVariant"):
+        for key in ("variants", "proteinColocatedVariant", "genomicColocatedVariant"):
             items = result.get(key)
             if not items:
                 continue

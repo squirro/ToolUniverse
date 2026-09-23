@@ -264,15 +264,9 @@ def _expand_intervention(term: str, timeout: int = 15) -> str:
         return " ".join(_re.sub(r"\[[^\]]*\]", "", s).strip().split()) or s
 
     try:
-        try:
-            from ..sr_synonyms import expand_synonyms
-        except (ImportError, SystemError):
-            try:
-                from integration.genai.research_pipeline.tools.synonyms import expand_synonyms
-            except ImportError:
-                log.warning("synonym expansion not available, using raw term")
-                return f'"{_sanitize(term)}"'
+        from ..sr_synonyms import expand_synonyms
     except ImportError:
+        log.warning("synonym expansion not available, using raw term")
         return f'"{_sanitize(term)}"'
 
     synonyms = expand_synonyms(term, timeout=timeout, max_terms=12)

@@ -124,13 +124,7 @@ def fetch_ctgov_trials(gene_symbol, indication="", timeout=30, search_mode="targ
 
     if search_mode == "intervention":
         # Expand synonyms for precise intervention search
-        try:
-            from ..sr_synonyms import expand_synonyms
-        except (ImportError, SystemError):
-            try:
-                from ..sr_synonyms import expand_synonyms
-            except ImportError:
-                from integration.genai.research_pipeline.tools.synonyms import expand_synonyms
+        from ..sr_synonyms import expand_synonyms
 
         synonyms = expand_synonyms(gene_symbol, timeout=min(timeout, 15))
         # Use query.intr (searches InterventionName + OtherName + Description)

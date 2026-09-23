@@ -75,13 +75,7 @@ def _sanitize_for_ctgov(s):
 def _expand_intervention(term, timeout=15):
     """Expand an intervention term into OR'd synonyms for query.intr."""
     try:
-        try:
-            from ..sr_synonyms import expand_synonyms
-        except (ImportError, SystemError):
-            try:
-                from ..sr_synonyms import expand_synonyms
-            except ImportError:
-                from integration.genai.research_pipeline.tools.synonyms import expand_synonyms
+        from ..sr_synonyms import expand_synonyms
     except ImportError:
         log.warning("synonym expansion not available, using raw term")
         return f'"{_sanitize_for_ctgov(term)}"'

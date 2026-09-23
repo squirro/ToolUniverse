@@ -6,7 +6,7 @@
   "_measured": "2026-09-23",
   "_note": "The invariant: the accepted counts sum to exactly every swallow the scan finds, so a new one cannot hide behind a site that already holds one.",
   "root": "src/tooluniverse",
-  "count": 296,
+  "count": 295,
   "modules": 116,
   "sites": {
     "__init__.py:09f2ee2b744a": {
@@ -342,10 +342,6 @@
       "reason": "carried over from the frozen count; upstream code, containment not remediation"
     },
     "euhealth/tools_runtime.py:e69ffd833708": {
-      "count": 1,
-      "reason": "carried over from the frozen count; upstream code, containment not remediation"
-    },
-    "europe_pmc_tool.py:8f026f46ebc9": {
       "count": 1,
       "reason": "carried over from the frozen count; upstream code, containment not remediation"
     },

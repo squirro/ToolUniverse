@@ -174,6 +174,9 @@ def _detect_ncbi_oai_error(xml_text: str) -> dict | None:
     return None
 
 
+_RETRYABLE_STATUSES = (408, 429, 500, 502, 503, 504)
+
+
 def _fetch_fulltext_with_trace(
     session: requests.Session,
     *,
@@ -307,6 +310,9 @@ def _fetch_fulltext_with_trace(
             }
 
     last = trace[-1] if trace else {}
+    # Any attempt worth repeating makes the chain worth repeating. Reporting only the
+    # last one presented a 503 followed by a 403 as not worth asking again.
+    retryable = any(entry.get("status_code") in _RETRYABLE_STATUSES for entry in trace)
     return {
         "ok": False,
         "url": last.get("url"),
@@ -314,6 +320,7 @@ def _fetch_fulltext_with_trace(
         "format": None,
         "content_type": last.get("content_type"),
         "status_code": last.get("status_code"),
+        "retryable": retryable,
         "content": None,
         "trace": trace,
     }
@@ -346,6 +353,12 @@ class EuropePMCTool(BaseTool):
             }
         )
 
+    # Bounds on how much full text one search opens. Named so the envelope can state
+    # them: a cap applied silently reads as the literature having nothing more to give.
+    MAX_FULLTEXT_ARTICLES = 3
+    MAX_SNIPPETS_PER_TERM = 3
+    MAX_ENRICHED_ABSTRACTS = 3
+
     def run(self, arguments):
         query = arguments.get("query")
         limit = arguments.get("limit") or arguments.get("page_size") or 5
@@ -377,9 +390,22 @@ class EuropePMCTool(BaseTool):
             enrich_missing_abstract=enrich_missing_abstract,
             extract_terms_from_fulltext=extract_terms_from_fulltext,
         )
-        metadata = {"count": len(articles), "query": query, "source": "Europe PMC",
+        failed = len(articles) == 1 and articles[0].get("error")
+        metadata = {"count": 0 if failed else len(articles), "query": query,
+                    "source": "Europe PMC",
                     "total": getattr(self, "_last_hit_count", None)}
-        if len(articles) == 1 and articles[0].get("error"):
+        if extract_terms_from_fulltext or enrich_missing_abstract:
+            # Caps that narrow the answer. Applied silently they read as the literature
+            # having nothing more to give.
+            metadata["limits"] = {
+                "fulltext_articles_scanned": self.MAX_FULLTEXT_ARTICLES,
+                "snippets_per_term": self.MAX_SNIPPETS_PER_TERM,
+                "abstracts_enriched": self.MAX_ENRICHED_ABSTRACTS,
+                "note": ("Only the first articles of the page are opened, and only the "
+                         "first matches of each term are quoted. A term absent from these "
+                         "snippets is not a term absent from the literature."),
+            }
+        if failed:
             # A failure of the source must not look like an answer.
             return {"status": "error", "error": articles[0]["error"],
                     "retryable": articles[0].get("retryable", False), "data": [], "metadata": metadata}
@@ -387,8 +413,10 @@ class EuropePMCTool(BaseTool):
 
     @staticmethod
     def _error_item(error: str, *, retryable: bool, reason: str | None = None) -> dict:
+        # No `citations` and no `open_access`: a search that never reached the source
+        # knows nothing about the paper, and a zero or a False here reads as if it did.
         item = {"title": "Error", "abstract": None, "authors": [], "journal": None, "year": None,
-                "doi": None, "url": None, "citations": 0, "open_access": False, "keywords": [],
+                "doi": None, "url": None, "keywords": [],
                 "source": "Europe PMC", "error": error, "retryable": retryable}
         if reason is not None:
             item["reason"] = reason
@@ -544,9 +572,10 @@ class EuropePMCTool(BaseTool):
                 lite_rec = lite_map[rec["id"]]
                 journal = lite_rec.get("journalTitle")
 
-            # If still no journal information, use source field
-            if not journal:
-                journal = rec.get("source")
+            # `source` is Europe PMC's code for its own index -- MED, PMC, PPR -- not the
+            # journal. Printed here it read as a journal title whenever the lite request,
+            # which carries the real one, had failed.
+            journal = journal or None
 
             # Extract DOI
             doi = rec.get("doi") or None
@@ -635,7 +664,7 @@ class EuropePMCTool(BaseTool):
 
         if enrich_missing_abstract:
             # Keep enrichment bounded to avoid slow calls.
-            max_enrich = min(int(limit) if limit else 5, 3)
+            max_enrich = min(int(limit) if limit else 5, self.MAX_ENRICHED_ABSTRACTS)
             enriched = 0
             for a in articles:
                 if enriched >= max_enrich:
@@ -652,6 +681,11 @@ class EuropePMCTool(BaseTool):
                 )
                 content = fetch.get("content")
                 if not isinstance(content, str) or not content.strip():
+                    a["abstract_error"] = (
+                        "No abstract was recorded and the full text could not be fetched, "
+                        "so this article's abstract is unread rather than absent.")
+                    a["abstract_retrieval_trace"] = fetch.get("trace") or []
+                    enriched += 1
                     continue
 
                 abstract_from_fulltext = None
@@ -689,8 +723,7 @@ class EuropePMCTool(BaseTool):
                     for i in range(0, len(all_valid_terms), batch_size)
                 ]
 
-                # Process up to 3 OA articles to avoid latency
-                max_snippet_articles = 3
+                max_snippet_articles = self.MAX_FULLTEXT_ARTICLES
                 processed = 0
 
                 for a in articles:
@@ -712,6 +745,15 @@ class EuropePMCTool(BaseTool):
                         )
                         content = fetch.get("content")
                         if not isinstance(content, str) or not content.strip():
+                            # A full text nobody could read is not a paper without the
+                            # term. Skipping it silently was how the run concluded that.
+                            a["fulltext_snippets_error"] = (
+                                "The full text could not be fetched, so this article was "
+                                "not searched for the terms. Absence of a snippet here is "
+                                "not absence of the term in the paper.")
+                            a["fulltext_snippets_retryable"] = fetch.get("retryable", False)
+                            a["fulltext_snippets_retrieval_trace"] = fetch.get("trace") or []
+                            processed += 1
                             continue
 
                         if fetch.get("format") == "xml":
@@ -719,6 +761,11 @@ class EuropePMCTool(BaseTool):
                                 root = ET.fromstring(content or "")
                                 text = " ".join("".join(root.itertext()).split())
                             except ET.ParseError:
+                                a["fulltext_snippets_error"] = (
+                                    "The full text came back but could not be parsed as "
+                                    "XML, so this article was not searched for the terms.")
+                                a["fulltext_snippets_retrieval_trace"] = fetch.get("trace") or []
+                                processed += 1
                                 continue
                         else:
                             text = _extract_text_from_html(content)
@@ -728,7 +775,7 @@ class EuropePMCTool(BaseTool):
                         total_chars = 0
                         max_total_chars = 8000
                         window_chars = 220
-                        max_snippets_per_term = 3
+                        max_snippets_per_term = self.MAX_SNIPPETS_PER_TERM
                         low = text.lower()
 
                         for batch in term_batches:
@@ -759,8 +806,11 @@ class EuropePMCTool(BaseTool):
                             )
 
                         processed += 1
-                    except Exception:
-                        # Silently skip articles that fail snippet extraction
+                    except Exception as exc:
+                        a["fulltext_snippets_error"] = (
+                            f"Snippet extraction failed for this article ({exc}), so it "
+                            "was not searched for the terms.")
+                        processed += 1
                         continue
 
         return articles

@@ -195,9 +195,10 @@ steps:
     calls:
       - tool: get_joint_associated_diseases_by_HPO_ID_list
         arguments: {HPO_ID_list: "{hpo_ids}", limit: 20}
-    # The tool answers a bare list of names, which the executor hands the run as
-    # {"result": [...]}.
-    extract: {strict_candidates: {path: "result"}}
+    # The tool answers an envelope: the names under data.diseases, and data.total saying
+    # how many carry every phenotype before the caller's limit cut it.
+    extract: {strict_candidates: {path: "data.diseases"}}
+    total: "data.total"
     produces: [strict_candidates]
     notes: >-
       A SHORT list here is normal, not a failure — a common phenotype is annotated
@@ -209,7 +210,8 @@ steps:
     calls:
       - tool: get_joint_associated_diseases_by_HPO_ID_list
         arguments: {HPO_ID_list: "{discriminating_hpo_ids}", limit: 30}
-    extract: {decisive_candidates: {path: "result"}}
+    extract: {decisive_candidates: {path: "data.diseases"}}
+    total: "data.total"
     produces: [decisive_candidates]
     notes: >-
       This is the call that surfaces the clinically decisive differential — the

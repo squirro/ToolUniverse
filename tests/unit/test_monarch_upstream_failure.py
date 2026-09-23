@@ -52,12 +52,17 @@ def test_a_server_error_is_retried_and_then_reported_with_the_upstream_status(se
 
 
 def test_a_good_answer_still_gives_the_intersection_of_disease_names(session):
+    """The names now arrive in an envelope, so a caller can tell an answer from a failure."""
     session.request.side_effect = [
         _response(200, {"items": [{"subject_label": "Hurler"}, {"subject_label": "Other"}]}),
         _response(200, {"items": [{"subject_label": "Hurler"}]}),
     ]
 
-    assert MonarchDiseasesForMultiplePhenoTool(CONFIG).run({"HPO_ID_list": ["HP:1", "HP:2"]}) == ["Hurler"]
+    out = MonarchDiseasesForMultiplePhenoTool(CONFIG).run({"HPO_ID_list": ["HP:1", "HP:2"]})
+
+    assert out["status"] == "success"
+    assert out["data"]["diseases"] == ["Hurler"]
+    assert out["data"]["total"] == 1
 
 
 def test_a_body_that_is_not_json_is_an_error_with_the_status_not_false(session):

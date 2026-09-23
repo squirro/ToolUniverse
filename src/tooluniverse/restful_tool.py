@@ -19,7 +19,13 @@ def execute_RESTful_query(endpoint_url, variables=None):
     if response.status_code >= 400:
         reason = (response.text or "")[:120].replace("\n", " ")
         return _upstream_error(f"{endpoint_url} answered HTTP {response.status_code}: {reason}",
-                               response.status_code, retryable=response.status_code in RETRY_STATUSES)
+                               response.status_code,
+                               retryable=response.status_code in RETRY_STATUSES,
+                               # A 404 is the source answering that nothing matches. Stamped
+                               # as a service error it read as the source having failed,
+                               # because the type string is what the run matches on.
+                               error_type=("UpstreamNotFound" if response.status_code == 404
+                                           else "UpstreamServiceError"))
     try:
         result = response.json()
     except ValueError:
@@ -86,33 +92,74 @@ class MonarchTool(RESTfulTool):
 
 @register_tool("MonarchDiseasesForMultiplePheno")
 class MonarchDiseasesForMultiplePhenoTool(MonarchTool):
+    """The diseases every one of several phenotypes is annotated with."""
+
+    # Monarch's own page for one phenotype. A common phenotype is annotated on thousands
+    # of diseases, so a page is not the set and the response's `total` says which it is.
+    PHENOTYPE_PAGE = 500
+
     def __init__(self, tool_config):
         super().__init__(tool_config)
 
     def run(self, arguments):
         arguments = copy.deepcopy(arguments)
+        phenotypes = list(arguments.get("HPO_ID_list") or [])
+        if not phenotypes:
+            return {"status": "error",
+                    "error": "HPO_ID_list is empty, so there is no intersection to take. "
+                             "Pass at least one HPO id."}
+
         query_schema_runtime = copy.deepcopy(self.query_schema)
         for key in query_schema_runtime:
             if (key != "HPO_ID_list") and (key in arguments):
                 query_schema_runtime[key] = arguments[key]
-        all_diseases = []
-        for HPOID in arguments["HPO_ID_list"]:
-            each_query_schema_runtime = copy.deepcopy(query_schema_runtime)
-            each_query_schema_runtime["object"] = HPOID
-            each_query_schema_runtime["limit"] = 500
-            each_output = execute_RESTful_query(
-                endpoint_url=self.endpoint_url, variables=each_query_schema_runtime
-            )
-            if isinstance(each_output, dict) and each_output.get("status") == "error":
-                # One list missing makes the intersection meaningless, so the call fails whole.
-                return each_output
-            items = each_output.get("items", []) if isinstance(each_output, dict) else []
-            all_diseases.append([disease["subject_label"] for disease in items])
+        limit = int(query_schema_runtime.get("limit") or 0)
+        # Never ask for less than the caller wants: the intersection cannot hold more
+        # than the smallest per-phenotype page it was built from.
+        page = max(limit, self.PHENOTYPE_PAGE)
 
-        intersection = set(all_diseases[0])
-        for element in all_diseases[1:]:
-            intersection &= set(element)
-        intersection = list(intersection)
-        if query_schema_runtime["limit"] < len(intersection):
-            intersection = intersection[: query_schema_runtime["limit"]]
-        return intersection
+        per_phenotype: dict = {}
+        truncated = []
+        for hpo_id in phenotypes:
+            each = copy.deepcopy(query_schema_runtime)
+            each["object"] = hpo_id
+            each["limit"] = page
+            answer = execute_RESTful_query(endpoint_url=self.endpoint_url, variables=each)
+            if isinstance(answer, dict) and answer.get("status") == "error":
+                # One list missing makes the intersection meaningless, so the call fails whole.
+                return answer
+            if not isinstance(answer, dict) or "items" not in answer:
+                return {"status": "error",
+                        "error": (f"Monarch answered for {hpo_id} without an `items` list, so "
+                                  "that phenotype contributed nothing. An empty contribution "
+                                  "would empty the whole intersection, which would read as a "
+                                  "real negative.")}
+            items = answer["items"] or []
+            total = answer.get("total")
+            if isinstance(total, int) and total > len(items):
+                truncated.append({"phenotype": hpo_id, "read": len(items),
+                                  "source_total": total})
+            per_phenotype[hpo_id] = [d.get("subject_label") for d in items
+                                     if isinstance(d, dict) and d.get("subject_label")]
+
+        shared = set(per_phenotype[phenotypes[0]])
+        for hpo_id in phenotypes[1:]:
+            shared &= set(per_phenotype[hpo_id])
+        # Ordered by the first phenotype's own order. Cutting an unordered set to a limit
+        # drops arbitrary candidates, and the one dropped can be the diagnosis.
+        ordered = [name for name in dict.fromkeys(per_phenotype[phenotypes[0]])
+                   if name in shared]
+        kept = ordered[:limit] if limit and limit < len(ordered) else ordered
+
+        data = {"diseases": kept, "total": len(ordered), "phenotypes": phenotypes,
+                "per_phenotype_counts": {k: len(v) for k, v in per_phenotype.items()}}
+        if len(kept) < len(ordered):
+            data["note"] = (f"{len(ordered)} diseases carry every phenotype; the {len(kept)} "
+                            "shown are the caller's limit, in the first phenotype's order.")
+        if truncated:
+            data["truncated_phenotypes"] = truncated
+            data["truncation_warning"] = (
+                "Monarch cut at least one phenotype's disease list, so the intersection is a "
+                "lower bound: a disease past the cut left it without being counted. The "
+                "phenotypes and their totals are under `truncated_phenotypes`.")
+        return {"status": "success", "data": data}

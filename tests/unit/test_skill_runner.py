@@ -1180,8 +1180,9 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
     no step blocked and no fact unresolved."""
     responses = {
         "get_HPO_ID_by_phenotype": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0001433"}]}},
-        # a bare list is wrapped as {"result": [...]}, the way the runner sees it
-        "get_joint_associated_diseases_by_HPO_ID_list": {"result": ["Gaucher disease"]},
+        # the intersection answers an envelope, so the run can tell it from a failure
+        "get_joint_associated_diseases_by_HPO_ID_list": {
+            "status": "success", "data": {"diseases": ["Gaucher disease"], "total": 1}},
         "Orphanet_search_diseases": {"data": {"results": [
             {"ORPHAcode": 355, "Preferred term": "Gaucher disease"}]}},
         "Orphanet_get_genes": {"data": {"orpha_code": "355", "genes": [{"Symbol": "GBA"}]}},
@@ -1314,8 +1315,8 @@ def _rare_disease_run(orphanet_hits):
     calls = []
     responses = {
         "get_HPO_ID_by_phenotype": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0000280"}]}},
-        "get_joint_associated_diseases_by_HPO_ID_list": ["Hunter syndrome", "GM1 gangliosidosis",
-                                                         "Sialuria"],
+        "get_joint_associated_diseases_by_HPO_ID_list": {"status": "success", "data": {
+            "diseases": ["Hunter syndrome", "GM1 gangliosidosis", "Sialuria"], "total": 3}},
         "EuropePMC_search_articles": {"data": []},
         "MyGene_query_genes": {"data": {"hits": [{"_id": "3423", "symbol": "IDS",
                                                   "name": "iduronate 2-sulfatase", "entrezgene": "3423",

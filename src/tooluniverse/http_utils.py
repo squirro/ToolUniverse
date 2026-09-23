@@ -19,14 +19,17 @@ RetryStatuses = Sequence[int]
 DEFAULT_RETRY_STATUSES = (408, 429, 500, 502, 503, 504)
 
 
-def upstream_error(message: str, status: Optional[int], *, retryable: bool) -> dict:
+def upstream_error(message: str, status: Optional[int], *, retryable: bool,
+                   error_type: str = "UpstreamServiceError") -> dict:
     """A service failure reported as an error, never as an empty answer.
 
     The shape a caller tests for: a `status` of "error" plus the typed details a run
-    reads to tell a failed source from a source with nothing to say.
+    reads to tell a failed source from a source with nothing to say. `error_type` is what
+    the run matches on, so a source that answered "nothing matches" gives a type of its
+    own rather than borrowing the service-failure one.
     """
     return {"status": "error", "error": message, "upstream_status": status, "retryable": retryable,
-            "error_details": {"type": "UpstreamServiceError", "retriable": retryable}}
+            "error_details": {"type": error_type, "retriable": retryable}}
 
 
 def error_from_exception(exc: Exception, what: str) -> dict:

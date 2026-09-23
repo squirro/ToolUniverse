@@ -94,11 +94,20 @@ _LINK = re.compile(r"https?://[^\s<>\"')\]]+")
 _CREDENTIAL = re.compile(r"[?&](?:api_?key|token|access_token|key)=[^&#\s]*", re.IGNORECASE)
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{5,}")
 
+# What a search engine or a share button adds on the way. These name no page, so two links
+# differing only in them are one page and refusing the citation says they are two.
+_TRACKING = re.compile(r"[?&](?:utm_[a-z_]+|fbclid|gclid|mc_cid|mc_eid)=[^&#\s]*",
+                       re.IGNORECASE)
+_WWW = re.compile(r"^(https?://)www\.", re.IGNORECASE)
+
 
 def _bare(link: str) -> str:
-    """A link as cited or as received: without credentials, trailing punctuation or case."""
-    link = _CREDENTIAL.sub("", link)
-    return link.rstrip(".,;:!?/&").lower()
+    """A link as cited or as received: without credentials, tracking, ``www.``, trailing
+    punctuation or case. One page spelled two ways must reduce to one string."""
+    link = _TRACKING.sub("", _CREDENTIAL.sub("", link))
+    if "?" not in link and "&" in link:
+        link = link.replace("&", "?", 1)  # the query opener went with the parameter it led
+    return _WWW.sub(r"\1", link).rstrip(".,;:!?/&").lower()
 
 
 def _built_from_received(link: str, text: str, domains: set[str]) -> bool:

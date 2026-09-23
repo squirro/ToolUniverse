@@ -345,3 +345,83 @@ def test_a_judged_mapping_the_report_does_not_show_is_a_failure_naming_the_hidde
 
     assert failure["text"] == "requested_meddra: FALL"
     assert [f for f in check_report(shown, MAPPED) if f["kind"] == "mapping_not_shown"] == []
+
+
+# --- the same page, spelled differently, is the same page -------------------------------
+#
+# A report-check error is not symmetric in its cost. A missed fabrication is invisible until
+# somebody opens the source. A false accusation is visible on every run, the agent is told to
+# rewrite in response to it, and on the live run measured for DSR-808 the agent answered a
+# refused citation by deleting it -- so the report the reader got was worse sourced than the
+# draft. A check that refuses correct citations spends the trust that makes it worth having.
+
+HELD_BARE = {"handover": {"facts": {}, "tables": [], "fetched": [
+    {"url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=508496cb"}]}}
+
+HELD_TRACKED = {"handover": {"facts": {}, "tables": [], "fetched": [
+    {"url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm"
+            "?setid=508496cb&utm_source=openai"}]}}
+
+
+def _links_refused(draft, received):
+    return {f["text"] for f in check_report(draft, received) if f["kind"] == "unvouched_link"}
+
+
+def test_a_citation_that_only_adds_www_to_the_held_link_is_vouched():
+    """`www.host` and `host` are one page; refusing the citation says they are two."""
+    draft = ("The label is at "
+             "https://www.dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=508496cb")
+
+    assert _links_refused(draft, HELD_BARE) == set()
+
+
+def test_a_citation_that_only_adds_a_tracking_parameter_is_vouched():
+    draft = ("The label is at https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm"
+             "?setid=508496cb&utm_source=openai")
+
+    assert _links_refused(draft, HELD_BARE) == set()
+
+
+def test_a_held_link_carrying_a_tracking_parameter_vouches_the_clean_citation():
+    """The parameter can arrive on either side; a search engine adds it to what it returns."""
+    draft = "The label is at https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=508496cb"
+
+    assert _links_refused(draft, HELD_TRACKED) == set()
+
+
+def test_a_different_page_on_a_held_host_is_still_refused():
+    """Folding the spelling must not fold the page: the setid is the page."""
+    draft = ("The label is at "
+             "https://www.dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=deadbeef")
+
+    assert _links_refused(draft, HELD_BARE) != set()
+
+
+def test_a_tracking_parameter_in_front_of_the_real_one_still_folds():
+    """Stripping the first parameter takes the `?` with it; both sides must land the same."""
+    draft = ("The label is at https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm"
+             "?utm_source=openai&setid=508496cb")
+
+    assert _links_refused(draft, HELD_BARE) == set()
+
+
+def test_a_query_parameter_that_is_not_tracking_still_identifies_the_page():
+    """Only analytics parameters are noise. Dropping a real one would fold two pages into one."""
+    draft = ("The label is at https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm"
+             "?setid=508496cb&page=2")
+
+    assert _links_refused(draft, HELD_BARE) != set()
+
+
+def test_a_heading_s_own_numbering_is_not_collected_as_a_stated_figure():
+    """A guard, not a pin: `_NUMBERING` already strips these, and the live report of
+    2026-09-21 carries headings 1 to 7 with no `unvouched_number` against any of them.
+    The test exists so a change to the numeric scan cannot quietly undo that."""
+    draft = ("## 1. Drug overview\nNothing numeric here.\n"
+             "## 2. Labeled safety\nNor here.\n"
+             "3) Post-market signals\nNor here.\n")
+
+    numbers = {f["text"] for f in check_report(draft, HELD_BARE)
+               if f["kind"] == "unvouched_number"}
+
+    assert numbers == set(), numbers

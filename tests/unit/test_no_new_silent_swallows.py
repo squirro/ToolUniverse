@@ -2,9 +2,10 @@
 
 A tool that catches everything and returns an empty value tells the agent nothing went
 wrong, so zero rows read as a real negative rather than an unreachable source. The
-baseline names the accepted sites, not a count, so a new swallow cannot pass by hiding
-behind one that was removed elsewhere: almost all of the population is upstream code
-that re-syncs from mims-harvard:main.
+baseline names each accepted site and how many instances of it are accepted, so a new
+swallow cannot pass by hiding behind one that was removed elsewhere, nor behind another
+instance of itself in a file that already holds one: almost all of the population is
+upstream code that re-syncs from mims-harvard:main.
 """
 
 import json
@@ -25,27 +26,72 @@ def _src(*lines):
 
 
 # --- the ratchet ---
+#
+# A site key is path + fingerprint, and the fingerprint hashes the enclosing scope, the
+# opening line and the handler body -- but two handlers can still land on an identical key
+# (same function, same body, e.g. two copy-pasted `except Exception: return {}` blocks), so
+# the baseline holds a count per key, not just the key's presence. The guard fails a key
+# that is new, a key whose observed count exceeds what is accepted, or -- checked in
+# aggregate, which is what actually closes the hole a per-key check alone leaves open -- a
+# baseline whose total accepted count does not equal every swallow the scan finds.
 
 
-def _sites(findings):
-    return {f"{f.path}:{silent_swallow.fingerprint(f)}" for f in findings}
+def _site_counts(findings):
+    counts: dict[str, int] = {}
+    for f in findings:
+        key = f"{f.path}:{silent_swallow.fingerprint(f)}"
+        counts[key] = counts.get(key, 0) + 1
+    return counts
 
 
-def test_no_site_swallows_that_the_baseline_does_not_already_accept():
-    new = _sites(silent_swallow.scan(ROOT)) - set(BASELINE["sites"])
+def test_no_site_has_more_instances_than_the_baseline_accepts():
+    observed = _site_counts(silent_swallow.scan(ROOT))
+    accepted = {key: entry["count"] for key, entry in BASELINE["sites"].items()}
 
-    assert not new, (
-        "new silent swallows:\n" + "\n".join(sorted(new))
+    new = sorted(key for key in observed if key not in accepted)
+    over = sorted(
+        f"{key}: {observed[key]} found, {accepted[key]} accepted"
+        for key in observed
+        if key in accepted and observed[key] > accepted[key]
+    )
+
+    assert not new and not over, (
+        "new silent swallows:\n" + "\n".join(new)
+        + "\nsites with more instances than the baseline accepts:\n" + "\n".join(over)
         + "\nMake the handler tell the caller what failed, or waive it with a stated reason.")
 
 
-def test_the_baseline_does_not_accept_sites_that_are_gone():
-    """A baseline that outlives its sites is slack a new swallow can hide in."""
-    stale = set(BASELINE["sites"]) - _sites(silent_swallow.scan(ROOT))
+def test_the_baseline_does_not_accept_more_than_the_current_population_at_any_site():
+    """A key with room to spare is slack a new swallow at that same site can hide in."""
+    observed = _site_counts(silent_swallow.scan(ROOT))
+    accepted = {key: entry["count"] for key, entry in BASELINE["sites"].items()}
 
-    assert not stale, (
-        "the baseline accepts sites that no longer exist:\n" + "\n".join(sorted(stale))
-        + "\nRemove them from silent_swallow_baseline.json.")
+    slack = sorted(
+        f"{key}: accepts {accepted[key]}, only {observed.get(key, 0)} found"
+        for key in accepted
+        if accepted[key] > observed.get(key, 0)
+    )
+
+    assert not slack, (
+        "the baseline accepts more instances than exist at these sites:\n" + "\n".join(slack)
+        + "\nLower the accepted count in silent_swallow_baseline.json.")
+
+
+def test_the_baseline_accounts_for_every_finding():
+    """The sum of accepted counts must equal every swallow the scan finds, not a sample.
+
+    This is the load-bearing check: the two per-key tests above only rule out a *known*
+    site holding more than it should. This rules out the baseline holding accepted room
+    that no key currently occupies -- the same hole a frozen total count had, in a new
+    shape, closed by requiring the total to be exact rather than merely non-decreasing.
+    """
+    findings = silent_swallow.scan(ROOT)
+    accepted_total = sum(entry["count"] for entry in BASELINE["sites"].values())
+
+    assert accepted_total == len(findings), (
+        f"baseline accepts {accepted_total} across its sites, scan finds {len(findings)}. "
+        "Re-freeze the baseline in silent_swallow_baseline.json."
+    )
 
 
 # --- what is and is not a swallow; the expected value is the lines reported ---

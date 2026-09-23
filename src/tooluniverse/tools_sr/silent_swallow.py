@@ -44,10 +44,12 @@ PRAGMA = re.compile(r"#\s*silent-swallow\s*:\s*(?P<reason>\S.*?)\s*$")
 class Finding:
     """One handler that swallows a failure without telling the caller."""
 
-    def __init__(self, path: Path, line: int, snippet: str):
+    def __init__(self, path: Path, line: int, snippet: str, qualname: str, body: str):
         self.path = path
         self.line = line
         self.snippet = snippet
+        self.qualname = qualname  # enclosing function/class, dotted; "<module>" at top level
+        self.body = body  # the handler body, ast.unparse'd
 
     def __repr__(self) -> str:
         return f"<Finding {self.path}:{self.line} {self.snippet!r}>"
@@ -131,6 +133,29 @@ def _probes_an_optional_import(node: ast.Try) -> bool:
     )
 
 
+def _qualnames(tree: ast.AST) -> dict[int, str]:
+    """Map each ExceptHandler's id() to the dotted name of its enclosing scope.
+
+    ``ast.walk`` visits every node but drops the parent, so the scope has to be carried
+    down explicitly instead: a recursive descent pushes a function or class name before
+    recursing into it, and records the joined stack at each handler it passes.
+    """
+    mapping: dict[int, str] = {}
+
+    def walk(node: ast.AST, stack: list[str]) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                walk(child, stack + [child.name])
+            elif isinstance(child, ast.ExceptHandler):
+                mapping[id(child)] = ".".join(stack) if stack else "<module>"
+                walk(child, stack)
+            else:
+                walk(child, stack)
+
+    walk(tree, [])
+    return mapping
+
+
 def _waived(lines: list[str], handler: ast.ExceptHandler) -> str | None:
     """The stated reason on a pragma inside this handler, if there is one."""
     start = handler.lineno - 1
@@ -186,6 +211,7 @@ def find_in_source(source: str, path: Path | str = "<source>") -> list[Finding]:
         if isinstance(node, ast.Try) and _probes_an_optional_import(node)
         for handler in node.handlers
     }
+    qualnames = _qualnames(tree)
 
     findings = []
     for node in ast.walk(tree):
@@ -196,13 +222,25 @@ def find_in_source(source: str, path: Path | str = "<source>") -> list[Finding]:
         if _waived(lines, node):
             continue
         snippet = lines[node.lineno - 1].strip() if node.lineno <= len(lines) else ""
-        findings.append(Finding(Path(path), node.lineno, snippet))
+        try:
+            body = ast.unparse(ast.Module(body=node.body, type_ignores=[]))
+        except Exception:
+            body = ""
+        qualname = qualnames.get(id(node), "<module>")
+        findings.append(Finding(Path(path), node.lineno, snippet, qualname, body))
     return sorted(findings, key=lambda f: f.line)
 
 
 def fingerprint(finding: Finding) -> str:
-    """One site's identity, stable when the file moves around it."""
-    return hashlib.sha256(" ".join(finding.snippet.split()).encode()).hexdigest()[:12]
+    """One site's identity: enclosing scope, opening line and body.
+
+    Stable when the file moves around it (no line number), but distinct from every other
+    handler in the same file -- unlike a hash of the opening line alone, which is the same
+    string for nearly every broad handler in this tree.
+    """
+    parts = (finding.qualname, finding.snippet, finding.body)
+    text = "\x00".join(" ".join(part.split()) for part in parts)
+    return hashlib.sha256(text.encode()).hexdigest()[:12]
 
 
 def scan(root: Path | str) -> list[Finding]:

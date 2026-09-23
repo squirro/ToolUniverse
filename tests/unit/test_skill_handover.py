@@ -206,17 +206,43 @@ def test_the_counts_a_fetch_reply_carries_count_as_received(tmp_path):
 
 # --- a phase that never ran must not vanish from the hand-over --------------------
 
-def test_a_step_skipped_because_its_loop_list_was_empty_says_so():
-    graph = {"skill": "demo", "inputs": ["drug_name"], "steps": [
-        {"id": "candidates", "calls": []},
-        {"id": "literature", "requires": ["candidates"], "for_each": "shortlist",
-         "as": "candidate", "calls": []},
-    ]}
-    run = new_run({"drug_name": "cisplatin"})
-    run["done"] = ["candidates"]
+LOOPING = {"skill": "demo", "inputs": ["drug_name"], "steps": [
+    {"id": "candidates", "calls": []},
+    {"id": "literature", "requires": ["candidates"], "for_each": "shortlist",
+     "as": "candidate", "calls": []},
+]}
 
-    handed = handover_of(graph, run)
-    skipped = [s for s in handed["steps_skipped"] if s["step"] == "literature"]
+
+def _skipped_literature(facts):
+    run = new_run(facts)
+    run["done"] = ["candidates"]
+    return [s for s in handover_of(LOOPING, run)["steps_skipped"] if s["step"] == "literature"]
+
+
+def test_a_step_skipped_because_its_loop_list_was_empty_says_so():
+    skipped = _skipped_literature({"drug_name": "cisplatin", "shortlist": []})
 
     assert skipped, "a step that never ran must appear somewhere in the hand-over"
-    assert "nothing to loop over" in skipped[0]["reason"]
+    assert skipped[0]["reason"] == "nothing to loop over: shortlist was empty"
+
+
+def test_a_list_that_never_arrived_is_not_reported_as_a_list_that_came_back_empty():
+    """"The source returned nothing" and "nothing ever asked the source" are different
+    gaps -- the same distinction `absorb` already makes for a derive."""
+    skipped = _skipped_literature({"drug_name": "cisplatin"})
+
+    assert skipped, "a step that never ran must appear somewhere in the hand-over"
+    assert skipped[0]["reason"] == "nothing to loop over: shortlist was never produced"
+
+
+def test_the_report_rules_name_the_skipped_steps_and_the_signals_a_row_can_carry(tmp_path):
+    """A signal no instruction names reaches no reader: `steps_skipped` is a gap the report
+    must state, and `decided`, `unparseable` and `note` each mean something specific."""
+    runner, run_id, _ = _finished_run(tmp_path)
+
+    handed = runner.handover(run_id)
+    rules = " ".join(handed["write_the_report"])
+
+    assert "steps_skipped" in handed
+    for named in ("steps_skipped", "decided", "unparseable", "note"):
+        assert named in rules, named

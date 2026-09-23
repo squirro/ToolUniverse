@@ -12,11 +12,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from tooluniverse.skill_graph import GRAPHS_DIR, SkillGraphError, load_graph  # noqa: E402
+from tooluniverse.skill_graph import (  # noqa: E402
+    GRAPHS_DIR, SkillGraphError, _expand_calls, load_graph)
 from tooluniverse.skill_runner import (  # noqa: E402
-    SkillPathError, SkillRunner, _derive, _dig, _fewest, _flag, _prevalence_tier, absorb, apply,
-    carries, check_facts, new_run, next_runnable, normalised_executor, placed_mapping,
-    question_for, resolved, source_total, substitute)
+    SkillPathError, SkillRunner, _derive, _dig, _fewest, _flag, _hierarchy_rows, _pluck,
+    _prevalence_tier, absorb, apply, carries, check_facts, new_run, next_runnable,
+    normalised_executor, placed_mapping, question_for, resolved, source_total, substitute)
 
 pytestmark = pytest.mark.unit
 
@@ -81,14 +82,16 @@ def test_two_extract_rules_over_the_same_heterogeneous_records_stay_in_step_thro
 
 
 def test_two_collect_rules_over_the_same_heterogeneous_records_stay_in_step_through_absorb():
-    spec = {"id": "s", "collect": {"ids": {"path": "records[].id", "flatten": True},
-                                   "dois": {"path": "records[].doi", "flatten": True}}}
+    """A collect keeps each call's mapped list whole, misses included, so two rules over the
+    same records pair up. `flatten` is the other case: the list is then a sequence of things
+    to act on, and a miss is no thing -- see the flattened-collect test below."""
+    spec = {"id": "s", "collect": {"ids": "records[].id", "dois": "records[].doi"}}
     results = [{"records": [{"id": "A", "doi": "10.1/a"},
                             {"id": "B"},
                             {"id": "C", "doi": "10.1/c"}]}]
 
     outcome = absorb(spec, results, {})
-    ids, dois = outcome["facts"]["ids"], outcome["facts"]["dois"]
+    ids, dois = outcome["facts"]["ids"][0], outcome["facts"]["dois"][0]
 
     assert len(ids) == len(dois) == 3
     assert ids[1] == "B" and dois[1] is None
@@ -104,6 +107,134 @@ def test_one_badly_shaped_payload_costs_only_that_payload_not_the_rule():
 
     assert outcome["facts"]["ids"] == [["A"], ["C"]]
     assert len([b for b in outcome["blocked"] if "ids" in b["reason"]]) == 1
+
+
+def test_one_badly_shaped_payload_costs_only_that_payload_in_the_extract_loop_too():
+    """The same claim for `extract`: the bad payload is skipped and named once, and the
+    payload after it still supplies the value."""
+    spec = {"id": "s", "extract": {"ids": "records[].id"}}
+    results = [{"records": "not a list"}, {"records": [{"id": "C"}]}]
+
+    outcome = absorb(spec, results, {})
+
+    assert outcome["facts"]["ids"] == ["C"]
+    assert len([b for b in outcome["blocked"] if "ids" in b["reason"]]) == 1
+
+
+# --- a mapped miss is kept where it is produced and dropped where it is acted on ---
+#
+# `_dig` keeps one entry per record so paired paths stay in step. A rule that consumes the
+# list as things to act on takes only what was read, and says how many it left out --
+# otherwise the run reports the presence of entities that do not exist and calls tools for
+# them, which is the same lie as reporting an absence it never measured.
+
+
+def test_a_flattened_collect_drops_a_miss_and_says_how_many():
+    spec = {"id": "modulators",
+            "collect": {"drug_names": {"path": "rows[].drug.name", "flatten": True}}}
+    results = [{"rows": [{"drug": {"name": "Imatinib"}}, {"drug": None},
+                         {"drug": None}, {"drug": {"name": "Nilotinib"}}]}]
+
+    outcome = absorb(spec, results, {})
+
+    assert outcome["facts"]["drug_names"] == ["Imatinib", "Nilotinib"]
+    assert [b["reason"] for b in outcome["blocked"]] == [
+        "drug_names: 2 of its values could not be read, so they were left out"]
+
+
+def test_the_extract_cap_trims_real_values_only():
+    """A miss that survives into a capped list occupies a slot and pushes a real value out."""
+    spec = {"id": "reaction_terms", "extract": {"top_aes": {"path": "result[].term", "limit": 3}}}
+    results = [{"result": [{"term": "NAUSEA"}, {"count": 7}, {"term": "RASH"},
+                           {"term": "PYREXIA"}]}]
+
+    outcome = absorb(spec, results, {})
+
+    assert outcome["facts"]["top_aes"] == ["NAUSEA", "RASH", "PYREXIA"]
+    assert [b["reason"] for b in outcome["blocked"]] == [
+        "top_aes: 1 of its values could not be read, so they were left out"]
+
+
+def test_a_union_leaves_out_what_could_not_be_read_and_says_so():
+    spec = {"id": "signal_terms", "combine": {"signal_aes": {"union": ["asked", "frequent"]}}}
+
+    outcome = absorb(spec, [], {"asked": ["NEPHROTOXICITY", None], "frequent": ["NAUSEA"]})
+
+    assert outcome["facts"]["signal_aes"] == ["NEPHROTOXICITY", "NAUSEA"]
+    assert [b["reason"] for b in outcome["blocked"]] == [
+        "signal_aes: 1 of its values could not be read, so they were left out"]
+
+
+def test_a_mapped_miss_is_still_kept_where_the_list_is_produced():
+    """The consuming rules drop misses; `_dig` and the paired extracts must not."""
+    spec = {"id": "s", "extract": {"ids": "records[].id", "dois": "records[].doi"}}
+    results = [{"records": [{"id": "A", "doi": "10.1/a"}, {"id": "B"}]}]
+
+    outcome = absorb(spec, results, {})
+
+    assert outcome["facts"]["ids"] == ["A", "B"]
+    assert outcome["facts"]["dois"] == ["10.1/a", None]
+    assert outcome["blocked"] == []
+
+
+SHIPPED = load_graph("drug-target-validation", GRAPHS_DIR)
+SHIPPED_AE = load_graph("adverse-event-detection", GRAPHS_DIR)
+
+
+def _shipped_step(graph, step_id):
+    return next(s for s in graph["steps"] if s["id"] == step_id)
+
+
+def test_a_row_with_no_drug_never_becomes_a_boxed_warning_lookup():
+    """The shipped graph, end to end: OpenTargets returns four candidate rows, two of which
+    carry no drug. The loop that follows must call the FDA for the two real ones only."""
+    rows = [{"drug": {"id": "CHEMBL941", "name": "Imatinib"}, "maxClinicalStage": 4},
+            {"drug": None, "maxClinicalStage": 2},
+            {"drug": None, "maxClinicalStage": 1},
+            {"drug": {"id": "CHEMBL255863", "name": "Nilotinib"}, "maxClinicalStage": 4}]
+    payload = {"data": {"target": {"drugAndClinicalCandidates": {"count": 4, "rows": rows}}}}
+
+    outcome = absorb(_shipped_step(SHIPPED, "modulators"), [payload, {}], {})
+    facts = {"ensembl_id": "ENSG1", "symbol": "ABL1", **outcome["facts"]}
+    calls = _expand_calls(_shipped_step(SHIPPED, "boxed_warnings"), facts)
+
+    assert outcome["facts"]["drug_names"] == ["Imatinib", "Nilotinib"]
+    assert [c["arguments"]["drug_name"] for c in calls] == ["Imatinib", "Nilotinib"]
+    assert any("drug_names" in b["reason"] for b in outcome["blocked"])
+
+
+def test_a_faers_row_with_no_term_never_becomes_a_disproportionality_call():
+    """The shipped graph's other instance: a term-less FAERS row must neither take one of
+    the twenty cap slots nor reach `FAERS_calculate_disproportionality`."""
+    rows = [{"term": f"TERM{n}", "count": 100 - n} for n in range(1, 21)]
+    rows.insert(3, {"count": 7})
+
+    reactions = absorb(_shipped_step(SHIPPED_AE, "reaction_terms"), [{"result": rows}], {})
+    combined = absorb(_shipped_step(SHIPPED_AE, "signal_terms"), [], reactions["facts"])
+    calls = _expand_calls(_shipped_step(SHIPPED_AE, "disproportionality"),
+                          {"drug_name": "cisplatin", **combined["facts"]})
+
+    assert len(reactions["facts"]["top_aes"]) == 20
+    assert "TERM20" in reactions["facts"]["top_aes"]
+    assert all(c["arguments"]["adverse_event"] is not None for c in calls)
+    assert any("top_aes" in b["reason"] for b in reactions["blocked"])
+
+
+def test_a_loop_makes_no_call_for_an_item_that_could_not_be_read_and_the_run_says_so():
+    """The last line of defence: a miss that reaches a loop from anywhere at all."""
+    graph = {"skill": "demo", "steps": [
+        {"id": "warn", "for_each": "drug_names", "as": "drug",
+         "calls": [{"tool": "FDA_boxed", "arguments": {"drug_name": "{drug}"}}]}]}
+    run = new_run({"drug_names": ["Imatinib", None, "Nilotinib"]})
+
+    step = next_runnable(graph, run)
+    next_runnable(graph, run)                       # peeked twice: said once
+
+    assert [c["arguments"]["drug_name"] for c in step["calls"]] == ["Imatinib", "Nilotinib"]
+    assert "unreadable_items" not in step
+    assert [b["reason"] for b in run["blocked"]] == [
+        "warn: 1 of the items this step loops over could not be read, "
+        "so no call was made for them"]
 
 
 def test_an_ontology_outage_reads_differently_from_a_term_no_ontology_knows():
@@ -401,6 +532,29 @@ def test_a_row_whose_flagged_field_will_not_parse_is_recorded_as_unparseable():
     assert unparseable["unparseable"] == "3.1 (0.8-9.4)"
 
 
+def test_a_compute_over_a_bare_none_row_is_a_row_it_cannot_read_not_a_crash():
+    """`_dig` maps a record missing the field to a bare None, so every compute that reads
+    rows is handed one sooner or later. A crash is not "I do not know": `_computed` catches
+    only SkillPathError, and `advance` wraps `absorb` in nothing, so the whole run dies."""
+    rows = {"rows": [None, {"term": "A", "prr": 17.7, "hpo_id": "HP:1", "ids": ["HP:2"]}]}
+
+    flagged = _flag({"rows": "rows", "field": "prr", "threshold": 5}, rows)
+    plucked = _pluck({"rows": "rows", "field": "term"}, rows)
+    folded = _hierarchy_rows({"rows": "rows"}, rows)
+
+    assert [r["term"] for r in flagged] == ["A"]
+    assert plucked == ["A"]
+    assert [r["hpo_id"] for r in folded] == ["HP:1"]
+
+
+def test_a_compute_still_separates_rows_that_never_arrived_from_rows_it_could_not_read():
+    """Dropping a miss must not turn an absent fact into an empty answer."""
+    assert _flag({"rows": "rows", "field": "prr"}, {}) is None
+    assert _pluck({"rows": "rows", "field": "term"}, {}) is None
+    assert _hierarchy_rows({"rows": "rows"}, {}) is None
+    assert _flag({"rows": "rows", "field": "prr"}, {"rows": [None]}) == []
+
+
 COLLECT_GRAPH = {
     "skill": "c", "inputs": ["drug"],
     "steps": [
@@ -665,6 +819,32 @@ def test_a_second_candidate_succeeding_still_credits_the_original_failure():
     assert "candidate one" not in str(failure)
     assert failure["repaired_by"] == "candidate two", (
         "repaired_by must name the candidate that actually worked")
+
+
+def test_a_failed_repair_keeps_the_upstream_error_that_started_it():
+    """A source outage must not read to the reader as a wrong identifier. The blocked
+    entry says the name could not be resolved; only the failure says the source was down,
+    and the repair that failed is exactly when that sentence matters most."""
+    responses = {"find_disease": [RuntimeError("upstream 503"), {"hits": []}, {"hits": []}]}
+    runner, _ = _repair_runner(responses, answers={"name": ["Rett syndrome", "Rett disease"]})
+
+    run_id = _run_to_end(runner, {"disease": "Rett's"})
+    state = runner.state(run_id)
+
+    assert any("upstream 503" in str(f) for f in state["failures"]), state["failures"]
+    assert any("could not be resolved" in b["reason"] for b in state["blocked"])
+
+
+def test_a_repair_that_finds_no_candidate_reports_the_call_that_failed_once():
+    """An over-correction guard, and it passes on the code above as well as below: nothing
+    suggested means nothing retried, so the call that failed is reported once, not twice."""
+    responses = {"find_disease": [RuntimeError("upstream 503")]}
+    runner, _ = _repair_runner(responses, answers={"name": []})
+
+    run_id = _run_to_end(runner, {"disease": "Rett's"})
+    failures = runner.state(run_id)["failures"]
+
+    assert [f["error"] for f in failures] == ["RuntimeError: upstream 503"]
 
 
 def test_a_raising_call_in_a_repair_retry_batch_keeps_its_slot():
@@ -1826,14 +2006,20 @@ def test_sorted_by_and_flag_read_a_missing_number_as_last_and_unflagged():
 
 def test_check_flag_reads_a_none_flag_as_not_flagged_not_an_error():
     """`_flag` marks a cell it cannot parse `flagged: None`. The check must read that as
-    "did not reach the threshold" -- not as a mismatch, and not as a pass for `flagged: True`."""
-    rule = {"prr_table": {"flag": {"field": "flagged", "from": "prr", "op": ">=", "value": 5}}}
-    rows = [{"term": "A", "prr": "3.1 (0.8-9.4)", "flagged": None},
-            {"term": "B", "prr": 17.7, "flagged": True}]
+    "did not reach the threshold" -- not as a mismatch, and not as a pass for `flagged: True`.
 
+    The rows come from `_flag` itself, so the two halves are pinned against each other
+    rather than against a literal somebody wrote to match.
+    """
+    rule = {"prr_table": {"flag": {"field": "flagged", "from": "prr", "op": ">=", "value": 5}}}
+    rows = _flag({"rows": "prr_rows", "field": "prr", "threshold": 5},
+                 {"prr_rows": [{"term": "A", "prr": "3.1 (0.8-9.4)"},
+                               {"term": "B", "prr": 17.7}]})
+
+    assert [(r["term"], r["flagged"]) for r in rows] == [("B", True), ("A", None)]
     assert check_facts(rule, {"prr_table": rows}, {}) == []
 
-    wrongly_true = [{**rows[0], "flagged": True}, rows[1]]
+    wrongly_true = [{**r, "flagged": True} for r in rows]
     assert [f["check"] for f in check_facts(rule, {"prr_table": wrongly_true}, {})] == ["flag"]
 
 

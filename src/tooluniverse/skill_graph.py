@@ -91,8 +91,8 @@ every step and every tool call itself.
    describes what is too wide to hand over; its preview is not the data — read
    the rows you need with `fetch_run_data(run_id=..., table=..., columns=[...])`.
    Every number comes from `handover.facts` or from rows you fetched; state
-   `failures`, `blocked`, `unresolved` and `excluded` as gaps. Follow the five
-   lines in `handover.write_the_report`.
+   `failures`, `blocked`, `unresolved`, `steps_skipped` and `excluded` as gaps.
+   Follow the five lines in `handover.write_the_report`.
 4. Before you answer the user, hand the whole draft to
    `submit_report(run_id=..., draft=...)`. `accepted`: send it. `revise`: correct
    each named statement and submit once more. `accepted_with_failures`: send it
@@ -191,13 +191,21 @@ def _expand_calls(step: dict, facts: dict) -> list[dict]:
             f"cannot build the call: missing {loop} (the list this step iterates)")
     variable = step.get("as", "item")
     expanded = []
-    for item in facts[loop]:
+    for item in facts[loop] or []:
+        if item is None:
+            continue            # a miss is not an entity: no call is made for it
         scoped = {**facts, variable: item}
         expanded.extend(
             {"tool": c["tool"], "arguments": _fill(c.get("arguments", {}), scoped)}
             for c in calls
         )
     return expanded
+
+
+def unreadable_items(step: dict, facts: dict) -> int:
+    """How many of a loop's items held no value, so no call was made for them."""
+    values = facts.get(step.get("for_each")) if step.get("for_each") else None
+    return sum(1 for v in values if v is None) if isinstance(values, list) else 0
 
 
 def delegated_calls(step: dict, facts: dict) -> list[dict]:
@@ -248,7 +256,8 @@ def skipped_gates(graph: dict, done: list[str], facts: dict) -> list[dict]:
     `decided` is a gate-skip key only: True when the gate's fact arrived and was
     rejected, False when it never arrived at all -- the gate was never decided, not
     closed on evidence. An empty loop had no condition to decide, so it is reported
-    with `reason` instead, never `decided`. A step that is both gated and looping is
+    with `reason` instead, never `decided`, and that reason separates a list that came
+    back empty from one that never arrived. A step that is both gated and looping is
     reported for its gate -- the gate is the reason nothing ran, the empty loop only
     a symptom of the same closed gate.
     """
@@ -263,7 +272,12 @@ def skipped_gates(graph: dict, done: list[str], facts: dict) -> list[dict]:
         if sid in ran or sid not in settled:
             continue
         if sid in empty_loops and sid not in gate_settled:
-            out.append({"step": sid, "reason": f"nothing to loop over: {s['for_each']} was empty"})
+            loop = s["for_each"]
+            # "The list came back empty" and "the list never arrived" are different gaps;
+            # saying "empty" for both asserts a read that never happened.
+            out.append({"step": sid, "reason": f"nothing to loop over: {loop} was empty"
+                        if loop in facts else
+                        f"nothing to loop over: {loop} was never produced"})
         elif s.get("when"):
             out.append({"step": sid, "gate": s["when"], "decided": s["when"] in facts})
     return out
@@ -297,10 +311,12 @@ def next_step(graph: dict, done: list[str], facts: dict) -> dict | None:
         except SkillGraphError as exc:
             exc.step = step["id"]   # the step that cannot be built is the one to blame
             raise
+        unreadable = unreadable_items(step, facts)
         return {
             "id": step["id"],
             "label": step.get("label", step["id"]),
             "calls": calls,
+            **({"unreadable_items": unreadable} if unreadable else {}),
             "produces": step.get("produces", []),
             "judge": step.get("judge", []),
             "notes": step.get("notes"),

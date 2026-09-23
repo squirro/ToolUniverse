@@ -261,9 +261,21 @@ def _item_in(template: str, marker: str, text: str) -> str | None:
     return match.group("item") if match else None
 
 
+def _rows_of(rule: dict, facts: dict) -> list[dict] | None:
+    """The named rows a compute reads, or None when the fact never arrived.
+
+    An entry that is not a record is not a row: a mapped path keeps a miss in place, and
+    reading one as a crash tells the agent nothing at all.
+    """
+    rows = facts.get(rule["rows"])
+    if rows is None:
+        return None
+    return [row for row in rows if isinstance(row, dict)]
+
+
 def _hierarchy_rows(rule: dict, facts: dict) -> list[dict] | None:
     """Fold the per-call hierarchy rows into one row per term: {hpo_id, parents, children}."""
-    rows = facts.get(rule["rows"])
+    rows = _rows_of(rule, facts)
     if rows is None:
         return None
     by: dict[str, dict] = {}
@@ -277,7 +289,7 @@ def _hierarchy_rows(rule: dict, facts: dict) -> list[dict] | None:
 
 def _flag(rule: dict, facts: dict) -> list[dict] | None:
     """The rows ordered by one numeric field, largest first, each marked whether it reaches the threshold."""
-    rows = facts.get(rule["rows"])
+    rows = _rows_of(rule, facts)
     if rows is None:
         return None
     field, threshold = rule["field"], float(rule.get("threshold", 0))
@@ -316,7 +328,7 @@ def _pluck_excluded(rule: dict, facts: dict) -> list:
 
 
 def _pluck_all(rule: dict, facts: dict) -> list | None:
-    rows = facts.get(rule["rows"])
+    rows = _rows_of(rule, facts)
     if rows is None:
         return None
     where = rule.get("where")
@@ -566,7 +578,7 @@ def next_runnable(graph: dict, run: dict) -> dict | None:
     """
     while True:
         try:
-            return next_step(graph, done=run["done"] + run["skipped"],
+            step = next_step(graph, done=run["done"] + run["skipped"],
                              facts=run["facts"])
         except SkillGraphError as exc:
             blocked = getattr(exc, "step", None) or next(
@@ -578,6 +590,17 @@ def next_runnable(graph: dict, run: dict) -> dict | None:
                 return None
             run["skipped"].append(blocked)
             run["blocked"].append({"step": blocked, "reason": _with_cause(graph, run, str(exc))})
+            continue
+        unreadable = step.pop("unreadable_items", 0) if step else 0
+        if unreadable:
+            # A loop item that is a miss makes no call. Said once, however often the
+            # step is peeked: both drivers come through here.
+            note = {"step": step["id"],
+                    "reason": f"{step['id']}: {unreadable} of the items this step loops "
+                              "over could not be read, so no call was made for them"}
+            if note not in run["blocked"]:
+                run["blocked"].append(note)
+        return step
 
 
 # The same rules for every skill; the report's structure is the skill's own.
@@ -589,8 +612,11 @@ WRITE_THE_REPORT = [
     "(source_total) and how much you read of it.",
     "A number published in a paper or a page stands beside a number this run computed, each "
     "with its source and period; never merge the two.",
-    "State what failed, what was not found and what was set aside, from failures, blocked, "
-    "unresolved and excluded.",
+    "State what failed, what was not found, what never ran and what was set aside, from "
+    "failures, blocked, unresolved, steps_skipped and excluded. A skipped step with "
+    "decided: false was never decided, not decided against; a row's `unparseable` holds "
+    "the text a number could not be read from, so that row's verdict is unknown, not no; "
+    "a mapped row's `note` says why its placing is uncertain.",
 ]
 
 
@@ -1085,6 +1111,23 @@ def checked(spec: dict, step_id: str, wants: list[str], outcome: dict, facts: di
     return without_failed(outcome, failures, step_id), None
 
 
+def _values_read(values: list) -> tuple[list, int]:
+    """The entries of a mapped list that were read, and how many were misses.
+
+    A mapped path keeps one entry per record so two paths over the same records pair up;
+    a rule that consumes the list as things to act on takes only what was read.
+    """
+    kept = [v for v in values if v is not None]
+    return kept, len(values) - len(kept)
+
+
+def _unread(step_id: str, name: str, dropped: int) -> dict:
+    """What a rule left out because it could not be read; dropping it silently is the
+    same defect as keeping it."""
+    return {"step": step_id,
+            "reason": f"{name}: {dropped} of its values could not be read, so they were left out"}
+
+
 def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
            calls: list[dict] | None = None) -> dict:
     """What a step's results yield: facts, what never arrived, what cannot be decided.
@@ -1126,7 +1169,13 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
                     excluded[name] = dropped
                     found = [v for v in found if v not in rule["exclude"]]
             if rule.get("limit") and isinstance(found, list):
+                # A miss goes before the cap too, so the cap trims real values only.
+                found, missed = _values_read(found)
+                if missed:
+                    blocked.append(_unread(spec["id"], name, missed))
                 found = found[: rule["limit"]]
+            # The first payload that yields a value wins, so a path error already recorded
+            # for an earlier call stays recorded even though the name did resolve.
             extracted[name] = found
             break
         if name not in extracted and rule.get("default_from"):
@@ -1138,6 +1187,7 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
         rule = rule if isinstance(rule, dict) else {"path": rule}
         gathered = []
         path_blocked = False
+        unread = 0
         for index, payload in enumerate(results):
             try:
                 found = _dig(payload, rule["path"])
@@ -1177,7 +1227,10 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
                 if isinstance(found, list) and (rule.get("flatten") or not found):
                     # A call whose list-of-records reshaped to nothing contributes no
                     # row, flatten or not -- an empty list is never a row of its own.
-                    gathered.extend(found)
+                    # A flattened list is acted on item by item, so a miss is no item.
+                    kept, missed = _values_read(found)
+                    unread += missed
+                    gathered.extend(kept)
                 else:
                     gathered.append(found)
             except SkillPathError as error:
@@ -1186,6 +1239,8 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
                     blocked.append({"step": spec["id"], "reason": f"cannot collect {name}: {error}"})
                     path_blocked = True
                 continue
+        if unread:
+            blocked.append(_unread(spec["id"], name, unread))
         if rule.get("unique"):
             gathered = list(dict.fromkeys(gathered))
         if gathered:
@@ -1193,11 +1248,17 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
     # `combine` merges in union order, so the cap trims the tail, never the ask.
     for name, rule in (spec.get("combine") or {}).items():
         merged: list = []
+        unread = 0
         for source in rule.get("union", []):
             value = facts.get(source) or extracted.get(source) or []
             for item in (value if isinstance(value, list) else [value]):
-                if item not in merged:
+                if item is None:
+                    # A union is acted on item by item; a miss holds no place in it.
+                    unread += 1
+                elif item not in merged:
                     merged.append(item)
+        if unread:
+            blocked.append(_unread(spec["id"], name, unread))
         if rule.get("limit"):
             merged = merged[: rule["limit"]]
         # A union of nothing is nothing gathered, not an answer of "empty".
@@ -1302,6 +1363,7 @@ class SkillRunner:
                                    "arguments": step["calls"][0]["arguments"],
                                    "error": problem}]
         retry_calls = step["calls"]
+        retry_failures: list[dict] = []
         for candidate in (suggestions or [])[: self.MAX_REPAIRS]:
             retried, retry_failures = [], []
             retry_calls = substitute(step["calls"], argument, candidate)
@@ -1319,13 +1381,15 @@ class SkillRunner:
                 run["facts"][argument] = candidate
                 kept = [{**f, "repaired_by": candidate} for f in pre_repair]
                 return retried, kept + retry_failures, retry_calls
-            results, failures = retried, retry_failures
+            results = retried
         run["blocked"].append({
             "step": step["id"],
             "reason": (f"{argument}={original!r} could not be resolved after "
                        f"{self.MAX_REPAIRS} suggested alternatives"),
         })
-        return results, failures, retry_calls
+        # The failure the repair started from is kept, so a source outage never reads
+        # to the reader as a wrong identifier.
+        return results, pre_repair + retry_failures, retry_calls
 
     def _keep_evidence(self, run_id: str, run: dict, outcome: dict) -> None:
         if self.records is not None:

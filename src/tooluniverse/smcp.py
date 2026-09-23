@@ -1283,15 +1283,16 @@ class SMCP(FastMCP):
                 with your own tools (web search, code interpreter) and map each
                 wanted name to what came back.
               - `finished` → `handover` {facts, tables, calls, notes, report,
-                excluded, steps_done, failures, blocked, unresolved, run_id}. Write
-                the report as `handover.report` instructs and read each step as
-                `handover.notes` says. `facts` holds what you must cite, whole, each
-                row with its own link. `tables` DESCRIBES what is too wide to hand
-                over — row count, columns, a two-row preview that is NOT the data:
-                read the rows you need with fetch_run_data(run_id, table, ...).
-                Every number comes from handover.facts or from rows you fetched;
-                report failures/blocked/unresolved/excluded as gaps. Follow the
-                five lines in `handover.write_the_report`: they hold for every
+                excluded, steps_done, steps_skipped, failures, blocked, unresolved,
+                run_id}. Write the report as `handover.report` instructs and read
+                each step as `handover.notes` says. `facts` holds what you must
+                cite, whole, each row with its own link. `tables` DESCRIBES what is
+                too wide to hand over — row count, columns, a two-row preview that
+                is NOT the data: read the rows you need with
+                fetch_run_data(run_id, table, ...). Every number comes from
+                handover.facts or from rows you fetched; report
+                failures/blocked/unresolved/steps_skipped/excluded as gaps. Follow
+                the five lines in `handover.write_the_report`: they hold for every
                 skill, and submit_report checks the draft against them.
               - `schema_mismatch` → bind the `missing_inputs` from the question
                 and call run_skill again.

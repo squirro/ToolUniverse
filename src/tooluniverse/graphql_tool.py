@@ -92,6 +92,17 @@ def _failed(result) -> bool:
     return isinstance(result, dict) and result.get("status") == "error"
 
 
+def _source_failed(result) -> bool:
+    """A source that failed, as against a source that answered with nothing.
+
+    Only the second is a reason to ask again with different arguments; asking an outage
+    a second question and reporting its rows under the caller's term is how a transport
+    failure becomes a statement about the drug.
+    """
+    return (isinstance(result, dict)
+            and (result.get("error_details") or {}).get("type") == "UpstreamServiceError")
+
+
 class GraphQLTool(BaseTool):
     def __init__(self, tool_config, endpoint_url):
         super().__init__(tool_config)
@@ -212,15 +223,28 @@ class OpentargetTool(GraphQLTool):
                     "For non-oncology phenotypes, use OpenTargets_get_evidence_by_datasource instead."
                 )
 
-        # If no results, retry with '-' replaced by ' '
-        if result.get("status") != "success":
+        # A source holding nothing may be a hyphenated name the index spells differently,
+        # so it is worth one differently-worded question -- but the answer is about the
+        # question that was asked, and the caller is told which one that was.
+        if result.get("status") != "success" and not _source_failed(result):
+            asked = copy.deepcopy(arguments)
             if "drugName" in arguments and isinstance(arguments["drugName"], str):
                 arguments["drugName"] = arguments["drugName"].split("-")[0]
             modified_arguments = copy.deepcopy(arguments)
             for each_arg, arg_value in modified_arguments.items():
                 if isinstance(arg_value, str) and "-" in arg_value:
                     modified_arguments[each_arg] = arg_value.replace("-", " ")
-            result = super().run(modified_arguments)
+            changed = {k: v for k, v in modified_arguments.items() if asked.get(k) != v}
+            retried = super().run(modified_arguments)
+            if changed and retried.get("status") == "success":
+                retried.setdefault("metadata", {})["retried_with"] = changed
+                retried["metadata"]["note"] = (
+                    "The first query returned nothing, so it was asked again with "
+                    f"{changed}. These rows answer that question, not the one as "
+                    "written -- check the result names the intended entity before "
+                    "quoting it."
+                )
+            result = retried
 
         # An unresolved disease id comes back as {"data": {}} after null stripping,
         # which must not pass as a real empty result.
@@ -253,6 +277,7 @@ class OpentargetToolDrugNameMatch(GraphQLTool):
 
     def run(self, arguments):
         arguments = copy.deepcopy(arguments)
+        substituted = None
         results = execute_query(
             endpoint_url=self.endpoint_url, query=self.query_schema, variables=arguments
         )
@@ -260,9 +285,6 @@ class OpentargetToolDrugNameMatch(GraphQLTool):
             # A failed source is not a drug whose brand name needs swapping.
             return results
         if results is None:
-            print(
-                "No results found for the drug brand name. Trying with the generic name."
-            )
             # Find which drug name argument was provided
             matched_arg = None
             for arg_name in self.possible_drug_name_args:
@@ -289,11 +311,20 @@ class OpentargetToolDrugNameMatch(GraphQLTool):
                     query=self.query_schema,
                     variables=arguments,
                 )
+                substituted = arguments[matched_arg]
         if _failed(results):
             return results
         if results is None:
             return {"status": "error", "error": "No data returned from API"}
-        return {"status": "success", "data": results.get("data", results)}
+        answer = {"status": "success", "data": results.get("data", results)}
+        if substituted is not None:
+            answer["metadata"] = {
+                "retried_with": {matched_arg: substituted},
+                "note": (f"The brand name returned nothing, so openFDA's generic name "
+                         f"{substituted!r} was queried instead. These rows are for that "
+                         "name."),
+            }
+        return answer
 
 
 @register_tool("OpenTargetGenetics")
@@ -408,28 +439,34 @@ class DiseaseTargetScoreTool(GraphQLTool):
 
             if disease_info is None:
                 disease_info = {
-                    "disease_id": disease_data["id"],
-                    "disease_name": disease_data["name"],
+                    "disease_id": disease_data.get("id"),
+                    "disease_name": disease_data.get("name"),
                 }
 
-            rows = disease_data["associatedTargets"]["rows"]
+            # Same reason the `disease` key above is read with .get(): the cleaner
+            # deletes any key whose value is an empty list, so a page with no rows and
+            # a target with no datasource scores both arrive with the key simply gone.
+            associated = disease_data.get("associatedTargets") or {}
+            rows = associated.get("rows") or []
             if total_count is None:
-                total_count = disease_data["associatedTargets"]["count"]
+                total_count = associated.get("count") or 0
 
             for row in rows:
-                symbol = row["target"]["approvedSymbol"]
-                target_id = row["target"]["id"]
+                target = row.get("target") or {}
+                if not target.get("id") and not target.get("approvedSymbol"):
+                    continue  # a score no target can be attributed to is not a result
                 score_entry = next(
-                    (ds for ds in row["datasourceScores"] if ds["id"] == datasource_id),
+                    (ds for ds in (row.get("datasourceScores") or [])
+                     if ds.get("id") == datasource_id),
                     None,
                 )
                 if score_entry:
                     results.append(
                         {
-                            "target_symbol": symbol,
-                            "target_id": target_id,
+                            "target_symbol": target.get("approvedSymbol"),
+                            "target_id": target.get("id"),
                             "datasource": datasource_id,
-                            "score": score_entry["score"],
+                            "score": score_entry.get("score"),
                         }
                     )
 

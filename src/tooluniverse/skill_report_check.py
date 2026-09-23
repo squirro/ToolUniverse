@@ -80,6 +80,8 @@ def _bare(link: str) -> str:
 def _built_from_received(link: str, text: str, domains: set[str]) -> bool:
     """A link the run could have built: when the run saw any domain, this one was among
     them, and its last segment is an identifier the agent received."""
+    # Binds only when the run held a link at all -- a process may tell the agent to build one
+    # from a bare identifier, with no domain to check the fabricated one against.
     if domains and _domain_of(link) not in domains:
         return False
     tail = re.split(r"[/=]", link.rstrip(".,;:!?/"))[-1]

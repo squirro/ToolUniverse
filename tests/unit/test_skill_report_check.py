@@ -101,11 +101,28 @@ def test_a_figure_of_a_million_or_more_is_checked():
 
 
 def test_a_run_identifier_does_not_vouch_a_number():
+    """This pins that run_id is excluded, not a substring match: _NUMBER_RECEIVED is unbounded
+    and already matches the whole run id as one token, never a shorter prefix of it -- so this
+    case alone would pass even serialising the whole received object, un-stripped."""
     received = {"run_id": "run-4815162342", "handover": {"facts": {}}}
 
     failures = check_report("There were 4815 cases.", received)
 
     assert [f["text"] for f in failures if f["kind"] == "unvouched_number"] == ["4815"]
+
+
+def test_a_tool_call_argument_in_the_run_record_does_not_vouch_a_number():
+    """handover["record"]["skeleton"] carries every tool call's arguments -- numbers the run
+    sent out, never data it got back. Serialising the whole hand-over would vouch them."""
+    received = {"handover": {"facts": {}, "record": {
+        "status": "written", "iri": "https://data.example/runs/skill-1",
+        "skeleton": {"steps": [{"id": "faers_counts", "calls": [
+            {"tool": "FAERS_count_reactions_by_drug_event",
+             "arguments": {"limit": 5000}}]}]}}}}
+
+    failures = check_report("The query used a limit of 5000 results.", received)
+
+    assert [f["text"] for f in failures if f["kind"] == "unvouched_number"] == ["5000"]
 
 
 def test_a_link_whose_domain_the_run_never_saw_is_refused():

@@ -41,19 +41,33 @@ def _vouched_numbers(received: Any) -> set[str]:
     return vouched
 
 
-# What the run actually held, as against the envelope it arrived in. Identifiers, dates,
-# hashes and the run's own permanent-record wrapper (its address and step/call log) vouch
-# nothing -- they describe the run, not an answer any source gave it.
-_ENVELOPE = ("run_id", "conversation_id", "definition_hash", "skill", "write_the_report",
-             "started", "finished", "record")
+# What a source gave the run back, as against what the run says about itself. An
+# allow-list: the run's own prose -- its failures, what it could not decide, the arguments
+# it sent, the steps it skipped -- describes the run, not an answer, and must never vouch
+# a statement. A hand-over key added later vouches nothing until it is named here.
+_VOUCHING = ("facts", "tables", "mappings", "excluded", "fetched")
+
+# The key the engine writes into a row to say it could not read a value there. Its content
+# is the text the read failed on, so it vouches nothing: a cell marked unreadable cannot
+# then certify the number printed in it.
+_UNREAD = ("unparseable",)
+
+
+def _read_only(value: Any) -> Any:
+    """The same data with every "I could not read this" marker taken out of it."""
+    if isinstance(value, dict):
+        return {k: _read_only(v) for k, v in value.items() if k not in _UNREAD}
+    if isinstance(value, list):
+        return [_read_only(v) for v in value]
+    return value
 
 
 def _data_of(received: Any) -> Any:
-    """The hand-over's own facts, plus any rows fetched or answers given alongside it.
+    """The hand-over's own data, plus any rows fetched alongside it.
 
     A "handover" key holds the terminal hand-over; every other top-level key is a sibling
-    the caller attached (fetched rows, prior answers). A flat object with no "handover" key
-    is the hand-over itself.
+    the caller attached (fetched rows). A flat object with no "handover" key is the
+    hand-over itself.
     """
     if not isinstance(received, dict):
         return received
@@ -61,7 +75,17 @@ def _data_of(received: Any) -> Any:
     handover = handover if isinstance(handover, dict) else {}
     sides = {k: v for k, v in received.items() if k != "handover"}
     merged = {**sides, **handover}
-    return {k: v for k, v in merged.items() if k not in _ENVELOPE}
+    return _read_only({k: v for k, v in merged.items() if k in _VOUCHING})
+
+
+def _holds_nothing(received: Any) -> bool:
+    """Whether the run handed over no data at all.
+
+    The caller always sends the keys, empty or not, so their presence is not the record --
+    only what is inside them is.
+    """
+    data = _data_of(received)
+    return not any(data.values()) if isinstance(data, dict) else not data
 
 
 _LINK = re.compile(r"https?://[^\s<>\"')\]]+")
@@ -154,7 +178,7 @@ def _unshown_mappings(draft: str, received: Any) -> list[dict]:
 
 def check_report(draft: str, received: Any) -> list[dict]:
     """Every statement in the draft that what the agent received does not vouch for."""
-    if not _data_of(received):
+    if _holds_nothing(received):
         return [{"kind": "no_working_record",
                  "text": "the run's record is missing, so nothing in the draft could be checked",
                  "context": "tell the reader the run was not recorded; do not restate the draft"}]

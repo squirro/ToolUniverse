@@ -25,8 +25,8 @@ RECEIVED = {
                  "abstract": "Hearing loss occurred in 57% with weekly dosing against 82%.",
                  "url": "https://pubmed.ncbi.nlm.nih.gov/31234567/"}],
 }
-FAERS_KEYED = {"url": "https://api.fda.gov/drug/event.json?search=reactionmeddrapt%3A%22"
-                      "ototoxicity%22&limit=1&api_key=REDACTED"}
+FAERS_KEYED = {"facts": {"url": "https://api.fda.gov/drug/event.json?search=reactionmeddrapt"
+                                "%3A%22ototoxicity%22&limit=1&api_key=REDACTED"}}
 
 
 @pytest.mark.parametrize("draft,received", [
@@ -104,7 +104,7 @@ def test_a_run_identifier_does_not_vouch_a_number():
     """This pins that run_id is excluded, not a substring match: _NUMBER_RECEIVED is unbounded
     and already matches the whole run id as one token, never a shorter prefix of it -- so this
     case alone would pass even serialising the whole received object, un-stripped."""
-    received = {"run_id": "run-4815162342", "handover": {"facts": {}}}
+    received = {"run_id": "run-4815162342", "handover": {"facts": {"drug_name": "cisplatin"}}}
 
     failures = check_report("There were 4815 cases.", received)
 
@@ -114,7 +114,7 @@ def test_a_run_identifier_does_not_vouch_a_number():
 def test_a_tool_call_argument_in_the_run_record_does_not_vouch_a_number():
     """handover["record"]["skeleton"] carries every tool call's arguments -- numbers the run
     sent out, never data it got back. Serialising the whole hand-over would vouch them."""
-    received = {"handover": {"facts": {}, "record": {
+    received = {"handover": {"facts": {"drug_name": "cisplatin"}, "record": {
         "status": "written", "iri": "https://data.example/runs/skill-1",
         "skeleton": {"steps": [{"id": "faers_counts", "calls": [
             {"tool": "FAERS_count_reactions_by_drug_event",
@@ -128,13 +128,63 @@ def test_a_tool_call_argument_in_the_run_record_does_not_vouch_a_number():
 def test_a_link_inside_the_run_record_does_not_vouch_a_citation():
     """record["iri"] is a URL too -- the run's own bookkeeping vouches no link, same as no
     number. Citing that address back is not citing a source."""
-    received = {"handover": {"facts": {}, "record": {
+    received = {"handover": {"facts": {"drug_name": "cisplatin"}, "record": {
         "status": "written", "iri": "https://data.example/runs/skill-1",
         "skeleton": {"steps": []}}}}
 
     failures = check_report("See [the run](https://data.example/runs/skill-1).", received)
 
     assert [f["kind"] for f in failures if f["kind"] == "unvouched_link"] == ["unvouched_link"]
+
+
+# --- only what a source gave back vouches: an allow-list, never a deny-list ------------
+#
+# The run's own prose about itself -- what failed, what it could not decide, the arguments
+# it sent -- is not an answer. A deny-list was extended twice and still let six keys
+# through; a key added after this line is written must vouch nothing until it is named.
+
+
+def test_a_failed_calls_own_arguments_do_not_vouch_a_number():
+    """`failures` carries the arguments the run sent out, and it sent them precisely
+    because nothing came back."""
+    received = {"handover": {"facts": {"drug_name": "cisplatin"}, "failures": [
+        {"tool": "FAERS_count_reactions_by_drug_event",
+         "arguments": {"limit": 5000}, "error": "HTTPError: 503"}]}}
+
+    failures = check_report("The analysis covered 5000 reports.", received)
+
+    assert [f["text"] for f in failures if f["kind"] == "unvouched_number"] == ["5000"]
+
+
+def test_a_cell_the_engine_marked_unreadable_does_not_vouch_the_number_in_it():
+    """The engine says it could not read this text; the checker must not then use it to
+    certify the number as read."""
+    received = {"handover": {"facts": {"prr_table": [
+        {"term": "NEPHROTOXICITY", "flagged": None, "unparseable": "3.1 (0.8-9.4)"}]}}}
+
+    failures = check_report("Nephrotoxicity showed a PRR of 3.1.", received)
+
+    assert "3.1" in {f["text"] for f in failures if f["kind"] == "unvouched_number"}
+
+
+def test_a_blocked_reason_does_not_vouch_the_count_inside_it():
+    received = {"handover": {"facts": {"drug_name": "cisplatin"}, "blocked": [
+        {"step": "lookup",
+         "reason": "name='Rett\\'s' could not be resolved after 2 suggested alternatives"}]}}
+
+    failures = check_report("2 comparator drugs were screened.", received)
+
+    assert [f["text"] for f in failures if f["kind"] == "unvouched_number"] == ["2"]
+
+
+def test_a_hand_over_key_nobody_has_named_yet_vouches_nothing():
+    """The allow-list's whole point: next year's key defaults to vouching nothing."""
+    received = {"handover": {"facts": {"drug_name": "cisplatin"},
+                             "a_key_invented_later": {"count": 77}}}
+
+    failures = check_report("There were 77 of them.", received)
+
+    assert [f["text"] for f in failures if f["kind"] == "unvouched_number"] == ["77"]
 
 
 @pytest.mark.parametrize("link,expected", [
@@ -158,8 +208,17 @@ def test_a_link_whose_domain_the_run_never_saw_is_refused():
     assert [f["kind"] for f in failures if f["kind"] == "unvouched_link"] == ["unvouched_link"]
 
 
-def test_a_missing_working_record_is_reported_as_a_missing_record():
-    failures = check_report("Cisplatin had 1234 reports and a PRR of 5.6.", {})
+@pytest.mark.parametrize("received", [
+    {},
+    # The shape `submit_report` really sends: the keys are always there, empty or not,
+    # so their presence is not the record -- only what is inside them is.
+    {"handover": {}, "fetched": {}},
+    {"handover": {"skill": "adverse-event-detection", "facts": {}, "unresolved": ["top_aes"],
+                  "write_the_report": ["Take every number from its row."]},
+     "fetched": {}},
+])
+def test_a_missing_working_record_is_reported_as_a_missing_record(received):
+    failures = check_report("Cisplatin had 1234 reports and a PRR of 5.6.", received)
 
     assert [f["kind"] for f in failures] == ["no_working_record"]
 
@@ -243,10 +302,26 @@ def test_a_live_report_of_the_production_shape_is_flagged_only_for_what_is_real(
 
 
 def test_the_web_report_with_the_sourceless_prr_fails_on_that_number():
-    """A number with no source in what the agent received is refused in a real report too."""
-    failures = _failures_for("web_report_cisplatin_2026-09-19.json")
+    """A number with no source in what the agent received is refused in a real report too.
+
+    The web arm ran no skill, so its own trace holds nothing to check against; that draft
+    is read here against the production run's record, which is what refusing a sourceless
+    number means.
+    """
+    web = json.loads((FIXTURES / "web_report_cisplatin_2026-09-19.json").read_text())
+    live = json.loads((FIXTURES / "live_run_cisplatin_2026-09-21.json").read_text())
+
+    failures = check_report(web["answer"], _received_from(live))
 
     assert "53.44" in {f["text"] for f in failures if f["kind"] == "unvouched_number"}
+
+
+def test_a_report_written_with_no_run_at_all_gets_one_true_statement_not_a_page_of_them():
+    """The web arm's trace holds no hand-over and no fetched row. One true sentence about
+    the missing record beats a failure for every number in the draft."""
+    failures = _failures_for("web_report_cisplatin_2026-09-19.json")
+
+    assert [f["kind"] for f in failures] == ["no_working_record"]
 
 
 # --- a judged mapping is shown -------------------------------------------------------

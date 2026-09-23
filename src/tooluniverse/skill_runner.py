@@ -38,6 +38,10 @@ _OPS: dict[str, Callable[[Any, Any], bool]] = {
 }
 
 
+class SkillPathError(ValueError):
+    """A path that can never be right, whatever the payload holds."""
+
+
 def _dig(payload: Any, path: str) -> Any:
     """Follow a dotted path into a result; a miss returns None so it surfaces as a missing fact.
 
@@ -55,9 +59,10 @@ def _dig(payload: Any, path: str) -> Any:
                 return None
         if mapped:
             if mapping:
-                return None                    # nested mapping is not supported
+                raise SkillPathError(f"{path}: a path maps over one list, not two")
             if not isinstance(current, list):
-                return None
+                raise SkillPathError(
+                    f"{path}: {key or 'the value'} is a {type(current).__name__}, not a list")
             mapping = True
     return current
 
@@ -67,8 +72,8 @@ def _step_in(current: Any, key: str, mapping: bool) -> Any:
     if mapping:
         if not isinstance(current, list):
             return None
-        out = [_step_in(item, key, False) for item in current]
-        return [value for value in out if value is not None]
+        # One entry per record, misses included, so two paths over the same records pair up.
+        return [_step_in(item, key, False) for item in current]
     if isinstance(current, dict):
         return current.get(key)
     if isinstance(current, list) and key.isdigit():
@@ -650,7 +655,9 @@ def placed_mapping(spec: dict, outcome: dict, lookup: Callable[[str], dict] | No
                              "label": None, "under": None})
             placed.append({**row, **{k: verdict.get(k) for k in
                                      ("placing", "ontology", "under")},
-                           "ontology_term": verdict.get("term"), "ontology_label": verdict.get("label")})
+                           "ontology_term": verdict.get("term"),
+                           "ontology_label": verdict.get("label"),
+                           **({"note": verdict["note"]} if verdict.get("note") else {})})
         facts[name] = placed
         facts[f"{name}_terms"] = list(dict.fromkeys(r["term"] for r in placed))
     return {**outcome, "facts": facts}
@@ -1061,28 +1068,33 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
     """
     extracted: dict[str, Any] = {}
     excluded: dict[str, list] = {}
+    blocked: list[dict] = []
     for name, rule in (spec.get("extract") or {}).items():
         rule = rule if isinstance(rule, dict) else {"path": rule}
-        for payload in results:
-            found = _dig(payload, rule["path"])
-            if found is None:
-                continue
-            if rule.get("regex") and isinstance(found, str):
-                # Some values only exist inside a returned string.
-                match = re.search(rule["regex"], found)
-                if not match:
+        try:
+            for payload in results:
+                found = _dig(payload, rule["path"])
+                if found is None:
                     continue
-                found = match.group(1) if match.groups() else match.group(0)
-            if rule.get("exclude") and isinstance(found, list):
-                # The author's noise list applies before the cap, so the cap trims real values only.
-                dropped = [v for v in found if v in rule["exclude"]]
-                if dropped:
-                    excluded[name] = dropped
-                    found = [v for v in found if v not in rule["exclude"]]
-            if rule.get("limit") and isinstance(found, list):
-                found = found[: rule["limit"]]
-            extracted[name] = found
-            break
+                if rule.get("regex") and isinstance(found, str):
+                    # Some values only exist inside a returned string.
+                    match = re.search(rule["regex"], found)
+                    if not match:
+                        continue
+                    found = match.group(1) if match.groups() else match.group(0)
+                if rule.get("exclude") and isinstance(found, list):
+                    # The author's noise list applies before the cap, so the cap trims real values only.
+                    dropped = [v for v in found if v in rule["exclude"]]
+                    if dropped:
+                        excluded[name] = dropped
+                        found = [v for v in found if v not in rule["exclude"]]
+                if rule.get("limit") and isinstance(found, list):
+                    found = found[: rule["limit"]]
+                extracted[name] = found
+                break
+        except SkillPathError as error:
+            blocked.append({"step": spec["id"], "reason": f"cannot extract {name}: {error}"})
+            continue
         if name not in extracted and rule.get("default_from"):
             fallback = facts.get(rule["default_from"])
             if fallback is not None:
@@ -1091,45 +1103,49 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
     for name, rule in (spec.get("collect") or {}).items():
         rule = rule if isinstance(rule, dict) else {"path": rule}
         gathered = []
-        for index, payload in enumerate(results):
-            found = _dig(payload, rule["path"])
-            if found is None:
-                continue
-            def row_of(record: dict, index: int = index) -> dict:
-                # Keep the few fields the run needs, as one row. "$item" is the loop
-                # value this call was made for, so a tool that does not echo its input still pairs.
-                row = {}
-                for spec_field in rule["fields"]:
-                    src, _, alias = spec_field.partition(" as ")
-                    if src == "$item":
-                        value = items[index] if items and index < len(items) else None
-                    elif src.startswith("$call."):
-                        arg = src[len("$call."):]
-                        value = (calls[index].get("arguments") or {}).get(arg) if calls and index < len(calls) else None
-                    else:
-                        value = _dig(record, src)
-                    if value is not None:
-                        row[alias or src.split(".")[-1].rstrip("[]").lstrip("$")] = value
-                return row
-
-            if rule.get("fields") and isinstance(found, dict):
-                found = row_of(found)
-            elif (rule.get("fields") and isinstance(found, list)
-                  and all(isinstance(record, dict) for record in found)):
-                # A record that lacks a field is a row without it, so positions are kept.
-                found = [row_of(record) for record in found]
-            if rule.get("match"):
-                # The first item that matches, per call.
-                candidates = found if isinstance(found, list) else [found]
-                found = next((c for c in candidates
-                              if isinstance(c, str) and re.search(rule["match"], c)),
-                             None)
+        try:
+            for index, payload in enumerate(results):
+                found = _dig(payload, rule["path"])
                 if found is None:
                     continue
-            if rule.get("flatten") and isinstance(found, list):
-                gathered.extend(found)
-            else:
-                gathered.append(found)
+                def row_of(record: dict, index: int = index) -> dict:
+                    # Keep the few fields the run needs, as one row. "$item" is the loop
+                    # value this call was made for, so a tool that does not echo its input still pairs.
+                    row = {}
+                    for spec_field in rule["fields"]:
+                        src, _, alias = spec_field.partition(" as ")
+                        if src == "$item":
+                            value = items[index] if items and index < len(items) else None
+                        elif src.startswith("$call."):
+                            arg = src[len("$call."):]
+                            value = (calls[index].get("arguments") or {}).get(arg) if calls and index < len(calls) else None
+                        else:
+                            value = _dig(record, src)
+                        if value is not None:
+                            row[alias or src.split(".")[-1].rstrip("[]").lstrip("$")] = value
+                    return row
+
+                if rule.get("fields") and isinstance(found, dict):
+                    found = row_of(found)
+                elif (rule.get("fields") and isinstance(found, list)
+                      and all(isinstance(record, dict) for record in found)):
+                    # A record that lacks a field is a row without it, so positions are kept.
+                    found = [row_of(record) for record in found]
+                if rule.get("match"):
+                    # The first item that matches, per call.
+                    candidates = found if isinstance(found, list) else [found]
+                    found = next((c for c in candidates
+                                  if isinstance(c, str) and re.search(rule["match"], c)),
+                                 None)
+                    if found is None:
+                        continue
+                if rule.get("flatten") and isinstance(found, list):
+                    gathered.extend(found)
+                else:
+                    gathered.append(found)
+        except SkillPathError as error:
+            blocked.append({"step": spec["id"], "reason": f"cannot collect {name}: {error}"})
+            continue
         if rule.get("unique"):
             gathered = list(dict.fromkeys(gathered))
         if gathered:
@@ -1148,7 +1164,8 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
 
     # `compute` runs on the server, in passes: a rule may read what another rule in the
     # same step produces, and a store may hand the rules back in its own order.
-    blocked, refused, pending = _computed(spec, dict(spec.get("compute") or {}), facts, extracted, excluded)
+    computed_blocked, refused, pending = _computed(spec, dict(spec.get("compute") or {}), facts, extracted, excluded)
+    blocked.extend(computed_blocked)
     computed_missing = list(pending) + refused
 
     undecided = []

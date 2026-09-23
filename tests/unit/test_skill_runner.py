@@ -14,10 +14,77 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from tooluniverse.skill_graph import GRAPHS_DIR, SkillGraphError, load_graph  # noqa: E402
 from tooluniverse.skill_runner import (  # noqa: E402
-    SkillRunner, _fewest, _prevalence_tier, absorb, apply, carries, check_facts, new_run,
-    next_runnable, normalised_executor, question_for, resolved, source_total, substitute)
+    SkillPathError, SkillRunner, _dig, _fewest, _prevalence_tier, absorb, apply, carries,
+    check_facts, new_run, next_runnable, normalised_executor, placed_mapping, question_for,
+    resolved, source_total, substitute)
 
 pytestmark = pytest.mark.unit
+
+
+def test_a_mapped_path_keeps_one_entry_per_record():
+    payload = {"records": [{"id": "A"}, {"other": "x"}, {"id": "C"}]}
+
+    assert _dig(payload, "records[].id") == ["A", None, "C"]
+
+
+def test_two_mapped_paths_over_the_same_records_stay_in_step():
+    payload = {"records": [{"id": "A", "doi": "10.1/a"},
+                           {"id": "B"},
+                           {"id": "C", "doi": "10.1/c"}]}
+
+    ids = _dig(payload, "records[].id")
+    dois = _dig(payload, "records[].doi")
+
+    assert len(ids) == len(dois) == 3
+    assert ids[1] == "B" and dois[1] is None
+
+
+def test_a_nested_mapped_segment_is_refused_rather_than_read_as_nothing():
+    payload = {"a": [{"b": [{"c": 1}]}]}
+
+    with pytest.raises(SkillPathError) as refused:
+        _dig(payload, "a[].b[].c")
+
+    assert "a[].b[].c" in str(refused.value)
+
+
+def test_a_mapped_segment_over_something_that_is_not_a_list_is_refused():
+    payload = {"records": {"id": "A"}}
+
+    with pytest.raises(SkillPathError) as refused:
+        _dig(payload, "records[].id")
+
+    assert "records" in str(refused.value)
+
+
+def test_a_malformed_path_is_blocked_rather_than_crashing_the_run():
+    spec = {"id": "identity", "extract": {"ids": "a[].b[].c"}}
+
+    outcome = absorb(spec, [{"a": [{"b": [{"c": 1}]}]}], {})
+
+    assert "ids" not in outcome["facts"]
+    assert any("a[].b[].c" in b["reason"] for b in outcome["blocked"])
+
+
+def test_an_ontology_outage_reads_differently_from_a_term_no_ontology_knows():
+    spec = {"mapping": {"requested_meddra": {}}}
+    outcome = {"facts": {"requested_meddra": [{"term": "NEPHROTOXICITY", "concept": ["kidney"]}]}}
+
+    def failed(term):
+        return {"hp": {"error": "URLError: timed out"},
+                "mondo": {"error": "URLError: timed out"}}
+
+    def unknown(term):
+        return {"hp": {"search": [], "ancestors": []},
+                "mondo": {"search": [], "ancestors": []}}
+
+    outage = placed_mapping(spec, outcome, failed)["facts"]["requested_meddra"][0]
+    absent = placed_mapping(spec, outcome, unknown)["facts"]["requested_meddra"][0]
+
+    assert outage["placing"] == absent["placing"] == "unknown"
+    assert "the lookup service failed" in outage["note"]
+    assert absent.get("note") is None
+
 
 GRAPH = {
     "skill": "demo", "inputs": ["drug_name"],

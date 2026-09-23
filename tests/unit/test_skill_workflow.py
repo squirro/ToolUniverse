@@ -232,6 +232,43 @@ async def test_a_repair_is_asked_for_by_signal_and_the_second_suggestion_resolve
     assert bundle["blocked"] == []
 
 
+DISEASE_REPAIR = {
+    "skill": "demo", "inputs": ["disease"],
+    "steps": [
+        {"id": "lookup",
+         "calls": [{"tool": "find_disease", "arguments": {"name": "{disease}"}}],
+         "repair": {"argument": "name", "when_missing": "hit_id"},
+         "extract": {"hit_id": "hits.0.id"},
+         "collect": {"hit_rows": {"path": "hits", "flatten": True,
+                                  "fields": ["id", "$call.name as asked"]}}},
+    ],
+}
+
+
+def _disease_responses():
+    """find_disease: nothing for the original name, one hit once the name is repaired."""
+    def find_disease(call):
+        found = call.arguments["name"] == "Rett syndrome"
+        return {"hits": [{"id": "MONDO:1"}]} if found else {"hits": []}
+    return {"find_disease": find_disease}
+
+
+async def test_both_drivers_report_the_same_failures_after_a_repair():
+    """The in-memory runner and the durable workflow must not disagree on a repair."""
+    responses = _disease_responses()
+    inputs = {"disease": "Rett's"}
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(
+            env, responses, DISEASE_REPAIR, inputs, "run-disease-repair",
+            before_result=lambda h, e: _answer(h, {"name": ["Rett syndrome"]}))
+
+    runner_state = _in_memory(responses, DISEASE_REPAIR, inputs,
+                              ask=lambda q: {"name": ["Rett syndrome"]})
+
+    assert bundle["failures"] == runner_state["failures"]
+    assert bundle["facts"]["hit_rows"] == runner_state["facts"]["hit_rows"]
+
+
 JUDGED = {
     "skill": "judged", "inputs": ["symptoms"],
     "steps": [

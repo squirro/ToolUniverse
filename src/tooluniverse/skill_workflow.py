@@ -427,11 +427,17 @@ class SkillWorkflow:
     async def _repair(self, spec, step, repair, outcome, failures, made):
         argument = repair["argument"]
         original = step["calls"][0]["arguments"].get(argument)
+        problem = f"returned nothing for {original!r}"
         answer = await self._ask(question_for(
             step["id"], "repair", [argument], dict(self._run["facts"]),
             tool=step["calls"][0]["tool"], argument=argument, value=original,
-            problem=f"returned nothing for {original!r}"))
+            problem=problem))
         suggestions = (answer or {}).get(argument) or []
+        # A repair always starts from a call that returned nothing usable, even when
+        # that was not an error; a successful repair must still be able to say so.
+        pre_repair = failures or [{"tool": step["calls"][0]["tool"],
+                                   "arguments": step["calls"][0]["arguments"],
+                                   "error": problem}]
         for attempt, candidate in enumerate(suggestions[:MAX_REPAIRS], start=1):
             retry_calls = substitute(step["calls"], argument, candidate)
             made.extend(retry_calls)
@@ -440,7 +446,8 @@ class SkillWorkflow:
                                          {**self._run["facts"], argument: candidate})
             if outcome["resolved"]:
                 self._run["facts"][argument] = candidate
-                return outcome, failures
+                kept = [{**f, "repaired_by": candidate} for f in pre_repair]
+                return outcome, kept + failures
         if answer is not None:
             self._run["blocked"].append({
                 "step": step["id"],

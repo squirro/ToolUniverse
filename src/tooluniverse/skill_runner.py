@@ -1276,20 +1276,32 @@ class SkillRunner:
                          facts=run["facts"])
 
     def _repair(self, spec, step, repair, results, failures, run, made):
-        """Ask for a better argument value and retry, at most MAX_REPAIRS times."""
+        """Ask for a better argument value and retry, at most MAX_REPAIRS times.
+
+        Returns the calls that actually produced the results handed back, so a
+        caller passing them to absorb or the Working Record reads the repaired
+        arguments instead of the ones that failed.
+        """
         if resolved(spec, repair, results):
-            return results, failures
+            return results, failures, step["calls"]
         argument = repair["argument"]
         original = step["calls"][0]["arguments"].get(argument)
+        problem = f"returned nothing for {original!r}"
         question = question_for(
             step["id"], "repair", [argument], dict(run["facts"]),
             tool=step["calls"][0]["tool"], argument=argument, value=original,
-            problem=f"returned nothing for {original!r}",
+            problem=problem,
         )
         answer = self.ask(question)
         asked(run, question, answer)
         # The answer maps the wanted name to a list of alternatives; a bare list is also taken.
         suggestions = answer.get(argument) if isinstance(answer, dict) else answer
+        # A repair always starts from a call that returned nothing usable, even when
+        # that was not an error; a successful repair must still be able to say so.
+        pre_repair = failures or [{"tool": step["calls"][0]["tool"],
+                                   "arguments": step["calls"][0]["arguments"],
+                                   "error": problem}]
+        retry_calls = step["calls"]
         for candidate in (suggestions or [])[: self.MAX_REPAIRS]:
             retried, retry_failures = [], []
             retry_calls = substitute(step["calls"], argument, candidate)
@@ -1302,14 +1314,15 @@ class SkillRunner:
                                            "error": f"{type(exc).__name__}: {exc}"})
             if resolved(spec, repair, retried):
                 run["facts"][argument] = candidate
-                return retried, retry_failures
+                kept = [{**f, "repaired_by": candidate} for f in pre_repair]
+                return retried, kept + retry_failures, retry_calls
             results, failures = retried, retry_failures
         run["blocked"].append({
             "step": step["id"],
             "reason": (f"{argument}={original!r} could not be resolved after "
                        f"{self.MAX_REPAIRS} suggested alternatives"),
         })
-        return results, failures
+        return results, failures, retry_calls
 
     def _keep_evidence(self, run_id: str, run: dict, outcome: dict) -> None:
         if self.records is not None:
@@ -1373,21 +1386,25 @@ class SkillRunner:
                                  "error": upstream_failure_text(result)})
 
         repair = spec.get("repair")
+        # The calls that produced `results`: the step's own calls, unless a repair
+        # substituted a candidate argument, in which case downstream reads must see
+        # the repaired arguments too.
+        effective_calls = step["calls"]
         if repair and self.ask:
-            results, failures = self._repair(
+            results, failures, effective_calls = self._repair(
                 spec, step, repair, results, failures, run, made)
 
         if self.records is not None:
             record = WorkingRecord(self.records, run_id)
-            for n, (call, payload) in enumerate(zip(step["calls"], results)):
+            for n, (call, payload) in enumerate(zip(effective_calls, results)):
                 record.put_result(step["id"], n, call["tool"], call["arguments"], payload)
-            outcome = absorb_recorded(record, self.graph.get("tables"), spec, step["calls"],
+            outcome = absorb_recorded(record, self.graph.get("tables"), spec, effective_calls,
                                       run["facts"])
             run.setdefault("evidence", []).extend(outcome.pop("evidence"))
             outcome.pop("resolved")
         else:
             outcome = absorb(spec, results, run["facts"],
-                             items=loop_items(spec, step["calls"]), calls=step["calls"])
+                             items=loop_items(spec, effective_calls), calls=effective_calls)
         delegated = spec.get("delegate") or []
         if delegated:
             # Web search and code live on the agent, so the run asks it to make these

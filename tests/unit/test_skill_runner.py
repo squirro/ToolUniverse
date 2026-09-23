@@ -590,6 +590,56 @@ def test_without_an_ask_callback_the_runner_behaves_exactly_as_before():
     assert seen == ["original"]
 
 
+# A repaired step's per-item collect must read the repaired argument, and a
+# successful repair must not erase the failure it repaired.
+DISEASE_REPAIR_GRAPH = {
+    "skill": "demo", "inputs": ["disease"],
+    "steps": [
+        {"id": "lookup",
+         "calls": [{"tool": "find_disease", "arguments": {"name": "{disease}"}}],
+         "repair": {"argument": "name", "when_missing": "hit_id"},
+         "extract": {"hit_id": "hits.0.id"},
+         "collect": {"hit_rows": {"path": "hits", "flatten": True,
+                                  "fields": ["id", "$call.name as asked"]}}},
+    ],
+}
+
+
+def _repair_runner(responses, answers):
+    """Injected executor: tool name -> successive responses, popped one call at a
+    time. `ask` always answers with `answers`, regardless of the question asked."""
+    queues = {tool: list(values) for tool, values in responses.items()}
+    calls = []
+
+    def execute(tool, arguments):
+        calls.append((tool, arguments))
+        return queues[tool].pop(0)
+
+    return SkillRunner(DISEASE_REPAIR_GRAPH, execute=execute, ask=lambda q: answers), calls
+
+
+def test_a_successful_repair_leaves_the_original_failure_in_the_run():
+    responses = {"find_disease": [{"hits": []}, {"hits": [{"id": "MONDO:1"}]}]}
+    runner, _ = _repair_runner(responses, answers={"name": ["Rett syndrome"]})
+
+    run_id = _run_to_end(runner, {"disease": "Rett's"})
+    state = runner.state(run_id)
+
+    assert any("Rett's" in str(f) for f in state["failures"]), (
+        "the report must be able to say the first identifier returned nothing")
+
+
+def test_the_working_record_stores_a_repaired_payload_against_the_arguments_that_produced_it():
+    responses = {"find_disease": [{"hits": []}, {"hits": [{"id": "MONDO:1"}]}]}
+    runner, _ = _repair_runner(responses, answers={"name": ["Rett syndrome"]})
+
+    run_id = _run_to_end(runner, {"disease": "Rett's"})
+    rows = runner.state(run_id)["facts"]["hit_rows"]
+
+    assert rows[0]["asked"] == "Rett syndrome", (
+        "a per-item collect on a repaired step must read the repaired argument")
+
+
 # Repair is the recovery; a declared value that never arrives is the honesty when
 # there is none.
 MISS_GRAPH = {
@@ -664,6 +714,20 @@ def test_absorb_collects_combines_and_derives_and_blocks_an_unknown():
     assert out["blocked"] == [{"step": "prr",
                                "reason": "cannot decide ghost: never_extracted was "
                                          "never extracted, so the branch was not taken"}]
+
+
+def test_a_blocked_derive_names_arrived_but_unreadable_separately_from_never_extracted():
+    """The source was present and every row was unusable -- a read failure, not an
+    absence -- must not be worded the same as a source that never showed up at all."""
+    spec = {"id": "prr",
+            "derive": {"strong": {"from": "prrs", "op": ">=", "value": 5},
+                       "ghost": {"from": "never_extracted", "op": ">", "value": 0}}}
+    out = absorb(spec, [{}], facts={"prrs": [None, None]})
+    reasons = {b["reason"] for b in out["blocked"]}
+    assert ("cannot decide strong: prrs arrived but no row could be read, "
+            "so the branch was not taken") in reasons
+    assert ("cannot decide ghost: never_extracted was never extracted, "
+            "so the branch was not taken") in reasons
 
 
 def test_a_collect_that_gathers_nothing_is_named_in_unresolved():

@@ -30,7 +30,9 @@ def _agent(question, web_pages=RECORDED_SEARCH["results"]):
     """The agent's side of a run: it does the compute step's arithmetic, as the task asks."""
     if "web_queries" in question["wants"]:
         # One query per subject, in the agent's own words -- the process holds no query text.
-        return {"web_queries": [f"{subject} published risk estimate" for subject in question["context"]["web_subjects"]]}
+        # Nothing flagged and nothing requested means the combine wrote no fact at all.
+        subjects = question["context"].get("web_subjects", [])
+        return {"web_queries": [f"{subject} published risk estimate" for subject in subjects]}
     if "web_rows" in question["wants"]:
         # The agent runs each composed call and answers one row per page the tool returned.
         return {"web_rows": [

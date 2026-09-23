@@ -154,6 +154,18 @@ def _vacuous(step: dict, facts: dict) -> bool:
     return bool(loop and loop in facts and not facts[loop])
 
 
+def _nothing_to_loop_over(step: dict, facts: dict) -> bool:
+    """A for_each list that never arrived, or arrived empty: no items to call for.
+
+    Broader than `_vacuous` on purpose: unlike the runtime path (`_is_runnable`, which
+    must still raise when a loop's list was never produced at all, so the omission is
+    not lost), the hand-over has nothing to gain from that distinction -- either way
+    there was nothing to loop over, and the report must say so.
+    """
+    loop = step.get("for_each")
+    return bool(loop) and not facts.get(loop)
+
+
 def _is_runnable(step: dict, done: set[str], facts: dict) -> bool:
     if step["id"] in done:
         return False
@@ -231,23 +243,37 @@ def _settled(graph: dict, done: set[str], facts: dict) -> set[str]:
 
 
 def skipped_gates(graph: dict, done: list[str], facts: dict) -> list[dict]:
-    """Steps that did not run because their gateway closed, each with the gate's name.
+    """Steps that did not run: a closed gateway, or a for_each with nothing to loop over.
 
-    `decided` is True when the gate's fact arrived and was rejected, False when the
-    fact never arrived at all -- the gate was never decided, not closed on evidence.
+    `decided` is a gate-skip key only: True when the gate's fact arrived and was
+    rejected, False when it never arrived at all -- the gate was never decided, not
+    closed on evidence. An empty loop had no condition to decide, so it is reported
+    with `reason` instead, never `decided`. A step that is both gated and looping is
+    reported for its gate -- the gate is the reason nothing ran, the empty loop only
+    a symptom of the same closed gate.
     """
     ran = set(done or [])
     facts = facts or {}
-    return [{"step": s["id"], "gate": s["when"], "decided": s["when"] in facts}
-            for s in graph["steps"]
-            if s["id"] in _settled(graph, ran, facts) and s["id"] not in ran and s.get("when")]
+    gate_settled = _settled(graph, ran, facts)
+    empty_loops = {s["id"] for s in graph["steps"] if _nothing_to_loop_over(s, facts)}
+    settled = _settled(graph, ran | empty_loops, facts)
+    out = []
+    for s in graph["steps"]:
+        sid = s["id"]
+        if sid in ran or sid not in settled:
+            continue
+        if sid in empty_loops and sid not in gate_settled:
+            out.append({"step": sid, "reason": f"nothing to loop over: {s['for_each']} was empty"})
+        elif s.get("when"):
+            out.append({"step": sid, "gate": s["when"], "decided": s["when"] in facts})
+    return out
 
 
 def stalled_steps(graph: dict, done: list[str], facts: dict) -> list[dict]:
     """Steps that never ran and were not skipped, each with the requirements it still waited for."""
     facts = facts or {}
     settled = _settled(graph, set(done or []) | {
-        s["id"] for s in graph["steps"] if _vacuous(s, facts)}, facts)
+        s["id"] for s in graph["steps"] if _nothing_to_loop_over(s, facts)}, facts)
     return [{"step": s["id"],
              "waiting_for": [dep for dep in s.get("requires", []) if dep not in settled]}
             for s in graph["steps"] if s["id"] not in settled]

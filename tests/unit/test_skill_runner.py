@@ -380,6 +380,15 @@ def test_one_usable_row_among_unusable_ones_still_decides():
     assert _derive(rule, facts) is True
 
 
+def test_a_bare_none_row_is_unusable_not_a_field_lookup():
+    """_dig maps a record missing the field to a bare None; _derive must read that as
+    unusable, not attempt row.get(field) on a non-dict."""
+    rule = {"from": "rows", "field": "prr", "op": ">=", "value": 5, "mode": "any"}
+    facts = {"rows": [None, None]}
+
+    assert _derive(rule, facts) is None
+
+
 def test_a_row_whose_flagged_field_will_not_parse_is_recorded_as_unparseable():
     rule = {"rows": "prr_rows", "field": "prr", "threshold": 5}
     facts = {"prr_rows": [{"term": "A", "prr": 17.7},
@@ -657,6 +666,46 @@ def test_absorb_collects_combines_and_derives_and_blocks_an_unknown():
                                          "never extracted, so the branch was not taken"}]
 
 
+def test_a_collect_that_gathers_nothing_is_named_in_unresolved():
+    spec = {"id": "literature", "collect": {"papers": {"path": "resultList.result",
+                                                      "fields": ["pmid", "title"]}}}
+
+    outcome = absorb(spec, [{"resultList": {"result": []}}], {})
+
+    assert "papers" not in outcome["facts"]
+    assert "papers" in outcome["unresolved"]
+
+
+def test_a_declared_produces_name_that_nothing_created_is_named_in_unresolved():
+    spec = {"id": "identity", "extract": {"chembl_id": "data.id"},
+            "produces": ["chembl_id", "approval_history"]}
+
+    outcome = absorb(spec, [{"data": {"id": "CHEMBL88"}}], {})
+
+    assert outcome["facts"]["chembl_id"] == "CHEMBL88"
+    assert "approval_history" in outcome["unresolved"]
+
+
+def test_a_combine_over_an_empty_gathering_writes_no_fact():
+    spec = {"id": "candidates", "combine": {"shortlist": {"union": ["from_a", "from_b"]}}}
+
+    outcome = absorb(spec, [{}], {"from_a": [], "from_b": []})
+
+    assert "shortlist" not in outcome["facts"]
+    assert "shortlist" in outcome["unresolved"]
+
+
+def test_a_source_answering_two_hundred_with_an_empty_list_does_not_vanish():
+    """The live shape: a 200 with an empty collection is not a missing fact, and not an answer."""
+    spec = {"id": "trials", "collect": {"trial_rows": {"path": "studies",
+                                                       "fields": ["nctId", "phase"]}}}
+
+    outcome = absorb(spec, [{"studies": []}], {})
+
+    assert "trial_rows" in outcome["unresolved"]
+    assert "trial_rows" not in outcome["facts"]
+
+
 def test_resolved_is_true_only_when_the_guarded_value_arrived():
     spec = {"id": "identity", "extract": {"setid": "data.0.setid", "title": "data.0.title"}}
     repair = {"argument": "drug_name", "when_missing": "setid"}
@@ -836,6 +885,8 @@ def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
         "Orphanet_get_natural_history": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
                                                   "type_of_inheritance": ["Autosomal recessive"],
                                                   "average_age_of_onset": ["All ages"]}},
+        "Orphanet_get_epidemiology": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
+                                               "prevalences": [{"class": "1-9 / 100 000"}]}},
         "OpenTargets_get_disease_ids_by_name": {"data": {"search": {"hits": [
             {"id": "MONDO_0018150", "name": "Gaucher disease"}]}}},
         "OpenTargets_get_associated_targets_by_disease_efoId": {"data": {"disease": {

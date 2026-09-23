@@ -12,7 +12,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from tooluniverse.skill_runner import SkillRunner
+from tooluniverse.skill_runner import SkillRunner, handover_of, new_run
 from tooluniverse.skill_working_record import WorkingRecord
 
 pytestmark = pytest.mark.unit
@@ -202,3 +202,21 @@ def test_the_counts_a_fetch_reply_carries_count_as_received(tmp_path):
 
     assert reply["matched"] == 3
     assert served["papers.reply"] == [{"total_rows": 3, "matched": 3, "returned": 1, "offset": 0}]
+
+
+# --- a phase that never ran must not vanish from the hand-over --------------------
+
+def test_a_step_skipped_because_its_loop_list_was_empty_says_so():
+    graph = {"skill": "demo", "inputs": ["drug_name"], "steps": [
+        {"id": "candidates", "calls": []},
+        {"id": "literature", "requires": ["candidates"], "for_each": "shortlist",
+         "as": "candidate", "calls": []},
+    ]}
+    run = new_run({"drug_name": "cisplatin"})
+    run["done"] = ["candidates"]
+
+    handed = handover_of(graph, run)
+    skipped = [s for s in handed["steps_skipped"] if s["step"] == "literature"]
+
+    assert skipped, "a step that never ran must appear somewhere in the hand-over"
+    assert "nothing to loop over" in skipped[0]["reason"]

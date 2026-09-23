@@ -788,14 +788,15 @@ def judged(outcome: dict, wants: list[str], answer: dict | None) -> dict:
     """Fold the model's answer to a judgement into a step outcome.
 
     Only the names the step declared are taken; a declared name the model did not
-    answer is unresolved.
+    answer is unresolved. A name already carried as unresolved -- declared under
+    `produces` as well as `judge` -- is not counted twice.
     """
     answer = answer or {}
     facts = {**outcome["facts"],
              **{name: answer[name] for name in wants if name in answer}}
     # A name a compute left unresolved and the model then supplied is resolved.
-    unresolved = ([n for n in outcome["unresolved"] if n not in answer]
-                  + [n for n in wants if n not in answer])
+    carried = [n for n in outcome["unresolved"] if n not in answer]
+    unresolved = carried + [n for n in wants if n not in answer and n not in carried]
     return {**outcome, "facts": facts, "unresolved": unresolved}
 
 
@@ -1173,7 +1174,9 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
                                  None)
                     if found is None:
                         continue
-                if rule.get("flatten") and isinstance(found, list):
+                if isinstance(found, list) and (rule.get("flatten") or not found):
+                    # A call whose list-of-records reshaped to nothing contributes no
+                    # row, flatten or not -- an empty list is never a row of its own.
                     gathered.extend(found)
                 else:
                     gathered.append(found)
@@ -1197,7 +1200,9 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
                     merged.append(item)
         if rule.get("limit"):
             merged = merged[: rule["limit"]]
-        extracted[name] = merged
+        # A union of nothing is nothing gathered, not an answer of "empty".
+        if merged:
+            extracted[name] = merged
 
     # `compute` runs on the server, in passes: a rule may read what another rule in the
     # same step produces, and a store may hand the rules back in its own order.
@@ -1211,17 +1216,25 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
         decided = _derive(rule, known)
         if decided is None:
             undecided.append(name)
-            blocked.append({
-                "step": spec["id"],
-                "reason": (f"cannot decide {name}: {rule['from']} was never "
-                           "extracted, so the branch was not taken"),
-            })
+            if rule["from"] in known:
+                # The source arrived, but every row was unusable -- a read failure,
+                # not an absence.
+                reason = (f"cannot decide {name}: {rule['from']} arrived but no row "
+                          "could be read, so the branch was not taken")
+            else:
+                reason = (f"cannot decide {name}: {rule['from']} was never "
+                          "extracted, so the branch was not taken")
+            blocked.append({"step": spec["id"], "reason": reason})
         else:
             extracted[name] = decided
 
-    # A value the step says it produces and did not is always recorded.
-    unresolved = [name for name in (spec.get("extract") or {})
-                  if name not in extracted] + computed_missing
+    # A value the step says it produces and did not is always recorded, whichever rule
+    # was meant to make it. A `produces` name that is also a `compute` name left in
+    # `computed_missing` is one gap, not two, so the merge dedupes across both parts.
+    promised = (list(spec.get("extract") or {}) + list(spec.get("collect") or {})
+                + list(spec.get("combine") or {}) + list(spec.get("produces") or []))
+    unresolved = list(dict.fromkeys(
+        [name for name in dict.fromkeys(promised) if name not in extracted] + computed_missing))
     return {"facts": extracted, "unresolved": unresolved, "blocked": blocked,
             "undecided": undecided, "excluded": excluded}
 

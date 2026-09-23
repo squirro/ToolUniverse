@@ -111,17 +111,18 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
     overlap = facts.get(rule["overlap"])
     if overlap is None:
         return None
+    overlap = _records(overlap)
     age = facts.get(rule.get("patient_age_years", ""))
     onset_by = {str(r.get("orpha_code")): r.get("average_age_of_onset") or []
-                for r in facts.get(rule.get("inheritance", ""), []) or []}
+                for r in _records(facts.get(rule.get("inheritance", "")))}
     prev_by = {str(r.get("orpha_code")): r.get("classes") or []
-               for r in facts.get(rule.get("epidemiology", ""), []) or []}
+               for r in _records(facts.get(rule.get("epidemiology", "")))}
     early, late = set(rule.get("early_onset", [])), set(rule.get("late_onset", []))
     # A candidate missing the discriminating phenotypes ranks below one that carries them,
     # else the commonest disease matching only the common phenotypes floats to the top.
     pair = facts.get(rule.get("must_carry", "")) or []
     ids_by = {str(r.get("orpha_code")): set(r.get("hpo_ids") or [])
-              for r in facts.get(rule.get("rows_ids", ""), []) or []}
+              for r in _records(facts.get(rule.get("rows_ids", "")))}
     hier = _hierarchy(rule, facts)
     out = []
     for row in overlap:
@@ -171,7 +172,7 @@ def carries(term: str, disease_ids: set, hierarchy: dict) -> bool:
 
 
 def _hierarchy(rule: dict, facts: dict) -> dict:
-    rows = facts.get(rule.get("hierarchy", ""), []) or []
+    rows = _records(facts.get(rule.get("hierarchy", "")))
     return {str(r.get("hpo_id")): r for r in rows}
 
 
@@ -184,8 +185,9 @@ def _overlap(rule: dict, facts: dict) -> list[dict] | None:
     rows, against = facts.get(rule["rows"]), facts.get(rule["against"])
     if rows is None or against is None:
         return None
+    rows = _records(rows)
     case = list(dict.fromkeys(against))
-    gene_rows = facts.get(rule.get("gene_rows", ""), []) or []
+    gene_rows = _records(facts.get(rule.get("gene_rows", "")))
     has_gene = {str(g.get("orpha_code")) for g in gene_rows if g.get("genes")}
     hier = _hierarchy(rule, facts)
     out = []
@@ -211,6 +213,7 @@ def _fewest(rule: dict, facts: dict) -> list | None:
     rows = facts.get(rule["rows"])
     if rows is None:
         return None
+    rows = _records(rows)
     take = int(rule.get("take", 2))
     seen: dict = {}
     for row in rows:
@@ -261,16 +264,22 @@ def _item_in(template: str, marker: str, text: str) -> str | None:
     return match.group("item") if match else None
 
 
-def _rows_of(rule: dict, facts: dict) -> list[dict] | None:
-    """The named rows a compute reads, or None when the fact never arrived.
+def _records(rows: Any) -> list[dict]:
+    """The record entries of a rows fact.
 
     An entry that is not a record is not a row: a mapped path keeps a miss in place, and
     reading one as a crash tells the agent nothing at all.
     """
+    return [row for row in rows or [] if isinstance(row, dict)]
+
+
+def _rows_of(rule: dict, facts: dict) -> list[dict] | None:
+    """The named rows a compute reads, or None when the fact never arrived.
+
+    None is the fact never arriving; an empty list is a fact that arrived holding no record.
+    """
     rows = facts.get(rule["rows"])
-    if rows is None:
-        return None
-    return [row for row in rows if isinstance(row, dict)]
+    return None if rows is None else _records(rows)
 
 
 def _hierarchy_rows(rule: dict, facts: dict) -> list[dict] | None:

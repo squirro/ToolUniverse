@@ -13,6 +13,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 from tooluniverse.europe_pmc_tool import EuropePMCTool
 
 
+def _articles(out):
+    """The article list inside run()'s envelope; a failed search is not an empty one."""
+    assert isinstance(out, dict) and out.get("status") == "success", out
+    return out["data"]
+
+
+
 class _FakeResponse:
     def __init__(
         self, *, status_code=200, json_payload=None, text="", url="", reason=""
@@ -45,6 +52,8 @@ def test_europe_pmc_enrich_missing_abstract_fills_from_fulltext_xml(monkeypatch)
                     "id": "123",
                     "pmcid": "PMC123",
                     "authorList": {"author": [{"fullName": "Author A"}]},
+                    # Only an open-access article carries a full-text link to fetch.
+                    "isOpenAccess": "Y",
                 }
             ]
         }
@@ -81,6 +90,7 @@ def test_europe_pmc_enrich_missing_abstract_fills_from_fulltext_xml(monkeypatch)
 
     result = tool.run({"query": "x", "limit": 1, "enrich_missing_abstract": True})
 
+    result = _articles(result)
     assert isinstance(result, list)
     assert len(result) == 1
     assert result[0]["abstract"] == "Filled abstract."
@@ -147,7 +157,48 @@ def test_europe_pmc_enrich_missing_abstract_falls_back_to_pmc_oai(monkeypatch):
 
     result = tool.run({"query": "x", "limit": 1, "enrich_missing_abstract": True})
 
+    result = _articles(result)
     assert isinstance(result, list)
     assert len(result) == 1
     assert result[0]["abstract"] == "Filled abstract from OAI."
     assert result[0]["abstract_source"] == "NCBI PMC OAI (JATS)"
+
+
+@pytest.mark.unit
+def test_europe_pmc_enrich_missing_abstract_skips_closed_access(monkeypatch):
+    """A closed-access article has no full text to fetch: its abstract stays missing."""
+    tool = EuropePMCTool({"name": "EuropePMC_search_articles"})
+
+    core_payload = {
+        "resultList": {
+            "result": [
+                {
+                    "title": "A title",
+                    "pubYear": 2024,
+                    "source": "PMC",
+                    "id": "123",
+                    "pmcid": "PMC123",
+                    "authorList": {"author": [{"fullName": "Author A"}]},
+                    "isOpenAccess": "N",
+                }
+            ]
+        }
+    }
+    lite_payload = {"resultList": {"result": [{"id": "123", "journalTitle": "J"}]}}
+
+    def fake_request_with_retry(session, method, url, *, params=None, **kwargs):
+        if url.endswith("/rest/search"):
+            payload = core_payload if params.get("resultType") == "core" else lite_payload
+            return _FakeResponse(status_code=200, json_payload=payload, url=url)
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    monkeypatch.setattr(
+        "tooluniverse.europe_pmc_tool.request_with_retry", fake_request_with_retry
+    )
+
+    result = _articles(
+        tool.run({"query": "x", "limit": 1, "enrich_missing_abstract": True}))
+
+    assert len(result) == 1
+    assert result[0]["abstract"] is None
+    assert result[0]["fulltext_xml_url"] is None

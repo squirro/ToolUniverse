@@ -1310,8 +1310,11 @@ class SkillRunner:
                 try:
                     retried.append(self.execute(call["tool"], call["arguments"]))
                 except Exception as exc:                   # noqa: BLE001
+                    # Its empty slot stays, so the calls after it in this batch keep
+                    # their own loop item -- same reasoning as the main call loop.
                     retry_failures.append({"tool": call["tool"], "arguments": call["arguments"],
                                            "error": f"{type(exc).__name__}: {exc}"})
+                    retried.append(None)
             if resolved(spec, repair, retried):
                 run["facts"][argument] = candidate
                 kept = [{**f, "repaired_by": candidate} for f in pre_repair]

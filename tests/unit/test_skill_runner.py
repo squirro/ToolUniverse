@@ -667,6 +667,42 @@ def test_a_second_candidate_succeeding_still_credits_the_original_failure():
         "repaired_by must name the candidate that actually worked")
 
 
+def test_a_raising_call_in_a_repair_retry_batch_keeps_its_slot():
+    """Same reasoning as the main call loop: one call in a batch raising must not
+    shift a later call's row onto the wrong identifier. A multi-call repair step
+    substitutes the repaired argument into every call at once, so a retry batch can
+    itself contain more than one call, and one of them can fail while another
+    succeeds."""
+    graph = {
+        "skill": "demo", "inputs": ["source"],
+        "steps": [
+            {"id": "lookup",
+             "calls": [
+                 {"tool": "find_disease", "arguments": {"source": "{source}", "id": "d1"}},
+                 {"tool": "find_disease", "arguments": {"source": "{source}", "id": "d2"}},
+             ],
+             "repair": {"argument": "source", "when_missing": "hit_id"},
+             "extract": {"hit_id": "hits.0.id"},
+             "collect": {"hit_rows": {"path": "hits", "flatten": True,
+                                      "fields": ["id", "$call.id as which"]}}},
+        ],
+    }
+
+    def execute(tool, arguments):
+        if arguments["source"] == "bad-source":
+            return {"hits": []}
+        if arguments["id"] == "d1":
+            raise RuntimeError("d1: 503 Service Unavailable")
+        return {"hits": [{"id": "MONDO:2"}]}
+
+    runner = SkillRunner(graph, execute=execute, ask=lambda q: {"source": ["good-source"]})
+    run_id = _run_to_end(runner, {"source": "bad-source"})
+    rows = runner.state(run_id)["facts"]["hit_rows"]
+
+    assert rows == [{"id": "MONDO:2", "which": "d2"}], (
+        "d2's row must pair with d2's own call, not slide into d1's failed slot")
+
+
 # Repair is the recovery; a declared value that never arrives is the honesty when
 # there is none.
 MISS_GRAPH = {

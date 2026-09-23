@@ -414,7 +414,13 @@ def _computed(spec: dict, pending: dict, facts: dict, extracted: dict,
     while pending:
         settled = []
         for name, rule in pending.items():
-            value = _compute(rule, {**facts, **extracted})
+            try:
+                value = _compute(rule, {**facts, **extracted})
+            except SkillPathError as error:
+                blocked.append({"step": spec["id"], "reason": f"cannot compute {name}: {error}"})
+                refused.append(name)
+                settled.append(name)
+                continue
             if isinstance(value, _Refused):
                 blocked.append({"step": spec["id"], "reason": f"cannot compute {name}: {value.reason}"})
                 refused.append(name)
@@ -681,7 +687,12 @@ def source_total(spec: dict, results: list, items: list | None) -> Any:
     path = spec.get("total")
     if not path:
         return "unknown"
-    found = [_dig(payload, path) for payload in results]
+    found = []
+    for payload in results:
+        try:
+            found.append(_dig(payload, path))
+        except SkillPathError:
+            found.append(None)               # a bad path holds no total, same as a source that gave none
     if items and len(items) == len(found):
         return {str(item): (total if total is not None else "unknown")
                 for item, total in zip(items, found)}
@@ -708,7 +719,13 @@ def resolved(spec: dict, repair: dict, results: list) -> bool:
     wanted = repair["when_missing"]
     rule = (spec.get("extract") or {}).get(wanted)
     path = rule["path"] if isinstance(rule, dict) else rule
-    return any(_dig(payload, path) is not None for payload in results)
+    for payload in results:
+        try:
+            if _dig(payload, path) is not None:
+                return True
+        except SkillPathError:
+            continue                         # a malformed path has not resolved anything either
+    return False
 
 
 def substitute(calls: list[dict], argument: str, candidate: Any) -> list[dict]:
@@ -1071,30 +1088,36 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
     blocked: list[dict] = []
     for name, rule in (spec.get("extract") or {}).items():
         rule = rule if isinstance(rule, dict) else {"path": rule}
-        try:
-            for payload in results:
+        path_blocked = False
+        for payload in results:
+            try:
                 found = _dig(payload, rule["path"])
-                if found is None:
+            except SkillPathError as error:
+                # A syntax error in the path is the same for every payload; a mapped segment over
+                # something that is not a list depends on what this one payload gave back. Either
+                # way, one bad call costs only that call -- the next payload still gets a try.
+                if not path_blocked:
+                    blocked.append({"step": spec["id"], "reason": f"cannot extract {name}: {error}"})
+                    path_blocked = True
+                continue
+            if found is None:
+                continue
+            if rule.get("regex") and isinstance(found, str):
+                # Some values only exist inside a returned string.
+                match = re.search(rule["regex"], found)
+                if not match:
                     continue
-                if rule.get("regex") and isinstance(found, str):
-                    # Some values only exist inside a returned string.
-                    match = re.search(rule["regex"], found)
-                    if not match:
-                        continue
-                    found = match.group(1) if match.groups() else match.group(0)
-                if rule.get("exclude") and isinstance(found, list):
-                    # The author's noise list applies before the cap, so the cap trims real values only.
-                    dropped = [v for v in found if v in rule["exclude"]]
-                    if dropped:
-                        excluded[name] = dropped
-                        found = [v for v in found if v not in rule["exclude"]]
-                if rule.get("limit") and isinstance(found, list):
-                    found = found[: rule["limit"]]
-                extracted[name] = found
-                break
-        except SkillPathError as error:
-            blocked.append({"step": spec["id"], "reason": f"cannot extract {name}: {error}"})
-            continue
+                found = match.group(1) if match.groups() else match.group(0)
+            if rule.get("exclude") and isinstance(found, list):
+                # The author's noise list applies before the cap, so the cap trims real values only.
+                dropped = [v for v in found if v in rule["exclude"]]
+                if dropped:
+                    excluded[name] = dropped
+                    found = [v for v in found if v not in rule["exclude"]]
+            if rule.get("limit") and isinstance(found, list):
+                found = found[: rule["limit"]]
+            extracted[name] = found
+            break
         if name not in extracted and rule.get("default_from"):
             fallback = facts.get(rule["default_from"])
             if fallback is not None:
@@ -1103,8 +1126,9 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
     for name, rule in (spec.get("collect") or {}).items():
         rule = rule if isinstance(rule, dict) else {"path": rule}
         gathered = []
-        try:
-            for index, payload in enumerate(results):
+        path_blocked = False
+        for index, payload in enumerate(results):
+            try:
                 found = _dig(payload, rule["path"])
                 if found is None:
                     continue
@@ -1143,9 +1167,12 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
                     gathered.extend(found)
                 else:
                     gathered.append(found)
-        except SkillPathError as error:
-            blocked.append({"step": spec["id"], "reason": f"cannot collect {name}: {error}"})
-            continue
+            except SkillPathError as error:
+                # Same reasoning as the extract loop: one bad call is skipped, not the whole rule.
+                if not path_blocked:
+                    blocked.append({"step": spec["id"], "reason": f"cannot collect {name}: {error}"})
+                    path_blocked = True
+                continue
         if rule.get("unique"):
             gathered = list(dict.fromkeys(gathered))
         if gathered:

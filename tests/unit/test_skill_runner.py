@@ -66,6 +66,46 @@ def test_a_malformed_path_is_blocked_rather_than_crashing_the_run():
     assert any("a[].b[].c" in b["reason"] for b in outcome["blocked"])
 
 
+def test_two_extract_rules_over_the_same_heterogeneous_records_stay_in_step_through_absorb():
+    """The brief's `_dig`-level claim, proven through the step-execution path that actually runs it."""
+    spec = {"id": "s", "extract": {"ids": "records[].id", "dois": "records[].doi"}}
+    results = [{"records": [{"id": "A", "doi": "10.1/a"},
+                            {"id": "B"},
+                            {"id": "C", "doi": "10.1/c"}]}]
+
+    outcome = absorb(spec, results, {})
+    ids, dois = outcome["facts"]["ids"], outcome["facts"]["dois"]
+
+    assert len(ids) == len(dois) == 3
+    assert ids[1] == "B" and dois[1] is None
+
+
+def test_two_collect_rules_over_the_same_heterogeneous_records_stay_in_step_through_absorb():
+    spec = {"id": "s", "collect": {"ids": {"path": "records[].id", "flatten": True},
+                                   "dois": {"path": "records[].doi", "flatten": True}}}
+    results = [{"records": [{"id": "A", "doi": "10.1/a"},
+                            {"id": "B"},
+                            {"id": "C", "doi": "10.1/c"}]}]
+
+    outcome = absorb(spec, results, {})
+    ids, dois = outcome["facts"]["ids"], outcome["facts"]["dois"]
+
+    assert len(ids) == len(dois) == 3
+    assert ids[1] == "B" and dois[1] is None
+
+
+def test_one_badly_shaped_payload_costs_only_that_payload_not_the_rule():
+    """A mapped segment over something that is not a list depends on that one payload's shape;
+    the payloads either side of it must still contribute what they hold."""
+    spec = {"id": "s", "collect": {"ids": "records[].id"}}
+    results = [{"records": [{"id": "A"}]}, {"records": "not a list"}, {"records": [{"id": "C"}]}]
+
+    outcome = absorb(spec, results, {})
+
+    assert outcome["facts"]["ids"] == [["A"], ["C"]]
+    assert len([b for b in outcome["blocked"] if "ids" in b["reason"]]) == 1
+
+
 def test_an_ontology_outage_reads_differently_from_a_term_no_ontology_knows():
     spec = {"mapping": {"requested_meddra": {}}}
     outcome = {"facts": {"requested_meddra": [{"term": "NEPHROTOXICITY", "concept": ["kidney"]}]}}

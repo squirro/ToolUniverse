@@ -193,3 +193,61 @@ def test_the_caps_that_narrow_the_answer_are_stated(monkeypatch):
 
     assert "limits" in out["metadata"], out["metadata"]
     assert out["metadata"]["limits"]["fulltext_articles_scanned"] == 3
+
+
+# ------------------------------------------- the structured tool: the two criteria I first missed
+#
+# Both live in `EuropePMCStructuredFullTextTool`, not in `EuropePMCTool._search`, which is why a
+# first reading of the search path found neither.
+
+from tooluniverse.europe_pmc_tool import EuropePMCStructuredFullTextTool  # noqa: E402
+
+_ARTICLE = """<article>
+  <front><article-meta><title-group><article-title>A study</article-title></title-group>
+  <abstract>{abstract}</abstract></article-meta></front>
+  <body><sec><title>Methods</title><p>We did things.</p></sec></body>
+</article>"""
+
+
+def _structured():
+    return EuropePMCStructuredFullTextTool({"name": "EuropePMC_get_structured_fulltext"})
+
+
+def test_a_pmid_lookup_that_failed_does_not_state_the_article_is_not_open_access(monkeypatch):
+    """`_resolve_pmid_to_pmcid` swallows everything, so a dead network read as a closed paper."""
+    def _boom(*a, **k):
+        raise OSError("Europe PMC unreachable")
+    monkeypatch.setattr(mod, "request_with_retry", _boom)
+
+    out = _structured().run({"pmid": "32226684"})
+
+    assert out["status"] == "error"
+    assert "open-access" not in out["error"], out["error"]
+    assert "unreachable" in out["error"] or "could not be reached" in out["error"], out["error"]
+
+
+def test_a_pmid_the_source_genuinely_does_not_know_still_says_so(monkeypatch):
+    """The real not-found answer must survive: only the outage stops claiming a status."""
+    monkeypatch.setattr(mod, "request_with_retry",
+                        lambda *a, **k: _Resp(json_data={"resultList": {"result": []}}))
+
+    out = _structured().run({"pmid": "32226684"})
+
+    assert out["status"] == "error"
+    assert "PubMed Central" in out["error"]
+
+
+def test_an_abstract_element_holding_no_text_is_not_a_parsed_abstract():
+    """`<abstract></abstract>` yields "" — an abstract key with nothing in it reads as read."""
+    parsed = _structured()._parse_article_xml(_ARTICLE.format(abstract=""))
+
+    assert parsed["abstract"] is None
+    assert parsed["has_abstract"] is False
+
+
+def test_an_abstract_with_text_is_reported_as_read():
+    parsed = _structured()._parse_article_xml(
+        _ARTICLE.format(abstract="<p>We studied resistance.</p>"))
+
+    assert "resistance" in parsed["abstract"]
+    assert parsed["has_abstract"] is True

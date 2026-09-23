@@ -1293,8 +1293,13 @@ class EuropePMCStructuredFullTextTool(BaseTool):
         """Collapse all text under *el* into a single whitespace-normalised string."""
         return " ".join("".join(el.itertext()).split())
 
-    def _resolve_pmid_to_pmcid(self, pmid: str) -> str | None:
-        """Use Europe PMC search to convert a PMID to a PMCID."""
+    def _resolve_pmid_to_pmcid(self, pmid: str) -> tuple[str | None, str | None]:
+        """The PMCID for this PMID, as ``(pmcid, error)``.
+
+        Two answers that were one before: Europe PMC saying it holds no PMC copy, and the
+        lookup never reaching Europe PMC. Collapsing them to ``None`` made the caller report
+        an outage as a statement about the article's open-access status.
+        """
         url = (
             "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
             f"?query=EXT_ID:{pmid}&format=json&pageSize=1"
@@ -1304,13 +1309,11 @@ class EuropePMCStructuredFullTextTool(BaseTool):
                 self.session, "GET", url, timeout=15, max_attempts=2
             )
             if resp.status_code != 200:
-                return None
+                return None, f"the PMID lookup could not be reached (HTTP {resp.status_code})"
             results = resp.json().get("resultList", {}).get("result", [])
-            if results:
-                return results[0].get("pmcid") or None
-        except Exception:
-            pass
-        return None
+        except Exception as exc:
+            return None, f"the PMID lookup could not be reached ({exc})"
+        return (results[0].get("pmcid") or None) if results else None, None
 
     def _classify_section(self, title_text: str) -> str:
         """Map a section title to a canonical name, or return 'other'."""
@@ -1335,7 +1338,12 @@ class EuropePMCStructuredFullTextTool(BaseTool):
 
         # --- abstract ---
         abstract_el = root.find(".//abstract")
+        # An `<abstract>` that exists but carries no text parses to "", which read as an
+        # abstract the tool had. This class carries no data_quality block, so the reader had
+        # nothing else to go on.
         abstract = self._itertext(abstract_el) if abstract_el is not None else None
+        abstract = abstract.strip() if isinstance(abstract, str) else abstract
+        abstract = abstract or None
 
         # --- body sections ---
         sections: dict[str, list[dict]] = {}
@@ -1415,6 +1423,7 @@ class EuropePMCStructuredFullTextTool(BaseTool):
         return {
             "title": title,
             "abstract": abstract,
+            "has_abstract": abstract is not None,
             "sections": structured_body,
             "figures": figures,
             "tables": tables,
@@ -1434,7 +1443,18 @@ class EuropePMCStructuredFullTextTool(BaseTool):
 
         # Resolve PMID -> PMCID when only PMID is given
         if not pmcid and pmid:
-            pmcid = self._resolve_pmid_to_pmcid(str(pmid))
+            pmcid, lookup_error = self._resolve_pmid_to_pmcid(str(pmid))
+            if lookup_error:
+                # Nothing is known about this article: the question was never asked.
+                return {
+                    "status": "error",
+                    "retryable": True,
+                    "error": (
+                        f"Could not resolve PMID {pmid} to a PMC ID because "
+                        f"{lookup_error}. This says nothing about whether the article is in "
+                        "PubMed Central or open access. Retry before concluding anything."
+                    ),
+                }
             if not pmcid:
                 return {
                     "status": "error",

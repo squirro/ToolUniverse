@@ -127,6 +127,12 @@ _STATUS_DETAIL = {
         "Studies matched and parsed, but this gene was not measured in them. This "
         "is NOT evidence the gene is unchanged."
     ),
+    "studies_partly_unreadable": (
+        "Some matching studies were read and others could not be fetched. Every "
+        "number here stands on the studies that were read only. The studies named "
+        "under `unreadable` in diagnostics are NOT evidence either way. Retry "
+        "before treating this median as the whole picture."
+    ),
     "catalog_unavailable": (
         "The GxA experiment catalogue could not be fetched, so no filtering "
         "happened at all. This is a transport failure, not a result."
@@ -334,8 +340,9 @@ def gxa_fetch_analytics(accession, timeout=60):
             resp2 = _ur.urlopen(req2, timeout=timeout)
             data = resp2.read().decode()
         except Exception as e2:
-            log.warning("gxa_fetch_analytics(%s): both RnaSeq and Microarray failed: %s / %s", accession, e, e2)
-            return [], ""
+            raise RuntimeError(
+                f"Expression Atlas analytics fetch failed for {accession}: "
+                f"RnaSeq {e} / Microarray {e2}") from e2
     lines = data.strip().split("\n")
     if len(lines) < 2:
         return [], ""
@@ -454,19 +461,27 @@ def exec_differential_expression(arguments, input_table, output_table, db_path):
 
     # Fetch analytics from all experiments in parallel
     all_analytics = {}
+    unreadable = []
 
     def _fetch(acc_desc_score):
         acc, desc, _ = acc_desc_score
-        analytics, comparison = gxa_fetch_analytics(acc)
-        return acc, analytics, comparison
+        try:
+            analytics, comparison = gxa_fetch_analytics(acc)
+        except Exception as e:
+            return acc, [], "", str(e)
+        return acc, analytics, comparison, ""
 
     with _TPE(max_workers=4) as pool:
         futures = {pool.submit(_fetch, e): e[0] for e in experiments}
         for future in as_completed(futures):
-            acc, analytics, comparison = future.result()
-            if analytics:
+            acc, analytics, comparison, error = future.result()
+            if error:
+                unreadable.append(acc)
+                log.warning("exec_de: %s could not be read: %s", acc, error)
+            elif analytics:
                 all_analytics[acc] = (analytics, comparison)
                 log.info("exec_de: %s -> %d genes", acc, len(analytics))
+    unreadable.sort()
 
     if not all_analytics:
         log.warning("exec_de: all analytics fetches failed for '%s' — returning empty rows", indication)
@@ -543,6 +558,12 @@ def exec_differential_expression(arguments, input_table, output_table, db_path):
 
     # Aggregation helper
     exp_names = "; ".join(all_analytics.keys())
+    partly_read = bool(unreadable)
+    read_diagnostics = json.dumps({
+        "studies_matched": [e[0] for e in experiments],
+        "studies_read": list(all_analytics),
+        "unreadable": unreadable,
+    }, default=str)
 
     def _agg(display_name, measurements):
         if measurements:
@@ -562,9 +583,11 @@ def exec_differential_expression(arguments, input_table, output_table, db_path):
                 "n_studies": n_studies,
                 "overexpressed": "yes" if median_fc > 0 else "no",
                 "experiments": exp_names,
-                "status": "ok",
-                "status_detail": "",
+                "status": "studies_partly_unreadable" if partly_read else "ok",
+                "status_detail": (_STATUS_DETAIL["studies_partly_unreadable"]
+                                  if partly_read else ""),
                 "widen_with": "",
+                "diagnostics": read_diagnostics,
             }
         # Studies matched AND parsed; this gene was simply not among them. Before
         # DSR-629 this was distinguishable from "no study matched" only by whether
@@ -577,6 +600,7 @@ def exec_differential_expression(arguments, input_table, output_table, db_path):
             "status": "gene_not_measured",
             "status_detail": _STATUS_DETAIL["gene_not_measured"],
             "widen_with": _WIDEN_WITH,
+            "diagnostics": read_diagnostics,
         }
 
     results = []

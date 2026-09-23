@@ -17,6 +17,21 @@ log = logging.getLogger(__name__)
 
 _CT_URL = "https://clinicaltrials.gov/api/v2/studies"
 
+# Row shape the downstream table pipeline reads. Kept in one place so the
+# populated and failed paths carry the same columns.
+_EMPTY_TRIAL = {
+    "nct_id": "", "title": "", "status": "", "phases": "", "enrollment": "",
+    "sponsor": "", "drug_names": "", "interventions": "", "conditions": "",
+    "start_date": "", "completion_date": "", "url": "", "has_biomarker": False,
+}
+
+_UNREACHABLE_DETAIL = (
+    "The search for this term did not reach ClinicalTrials.gov. No trial was read "
+    "for it, which is NOT evidence that no trial exists, and the total is unknown "
+    "rather than zero. Retry before drawing any conclusion, and read the trials "
+    "listed here as a partial list."
+)
+
 # Terms that genuinely indicate a biomarker-selected trial design.
 # Intentionally narrow: "positive/negative/expression" alone match too many
 # non-molecular contexts (ECOG performance, pregnancy test, etc.).
@@ -105,8 +120,7 @@ def search_ctgov(intervention, condition="", page_size=100, timeout=30):
         r.raise_for_status()
         data = r.json()
     except Exception as e:
-        log.warning("search_ctgov: %s", e)
-        return [], 0
+        raise RuntimeError(f"ClinicalTrials.gov search failed: {e}") from e
 
     studies = data.get("studies") or []
     total = data.get("totalCount", len(studies))
@@ -131,6 +145,7 @@ def search_ctgov(intervention, condition="", page_size=100, timeout=30):
         title = ident.get("briefTitle", "")
         eligibility_text = elig_mod.get("eligibilityCriteria", "")
         trials.append({
+            **_EMPTY_TRIAL,
             "nct_id": nct_id,
             "title": title,
             "status": stat.get("overallStatus", ""),
@@ -202,12 +217,27 @@ def exec_ct_search(arguments, input_table, output_table, db_path):
 
     all_results = []
     for term in terms:
-        expanded = _expand_intervention(term)
-        log.info("exec_ct_search: '%s' expanded to: %s", term, expanded[:100])
-        trials, total = search_ctgov(expanded, condition)
+        try:
+            expanded = _expand_intervention(term)
+            log.info("exec_ct_search: '%s' expanded to: %s", term, expanded[:100])
+            trials, total = search_ctgov(expanded, condition)
+        except Exception as e:
+            # Merging nothing for this term would leave a filtered list looking
+            # like a short one, with no column saying which terms are missing.
+            log.warning("exec_ct_search: '%s' failed: %s", term, e)
+            all_results.append({
+                **_EMPTY_TRIAL,
+                "_input_query": term,
+                "total_matching": "unknown",
+                "search_status": "source_unreachable",
+                "search_status_detail": f"{_UNREACHABLE_DETAIL} ({e})",
+            })
+            continue
         for t in trials:
             t["_input_query"] = term
             t["total_matching"] = str(total)
+            t["search_status"] = "ok"
+            t["search_status_detail"] = ""
         all_results.extend(trials)
 
     log.info("exec_ct_search: %d total trials for %d terms",

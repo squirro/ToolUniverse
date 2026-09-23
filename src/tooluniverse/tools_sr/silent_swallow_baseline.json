@@ -6,8 +6,8 @@
   "_measured": "2026-09-23",
   "_note": "The invariant: the accepted counts sum to exactly every swallow the scan finds, so a new one cannot hide behind a site that already holds one.",
   "root": "src/tooluniverse",
-  "count": 299,
-  "modules": 118,
+  "count": 297,
+  "modules": 117,
   "sites": {
     "__init__.py:09f2ee2b744a": {
       "count": 1,
@@ -929,10 +929,6 @@
       "count": 1,
       "reason": "carried over from the frozen count; upstream code, containment not remediation"
     },
-    "tools_sr/clinical_trials.py:5bc5b610244c": {
-      "count": 1,
-      "reason": "newly caught by the widened detector (composite empty-tuple return that carries no diagnostic); this project's own code under tools_sr/ -- accepted here for containment, tracked to be fixed rather than baselined long-term"
-    },
     "tools_sr/competition.py:2f11376456e6": {
       "count": 1,
       "reason": "this project's own code under tools_sr/, not upstream -- accepted here for containment, tracked to be fixed rather than baselined long-term"
@@ -944,10 +940,6 @@
     "tools_sr/competition.py:8ac7dd4248a5": {
       "count": 1,
       "reason": "this project's own code under tools_sr/, not upstream -- accepted here for containment, tracked to be fixed rather than baselined long-term"
-    },
-    "tools_sr/differential.py:b126d030c2a8": {
-      "count": 1,
-      "reason": "newly caught by the widened detector (composite empty-tuple return that carries no diagnostic); this project's own code under tools_sr/ -- accepted here for containment, tracked to be fixed rather than baselined long-term"
     },
     "tools_sr/differential.py:c8470ed3ecfb": {
       "count": 1,

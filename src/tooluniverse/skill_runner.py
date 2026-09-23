@@ -288,7 +288,13 @@ def _flag(rule: dict, facts: dict) -> list[dict] | None:
         except (TypeError, ValueError):
             return None
 
-    out = [{**row, "flagged": value(row) is not None and value(row) >= threshold} for row in rows]
+    out = []
+    for row in rows:
+        seen = value(row)
+        marked = {**row, "flagged": None if seen is None else seen >= threshold}
+        if seen is None and row.get(field) is not None:
+            marked["unparseable"] = row[field]
+        out.append(marked)
     out.sort(key=lambda r: (value(r) is None, -(value(r) or 0.0)))
     return out
 
@@ -467,15 +473,19 @@ def _derive(spec: dict, facts: dict) -> bool | None:
     rows = facts.get(spec["from"]) or []
     field, op, value = spec.get("field"), spec.get("op", "=="), spec.get("value")
     compare = _OPS[op]
-    hits = []
+    hits, unusable = [], 0
     for row in rows:
         seen = row.get(field) if isinstance(row, dict) else row
         if seen is None:
+            unusable += 1
             continue
         try:
             hits.append(compare(seen, value))
         except TypeError:
+            unusable += 1
             continue
+    if not hits and unusable:
+        return None          # rows arrived but none could be read: unknown, not "no"
     return all(hits) if spec.get("mode") == "all" else any(hits)
 
 

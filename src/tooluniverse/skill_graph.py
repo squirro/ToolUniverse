@@ -231,11 +231,16 @@ def _settled(graph: dict, done: set[str], facts: dict) -> set[str]:
 
 
 def skipped_gates(graph: dict, done: list[str], facts: dict) -> list[dict]:
-    """Steps that did not run because their gateway closed, each with the gate's name."""
+    """Steps that did not run because their gateway closed, each with the gate's name.
+
+    `decided` is True when the gate's fact arrived and was rejected, False when the
+    fact never arrived at all -- the gate was never decided, not closed on evidence.
+    """
     ran = set(done or [])
-    settled = _settled(graph, ran, facts or {})
-    return [{"step": s["id"], "gate": s["when"]} for s in graph["steps"]
-            if s["id"] in settled and s["id"] not in ran and s.get("when")]
+    facts = facts or {}
+    return [{"step": s["id"], "gate": s["when"], "decided": s["when"] in facts}
+            for s in graph["steps"]
+            if s["id"] in _settled(graph, ran, facts) and s["id"] not in ran and s.get("when")]
 
 
 def stalled_steps(graph: dict, done: list[str], facts: dict) -> list[dict]:

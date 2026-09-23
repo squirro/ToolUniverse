@@ -555,7 +555,8 @@ async def test_a_closed_gateway_strands_nothing_on_temporal_either():
         handed, calls = await _run(env, responses, gated, {"drug_name": "x"}, "run-gated")
 
     assert [tool for tool, _ in calls] == ["count_reactions", "signal"]
-    assert handed["steps_skipped"] == [{"step": "map_terms", "gate": "requested"}]
+    # "requested" is never supplied, so the gate was never decided, not closed on evidence.
+    assert handed["steps_skipped"] == [{"step": "map_terms", "gate": "requested", "decided": False}]
     assert _handed(handed) == _in_memory(responses, gated, {"drug_name": "x"})
 
 

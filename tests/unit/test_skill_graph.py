@@ -15,6 +15,7 @@ from tooluniverse.skill_graph import (  # noqa: E402
     graph_directive,
     load_graph,
     next_step,
+    skipped_gates,
     undeclared_tables,
 )
 
@@ -314,3 +315,16 @@ def test_the_directive_tells_the_agent_to_write_from_the_handover_and_to_fetch_t
 
     assert "`handover`" in text and "fetch_run_data(" in text
     assert "bundle" not in text
+
+
+def test_a_skipped_gate_says_whether_its_condition_was_decided():
+    graph = {"skill": "demo", "inputs": ["drug_name"], "steps": [
+        {"id": "signals", "calls": []},
+        {"id": "stratify", "requires": ["signals"], "when": "strong_signal", "calls": []},
+    ]}
+
+    rejected = skipped_gates(graph, ["signals"], {"strong_signal": False})
+    never = skipped_gates(graph, ["signals"], {})
+
+    assert rejected[0]["decided"] is True
+    assert never[0]["decided"] is False

@@ -14,9 +14,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from tooluniverse.skill_graph import GRAPHS_DIR, SkillGraphError, load_graph  # noqa: E402
 from tooluniverse.skill_runner import (  # noqa: E402
-    SkillPathError, SkillRunner, _dig, _fewest, _prevalence_tier, absorb, apply, carries,
-    check_facts, new_run, next_runnable, normalised_executor, placed_mapping, question_for,
-    resolved, source_total, substitute)
+    SkillPathError, SkillRunner, _derive, _dig, _fewest, _flag, _prevalence_tier, absorb, apply,
+    carries, check_facts, new_run, next_runnable, normalised_executor, placed_mapping,
+    question_for, resolved, source_total, substitute)
 
 pytestmark = pytest.mark.unit
 
@@ -324,7 +324,7 @@ DERIVE_GRAPH = {
 }
 
 
-def _derive(payload):
+def _run_derive_graph(payload):
     runner = SkillRunner(DERIVE_GRAPH, execute=lambda t, a: payload)
     return runner.advance(runner.start({"drug": "enzalutamide"})["run_id"])
 
@@ -332,18 +332,64 @@ def _derive(payload):
 def test_a_gateway_over_a_missing_fact_is_unknown_not_false():
     """A missing input and a genuine negative are different answers, and only one
     of them is safe to branch on."""
-    assert _derive({"data": {}})["extracted"]["strong"] is None
+    assert _run_derive_graph({"data": {}})["extracted"]["strong"] is None
 
 
 def test_an_unknown_gateway_is_reported_so_the_skip_is_not_silent():
-    out = _derive({"data": {}})
+    out = _run_derive_graph({"data": {}})
     assert any("strong" in b["reason"] for b in out["blocked"]), out["blocked"]
 
 
 def test_a_gateway_over_real_but_empty_rows_is_a_genuine_no():
     """Rows came back and none reached the threshold — that IS a decision."""
-    out = _derive({"data": {"results": []}})
+    out = _run_derive_graph({"data": {"results": []}})
     assert out["extracted"]["strong"] is False and out["next_step"]["id"] == "report"
+
+
+def test_a_derive_over_rows_that_all_lack_the_field_is_undecided():
+    rule = {"from": "rows", "field": "prr", "op": ">=", "value": 5, "mode": "any"}
+    facts = {"rows": [{"ror": 9.0}, {"ror": 12.0}]}
+
+    assert _derive(rule, facts) is None
+
+
+def test_a_derive_over_rows_of_the_wrong_type_is_undecided():
+    rule = {"from": "rows", "field": "prr", "op": ">=", "value": 5, "mode": "any"}
+    facts = {"rows": [{"prr": "not reported"}, {"prr": "n/a"}]}
+
+    assert _derive(rule, facts) is None
+
+
+def test_a_derive_with_mode_all_over_zero_usable_rows_is_not_vacuously_true():
+    rule = {"from": "rows", "field": "prr", "op": ">=", "value": 5, "mode": "all"}
+    facts = {"rows": [{"ror": 9.0}]}
+
+    assert _derive(rule, facts) is None
+
+
+def test_a_genuinely_empty_result_is_still_a_no():
+    rule = {"from": "rows", "field": "prr", "op": ">=", "value": 5, "mode": "any"}
+
+    assert _derive(rule, {"rows": []}) is False
+
+
+def test_one_usable_row_among_unusable_ones_still_decides():
+    rule = {"from": "rows", "field": "prr", "op": ">=", "value": 5, "mode": "any"}
+    facts = {"rows": [{"prr": "n/a"}, {"prr": 17.7}]}
+
+    assert _derive(rule, facts) is True
+
+
+def test_a_row_whose_flagged_field_will_not_parse_is_recorded_as_unparseable():
+    rule = {"rows": "prr_rows", "field": "prr", "threshold": 5}
+    facts = {"prr_rows": [{"term": "A", "prr": 17.7},
+                          {"term": "B", "prr": "3.1 (0.8-9.4)"}]}
+
+    rows = _flag(rule, facts)
+    unparseable = [r for r in rows if r["term"] == "B"][0]
+
+    assert unparseable["flagged"] is None
+    assert unparseable["unparseable"] == "3.1 (0.8-9.4)"
 
 
 COLLECT_GRAPH = {
@@ -1600,6 +1646,19 @@ def test_sorted_by_and_flag_read_a_missing_number_as_last_and_unflagged():
     assert {f["check"] for f in check_facts(CHECK_RULES, null_flagged, PRR_FACTS)} == {"flag", "covers"}
 
 
+def test_check_flag_reads_a_none_flag_as_not_flagged_not_an_error():
+    """`_flag` marks a cell it cannot parse `flagged: None`. The check must read that as
+    "did not reach the threshold" -- not as a mismatch, and not as a pass for `flagged: True`."""
+    rule = {"prr_table": {"flag": {"field": "flagged", "from": "prr", "op": ">=", "value": 5}}}
+    rows = [{"term": "A", "prr": "3.1 (0.8-9.4)", "flagged": None},
+            {"term": "B", "prr": 17.7, "flagged": True}]
+
+    assert check_facts(rule, {"prr_table": rows}, {}) == []
+
+    wrongly_true = [{**rows[0], "flagged": True}, rows[1]]
+    assert [f["check"] for f in check_facts(rule, {"prr_table": wrongly_true}, {})] == ["flag"]
+
+
 def test_list_checks_hold_the_selection_to_the_table():
     foreign = {**GOOD_ANSWER, "flagged_aes": ["MYELODYSPLASTIC SYNDROME", "HEADACHE"]}
     assert [f["check"] for f in check_facts(CHECK_RULES, foreign, PRR_FACTS)] == ["subset_of"]
@@ -1694,7 +1753,8 @@ def test_a_step_that_requires_a_skipped_gated_step_still_runs():
 def test_a_skipped_gated_step_is_handed_over_as_skipped_with_its_gate():
     """Not done, not blocked: the report can say what did not run and why."""
     handed = _gated_handover()
-    assert handed["steps_skipped"] == [{"step": "map_terms", "gate": "requested"}]
+    # "requested" is an optional input never supplied, so the gate was never decided.
+    assert handed["steps_skipped"] == [{"step": "map_terms", "gate": "requested", "decided": False}]
     assert handed["blocked"] == []
 
 

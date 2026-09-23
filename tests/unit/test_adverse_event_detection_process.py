@@ -83,7 +83,9 @@ def test_without_a_requested_reaction_the_reading_is_skipped_and_the_top_terms_r
     handed, calls, asked = _drive()
 
     assert [q for q in asked if "requested_meddra" in q["wants"]] == []
-    assert {"step": "requested_terms", "gate": "requested_aes"} in handed["steps_skipped"]
+    # requested_aes is never supplied, so the gate was never decided, not closed on evidence.
+    assert {"step": "requested_terms", "gate": "requested_aes",
+            "decided": False} in handed["steps_skipped"]
     looped = [a["adverse_event"] for tool, a in calls if tool == "FAERS_calculate_disproportionality"]
     assert looped == TERMS
     assert "stalled" not in handed and handed["blocked"] == []

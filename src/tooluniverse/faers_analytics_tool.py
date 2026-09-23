@@ -10,8 +10,17 @@ from .tool_registry import register_tool
 
 FDA_BASE_URL = "https://api.fda.gov/drug/event.json"
 
+
+class LookupFailed(Exception):
+    """A name lookup did not run, as against a name lookup that found nothing."""
+
 # openFDA's widest count page; a limit above 100 needs an api_key.
 COUNT_PAGE_MAX = 1000
+
+# What an unauthenticated count request gets, which is what the tool asks for
+# when no key is set. Comparing a page against COUNT_PAGE_MAX instead of this
+# was why no count path ever reported itself truncated.
+COUNT_PAGE_DEFAULT = 100
 
 
 @register_tool("FAERSAnalyticsTool")
@@ -331,6 +340,13 @@ class FAERSAnalyticsTool(BaseTool):
                 "stratified_by": stratify_by,
                 "case_definition": self._case_definition(drug_name, resolved_field, drug_total),
                 "total_reports": total_count,
+                "total_reports_note": (
+                    "Summed over the returned page only, which openFDA cut off, so "
+                    "every percentage below is a share of this page and not of all "
+                    "reports for the drug."
+                    if truncated else
+                    "Summed over the whole distribution openFDA returned."
+                ),
                 "stratification": sorted(
                     stratified_data, key=lambda x: x["count"], reverse=True
                 ),
@@ -397,10 +413,21 @@ class FAERSAnalyticsTool(BaseTool):
             # Get total serious event count
             total_url = f"{FDA_BASE_URL}?search={search_query}&limit=1"
             total_response = requests.get(total_url, timeout=30)
-            total_data = total_response.json()
-            total_serious = (
-                total_data.get("meta", {}).get("results", {}).get("total", 0)
-            )
+            try:
+                total_response.raise_for_status()
+                total_serious = (
+                    total_response.json()
+                    .get("meta", {})
+                    .get("results", {})
+                    .get("total", 0)
+                )
+            except requests.HTTPError as exc:
+                # openFDA answers 404 to a search matching nothing: a real zero.
+                # Any other status leaves no total, and a body without `meta`
+                # parses to zero, which would be printed beside the reactions above.
+                if exc.response is None or exc.response.status_code != 404:
+                    raise
+                total_serious = 0
 
             # Format results
             serious_reactions = []
@@ -546,7 +573,15 @@ class FAERSAnalyticsTool(BaseTool):
             ]
 
             # Calculate trend
-            if len(temporal_data) >= 2:
+            if truncated:
+                # openFDA orders a count by frequency, so a full page is the most
+                # reported dates, not the earliest. Their ends are not a trend.
+                percent_change = 0
+                trend = (
+                    "Not a time series: these are the most frequently reported dates, "
+                    "not the whole date range, so no direction can be read from them"
+                )
+            elif len(temporal_data) >= 2:
                 first_year_count = temporal_data[0]["count"]
                 last_year_count = temporal_data[-1]["count"]
                 percent_change = (
@@ -622,6 +657,12 @@ class FAERSAnalyticsTool(BaseTool):
                         "PT_level": pt_level,
                         # Count the full result, not the display slice.
                         "total_unique_PTs": len(pt_results),
+                        "total_unique_PTs_note": (
+                            "A lower bound: openFDA cut the page, so terms beyond it "
+                            "were never counted."
+                            if truncated else
+                            "Every preferred term openFDA returned."
+                        ),
                     },
                     "note": "Full MedDRA hierarchy (HLT, SOC) requires MedDRA license. Showing Preferred Term (PT) level only.",
                     "recommendation": "Use MedDRA dictionary to map PTs to higher-level terms for system organ class analysis",
@@ -726,6 +767,14 @@ class FAERSAnalyticsTool(BaseTool):
             "number describes; the ROR 1.0 line is the no-signal boundary."
         )
 
+    def _page_ceiling(self) -> int:
+        """The count page this caller actually gets.
+
+        openFDA caps an unauthenticated count at 100 and only a key buys the wider
+        page, so the ceiling moves with the key and a fixed one describes neither case.
+        """
+        return COUNT_PAGE_MAX if os.getenv("FDA_API_KEY") else COUNT_PAGE_DEFAULT
+
     def _count_url(self, search_query: str, count_field: str) -> str:
         """A count URL asking for as many terms as this caller is allowed.
 
@@ -742,12 +791,16 @@ class FAERSAnalyticsTool(BaseTool):
 
         A full page is evidence of truncation, not of completeness.
         """
-        if len(results) < COUNT_PAGE_MAX:
+        ceiling = self._page_ceiling()
+        if len(results) < ceiling:
             return None
+        widen = "" if ceiling == COUNT_PAGE_MAX else (
+            f" Set FDA_API_KEY to raise the page to {COUNT_PAGE_MAX}.")
         return (
-            f"TRUNCATED: openFDA returned the maximum {COUNT_PAGE_MAX} terms, so "
-            "rarer events beyond the cap are missing. Counts shown are a lower "
-            "bound and the distribution is incomplete."
+            f"TRUNCATED: openFDA returned a full page of {len(results)} terms, the "
+            f"most it gives this caller ({ceiling}), so rarer events beyond the cap "
+            f"are missing. Counts shown are a lower bound and the distribution is "
+            f"incomplete.{widen}"
         )
 
     def _field_total(self, field: str, term: str):
@@ -771,7 +824,18 @@ class FAERSAnalyticsTool(BaseTool):
         Never raises into the primary result; a failure here degrades to "not computed".
         """
         try:
-            fields = self._resolve_all_drug_fields(drug_name)
+            try:
+                fields = self._resolve_all_drug_fields(drug_name)
+            except LookupFailed as exc:
+                return {
+                    "computed": False,
+                    "reason": (
+                        f"The other-names lookup did not answer ({exc}), so the union "
+                        "cohort could not be built. This says nothing about how many "
+                        "openFDA fields know this drug. Retry before reading the "
+                        "narrow estimate as the only one available."
+                    ),
+                }
             if len(fields) <= 1:
                 return {
                     "computed": False,
@@ -823,7 +887,12 @@ class FAERSAnalyticsTool(BaseTool):
             return {"computed": False, "reason": log_msg}
 
     def _resolve_all_drug_fields(self, drug_name: str) -> List[Tuple[str, str]]:
-        """Every ``(field, term)`` that knows this drug: the first is the narrow cohort, all together the union."""
+        """Every ``(field, term)`` that knows this drug: the first is the narrow cohort, all together the union.
+
+        Raises ``LookupFailed`` when openFDA's name set could not be read, because
+        the fields found without it are a narrower set for a reason the caller must
+        state rather than report as the drug's own.
+        """
         matches = []
         for term in self.expand_terms(drug_name, self._openfda_block(drug_name)):
             for field in self.DRUG_NAME_FIELDS:
@@ -856,9 +925,11 @@ class FAERSAnalyticsTool(BaseTool):
                 if any(wanted in n or n in wanted for n in names):
                     return block
             return None
-        except Exception:
-            # Expansion must not break the analysis.
-            return None
+        except requests.RequestException as exc:
+            # A lookup that never ran is not a drug with no other names. The caller
+            # decides what to do with it; reporting it as an absent name set is what
+            # turned an outage into a statement about the drug.
+            raise LookupFailed(f"openFDA name-set lookup failed: {exc}") from exc
 
     def _count_for_population(self, population_query: str, adverse_event: str = None) -> int:
         """Report count for an explicit population query, 404 meaning a true zero."""

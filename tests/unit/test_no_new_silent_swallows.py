@@ -80,10 +80,9 @@ def test_the_baseline_does_not_accept_more_than_the_current_population_at_any_si
 def test_the_baseline_accounts_for_every_finding():
     """The sum of accepted counts must equal every swallow the scan finds, not a sample.
 
-    This is the load-bearing check: the two per-key tests above only rule out a *known*
-    site holding more than it should. This rules out the baseline holding accepted room
-    that no key currently occupies -- the same hole a frozen total count had, in a new
-    shape, closed by requiring the total to be exact rather than merely non-decreasing.
+    Implied by the two per-key tests beside it -- it cannot fail unless one of them
+    already has. It is kept as the statement of the invariant the three together hold:
+    the baseline is exact, never merely non-decreasing.
     """
     findings = silent_swallow.scan(ROOT)
     accepted_total = sum(entry["count"] for entry in BASELINE["sites"].values())
@@ -92,6 +91,20 @@ def test_the_baseline_accounts_for_every_finding():
         f"baseline accepts {accepted_total} across its sites, scan finds {len(findings)}. "
         "Re-freeze the baseline in silent_swallow_baseline.json."
     )
+
+
+def test_no_site_in_this_project_s_own_code_is_waived_as_upstream():
+    """A reason is required so the guard cannot be silenced without stating why; a reason
+    that is false for the site it covers silences it just the same. Code under `tools_sr/`
+    is this project's own: it does not re-sync from upstream and the sync argument cannot
+    be borrowed for it."""
+    lying = sorted(key for key, entry in BASELINE["sites"].items()
+                   if key.startswith("tools_sr/") and "upstream" in entry["reason"]
+                   and "not upstream" not in entry["reason"])
+
+    assert not lying, (
+        "these sites are this project's own code and are waived as upstream:\n"
+        + "\n".join(lying))
 
 
 # --- what is and is not a swallow; the expected value is the lines reported ---

@@ -4,7 +4,8 @@ A tool that catches everything and returns an empty value tells the agent nothin
 wrong, and the agent reads zero rows as a real negative. A log does not count as surfacing
 the failure, because server logs are not the agent's channel, so logging statements are
 transparent here and are removed before asking what the handler body reduces to. This is
-containment: the count is frozen, existing debt stays and new code cannot add to it.
+containment: each accepted site is named with how many instances it holds, existing debt
+stays and new code cannot add to it.
 """
 
 from __future__ import annotations
@@ -234,9 +235,8 @@ def find_in_source(source: str, path: Path | str = "<source>") -> list[Finding]:
 def fingerprint(finding: Finding) -> str:
     """One site's identity: enclosing scope, opening line and body.
 
-    Stable when the file moves around it (no line number), but distinct from every other
-    handler in the same file -- unlike a hash of the opening line alone, which is the same
-    string for nearly every broad handler in this tree.
+    No line number, so the key survives the file moving around it, and all three parts,
+    so it stays distinct from every other handler in the same file.
     """
     parts = (finding.qualname, finding.snippet, finding.body)
     text = "\x00".join(" ".join(part.split()) for part in parts)

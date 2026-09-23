@@ -621,6 +621,12 @@ WRITE_THE_REPORT = [
     "(source_total) and how much you read of it.",
     "A number published in a paper or a page stands beside a number this run computed, each "
     "with its source and period; never merge the two.",
+    "Cite only what this run received. A tool you called before run_skill left no record "
+    "here, so its numbers and links cannot be vouched for: take the fact from a row of this "
+    "run and cite that row, or leave it out.",
+    "The run's own address is not a source. A /skills/runs/ URL is this run's bookkeeping, "
+    "so never footnote it -- cite the row's own link instead, from the table the number "
+    "came from.",
     "State what failed, what was not found, what never ran and what was set aside, from "
     "failures, blocked, unresolved, steps_skipped and excluded. A skipped step with "
     "decided: false was never decided, not decided against; a row's `unparseable` holds "

@@ -12,7 +12,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from tooluniverse.skill_runner import SkillRunner, handover_of, new_run
+from tooluniverse.skill_runner import (WRITE_THE_REPORT, SkillRunner, handover_of,
+                                       new_run)
 from tooluniverse.skill_working_record import WorkingRecord
 
 pytestmark = pytest.mark.unit
@@ -189,7 +190,9 @@ def test_the_handover_carries_the_same_lines_of_discipline_for_every_skill(tmp_p
 
     lines = runner.handover(run_id)["write_the_report"]
 
-    assert isinstance(lines, list) and len(lines) == 5
+    # Against the rules themselves, not a count: a rule added is not a regression, but a
+    # skill handed fewer rules than the module defines is.
+    assert lines == WRITE_THE_REPORT
     assert all(isinstance(line, str) and line for line in lines)
 
 

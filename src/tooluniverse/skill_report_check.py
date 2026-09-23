@@ -129,6 +129,27 @@ def _domain_of(link: str) -> str:
     return parts[2] if "//" in bare and len(parts) > 2 else ""
 
 
+# A Run Record's own address. The run's bookkeeping, never a document: citing it points a
+# reader at the machinery that produced the claim rather than at what the claim rests on.
+_RUN_ADDRESS = re.compile(r"/skills?/runs?/", re.IGNORECASE)
+
+
+def why_refused(link: str, *, saw_domain: bool) -> str:
+    """Why this link is not vouched, in the words a re-ask can act on.
+
+    Naming the link and not the reason is what let the agent write the same citation twice.
+    """
+    if _RUN_ADDRESS.search(link):
+        return ("this is the Skill Run's own address -- the run's bookkeeping, not a source. "
+                "Cite the row's own link instead, from the table the number came from.")
+    if saw_domain:
+        return ("the run saw this site but not this page, so nothing it holds says this page "
+                "exists. Cite the page the row itself gives.")
+    return ("the run never received this link, so nothing it holds vouches for it. If it came "
+            "from a tool you called before run_skill, the run has no record of it: fetch the "
+            "same fact inside the run and cite that, or drop the citation.")
+
+
 def _unvouched_links(draft: str, received: Any) -> list[dict]:
     text = json.dumps(_data_of(received), default=str, ensure_ascii=False)
     known = {_bare(link) for link in _LINK.findall(text)}
@@ -141,6 +162,7 @@ def _unvouched_links(draft: str, received: Any) -> list[dict]:
                 continue
             seen.add(_bare(link))
             failures.append({"kind": "unvouched_link", "text": link.rstrip(".,;:!?"),
+                             "why": why_refused(link, saw_domain=_domain_of(link) in domains),
                              "context": " ".join(line.split())[:160]})
     return failures
 
@@ -202,6 +224,10 @@ def check_report(draft: str, received: Any) -> list[dict]:
         seen.add(number)
         start, end = max(0, match.start() - 50), min(len(prose), match.end() + 50)
         failures.append({"kind": "unvouched_number", "text": number,
+                         "why": ("no fact, row or table the run holds carries this number. If "
+                                 "it came from a tool you called before run_skill, the run has "
+                                 "no record of it and cannot vouch for it: take the number from "
+                                 "a row of this run, or drop it."),
                          "context": " ".join(prose[start:end].split())})
     return (failures + _unvouched_links(draft, received) + _unstated_narrowing(draft, received)
             + _unshown_mappings(draft, received))

@@ -71,9 +71,12 @@ def test_a_link_the_agent_never_received_is_a_failure():
 
     (failure,) = check_report(draft, RECEIVED)
 
-    assert failure == {"kind": "unvouched_link",
-                       "text": "https://pubmed.ncbi.nlm.nih.gov/99999999/",
-                       "context": "[3]: https://pubmed.ncbi.nlm.nih.gov/99999999/"}
+    assert {k: failure[k] for k in ("kind", "text", "context")} == {
+        "kind": "unvouched_link",
+        "text": "https://pubmed.ncbi.nlm.nih.gov/99999999/",
+        "context": "[3]: https://pubmed.ncbi.nlm.nih.gov/99999999/"}
+    # The refusal says why, so a re-ask can act on it: the run saw PubMed, not this page.
+    assert "site but not this page" in failure["why"]
 
 
 def test_a_link_built_from_an_identifier_the_agent_received_passes():

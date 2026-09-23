@@ -90,6 +90,40 @@ def test_a_link_built_from_an_identifier_the_agent_received_passes():
     assert failure["text"] == "https://clinicaltrials.gov/study/NCT09999999"
 
 
+def test_a_figure_of_a_million_or_more_is_checked():
+    received = {"handover": {"facts": {"reports": 2078456}}}
+
+    good = check_report("The database holds 2,078,456 reports.", received)
+    bad = check_report("The database holds 9,000,000 reports.", received)
+
+    assert [f for f in good if f["kind"] == "unvouched_number"] == []
+    assert [f["text"] for f in bad if f["kind"] == "unvouched_number"] == ["9000000"]
+
+
+def test_a_run_identifier_does_not_vouch_a_number():
+    received = {"run_id": "run-4815162342", "handover": {"facts": {}}}
+
+    failures = check_report("There were 4815 cases.", received)
+
+    assert [f["text"] for f in failures if f["kind"] == "unvouched_number"] == ["4815"]
+
+
+def test_a_link_whose_domain_the_run_never_saw_is_refused():
+    received = {"handover": {"facts": {"rows": [
+        {"id": "NCT04875806", "url": "https://clinicaltrials.gov/study/NCT04875806"}]}}}
+
+    failures = check_report(
+        "See [the trial](https://example.invalid/study/NCT04875806).", received)
+
+    assert [f["kind"] for f in failures if f["kind"] == "unvouched_link"] == ["unvouched_link"]
+
+
+def test_a_missing_working_record_is_reported_as_a_missing_record():
+    failures = check_report("Cisplatin had 1234 reports and a PRR of 5.6.", {})
+
+    assert [f["kind"] for f in failures] == ["no_working_record"]
+
+
 # --- narrowing must be stated ------------------------------------------------------
 
 NARROWED = {"handover": {"facts": {}, "tables": [

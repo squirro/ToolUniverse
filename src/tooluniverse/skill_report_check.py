@@ -10,7 +10,7 @@ import re
 from typing import Any
 
 # A standalone numeric token; HP:0001433, [^3^], v3 and 1.2.3 are names, not numbers.
-_NUMBER = re.compile(r"(?<![\w.:/^])(\d{1,6}(?:\.\d{1,4})?)(?![\w^/]|\.\d)")
+_NUMBER = re.compile(r"(?<![\w.:/^])(\d{1,12}(?:\.\d{1,4})?)(?![\w^/]|\.\d)")
 _NUMBER_RECEIVED = re.compile(r"(?<![\w.:/^])(\d+(?:\.\d+)?)(?![\w^/]|\.\d)")
 _URL = re.compile(r"\(?https?://\S+\)?")
 _DOI = re.compile(r"\b10\.\d{4,9}/\S+")
@@ -34,11 +34,34 @@ def _rounded_forms(value: str) -> set[str]:
 
 
 def _vouched_numbers(received: Any) -> set[str]:
-    text = json.dumps(received, default=str, ensure_ascii=False)
+    text = json.dumps(_data_of(received), default=str, ensure_ascii=False)
     vouched: set[str] = set()
-    for match in _NUMBER_RECEIVED.finditer(text):
+    for match in _NUMBER_RECEIVED.finditer(_fold_thousands(text)):
         vouched |= _rounded_forms(match.group(1))
     return vouched
+
+
+# What the run actually held, as against the envelope it arrived in. Identifiers, dates,
+# hashes and the run's own permanent-record wrapper (its address and step/call log) vouch
+# nothing -- they describe the run, not an answer any source gave it.
+_ENVELOPE = ("run_id", "conversation_id", "definition_hash", "skill", "write_the_report",
+             "started", "finished", "record")
+
+
+def _data_of(received: Any) -> Any:
+    """The hand-over's own facts, plus any rows fetched or answers given alongside it.
+
+    A "handover" key holds the terminal hand-over; every other top-level key is a sibling
+    the caller attached (fetched rows, prior answers). A flat object with no "handover" key
+    is the hand-over itself.
+    """
+    if not isinstance(received, dict):
+        return received
+    handover = received.get("handover")
+    handover = handover if isinstance(handover, dict) else {}
+    sides = {k: v for k, v in received.items() if k != "handover"}
+    merged = {**sides, **handover}
+    return {k: v for k, v in merged.items() if k not in _ENVELOPE}
 
 
 _LINK = re.compile(r"https?://[^\s<>\"')\]]+")
@@ -54,19 +77,34 @@ def _bare(link: str) -> str:
     return link.rstrip(".,;:!?/&").lower()
 
 
-def _built_from_received(link: str, text: str) -> bool:
-    """A link whose last segment is an identifier the agent received, as a process may tell it to build."""
+def _built_from_received(link: str, text: str, domains: set[str]) -> bool:
+    """A link the run could have built: when the run saw any domain, this one was among
+    them, and its last segment is an identifier the agent received."""
+    # Binds only when the run held a link at all -- a process may tell the agent to build one
+    # from a bare identifier, with no domain to check the fabricated one against.
+    if domains and _domain_of(link) not in domains:
+        return False
     tail = re.split(r"[/=]", link.rstrip(".,;:!?/"))[-1]
     return bool(_IDENTIFIER.fullmatch(tail)) and any(c.isdigit() for c in tail) and tail in text
 
 
+def _domain_of(link: str) -> str:
+    """The link's bare domain; "" for a link with none -- a DOI, a path with no scheme, or
+    a scheme with nothing after it."""
+    bare = _bare(link)
+    parts = bare.split("/")
+    return parts[2] if "//" in bare and len(parts) > 2 else ""
+
+
 def _unvouched_links(draft: str, received: Any) -> list[dict]:
-    text = json.dumps(received, default=str, ensure_ascii=False)
+    text = json.dumps(_data_of(received), default=str, ensure_ascii=False)
     known = {_bare(link) for link in _LINK.findall(text)}
+    domains = {_domain_of(link) for link in _LINK.findall(text)}
     failures, seen = [], set()
     for line in (draft or "").splitlines():
         for link in _LINK.findall(line):
-            if _bare(link) in known or _bare(link) in seen or _built_from_received(link, text):
+            if (_bare(link) in known or _bare(link) in seen
+                    or _built_from_received(link, text, domains)):
                 continue
             seen.add(_bare(link))
             failures.append({"kind": "unvouched_link", "text": link.rstrip(".,;:!?"),
@@ -116,6 +154,10 @@ def _unshown_mappings(draft: str, received: Any) -> list[dict]:
 
 def check_report(draft: str, received: Any) -> list[dict]:
     """Every statement in the draft that what the agent received does not vouch for."""
+    if not _data_of(received):
+        return [{"kind": "no_working_record",
+                 "text": "the run's record is missing, so nothing in the draft could be checked",
+                 "context": "tell the reader the run was not recorded; do not restate the draft"}]
     vouched = _vouched_numbers(received)
     prose = _FOOTNOTE.sub(" ", _DOI.sub(" ", _URL.sub(" ", draft or "")))
     prose = _fold_thousands(_NUMBERING.sub("\n", _CHIP.sub(" ", _DATE.sub(" ", prose))))

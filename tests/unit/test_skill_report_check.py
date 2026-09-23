@@ -13,7 +13,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from tooluniverse.skill_report_check import check_report  # noqa: E402
+from tooluniverse.skill_report_check import check_report, _domain_of  # noqa: E402
 
 pytestmark = pytest.mark.unit
 
@@ -88,6 +88,80 @@ def test_a_link_built_from_an_identifier_the_agent_received_passes():
     (failure,) = check_report(draft, received)
 
     assert failure["text"] == "https://clinicaltrials.gov/study/NCT09999999"
+
+
+def test_a_figure_of_a_million_or_more_is_checked():
+    received = {"handover": {"facts": {"reports": 2078456}}}
+
+    good = check_report("The database holds 2,078,456 reports.", received)
+    bad = check_report("The database holds 9,000,000 reports.", received)
+
+    assert [f for f in good if f["kind"] == "unvouched_number"] == []
+    assert [f["text"] for f in bad if f["kind"] == "unvouched_number"] == ["9000000"]
+
+
+def test_a_run_identifier_does_not_vouch_a_number():
+    """This pins that run_id is excluded, not a substring match: _NUMBER_RECEIVED is unbounded
+    and already matches the whole run id as one token, never a shorter prefix of it -- so this
+    case alone would pass even serialising the whole received object, un-stripped."""
+    received = {"run_id": "run-4815162342", "handover": {"facts": {}}}
+
+    failures = check_report("There were 4815 cases.", received)
+
+    assert [f["text"] for f in failures if f["kind"] == "unvouched_number"] == ["4815"]
+
+
+def test_a_tool_call_argument_in_the_run_record_does_not_vouch_a_number():
+    """handover["record"]["skeleton"] carries every tool call's arguments -- numbers the run
+    sent out, never data it got back. Serialising the whole hand-over would vouch them."""
+    received = {"handover": {"facts": {}, "record": {
+        "status": "written", "iri": "https://data.example/runs/skill-1",
+        "skeleton": {"steps": [{"id": "faers_counts", "calls": [
+            {"tool": "FAERS_count_reactions_by_drug_event",
+             "arguments": {"limit": 5000}}]}]}}}}
+
+    failures = check_report("The query used a limit of 5000 results.", received)
+
+    assert [f["text"] for f in failures if f["kind"] == "unvouched_number"] == ["5000"]
+
+
+def test_a_link_inside_the_run_record_does_not_vouch_a_citation():
+    """record["iri"] is a URL too -- the run's own bookkeeping vouches no link, same as no
+    number. Citing that address back is not citing a source."""
+    received = {"handover": {"facts": {}, "record": {
+        "status": "written", "iri": "https://data.example/runs/skill-1",
+        "skeleton": {"steps": []}}}}
+
+    failures = check_report("See [the run](https://data.example/runs/skill-1).", received)
+
+    assert [f["kind"] for f in failures if f["kind"] == "unvouched_link"] == ["unvouched_link"]
+
+
+@pytest.mark.parametrize("link,expected", [
+    ("https://", ""),                        # _bare strips the scheme down to nothing
+    ("clinicaltrials.gov", ""),               # a bare domain, no scheme
+    ("example.com/path", ""),                 # a schemeless path
+    ("//example.com/path", "example.com"),    # protocol-relative: a real domain, no crash
+    ("10.1038/nature12373", ""),              # a DOI
+])
+def test_domain_of_handles_every_link_shape_without_raising(link, expected):
+    assert _domain_of(link) == expected
+
+
+def test_a_link_whose_domain_the_run_never_saw_is_refused():
+    received = {"handover": {"facts": {"rows": [
+        {"id": "NCT04875806", "url": "https://clinicaltrials.gov/study/NCT04875806"}]}}}
+
+    failures = check_report(
+        "See [the trial](https://example.invalid/study/NCT04875806).", received)
+
+    assert [f["kind"] for f in failures if f["kind"] == "unvouched_link"] == ["unvouched_link"]
+
+
+def test_a_missing_working_record_is_reported_as_a_missing_record():
+    failures = check_report("Cisplatin had 1234 reports and a PRR of 5.6.", {})
+
+    assert [f["kind"] for f in failures] == ["no_working_record"]
 
 
 # --- narrowing must be stated ------------------------------------------------------

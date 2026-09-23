@@ -607,13 +607,17 @@ DISEASE_REPAIR_GRAPH = {
 
 def _repair_runner(responses, answers):
     """Injected executor: tool name -> successive responses, popped one call at a
-    time. `ask` always answers with `answers`, regardless of the question asked."""
+    time, a queued Exception raised instead of returned. `ask` always answers with
+    `answers`, regardless of the question asked."""
     queues = {tool: list(values) for tool, values in responses.items()}
     calls = []
 
     def execute(tool, arguments):
         calls.append((tool, arguments))
-        return queues[tool].pop(0)
+        value = queues[tool].pop(0)
+        if isinstance(value, Exception):
+            raise value
+        return value
 
     return SkillRunner(DISEASE_REPAIR_GRAPH, execute=execute, ask=lambda q: answers), calls
 
@@ -638,6 +642,29 @@ def test_the_working_record_stores_a_repaired_payload_against_the_arguments_that
 
     assert rows[0]["asked"] == "Rett syndrome", (
         "a per-item collect on a repaired step must read the repaired argument")
+
+
+def test_a_second_candidate_succeeding_still_credits_the_original_failure():
+    """The first candidate is as much a substitution as the second, and it fails for
+    its own reason (a real error), not the original's. The surviving failure must
+    still name what the run was originally asked about, not the failed first guess --
+    a design that recomputed the kept failure from whatever `failures` held at the
+    point of success, rather than fixing it before the retry loop starts, would name
+    the first candidate here instead."""
+    responses = {"find_disease": [{"hits": []},
+                                  RuntimeError("candidate one: 503 Service Unavailable"),
+                                  {"hits": [{"id": "MONDO:1"}]}]}
+    runner, _ = _repair_runner(responses, answers={"name": ["candidate one", "candidate two"]})
+
+    run_id = _run_to_end(runner, {"disease": "Rett's"})
+    state = runner.state(run_id)
+
+    (failure,) = [f for f in state["failures"] if f.get("step") == "lookup"]
+    assert failure["arguments"]["name"] == "Rett's", (
+        "the surviving failure must name the original value, not the failed first guess")
+    assert "candidate one" not in str(failure)
+    assert failure["repaired_by"] == "candidate two", (
+        "repaired_by must name the candidate that actually worked")
 
 
 # Repair is the recovery; a declared value that never arrives is the honesty when

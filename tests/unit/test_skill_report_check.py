@@ -13,7 +13,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from tooluniverse.skill_report_check import check_report  # noqa: E402
+from tooluniverse.skill_report_check import check_report, _domain_of  # noqa: E402
 
 pytestmark = pytest.mark.unit
 
@@ -123,6 +123,29 @@ def test_a_tool_call_argument_in_the_run_record_does_not_vouch_a_number():
     failures = check_report("The query used a limit of 5000 results.", received)
 
     assert [f["text"] for f in failures if f["kind"] == "unvouched_number"] == ["5000"]
+
+
+def test_a_link_inside_the_run_record_does_not_vouch_a_citation():
+    """record["iri"] is a URL too -- the run's own bookkeeping vouches no link, same as no
+    number. Citing that address back is not citing a source."""
+    received = {"handover": {"facts": {}, "record": {
+        "status": "written", "iri": "https://data.example/runs/skill-1",
+        "skeleton": {"steps": []}}}}
+
+    failures = check_report("See [the run](https://data.example/runs/skill-1).", received)
+
+    assert [f["kind"] for f in failures if f["kind"] == "unvouched_link"] == ["unvouched_link"]
+
+
+@pytest.mark.parametrize("link,expected", [
+    ("https://", ""),                        # _bare strips the scheme down to nothing
+    ("clinicaltrials.gov", ""),               # a bare domain, no scheme
+    ("example.com/path", ""),                 # a schemeless path
+    ("//example.com/path", "example.com"),    # protocol-relative: a real domain, no crash
+    ("10.1038/nature12373", ""),              # a DOI
+])
+def test_domain_of_handles_every_link_shape_without_raising(link, expected):
+    assert _domain_of(link) == expected
 
 
 def test_a_link_whose_domain_the_run_never_saw_is_refused():

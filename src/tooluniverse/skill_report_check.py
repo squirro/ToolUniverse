@@ -97,7 +97,7 @@ def _domain_of(link: str) -> str:
 
 
 def _unvouched_links(draft: str, received: Any) -> list[dict]:
-    text = json.dumps(received, default=str, ensure_ascii=False)
+    text = json.dumps(_data_of(received), default=str, ensure_ascii=False)
     known = {_bare(link) for link in _LINK.findall(text)}
     domains = {_domain_of(link) for link in _LINK.findall(text)}
     failures, seen = [], set()

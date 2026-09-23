@@ -245,10 +245,17 @@ DISEASE_REPAIR = {
 }
 
 
-def _disease_responses():
-    """find_disease: nothing for the original name, one hit once the name is repaired."""
+def _disease_responses(repaired="Rett syndrome"):
+    """find_disease: the original name raises at the source, and only `repaired` hits.
+
+    The first call raises rather than returning empty on purpose: a fixture whose first
+    call merely comes back empty lets both drivers satisfy the parity assertion by saying
+    nothing at all, which is what the assertion exists to catch.
+    """
     def find_disease(call):
-        found = call.arguments["name"] == "Rett syndrome"
+        if call.arguments["name"] == "Rett's":
+            raise RuntimeError("upstream 503")
+        found = call.arguments["name"] == repaired
         return {"hits": [{"id": "MONDO:1"}]} if found else {"hits": []}
     return {"find_disease": find_disease}
 
@@ -265,8 +272,28 @@ async def test_both_drivers_report_the_same_failures_after_a_repair():
     runner_state = _in_memory(responses, DISEASE_REPAIR, inputs,
                               ask=lambda q: {"name": ["Rett syndrome"]})
 
+    assert [f["error"] for f in bundle["failures"]] == ["RuntimeError: upstream 503"]
     assert bundle["failures"] == runner_state["failures"]
     assert bundle["facts"]["hit_rows"] == runner_state["facts"]["hit_rows"]
+
+
+async def test_both_drivers_keep_the_upstream_error_when_the_repair_fails():
+    """A source outage behind a failed repair must not read as a wrong identifier, and the
+    two drivers must not disagree about which it was."""
+    responses = _disease_responses(repaired="never suggested")
+    inputs = {"disease": "Rett's"}
+    suggestions = {"name": ["Rett syndrome", "Rett disease"]}
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(
+            env, responses, DISEASE_REPAIR, inputs, "run-disease-repair-failed",
+            before_result=lambda h, e: _answer(h, suggestions))
+
+    runner_state = _in_memory(responses, DISEASE_REPAIR, inputs, ask=lambda q: suggestions)
+
+    assert any("upstream 503" in f["error"] for f in bundle["failures"]), bundle["failures"]
+    assert any("could not be resolved" in b["reason"] for b in bundle["blocked"])
+    assert bundle["failures"] == runner_state["failures"]
+    assert bundle["blocked"] == runner_state["blocked"]
 
 
 JUDGED = {

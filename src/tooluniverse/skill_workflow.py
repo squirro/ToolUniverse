@@ -438,20 +438,23 @@ class SkillWorkflow:
         pre_repair = failures or [{"tool": step["calls"][0]["tool"],
                                    "arguments": step["calls"][0]["arguments"],
                                    "error": problem}]
+        retry_failures: list = []
         for attempt, candidate in enumerate(suggestions[:MAX_REPAIRS], start=1):
             retry_calls = substitute(step["calls"], argument, candidate)
             made.extend(retry_calls)
-            failures = await self._calls(retry_calls, attempt=attempt)
+            retry_failures = await self._calls(retry_calls, attempt=attempt)
             outcome = await self._absorb(spec, retry_calls,
                                          {**self._run["facts"], argument: candidate})
             if outcome["resolved"]:
                 self._run["facts"][argument] = candidate
                 kept = [{**f, "repaired_by": candidate} for f in pre_repair]
-                return outcome, kept + failures
+                return outcome, kept + retry_failures
         if answer is not None:
             self._run["blocked"].append({
                 "step": step["id"],
                 "reason": (f"{argument}={original!r} could not be resolved after "
                            f"{MAX_REPAIRS} suggested alternatives"),
             })
-        return outcome, failures
+        # The failure the repair started from is kept, so a source outage never reads
+        # to the reader as a wrong identifier.
+        return outcome, pre_repair + retry_failures

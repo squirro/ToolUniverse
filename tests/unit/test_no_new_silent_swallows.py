@@ -1,9 +1,10 @@
 """New code may not hide a failure from the agent (DSR-659).
 
 A tool that catches everything and returns an empty value tells the agent nothing went
-wrong, so zero rows read as a real negative rather than an unreachable source. The count
-is frozen and may fall, never rise: almost all of the population is upstream code that
-re-syncs from mims-harvard:main.
+wrong, so zero rows read as a real negative rather than an unreachable source. The
+baseline names the accepted sites, not a count, so a new swallow cannot pass by hiding
+behind one that was removed elsewhere: almost all of the population is upstream code
+that re-syncs from mims-harvard:main.
 """
 
 import json
@@ -26,23 +27,25 @@ def _src(*lines):
 # --- the ratchet ---
 
 
-def test_the_count_has_not_risen_above_the_frozen_baseline():
-    findings = silent_swallow.scan(ROOT)
-
-    assert len(findings) <= BASELINE["count"], (
-        f"{len(findings)} silent swallows, baseline {BASELINE['count']}. New ones:\n"
-        + "\n".join(f.message for f in findings[-12:])
-    )
+def _sites(findings):
+    return {f"{f.path}:{silent_swallow.fingerprint(f)}" for f in findings}
 
 
-def test_the_baseline_is_not_stale_by_a_wide_margin():
-    """Slack in the ratchet lets a new swallow in. Re-freeze when this trips."""
-    findings = silent_swallow.scan(ROOT)
+def test_no_site_swallows_that_the_baseline_does_not_already_accept():
+    new = _sites(silent_swallow.scan(ROOT)) - set(BASELINE["sites"])
 
-    assert len(findings) >= BASELINE["count"] - 20, (
-        f"{len(findings)} found against a baseline of {BASELINE['count']}; "
-        "lower the baseline in silent_swallow_baseline.json"
-    )
+    assert not new, (
+        "new silent swallows:\n" + "\n".join(sorted(new))
+        + "\nMake the handler tell the caller what failed, or waive it with a stated reason.")
+
+
+def test_the_baseline_does_not_accept_sites_that_are_gone():
+    """A baseline that outlives its sites is slack a new swallow can hide in."""
+    stale = set(BASELINE["sites"]) - _sites(silent_swallow.scan(ROOT))
+
+    assert not stale, (
+        "the baseline accepts sites that no longer exist:\n" + "\n".join(sorted(stale))
+        + "\nRemove them from silent_swallow_baseline.json.")
 
 
 # --- what is and is not a swallow; the expected value is the lines reported ---
@@ -124,6 +127,27 @@ CASES = {
         "        return call()",
         "    except Exception:",
         "        return {}"), [11]),
+    # the live openFDA and OpenTargets shape: a success envelope with nothing inside
+    "returns_a_success_envelope_with_an_empty_collection": (_src(
+        "def fetch(url):",
+        "    try:",
+        "        return call(url)",
+        "    except Exception:",
+        "        return {'status': 'ok', 'results': []}"), [4]),
+    # a key merely named like a diagnostic must not rescue a handler that says nothing
+    "returns_a_key_named_like_a_note_but_says_nothing": (_src(
+        "def fetch(url):",
+        "    try:",
+        "        return call(url)",
+        "    except Exception:",
+        "        return {'notes': []}"), [4]),
+    # a handler that genuinely names the failure is still not a swallow
+    "returns_the_error_text": (_src(
+        "def fetch(url):",
+        "    try:",
+        "        return call(url)",
+        "    except Exception as exc:",
+        "        return {'error': str(exc)}"), []),
 }
 
 

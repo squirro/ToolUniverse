@@ -10,10 +10,12 @@ containment: the count is frozen, existing debt stays and new code cannot add to
 from __future__ import annotations
 
 import ast
+import hashlib
 import re
 from pathlib import Path
+from typing import Any
 
-__all__ = ["Finding", "PRAGMA", "find_in_source", "scan"]
+__all__ = ["Finding", "PRAGMA", "fingerprint", "find_in_source", "scan"]
 
 # Catching these is catching everything: a narrow `except KeyError` is a decision, this is
 # the absence of one.
@@ -26,6 +28,10 @@ _DIAGNOSTIC = ("error", "status", "reason", "detail", "message", "warning", "fai
 
 # Values that carry no information to the caller.
 _EMPTY = (None, "", [], {}, (), 0, False)
+
+# A bare token like this names no failure and no data; it is a success envelope's
+# padding, not a diagnostic.
+_SUCCESS = {"ok", "success", "true", "done", "none", "n/a"}
 
 _LOG_CALLS = {"debug", "info", "warning", "warn", "error", "exception", "critical", "log",
               "print"}
@@ -70,17 +76,46 @@ def _returns_empty(stmt: ast.Return) -> bool:
     if stmt.value is None:
         return True
     try:
-        return ast.literal_eval(stmt.value) in _EMPTY
+        value = ast.literal_eval(stmt.value)
     except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
         return False
+    return _carries_nothing(value)
+
+
+def _carries_nothing(value: Any) -> bool:
+    """A value the caller learns nothing from, whether it is empty or merely wraps emptiness."""
+    if isinstance(value, dict):
+        return all(_carries_nothing(v) for v in value.values())
+    if isinstance(value, (list, tuple, set)):
+        return all(_carries_nothing(v) for v in value)
+    if isinstance(value, str) and value.strip().lower() in _SUCCESS:
+        return True
+    return value in _EMPTY
 
 
 def _mentions_diagnostic(stmt: ast.stmt) -> bool:
+    """Whether the statement passes the failure on, rather than merely naming a key like one."""
+    value = getattr(stmt, "value", None)
+    if value is None:
+        return False
+    if isinstance(value, ast.Dict):
+        for key, item in zip(value.keys, value.values):
+            name = key.value.lower() if isinstance(key, ast.Constant) and isinstance(key.value, str) else ""
+            if any(word in name for word in _DIAGNOSTIC) and not _is_empty_node(item):
+                return True
+        return False
     try:
-        text = ast.unparse(stmt).lower()
+        text = ast.unparse(value).lower()
     except Exception:
         return False
     return any(word in text for word in _DIAGNOSTIC)
+
+
+def _is_empty_node(node: ast.expr) -> bool:
+    try:
+        return _carries_nothing(ast.literal_eval(node))
+    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        return False
 
 
 def _probes_an_optional_import(node: ast.Try) -> bool:
@@ -163,6 +198,11 @@ def find_in_source(source: str, path: Path | str = "<source>") -> list[Finding]:
         snippet = lines[node.lineno - 1].strip() if node.lineno <= len(lines) else ""
         findings.append(Finding(Path(path), node.lineno, snippet))
     return sorted(findings, key=lambda f: f.line)
+
+
+def fingerprint(finding: Finding) -> str:
+    """One site's identity, stable when the file moves around it."""
+    return hashlib.sha256(" ".join(finding.snippet.split()).encode()).hexdigest()[:12]
 
 
 def scan(root: Path | str) -> list[Finding]:

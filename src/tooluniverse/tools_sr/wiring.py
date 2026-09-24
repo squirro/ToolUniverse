@@ -18,6 +18,7 @@ __all__ = [
     "definitions_by_file",
     "is_declared",
     "reachable_files",
+    "unreadable_definition_files",
     "unwired_definitions",
 ]
 
@@ -62,7 +63,8 @@ def definitions_by_file(data: Path | None = None) -> dict[Path, list[str]]:
     """Tool names per file, for every file under ``data`` that holds tool definitions.
 
     A definition is an object with both a ``name`` and a ``type``. Files that are not a JSON
-    list, and files that will not parse, are skipped rather than guessed at.
+    list, and files that will not parse, are skipped rather than guessed at;
+    ``unreadable_definition_files`` is where a broken one is reported.
     """
     data = data or data_dir()
     found: dict[Path, list[str]] = {}
@@ -83,6 +85,42 @@ def definitions_by_file(data: Path | None = None) -> dict[Path, list[str]]:
         if names:
             found[path] = names
     return found
+
+
+def _is_definition(value) -> bool:
+    return isinstance(value, dict) and isinstance(value.get("name"), str) and bool(value.get("type"))
+
+
+def _holds_definitions(value: dict) -> bool:
+    """An object that is a definition, or wraps a list of them: a definition file gone wrong,
+    not one of the settings, schemas or indexes that also live under ``data/``."""
+    return _is_definition(value) or any(
+        isinstance(member, list) and any(_is_definition(item) for item in member)
+        for member in value.values()
+    )
+
+
+def unreadable_definition_files(data: Path | None = None) -> dict[str, str]:
+    """Definition files every scan skips, keyed by path relative to ``data``, with why.
+
+    A file that will not parse is reported, because nothing can say what it held. An object
+    at the top level is reported only when it holds a definition. Declared collections are
+    omitted: the archive keeps half-written records on purpose.
+    """
+    data = data or data_dir()
+    unreadable: dict[str, str] = {}
+    for path in sorted(data.rglob("*.json")):
+        relative = str(path.relative_to(data))
+        if is_declared(relative):
+            continue
+        try:
+            value = json.loads(path.read_text())
+        except ValueError as exc:
+            unreadable[relative] = f"not valid JSON: {exc}"
+            continue
+        if isinstance(value, dict) and _holds_definitions(value):
+            unreadable[relative] = "holds tool definitions but is not a list; the loader reads lists"
+    return unreadable
 
 
 def is_declared(relative: str) -> bool:

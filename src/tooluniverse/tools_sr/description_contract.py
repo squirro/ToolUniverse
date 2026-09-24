@@ -63,7 +63,8 @@ def load_tools(data_dir: Path | str) -> dict[str, dict]:
         try:
             defs = json.loads(path.read_text())
         except Exception:
-            # silent-swallow: a malformed file is another guard's problem; report what can be read.
+            # silent-swallow: wiring.unreadable_definition_files reports a broken definition file,
+            # and test_tool_definitions_wired fails on it; report what can be read.
             continue
         if not isinstance(defs, list):
             continue

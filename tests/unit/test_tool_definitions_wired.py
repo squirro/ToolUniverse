@@ -116,3 +116,59 @@ def test_the_loader_reachable_set_excludes_what_disk_scanning_accepts():
     assert only_on_disk, "expected the archive and the key catalogue to be excluded"
     assert "OPENAI_API_KEY" in only_on_disk, sorted(only_on_disk)[:10]
     assert servable < on_disk
+
+
+# --- a definition file the scan cannot read (DSR-816) ---
+
+
+def test_no_definition_file_is_unreadable():
+    """The ratchet. A broken definition file drops out of every scan, so this is the one
+    place that says so."""
+    assert wiring.unreadable_definition_files() == {}
+
+
+def test_a_file_that_will_not_parse_is_reported(tmp_path):
+    (tmp_path / "broken_tools.json").write_text('[{"name": "Broken_get", "type": "RESTTool"')
+
+    unreadable = wiring.unreadable_definition_files(tmp_path)
+
+    assert set(unreadable) == {"broken_tools.json"}
+    assert "not valid JSON" in unreadable["broken_tools.json"]
+
+
+def test_a_definition_not_inside_a_list_is_reported(tmp_path):
+    """One tool written as a bare object: the loader reads lists, so it is lost."""
+    (tmp_path / "single_tool.json").write_text(json.dumps(_definition("Single_get")))
+
+    unreadable = wiring.unreadable_definition_files(tmp_path)
+
+    assert set(unreadable) == {"single_tool.json"}
+    assert "not a list" in unreadable["single_tool.json"]
+
+
+def test_definitions_wrapped_in_an_object_are_reported(tmp_path):
+    (tmp_path / "wrapped_tools.json").write_text(
+        json.dumps({"tools": [_definition("Wrapped_one"), _definition("Wrapped_two")]})
+    )
+
+    assert set(wiring.unreadable_definition_files(tmp_path)) == {"wrapped_tools.json"}
+
+
+def test_an_object_that_holds_no_definition_is_not_a_definition_file(tmp_path):
+    """Settings, schemas and indexes live under data/ too; they are not broken."""
+    (tmp_path / "skill_ceilings.json").write_text(
+        json.dumps({"prefixes": ["A_"], "ceilings": {"A_": 3}})
+    )
+    (tmp_path / "good_tools.json").write_text(json.dumps([_definition("Good_get")]))
+
+    assert wiring.unreadable_definition_files(tmp_path) == {}
+
+
+def test_a_declared_directory_is_not_read_for_breakage(tmp_path):
+    """The archive holds half-written records on purpose."""
+    archive = tmp_path / "broken_apis"
+    archive.mkdir()
+    (archive / "mobidb_rest.json").write_text("{not json")
+    (archive / "hmdb_rest.json").write_text(json.dumps(_definition("HMDB_get")))
+
+    assert wiring.unreadable_definition_files(tmp_path) == {}

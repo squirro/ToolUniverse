@@ -64,3 +64,14 @@ def test_a_question_the_run_asks_says_its_reasons_follow_the_question_language()
 
     assert out["status"] == "waiting"
     assert "language of the user's question" in out.get("next", "")
+
+
+def test_the_rule_names_the_search_query_trap_on_both_surfaces():
+    """Live: an English question, a German search query the agent chose, then German reasons.
+    The rule has to say that a search query's language does not carry over."""
+    from tooluniverse.skill_run_client import progress
+    from tooluniverse.skill_serving import CITATION_CONTRACT
+
+    waiting = progress("r", {"waiting_for": {"kind": "judge", "wants": ["x_reason"]}, "done": []})
+    for text in (CITATION_CONTRACT, waiting["next"]):
+        assert "search quer" in text and "language of the user's question" in text, text

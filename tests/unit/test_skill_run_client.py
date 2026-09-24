@@ -27,7 +27,8 @@ from tooluniverse.skill_working_record import WorkingRecord  # noqa: E402
 pytestmark = pytest.mark.unit
 
 WAITING_NEXT = ("Answer with continue_skill(run_id, answer={...}); write every reason "
-                "in the language of the user's question.")
+                "in the language of the user's question, even if your search queries "
+                "were in another language.")
 
 PROCESS = {"skill": "demo", "inputs": ["drug_name"], "optional_inputs": ["requested_aes"],
            "steps": [{"id": "a", "calls": []}]}

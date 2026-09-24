@@ -44,7 +44,8 @@ def progress(run_id: str, status: dict, handover: dict | None = None) -> dict:
     if status.get("waiting_for"):
         return {"status": "waiting", "question": status["waiting_for"], **base,
                 "next": "Answer with continue_skill(run_id, answer={...}); write every reason "
-                        "in the language of the user's question."}
+                        "in the language of the user's question, even if your search queries "
+                        "were in another language."}
     return {"status": "running", "remaining": status.get("remaining", 0), **base}
 
 

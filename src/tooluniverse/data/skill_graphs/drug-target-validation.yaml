@@ -94,15 +94,17 @@ steps:
     label: "Phase 0 -- identifiers, function, development level"
     calls:
       - tool: MyGene_query_genes
-        arguments: {query: "{target}", fields: "symbol,name,entrezgene,ensembl.gene,uniprot", species: "human"}
+        arguments: {query: "{target}", fields: "symbol,name,entrezgene,ensembl.gene,uniprot,alias", species: "human"}
       - tool: Pharos_get_target
         arguments: {gene: "{target}"}
       - tool: ensembl_lookup_gene
         arguments: {gene_id: "{target}", species: "homo_sapiens"}
     repair:
-      # A protein name or an alias returns no hit; the agent knows the symbol.
+      # A protein name or an alias returns no hit, or a wrong first hit; the agent knows the symbol.
       argument: target
       when_missing: ensembl_id
+      # The hit counts only when the target is its symbol or one of its listed aliases.
+      named_by: ["data.hits.0.symbol", "data.hits.0.alias"]
     extract:
       symbol: "data.hits.0.symbol"
       gene_name: "data.hits.0.name"

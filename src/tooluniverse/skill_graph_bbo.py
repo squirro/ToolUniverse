@@ -237,6 +237,8 @@ def _repair(g: Graph, process: URIRef, skill: str, step: dict,
     g.add((ask, SRP.repairsArgument, Literal(repair["argument"])))
     g.add((ask, SRP.whenMissing, Literal(repair["when_missing"])))
     g.add((ask, SRP.maxAttempts, Literal(2, datatype=XSD.integer)))
+    if repair.get("named_by"):
+        g.add((ask, SRP.namedBy, Literal(json.dumps(repair["named_by"]))))
     g.add((process, BBO.has_flowElements, ask))
 
     _flow(g, process, task, gateway, _node(skill, f"flow/{step['id']}-check"))
@@ -329,6 +331,8 @@ def _step(g: Graph, skill: str, task: URIRef, order_of: dict) -> dict:
     if (argument := g.value(ask, SRP.repairsArgument)) is not None:
         step["repair"] = {"argument": str(argument),
                           "when_missing": str(g.value(ask, SRP.whenMissing))}
+        if (named_by := g.value(ask, SRP.namedBy)) is not None:
+            step["repair"]["named_by"] = json.loads(str(named_by))
 
     if (notes := g.value(task, RDFS.comment)) is not None:
         step["notes"] = str(notes)

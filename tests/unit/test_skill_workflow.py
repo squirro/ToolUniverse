@@ -7,6 +7,7 @@ activities registered under the real names, so the one-hour ceiling costs nothin
 """
 
 import asyncio
+import json
 import sys
 import tempfile
 import threading
@@ -230,6 +231,41 @@ async def test_a_repair_is_asked_for_by_signal_and_the_second_suggestion_resolve
     assert bundle["facts"]["drug_name"] == "Lutathera"
     assert bundle["facts"]["setid"] == "72d1"
     assert bundle["steps_done"] == ["identity", "label"]
+    assert bundle["blocked"] == []
+
+
+# A wrong first hit is repaired, and the retry is composed from the repaired fact.
+MYGENE = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "dtv"
+                     / "mygene_folr1_queries_2026-09-24.json").read_text())["responses"]
+NAMED = {
+    "skill": "named", "inputs": ["target"],
+    "steps": [
+        {"id": "identity",
+         "calls": [{"tool": "MyGene_query_genes", "arguments": {"query": "{target}"}}],
+         "repair": {"argument": "target", "when_missing": "ensembl_id",
+                    "named_by": ["data.hits.0.symbol", "data.hits.0.alias"]},
+         "extract": {"symbol": "data.hits.0.symbol", "ensembl_id": "data.hits.0.ensembl.gene"}},
+    ],
+}
+
+
+async def test_a_hit_that_does_not_name_the_query_is_repaired_on_temporal_too():
+    seen, asked = [], []
+
+    def mygene(call):
+        seen.append(call.arguments["query"])
+        return MYGENE[call.arguments["query"]]
+
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(
+            env, {"MyGene_query_genes": mygene}, NAMED, {"target": "FR-alpha"}, "run-named",
+            before_result=lambda h, e: _answer(h, {"target": ["FOLR1"]}, seen=asked))
+
+    question = asked[0]["waiting_for"]
+    assert question["kind"] == "repair" and question["value"] == "FR-alpha"
+    assert "FOLR2" in question["problem"]
+    assert seen == ["FR-alpha", "FOLR1"]
+    assert (bundle["facts"]["target"], bundle["facts"]["symbol"]) == ("FOLR1", "FOLR1")
     assert bundle["blocked"] == []
 
 

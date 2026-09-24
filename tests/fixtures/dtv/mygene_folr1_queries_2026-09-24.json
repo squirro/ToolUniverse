@@ -1,0 +1,293 @@
+{
+ "recorded": "2026-09-24",
+ "tool": "MyGene_query_genes",
+ "arguments": {
+  "fields": "symbol,name,entrezgene,ensembl.gene,uniprot,alias",
+  "species": "human"
+ },
+ "responses": {
+  "FOLR1": {
+   "status": "success",
+   "data": {
+    "took": 7,
+    "total": 3,
+    "max_score": 167.0419,
+    "hits": [
+     {
+      "_id": "2348",
+      "_score": 167.0419,
+      "alias": [
+       "FBP",
+       "FOLR",
+       "FR-alpha",
+       "FRalpha",
+       "NCFTD"
+      ],
+      "ensembl": {
+       "gene": "ENSG00000110195"
+      },
+      "entrezgene": "2348",
+      "name": "folate receptor alpha",
+      "symbol": "FOLR1",
+      "uniprot": {
+       "Swiss-Prot": "P15328"
+      }
+     },
+     {
+      "_id": "140577509",
+      "_score": 109.78042,
+      "ensembl": {
+       "gene": "ENSG00000204971"
+      },
+      "entrezgene": "140577509",
+      "name": "FOLR1 antisense RNA 1",
+      "symbol": "FOLR1-AS1"
+     },
+     {
+      "_id": "2350",
+      "_score": 2.4916399,
+      "alias": [
+       "BETA-HFR",
+       "FBP",
+       "FBP/PL-1",
+       "FR-BETA",
+       "FR-P3",
+       "FRbeta"
+      ],
+      "ensembl": {
+       "gene": "ENSG00000165457"
+      },
+      "entrezgene": "2350",
+      "name": "folate receptor beta",
+      "symbol": "FOLR2",
+      "uniprot": {
+       "Swiss-Prot": "P14207",
+       "TrEMBL": [
+        "J3KQP4",
+        "A0ACI8U7T2",
+        "F5GXV3",
+        "E7EU04",
+        "F5H5L8",
+        "J3KR13",
+        "F5H3Z4",
+        "A0ACI8U7S9",
+        "F5H4Z6",
+        "F5GZ45"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "FR-alpha": {
+   "status": "success",
+   "data": {
+    "took": 3,
+    "total": 2,
+    "max_score": 5.275479,
+    "hits": [
+     {
+      "_id": "2350",
+      "_score": 5.275479,
+      "alias": [
+       "BETA-HFR",
+       "FBP",
+       "FBP/PL-1",
+       "FR-BETA",
+       "FR-P3",
+       "FRbeta"
+      ],
+      "ensembl": {
+       "gene": "ENSG00000165457"
+      },
+      "entrezgene": "2350",
+      "name": "folate receptor beta",
+      "symbol": "FOLR2",
+      "uniprot": {
+       "Swiss-Prot": "P14207",
+       "TrEMBL": [
+        "J3KQP4",
+        "A0ACI8U7T2",
+        "F5GXV3",
+        "E7EU04",
+        "F5H5L8",
+        "J3KR13",
+        "F5H3Z4",
+        "A0ACI8U7S9",
+        "F5H4Z6",
+        "F5GZ45"
+       ]
+      }
+     },
+     {
+      "_id": "2348",
+      "_score": 3.8998408,
+      "alias": [
+       "FBP",
+       "FOLR",
+       "FR-alpha",
+       "FRalpha",
+       "NCFTD"
+      ],
+      "ensembl": {
+       "gene": "ENSG00000110195"
+      },
+      "entrezgene": "2348",
+      "name": "folate receptor alpha",
+      "symbol": "FOLR1",
+      "uniprot": {
+       "Swiss-Prot": "P15328"
+      }
+     }
+    ]
+   }
+  },
+  "FOLR-1": {
+   "status": "success",
+   "data": {
+    "took": 3,
+    "total": 3,
+    "max_score": 4.3649955,
+    "hits": [
+     {
+      "_id": "2352",
+      "_score": 4.3649955,
+      "alias": [
+       "FR-G",
+       "FR-gamma",
+       "FRgamma",
+       "gamma-hFR"
+      ],
+      "ensembl": {
+       "gene": "ENSG00000110203"
+      },
+      "entrezgene": "2352",
+      "name": "folate receptor gamma",
+      "symbol": "FOLR3",
+      "uniprot": {
+       "Swiss-Prot": "P41439",
+       "TrEMBL": [
+        "F5H2G8",
+        "A0A087WYI3",
+        "A0ACI8RTF8"
+       ]
+      }
+     },
+     {
+      "_id": "2348",
+      "_score": 3.4719634,
+      "alias": [
+       "FBP",
+       "FOLR",
+       "FR-alpha",
+       "FRalpha",
+       "NCFTD"
+      ],
+      "ensembl": {
+       "gene": "ENSG00000110195"
+      },
+      "entrezgene": "2348",
+      "name": "folate receptor alpha",
+      "symbol": "FOLR1",
+      "uniprot": {
+       "Swiss-Prot": "P15328"
+      }
+     },
+     {
+      "_id": "2350",
+      "_score": 3.244962,
+      "alias": [
+       "BETA-HFR",
+       "FBP",
+       "FBP/PL-1",
+       "FR-BETA",
+       "FR-P3",
+       "FRbeta"
+      ],
+      "ensembl": {
+       "gene": "ENSG00000165457"
+      },
+      "entrezgene": "2350",
+      "name": "folate receptor beta",
+      "symbol": "FOLR2",
+      "uniprot": {
+       "Swiss-Prot": "P14207",
+       "TrEMBL": [
+        "J3KQP4",
+        "A0ACI8U7T2",
+        "F5GXV3",
+        "E7EU04",
+        "F5H5L8",
+        "J3KR13",
+        "F5H3Z4",
+        "A0ACI8U7S9",
+        "F5H4Z6",
+        "F5GZ45"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "FRalpha": {
+   "status": "success",
+   "data": {
+    "took": 2,
+    "total": 1,
+    "max_score": 2.7566211,
+    "hits": [
+     {
+      "_id": "2348",
+      "_score": 2.7566211,
+      "alias": [
+       "FBP",
+       "FOLR",
+       "FR-alpha",
+       "FRalpha",
+       "NCFTD"
+      ],
+      "ensembl": {
+       "gene": "ENSG00000110195"
+      },
+      "entrezgene": "2348",
+      "name": "folate receptor alpha",
+      "symbol": "FOLR1",
+      "uniprot": {
+       "Swiss-Prot": "P15328"
+      }
+     }
+    ]
+   }
+  },
+  "fralpha": {
+   "status": "success",
+   "data": {
+    "took": 2,
+    "total": 1,
+    "max_score": 2.7566211,
+    "hits": [
+     {
+      "_id": "2348",
+      "_score": 2.7566211,
+      "alias": [
+       "FBP",
+       "FOLR",
+       "FR-alpha",
+       "FRalpha",
+       "NCFTD"
+      ],
+      "ensembl": {
+       "gene": "ENSG00000110195"
+      },
+      "entrezgene": "2348",
+      "name": "folate receptor alpha",
+      "symbol": "FOLR1",
+      "uniprot": {
+       "Swiss-Prot": "P15328"
+      }
+     }
+    ]
+   }
+  }
+ }
+}

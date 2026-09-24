@@ -44,8 +44,9 @@ from .skill_runner import (
     placed_mapping,
     question_for,
     recomputed,
+    repair_calls,
+    repair_value,
     report_rules,
-    substitute,
     tables_checked,
     upstream_failure_text,
 )
@@ -252,6 +253,7 @@ class SkillWorkflow:
                                                        failures, made)
             run.setdefault("evidence", []).extend(outcome.pop("evidence"))
             outcome.pop("resolved")
+            outcome.pop("repair_problem")
             delegated = spec.get("delegate") or []
             if delegated:
                 # Web search and code live on the agent: it makes the composed calls.
@@ -429,8 +431,8 @@ class SkillWorkflow:
 
     async def _repair(self, spec, step, repair, outcome, failures, made):
         argument = repair["argument"]
-        original = step["calls"][0]["arguments"].get(argument)
-        problem = f"returned nothing for {original!r}"
+        original = repair_value(repair, step["calls"], self._run["facts"])
+        problem = outcome["repair_problem"]
         answer = await self._ask(question_for(
             step["id"], "repair", [argument], dict(self._run["facts"]),
             tool=step["calls"][0]["tool"], argument=argument, value=original,
@@ -443,7 +445,7 @@ class SkillWorkflow:
                                    "error": problem}]
         retry_failures: list = []
         for attempt, candidate in enumerate(suggestions[:MAX_REPAIRS], start=1):
-            retry_calls = substitute(step["calls"], argument, candidate)
+            retry_calls = repair_calls(spec, step["calls"], argument, candidate, self._run["facts"])
             made.extend(retry_calls)
             retry_failures = await self._calls(retry_calls, attempt=attempt)
             outcome = await self._absorb(spec, retry_calls,

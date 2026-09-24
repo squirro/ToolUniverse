@@ -18,6 +18,7 @@ from typing import Any
 
 from .skill_graph import (
     SkillGraphError,
+    _expand_calls,
     _fill,
     _produces,
     delegated_calls,
@@ -839,22 +840,80 @@ def absorb_recorded(record: WorkingRecord, tables: dict | None, spec: dict,
             described["held"] = held_rows(results, items)
         outcome["evidence"].append(described)
     repair = spec.get("repair")
-    outcome["resolved"] = resolved(spec, repair, results) if repair else True
+    problem = repair_problem(spec, repair, results, repair_value(repair, calls, facts)) \
+        if repair else None
+    outcome["resolved"], outcome["repair_problem"] = problem is None, problem
     return outcome
 
 
-def resolved(spec: dict, repair: dict, results: list) -> bool:
-    """Did the value this step exists to produce actually arrive?"""
-    wanted = repair["when_missing"]
-    rule = (spec.get("extract") or {}).get(wanted)
-    path = rule["path"] if isinstance(rule, dict) else rule
-    for payload in results:
+def repair_value(repair: dict, calls: list[dict], facts: dict) -> Any:
+    """The value a repair replaces: a call argument of that name, else the fact the calls are built from."""
+    argument = repair["argument"]
+    for call in calls:
+        if argument in call["arguments"]:
+            return call["arguments"][argument]
+    return facts.get(argument)
+
+
+def _names(payload: Any, paths: list[str]) -> list[str]:
+    """The names a hit lists at the given paths, in order; a path that is absent gives none."""
+    names = []
+    for path in paths:
         try:
-            if _dig(payload, path) is not None:
-                return True
+            found = _dig(payload, path)
         except SkillPathError:
-            continue                         # a malformed path has not resolved anything either
-    return False
+            continue                         # a hit without that field lists no name there
+        names.extend(n for n in (found if isinstance(found, list) else [found]) if isinstance(n, str))
+    return names
+
+
+def _hit(spec: dict, repair: dict, payload: Any) -> bool:
+    """The payload carries the value the repair watches for."""
+    rule = (spec.get("extract") or {}).get(repair["when_missing"])
+    try:
+        return _dig(payload, rule["path"] if isinstance(rule, dict) else rule) is not None
+    except SkillPathError:
+        return False                         # a malformed path has not resolved anything either
+
+
+def _wrong_hit(spec: dict, repair: dict | None, payload: Any, value: Any) -> bool:
+    """A hit whose names, where `named_by` says to read them, do not include the value asked.
+
+    The value matches when it is one of those names, ignoring case.
+    """
+    if not (repair or {}).get("named_by") or not _hit(spec, repair, payload):
+        return False
+    return str(value).casefold() not in {n.casefold() for n in _names(payload, repair["named_by"])}
+
+
+def repair_problem(spec: dict, repair: dict, results: list, value: Any) -> str | None:
+    """Why the value this step exists to produce did not arrive; None when it did.
+
+    With `named_by`, a hit counts only when it names the value asked for: a source may
+    answer a near miss with the wrong entity rather than with nothing.
+    """
+    hits = [p for p in results if _hit(spec, repair, p)]
+    if any(not _wrong_hit(spec, repair, p, value) for p in hits):
+        return None
+    if hits:
+        names = _names(hits[0], repair["named_by"])
+        wrong = names[0] if names else "a hit that lists no name"
+        return f"returned {wrong!r} for {value!r}, and {value!r} is none of the names that hit lists"
+    return f"returned nothing for {value!r}"
+
+
+def resolved(spec: dict, repair: dict, results: list, value: Any = None) -> bool:
+    """Did the value this step exists to produce actually arrive, for the value asked?"""
+    return repair_problem(spec, repair, results, value) is None
+
+
+def repair_calls(spec: dict, calls: list[dict], argument: str, candidate: Any,
+                 facts: dict) -> list[dict]:
+    """The step's calls again with the candidate: swapped where a call carries the
+    argument, else composed afresh from the fact of that name."""
+    if any(argument in call["arguments"] for call in calls):
+        return substitute(calls, argument, candidate)
+    return _expand_calls(spec, {**facts, argument: candidate})
 
 
 def substitute(calls: list[dict], argument: str, candidate: Any) -> list[dict]:
@@ -1235,6 +1294,10 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
     extracted: dict[str, Any] = {}
     excluded: dict[str, list] = {}
     blocked: list[dict] = []
+    if (repair := spec.get("repair")) and repair.get("named_by"):
+        # A hit that names something other than what was asked is not the thing asked for.
+        value = repair_value(repair, calls or [], facts)
+        results = [None if _wrong_hit(spec, repair, p, value) else p for p in results]
     for name, rule in (spec.get("extract") or {}).items():
         rule = rule if isinstance(rule, dict) else {"path": rule}
         path_blocked = False
@@ -1438,11 +1501,11 @@ class SkillRunner:
         caller passing them to absorb or the Working Record reads the repaired
         arguments instead of the ones that failed.
         """
-        if resolved(spec, repair, results):
+        original = repair_value(repair, step["calls"], run["facts"])
+        problem = repair_problem(spec, repair, results, original)
+        if problem is None:
             return results, failures, step["calls"]
         argument = repair["argument"]
-        original = step["calls"][0]["arguments"].get(argument)
-        problem = f"returned nothing for {original!r}"
         question = question_for(
             step["id"], "repair", [argument], dict(run["facts"]),
             tool=step["calls"][0]["tool"], argument=argument, value=original,
@@ -1461,7 +1524,7 @@ class SkillRunner:
         retry_failures: list[dict] = []
         for candidate in (suggestions or [])[: self.MAX_REPAIRS]:
             retried, retry_failures = [], []
-            retry_calls = substitute(step["calls"], argument, candidate)
+            retry_calls = repair_calls(spec, step["calls"], argument, candidate, run["facts"])
             made.extend(retry_calls)
             for call in retry_calls:
                 try:
@@ -1472,7 +1535,7 @@ class SkillRunner:
                     retry_failures.append({"tool": call["tool"], "arguments": call["arguments"],
                                            "error": f"{type(exc).__name__}: {exc}"})
                     retried.append(None)
-            if resolved(spec, repair, retried):
+            if resolved(spec, repair, retried, candidate):
                 run["facts"][argument] = candidate
                 kept = [{**f, "repaired_by": candidate} for f in pre_repair]
                 return retried, kept + retry_failures, retry_calls
@@ -1564,6 +1627,7 @@ class SkillRunner:
                                       run["facts"])
             run.setdefault("evidence", []).extend(outcome.pop("evidence"))
             outcome.pop("resolved")
+            outcome.pop("repair_problem")
         else:
             outcome = absorb(spec, results, run["facts"],
                              items=loop_items(spec, effective_calls), calls=effective_calls)

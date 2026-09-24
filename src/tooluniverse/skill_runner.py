@@ -103,11 +103,75 @@ def _prevalence_tier(classes: list[str]) -> tuple[str, float]:
     return best, float(_PREVALENCE_TIERS.index(best))
 
 
+_WEEK = 7 / 365.25
+# Orphanet's age-of-onset classes as the natural-history payload spells them, with the
+# age range each covers in years, [from, to). Source: Orphadata "Free access products
+# description", Table 8 "categories of onset".
+_ONSET_CLASSES = {
+    "Antenatal": (float("-inf"), 0.0, "before birth"),
+    "Neonatal": (0.0, 4 * _WEEK, "birth to 4 weeks"),
+    "Infancy": (4 * _WEEK, 2.0, "28 days to 23 months"),
+    "Childhood": (2.0, 12.0, "2 to 11 years"),
+    "Adolescent": (12.0, 19.0, "12 to 18 years"),
+    "Adult": (19.0, 66.0, "19 to 65 years"),
+    "Elderly": (66.0, float("inf"), "over 65 years"),
+    "All ages": (0.0, float("inf"), "any age"),   # "from birth to adulthood without peak"
+}
+# Rank key: only an onset still ahead of the patient's age demotes, since the disease cannot
+# have begun yet. An onset already over does not: diagnosis often comes years after it.
+_FITS = _NOT_ASSESSED = _EARLIER = 0
+_LATER = 1
+
+
+def _patient_age(value: Any) -> float | None:
+    """Age in years, fractional for an infant; None for anything else."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, str) and re.fullmatch(r"\d+(\.\d+)?", value.strip()):
+        value = float(value)
+    if isinstance(value, (int, float)) and 0 <= value < float("inf"):
+        return float(value)
+    return None
+
+
+def _onset_fit(age: Any, onsets: list) -> tuple[str, str | None, int]:
+    """Verdict, the class it names, and its rank key, for one disease's onset classes."""
+    if age is None:
+        return "not assessed (no patient age)", None, _NOT_ASSESSED
+    years = _patient_age(age)
+    if years is None:
+        return f"not assessed (patient age {age!r} is not a number of years)", None, _NOT_ASSESSED
+    # No recorded payload spells Orphanet's "no data" class; it would read as an unknown class.
+    named = list(onsets)
+    if not named:
+        return "not assessed (no onset data)", None, _NOT_ASSESSED
+
+    def said(verdict, cls):
+        return f"{verdict}: {cls} ({_ONSET_CLASSES[cls][2]})", cls
+
+    known = sorted((o for o in named if o in _ONSET_CLASSES),
+                   key=lambda o: (_ONSET_CLASSES[o][0], _ONSET_CLASSES[o][1]))
+    # A named class beats "All ages", which matches everyone.
+    inside = sorted((o for o in known if _ONSET_CLASSES[o][0] <= years < _ONSET_CLASSES[o][1]),
+                    key=lambda o: o == "All ages")
+    if inside:
+        return (*said("fits", inside[0]), _FITS)
+    unknown = [o for o in named if o not in _ONSET_CLASSES]
+    if unknown:
+        return f"not assessed (unknown onset class: {', '.join(unknown)})", None, _NOT_ASSESSED
+    over = [o for o in known if _ONSET_CLASSES[o][1] <= years]
+    if over:
+        return (*said("earlier than patient", over[-1]), _EARLIER)
+    return (*said("later than patient", known[0]), _LATER)
+
+
 def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
     """Order candidates by onset fit, then discriminating phenotypes, then prevalence, then overlap.
 
-    A disease whose every onset class is later than the patient goes below every disease
-    that fits; no patient age means onset is not assessed.
+    Onset fit compares the patient's age in years with each onset class's range and names
+    the class: one covers the age ("fits"), all are over ("earlier than patient") or all are
+    still ahead ("later than patient", ranked below the rest). No age, no onset data or an
+    unknown class is "not assessed".
     """
     overlap = facts.get(rule["overlap"])
     if overlap is None:
@@ -118,7 +182,6 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
                 for r in _records(facts.get(rule.get("inheritance", "")))}
     prev_by = {str(r.get("orpha_code")): r.get("classes") or []
                for r in _records(facts.get(rule.get("epidemiology", "")))}
-    early, late = set(rule.get("early_onset", [])), set(rule.get("late_onset", []))
     # A candidate missing the discriminating phenotypes ranks below one that carries them,
     # else the commonest disease matching only the common phenotypes floats to the top.
     pair = facts.get(rule.get("must_carry", "")) or []
@@ -135,18 +198,12 @@ def _rank_differential(rule: dict, facts: dict) -> list[dict] | None:
             carried = "both" if n_carried == len(pair) else f"{n_carried} of {len(pair)}"
             gate_key = len(pair) - n_carried
         onsets = onset_by.get(code, [])
-        if age is None:
-            fit, fit_key = "not assessed (no patient age)", 0
-        elif onsets and all(o in late for o in onsets):
-            fit, fit_key = "later than patient", 1
-        elif onsets and any(o in early for o in onsets):
-            fit, fit_key = "fits", 0
-        else:
-            fit, fit_key = "unknown onset", 0
+        fit, onset_class, fit_key = _onset_fit(age, onsets)
         tier, tier_key = _prevalence_tier(prev_by.get(code, []))
         pct = float(row.get("overlap_pct") or 0)
         # A candidate matching nothing goes to the bottom of its band; prevalence does not rescue it.
-        out.append({**row, "onset": onsets, "onset_fit": fit, "prevalence_tier": tier,
+        out.append({**row, "onset": onsets, "onset_fit": fit, "onset_class": onset_class,
+                    "prevalence_tier": tier,
                     "carries_discriminating": carried,
                     "_key": (fit_key, gate_key, 0 if pct > 0 else 1, tier_key, -pct)})
     out.sort(key=lambda r: (r["_key"], str(r.get("preferred_term"))))

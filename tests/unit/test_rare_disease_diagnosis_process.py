@@ -77,11 +77,21 @@ def test_with_the_age_bound_the_differential_is_ranked_on_onset_fit():
     handed, _ = _drive(age_years=4)
 
     ranked = handed["facts"]["ranked_rows"]
+    # Majeed syndrome: Childhood, Infancy. The rickets candidate's Orphanet hit is a group entry: not resolved.
     assert [(r["preferred_term"], r["onset_fit"], r["rank"]) for r in ranked] == [
-        ("Majeed syndrome", "fits", 1)]
+        ("Majeed syndrome", "fits: Childhood (2 to 11 years)", 1)]
     assert {r["carries_discriminating"] for r in ranked} == {"both"}
     assert "rank_differential" in handed["steps_done"]
     assert handed["failures"] == [] and handed["blocked"] == [] and "stalled" not in handed
+
+
+def test_for_an_adult_no_childhood_onset_disease_fits():
+    handed, _ = _drive(age_years=60)
+
+    ranked = handed["facts"]["ranked_rows"]
+    assert [(r["preferred_term"], r["onset_fit"]) for r in ranked] == [
+        ("Majeed syndrome", "earlier than patient: Childhood (2 to 11 years)")]
+    assert [r["onset_class"] for r in ranked] == ["Childhood"]
 
 
 def test_without_an_age_onset_is_not_assessed():

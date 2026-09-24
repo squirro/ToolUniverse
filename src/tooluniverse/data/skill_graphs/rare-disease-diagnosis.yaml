@@ -439,9 +439,8 @@ steps:
         overlap: overlap_rows
         inheritance: disease_inheritance
         epidemiology: disease_prevalence
+        # Age in years, fractional for an infant; compared with each Orphanet onset class's range.
         patient_age_years: age_years
-        early_onset: ["Antenatal", "Neonatal", "Infancy", "Childhood", "All ages"]
-        late_onset: ["Adolescent", "Adult", "Elderly"]
         # A candidate must carry the discriminating pair the run computed to rank
         # above candidates that do.
         must_carry: discriminating_hpo_ids
@@ -450,12 +449,14 @@ steps:
     produces: [ranked_rows]
     notes: >-
       The differential in the order the report presents it. First: onset fit —
-      a disease whose every onset class is later than the patient's age goes
-      below every disease that fits. Second: does the disease carry both
+      the patient's age against each onset class's age range, naming the class
+      ("fits", "earlier than patient" or "later than patient"); a disease whose
+      every onset class is later than the patient's age goes below the rest. Second: does the disease carry both
       discriminating phenotypes? Those that do rank above those that do not.
       Then commoner above rarer (Orphanet prevalence class, unknown in
-      between), then overlap. The grade stays a column. Without a patient age
-      onset is "not assessed"; without a computed pair the gate is not applied.
+      between), then overlap. The grade stays a column. Without a patient age,
+      onset data or a known onset class, onset is "not assessed"; without a
+      computed pair the gate is not applied.
 
   - id: gene_panel
     label: "Phase 4 — characterise the candidate genes"

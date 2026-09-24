@@ -36,8 +36,7 @@ def _disease(code="ORPHA:1", ids=("HP:0001", "HP:0002")):
 def test_rank_differential_survives_a_miss_in_every_list_it_reads():
     rule = {"op": "rank_differential", "overlap": "overlap_rows",
             "inheritance": "disease_inheritance", "epidemiology": "disease_prevalence",
-            "patient_age_years": "age_years", "early_onset": ["Childhood"],
-            "late_onset": ["Adult"], "must_carry": "discriminating_hpo_ids",
+            "patient_age_years": "age_years", "must_carry": "discriminating_hpo_ids",
             "rows_ids": "disease_phenotypes", "hierarchy": "hpo_hierarchy"}
     facts = {
         "overlap_rows": [None, {"orpha_code": "ORPHA:1", "preferred_term": "A disease",

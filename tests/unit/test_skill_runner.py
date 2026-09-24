@@ -1648,9 +1648,7 @@ def test_a_stubbed_fact_says_it_travels_whole_in_the_questions_own_calls():
 RANK_SPEC = {"compute": {"ranked_rows": {
     "op": "rank_differential",
     "overlap": "overlap_rows", "inheritance": "disease_inheritance",
-    "epidemiology": "disease_prevalence", "patient_age_years": "age_years",
-    "early_onset": ["Antenatal", "Neonatal", "Infancy", "Childhood", "All ages"],
-    "late_onset": ["Adolescent", "Adult", "Elderly"]}}}
+    "epidemiology": "disease_prevalence", "patient_age_years": "age_years"}}}
 
 RANK_FACTS = {
     "age_years": 4,
@@ -1680,9 +1678,10 @@ def test_the_differential_is_ranked_by_onset_fit_then_prevalence_then_overlap():
         "Sialuria",                    # fits age; rarest (<1/1 000 000); 100%
         "Juvenile sialidosis type 2",  # onset excludes a four-year-old: last, whatever the overlap
     ]
-    assert rows[0]["rank"] == 1 and rows[0]["onset_fit"] == "fits"
+    assert rows[0]["rank"] == 1 and rows[0]["onset_fit"] == "fits: Childhood (2 to 11 years)"
     assert rows[0]["prevalence_tier"] == "1-9 / 100 000"
-    assert rows[-1]["onset_fit"] == "later than patient" and rows[-1]["rank"] == 5
+    assert rows[-1]["onset_fit"] == "later than patient: Adolescent (12 to 18 years)"
+    assert rows[-1]["rank"] == 5
     assert rows[2]["prevalence_tier"] == "unknown"
     assert rows[0]["overlap_pct"] == 75 and rows[0]["grade"] == "T2"   # both travel with the row
 
@@ -1711,10 +1710,11 @@ def test_the_shipped_process_ranks_the_differential_on_the_server_from_its_rows(
         "93399"]                                                      # onset later than 4 years
     first = ranked[0]
     assert (first["onset_fit"], first["carries_discriminating"], first["prevalence_tier"]) == (
-        "fits", "both", "1-9 / 1 000 000")
+        "earlier than patient: Infancy (28 days to 23 months)", "both", "1-9 / 1 000 000")
     assert (first["grade"], first["overlap_pct"]) == ("T1", 100)   # overlap travels with the row
     assert ranked[-1]["preferred_term"] == "Juvenile sialidosis type 2"
-    assert ranked[-1]["onset_fit"] == "later than patient" and ranked[-1]["overlap_pct"] == 100
+    assert ranked[-1]["onset_fit"] == "later than patient: Adolescent (12 to 18 years)"
+    assert ranked[-1]["overlap_pct"] == 100
 
 
 def test_prevalence_tier_is_the_class_most_studies_agree_on_not_one_outlier():

@@ -17,7 +17,7 @@ from .skill_process_store import SkillProcessMismatch
 ANALYSES_PREFIX = "analyses/"
 
 # A ToolUniverse tool name; it also becomes part of an IRI in the published graph.
-_TOOL = re.compile(r"[A-Za-z0-9_.-]+")
+_TOOL = re.compile(r"[A-Za-z0-9_.:-]+")  # colons: a direct Squirro call (squirro_tools)
 
 # Squirro ids are URL-safe base64 tokens; anything else would be spliced into an IRI.
 _PROMPT_ID = re.compile(r"[A-Za-z0-9_-]{8,64}")

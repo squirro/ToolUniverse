@@ -376,3 +376,15 @@ def test_a_definition_that_would_not_read_back_whole_is_refused_as_the_callers_t
                               TOKEN, TOKEN, _store())
 
     assert status == 422 and "rebuild" in out["error"] and not put.called
+
+
+def test_a_direct_squirro_call_passes_the_checks_and_the_graphdb_round_trip():
+    from tooluniverse.squirro_tools import call_name
+    tool = call_name("0Hf8aoWMSm-5sPqBKE9atg", "Kkp_3Cu0TDyIcUOdXCNZsQ",
+                     "genai_plugin.clinicaltrials_search_tool.clinicaltrials_search_tool."
+                     "clinicaltrials_search")
+    process = {"skill": "analyses/s", "steps": [
+        {"id": "t1_c1", "calls": [{"tool": tool, "arguments": {"intervention": "AR-V7"}}]}]}
+
+    assert problems(process) == []
+    assert from_bbo(_Graph().parse(data=to_bbo(process), format="turtle")) == process

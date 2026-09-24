@@ -20,6 +20,7 @@ from temporalio.worker import Worker
 from . import skill_ontology_placing
 from .skill_process_store import Store
 from .skill_runner import normalised_executor
+from .squirro_tools import SquirroTools, routed
 from .skill_workflow import (
     TASK_QUEUE,
     WORKFLOW_RUNNER,
@@ -50,7 +51,9 @@ def configured() -> str | None:
 
 def build_worker(client: Client, tooluniverse: Any, *, task_queue: str = TASK_QUEUE) -> Worker:
     """A worker whose activity calls tools through the agent's door."""
-    bind_executor(normalised_executor(tooluniverse.run_one_function))
+    # A Saved Analysis's direct Squirro calls go to genai; everything else to ToolUniverse.
+    bind_executor(normalised_executor(routed(tooluniverse.run_one_function,
+                                             SquirroTools.from_env())))
     bind_records(records_dir())
     bind_lookup(lambda term: skill_ontology_placing.lookup(term))
     try:

@@ -315,7 +315,8 @@ class SkillWorkflow:
     async def _record(self, inp: SkillRunInput) -> dict:
         """Write the permanent Run Record once. A failed write is a warning, never a failed run."""
         skel = skeleton(self._process, self._run, run_id=workflow.info().workflow_id,
-                        definition_iri=inp.definition_iri, definition_hash=inp.definition_hash)
+                        definition_iri=inp.definition_iri, definition_hash=inp.definition_hash,
+                        started=workflow.info().start_time.isoformat(), inputs=dict(inp.inputs))
         try:
             iri = await workflow.execute_activity(
                 record_run, skel,

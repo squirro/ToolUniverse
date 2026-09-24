@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 
-from rdflib import RDF, RDFS, Graph, Literal, Namespace, URIRef
+from rdflib import RDF, RDFS, XSD, Graph, Literal, Namespace, URIRef
 
 from .skill_process_store import RUNS_BASE
 
@@ -34,8 +34,12 @@ def outcome_of(step_id: str, run: dict) -> str:
 
 
 def skeleton(process: dict, run: dict, *, run_id: str,
-             definition_iri: str, definition_hash: str) -> dict:
-    """What the record holds, as plain data. Pure."""
+             definition_iri: str, definition_hash: str, started: str | None = None,
+             inputs: dict | None = None) -> dict:
+    """What the record holds, as plain data. Pure.
+
+    `started` and `inputs` let a Saved Analysis list its runs (SA-12); older callers omit them.
+    """
     steps = []
     for spec in process["steps"]:
         sid = spec["id"]
@@ -47,9 +51,10 @@ def skeleton(process: dict, run: dict, *, run_id: str,
             "questions": [{"kind": q["kind"], "wants": q["wants"], "answer": q["answer"]}
                           for q in run["questions"] if q["step"] == sid],
         })
+    extra = {k: v for k, v in (("started", started), ("inputs", inputs)) if v is not None}
     return {"run_id": run_id, "skill": process["skill"],
             "definition_iri": definition_iri, "definition_hash": definition_hash,
-            "steps": steps}
+            "steps": steps, **extra}
 
 
 def _lit(value) -> Literal:
@@ -67,6 +72,10 @@ def to_prov(skel: dict) -> str:
     g.add((run, PROV.used, URIRef(skel["definition_iri"])))
     g.add((run, SRR.skill, Literal(skel["skill"])))
     g.add((run, SRR.definitionHash, Literal(skel["definition_hash"])))
+    if skel.get("started"):
+        g.add((run, SRR.started, Literal(skel["started"], datatype=XSD.dateTime)))
+    if "inputs" in skel:
+        g.add((run, SRR.inputs, _lit(skel["inputs"])))
     for order, step in enumerate(skel["steps"]):
         s = URIRef(f"{run}/step/{step['id']}")
         g.add((s, RDF.type, PROV.Activity))

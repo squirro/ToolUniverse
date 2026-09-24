@@ -152,3 +152,23 @@ def test_each_question_is_an_entity_generated_by_its_step_with_the_answer():
 
 def test_no_payload_reaches_the_graph_either():
     assert SECRET_PAYLOAD not in to_prov(_skel())
+
+
+# A Saved Analysis's run history (SA-12) reads when a run started and on what Inputs.
+
+def test_the_record_keeps_when_the_run_started_and_its_inputs():
+    skel = skeleton(PROCESS, _finished_run(), run_id="run-abc",
+                    definition_iri="https://data.swissrockets.com/skills/demo",
+                    definition_hash="deadbeef", started="2026-09-24T15:00:00+00:00",
+                    inputs={"drug_name": "Lu-177"})
+    g = Graph().parse(data=to_prov(skel), format="turtle")
+    run = URIRef(RUNS + "run-abc")
+
+    assert str(g.value(run, SRR.started)) == "2026-09-24T15:00:00+00:00"
+    assert json.loads(str(g.value(run, SRR.inputs))) == {"drug_name": "Lu-177"}
+
+
+def test_a_record_without_them_is_as_before():
+    g = Graph().parse(data=to_prov(_skel()), format="turtle")
+
+    assert g.value(URIRef(RUNS + "run-abc"), SRR.started) is None

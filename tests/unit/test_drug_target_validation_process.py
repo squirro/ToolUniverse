@@ -215,3 +215,22 @@ def test_a_run_holding_one_page_of_the_drugs_owes_the_sources_total(tmp_path):
     owed = [f for f in check_report("The target has known drugs.", {"handover": handed})
             if f["kind"] == "narrowing_not_stated"]
     assert any("results.modulators" in f["text"] and "82" in f["text"] for f in owed)
+
+
+def test_a_run_holding_the_whole_list_of_drugs_is_not_asked_for_a_narrowing(tmp_path):
+    """Served all 82 of EGFR's drugs, the run narrowed nothing; the report owes no total."""
+    from tooluniverse.skill_report_check import check_report
+
+    egfr = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "opentargets"
+                       / "egfr_drug_candidates_2026-09-24.json").read_text())
+    whole = {"status": "success", **egfr,
+             "metadata": {"total": 82, "returned": 82, "has_more": False}}
+    handed, calls, asked = _drive(
+        tmp_path, responses={"OpenTargets_get_associated_drugs_by_target_ensemblID": whole})
+
+    (table,) = [t for t in handed["tables"] if t["table"] == "results.modulators"]
+    assert table["source_total"] == 82
+    assert table["rows"] >= 82, "the drugs the run holds, not the calls the step made"
+    owed = [f for f in check_report("The target has known drugs.", {"handover": handed})
+            if f["kind"] == "narrowing_not_stated" and "results.modulators" in f["text"]]
+    assert owed == []

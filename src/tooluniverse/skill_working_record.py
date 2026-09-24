@@ -39,14 +39,26 @@ def _cut(value: Any) -> Any:
     return value if len(text) <= PREVIEW_CHARS else text[:PREVIEW_CHARS] + "…"
 
 
+def _is_records(value: Any) -> bool:
+    return isinstance(value, list) and bool(value) and all(isinstance(r, dict) for r in value)
+
+
+def _record_lists(data: dict) -> list[list]:
+    """The lists of records at the shallowest level that has any; holders are looked through."""
+    here = [v for v in data.values() if _is_records(v)]
+    if here:
+        return here
+    return [found for v in data.values() if isinstance(v, dict) for found in _record_lists(v)]
+
+
 def _rows_of(payload: Any) -> list[dict]:
-    """The rows inside one tool result: its list of records, else the result as one row."""
+    """The rows inside one tool result: its one list of records, even under holders
+    (data.target.drugs.rows), else the result as one row."""
     data = payload.get("data", payload) if isinstance(payload, dict) else payload
-    if isinstance(data, list) and data and all(isinstance(r, dict) for r in data):
+    if _is_records(data):
         return data
     if isinstance(data, dict):
-        lists = [v for v in data.values()
-                 if isinstance(v, list) and v and all(isinstance(r, dict) for r in v)]
+        lists = _record_lists(data)
         return lists[0] if len(lists) == 1 else [data]
     return [{"value": data}]
 

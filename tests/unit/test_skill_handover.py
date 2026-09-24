@@ -249,3 +249,22 @@ def test_the_report_rules_name_the_skipped_steps_and_the_signals_a_row_can_carry
     assert "steps_skipped" in handed
     for named in ("steps_skipped", "decided", "unparseable", "note"):
         assert named in rules, named
+
+
+def test_a_results_table_counts_the_records_under_the_sources_holders_not_the_calls(tmp_path):
+    """A GraphQL answer wraps its list in holders; the run holds the list, not one row per call."""
+    nested = {"skill": "nested", "inputs": ["gene"],
+              "steps": [{"id": "drugs", "total": "data.target.drugs.count",
+                         "calls": [{"tool": "drugs_of", "arguments": {"gene": "{gene}"}}]}]}
+    payload = {"status": "success",
+               "data": {"target": {"id": "ENSG1", "drugs": {
+                   "count": 3, "rows": [{"name": "A"}, {"name": "B"}, {"name": "C"}]}}}}
+
+    runner, run_id, record = _finished_run(tmp_path, nested, execute=lambda t, a: payload,
+                                           inputs={"gene": "EGFR"})
+
+    (table,) = [t for t in runner.handover(run_id)["tables"] if t["table"] == "results.drugs"]
+    served = record.fetch("results.drugs")
+    assert (table["rows"], table["source_total"]) == (3, 3)
+    assert served["total_rows"] == 3
+    assert [r["name"] for r in served["rows"]] == ["A", "B", "C"]

@@ -1446,6 +1446,13 @@ class SMCP(FastMCP):
             pass their pick with continue_skill(run_id, answer={<name>: [...]}). Never pick
             yourself, even when one value looks obviously right.
 
+            A `waiting` question of kind "delegate" asks YOU to make `question.calls` with
+            your own tools (the server cannot: they need keys only you hold). Make each call
+            exactly as given, changing nothing. Then answer, for each name in `wants`: the
+            name ending in `_made` with the list of calls you made, as
+            [{"tool": ..., "arguments": {...}}]; every other name with the value at the path
+            `question.notes` gives, copied exactly from that call's result.
+
             Args:
                 prompt_id: the id in the message, e.g. "K_IZog8LROOP2gPODyN2uQ".
                 inputs: every `<input> = <value>` pair of the message, e.g.

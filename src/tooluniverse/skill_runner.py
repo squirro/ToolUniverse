@@ -1243,12 +1243,43 @@ def _check_selected_from(rule: dict, value: Any, facts: dict) -> str | None:
     return None
 
 
+def _check_made_as_asked(rule: dict, value: Any, facts: dict) -> str | None:
+    """A Delegated call of a Saved Analysis was made exactly as the run asked (ADR-0021).
+
+    The rule holds the call(s) as the step declares them; they are filled from the run's facts
+    the same way the question was, so the two cannot differ. Same tools, in any order, and the
+    same arguments, where an argument the agent left out counts as null (genai records unset
+    arguments as null).
+    """
+    asked = delegated_calls({"delegate": rule.get("calls") or [], "for_each": rule.get("for_each"),
+                             "as": rule.get("as", "item")}, facts)
+    if not isinstance(value, list) or not all(isinstance(c, dict) for c in value):
+        return "not a list of {tool, arguments}: the calls you made, as you made them"
+
+    def same(a: dict, b: dict) -> bool:
+        x, y = a.get("arguments") or {}, b.get("arguments") or {}
+        return a.get("tool") == b.get("tool") and all(
+            _same(x.get(k), y.get(k)) if x.get(k) is not None and y.get(k) is not None
+            else x.get(k) is None and y.get(k) is None for k in set(x) | set(y))
+
+    left = list(value)
+    for want in asked:
+        hit = next((i for i, got in enumerate(left) if same(want, got)), None)
+        if hit is None:
+            return f"the call {json.dumps(want, default=str)[:200]} was not made as asked"
+        left.pop(hit)
+    if left:
+        return f"calls not asked for were made: {json.dumps(left, default=str)[:200]}"
+    return None
+
+
 _CHECKS: dict[str, Callable[[Any, Any, dict], str | None]] = {
     "rows_of": _check_rows_of, "sorted_by": _check_sorted_by, "flag": _check_flag,
     "subset_of": _check_subset_of, "covers": _check_covers,
     "excludes": _check_excludes, "only": _check_only,
     "not_in": _check_not_in, "only_in": _check_only_in,
     "selected_from": _check_selected_from,
+    "made_as_asked": _check_made_as_asked,
 }
 
 

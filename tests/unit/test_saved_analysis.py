@@ -388,3 +388,78 @@ def test_a_direct_squirro_call_passes_the_checks_and_the_graphdb_round_trip():
 
     assert problems(process) == []
     assert from_bbo(_Graph().parse(data=to_bbo(process), format="turtle")) == process
+
+
+# -- Delegated Squirro calls (SA-06b, ADR-0021): the agent makes the call ------------------
+
+from tooluniverse.skill_runner import check_facts  # noqa: E402
+
+EPO_CALL = {"tool": "EPO_Patent_Search", "arguments": {"action": "search", "query": "{query}",
+                                                       "range_end": 10, "applicant": None}}
+DELEGATED = {"skill": "analyses/d", "inputs": ["query"], "steps": [
+    {"id": "t1_c1", "label": "Turn 1: EPO_Patent_Search", "calls": [],
+     "delegate": [EPO_CALL], "produces": ["t1_c1_made", "patent_id"],
+     "check": {"t1_c1_made": {"made_as_asked": {"calls": [EPO_CALL]}}},
+     "notes": "Make the call exactly as given. Answer t1_c1_made with the call you made, and "
+              "patent_id with the value at results.0.id of its result, copied exactly."},
+    {"id": "t1_c2", "label": "Turn 1: next", "requires": ["t1_c1"],
+     "calls": [{"tool": "Some_tool", "arguments": {"id": "{patent_id}"}}]},
+]}
+MADE_OK = {"t1_c1_made": [{"tool": "EPO_Patent_Search", "arguments": {
+    "action": "search", "query": "KRAS", "range_end": 10, "applicant": None}}],
+    "patent_id": "EP1234567"}
+
+
+def _delegate(answers):
+    calls, questions, answers = [], [], list(answers)
+    runner = SkillRunner(DELEGATED, execute=lambda t, a: calls.append((t, a)) or {},
+                         ask=lambda q: questions.append(q) or (answers.pop(0) if answers else None))
+    run_id = runner.start({"query": "KRAS"})["run_id"]
+    for _ in range(10):
+        if runner.advance(run_id) is None or runner.state(run_id).get("finished"):
+            break
+    return calls, questions, runner.state(run_id)
+
+
+def test_the_agent_is_asked_to_make_the_exact_call_with_the_new_input():
+    _, questions, _ = _delegate([MADE_OK])
+
+    (q,) = questions
+    assert q["kind"] == "delegate"
+    assert q["calls"] == [{"tool": "EPO_Patent_Search", "arguments": {
+        "action": "search", "query": "KRAS", "range_end": 10, "applicant": None}}]
+    assert set(q["wants"]) == {"t1_c1_made", "patent_id"}
+
+
+def test_a_value_the_agent_copied_from_its_result_drives_the_next_call():
+    calls, _, _ = _delegate([MADE_OK])
+
+    assert calls == [("Some_tool", {"id": "EP1234567"})]
+
+
+@pytest.mark.parametrize("made", [
+    [{"tool": "EPO_Patent_Search", "arguments": {"action": "search", "query": "KRAS mutations",
+                                                  "range_end": 10, "applicant": None}}],
+    [{"tool": "Other_tool", "arguments": {"action": "search", "query": "KRAS", "range_end": 10}}],
+    [],
+], ids=["changed-argument", "other-tool", "no-call"])
+def test_a_call_made_otherwise_is_asked_again_then_left_unresolved(made):
+    bad = {**MADE_OK, "t1_c1_made": made}
+
+    _, questions, state = _delegate([bad, bad])
+
+    assert len(questions) == 2 and "problem" in questions[1]
+    assert {"step": "t1_c1", "fact": "t1_c1_made"} in state["unresolved"]
+
+
+def test_a_missing_argument_counts_as_null_so_the_agents_defaults_do_not_fail_the_check():
+    made = [{"tool": "EPO_Patent_Search", "arguments": {"action": "search", "query": "KRAS",
+                                                         "range_end": 10}}]
+    rules = DELEGATED["steps"][0]["check"]
+
+    assert check_facts(rules, {"t1_c1_made": made}, {"query": "KRAS"}) == []
+
+
+def test_a_delegated_step_passes_the_save_checks_and_the_round_trip():
+    assert problems(DELEGATED) == []
+    assert from_bbo(_Graph().parse(data=to_bbo(DELEGATED), format="turtle")) == DELEGATED

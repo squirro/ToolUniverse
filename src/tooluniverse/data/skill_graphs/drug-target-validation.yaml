@@ -280,7 +280,7 @@ steps:
       tractability_rows: {path: "data.target.tractability", flatten: true, fields: ["modality", "label", "value"]}
       class_rows: {path: "data.target.targetClass", flatten: true, fields: ["label", "level"]}
       probe_rows: {path: "data.target.chemicalProbes", flatten: true,
-                   fields: ["id", "isHighQuality", "probeMinerScore", "probesDrugsScore"]}
+                   fields: ["id", "isHighQuality", "probesDrugsScore"]}
     produces: [alphafold_confidence, tractability_rows, class_rows, probe_rows]
 
   - id: modulators

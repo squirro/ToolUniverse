@@ -3534,7 +3534,7 @@
         "ensemblId"
       ]
     },
-    "query_schema": "\n      query getTargetChemicalProbes($ensemblId: String!) {\n        target(ensemblId: $ensemblId) {\n          chemicalProbes {\n            id\n            control\n            drugId\n            mechanismOfAction\n            isHighQuality\n            origin\n            probeMinerScore\n            probesDrugsScore\n            scoreInCells\n            scoreInOrganisms\n            targetFromSourceId\n            urls {\n              niceName\n              url\n            }\n          }\n        }\n      }\n    ",
+    "query_schema": "\n      query getTargetChemicalProbes($ensemblId: String!) {\n        target(ensemblId: $ensemblId) {\n          chemicalProbes {\n            id\n            control\n            drugId\n            mechanismOfAction\n            isHighQuality\n            origin\n            probesDrugsScore\n            scoreInCells\n            scoreInOrganisms\n            targetFromSourceId\n            urls {\n              niceName\n              url\n            }\n          }\n        }\n      }\n    ",
     "label": [
       "OpenTarget",
       "Drug Information",

@@ -322,3 +322,22 @@ def test_a_target_with_more_activity_than_one_page_owes_the_sources_total(tmp_pa
     owed = [f for f in check_report("The target has measured activity.", {"handover": handed})
             if f["kind"] == "narrowing_not_stated" and "results.chembl_activities" in f["text"]]
     assert owed and "58847" in owed[0]["text"]
+
+
+def test_the_probe_rows_are_read_from_the_chemical_probes_answer_of_the_live_schema(tmp_path):
+    """Open Targets dropped probeMinerScore; the step still reads each probe from the new shape."""
+    import tooluniverse.graphql_tool as graphql
+
+    live = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "opentargets"
+                       / "egfr_chemical_probes_2026-09-24.json").read_text())
+    served = graphql.remove_none_and_empty_values(json.loads(json.dumps(live)))
+    handed, _, _ = _drive(
+        tmp_path, responses={"OpenTargets_get_chemical_probes_by_target_ensemblID": served})
+
+    probes = live["data"]["target"]["chemicalProbes"]
+    rows = handed["facts"]["probe_rows"]
+    assert [r["id"] for r in rows] == [p["id"] for p in probes]
+    assert rows[0] == {"id": probes[0]["id"], "isHighQuality": probes[0]["isHighQuality"],
+                       "probesDrugsScore": probes[0]["probesDrugsScore"]}
+    assert not [f for f in handed["failures"]
+                if f["tool"] == "OpenTargets_get_chemical_probes_by_target_ensemblID"]

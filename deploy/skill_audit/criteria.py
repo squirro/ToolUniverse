@@ -16,7 +16,6 @@ genai log.
 """
 from __future__ import annotations
 
-import json
 import re
 import statistics
 import sys
@@ -27,6 +26,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 # A module import: `from tooluniverse import x` goes through the package's lazy tool
 # lookup and runs a full registry discovery when the name is not a tool.
 import tooluniverse.skill_report_check as rc  # noqa: E402
+
+from .oracle import output_text as _output_text  # noqa: E402  one wire-shape reader
 
 WEB_ARM_LIMIT = ("Limit of the web arm: on sr-dev it has Exa, Perplexity and OpenAI web search; "
                  "it does not have the internal document search of the production web agent.")
@@ -120,9 +121,14 @@ def _sentences(text: str) -> list[str]:
 
 
 def citations_resolve(answer: str, fetch_text: Callable[[str], str | None]) -> list[dict]:
-    """For each footnoted link: does it open, and does the page hold the statement's numbers?"""
+    """For each footnoted statement: does its link open, and does the page hold its numbers?
+
+    ``contains_statement`` is None for a statement with no number: nothing was checked,
+    so it is neither verified nor refuted. Each (link, numbers) pair is checked once, so a
+    link first cited by such a statement is still checked for a later one that has numbers.
+    """
     definitions = dict(_FOOTNOTE_DEF.findall(answer or ""))
-    out, seen = [], set()
+    out, seen, pages = [], set(), {}
     for sentence in _sentences(_FOOTNOTE_DEF.sub("", answer or "")):
         refs = _FOOTNOTE_REF.findall(sentence)
         if not refs:
@@ -130,15 +136,22 @@ def citations_resolve(answer: str, fetch_text: Callable[[str], str | None]) -> l
         numbers = stated_numbers(sentence)
         for ref in refs:
             url = definitions.get(ref)
-            if not url or url in seen:
+            if not url or (url, tuple(numbers)) in seen:
                 continue
-            seen.add(url)
-            page = fetch_text(url)
+            seen.add((url, tuple(numbers)))
+            if url not in pages:
+                pages[url] = fetch_text(url)
+            page = pages[url]
             folded = rc._fold_thousands(page) if page else ""
+            if page is None:
+                holds = False
+            elif not numbers:
+                holds = None
+            else:
+                holds = all(re.search(rf"(?<![\d.]){re.escape(n)}(?![\d.])", folded) for n in numbers)
             out.append({"url": url, "opens": page is not None,
                         "numbers": numbers if page is not None else [],
-                        "contains_statement": page is not None
-                        and all(re.search(rf"(?<![\d.]){re.escape(n)}(?![\d.])", folded) for n in numbers)})
+                        "contains_statement": holds})
     return out
 
 
@@ -206,19 +219,6 @@ def web_tools_of(agent: dict) -> list[str]:
     tools = (agent.get("toolkit") or {}).get("tools") or []
     return [t.get("custom_name") or t.get("tool_id") for t in tools
             if t.get("enabled", True) and _WEB_TOOL.search(t.get("custom_name") or t.get("tool_id") or "")]
-
-
-def _output_text(action: dict) -> str:
-    content = action.get("content")
-    if isinstance(content, str):
-        try:
-            content = json.loads(content)
-        except ValueError:
-            return content
-    if isinstance(content, dict):
-        output = content.get("output", content)
-        return output if isinstance(output, str) else json.dumps(output, default=str)
-    return json.dumps(content, default=str)
 
 
 def web_arm_limit(tools: list[str]) -> str:

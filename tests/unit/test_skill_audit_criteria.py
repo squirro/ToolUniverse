@@ -185,3 +185,43 @@ def test_the_limit_sentence_names_the_web_tool_families_the_arm_actually_has():
     assert "Exa and Perplexity;" in web_arm_limit(["exa_web_search", "Perplexity_web_Search_API"])
     assert "Exa, Perplexity and OpenAI web search;" in web_arm_limit(["exa_web_answer", "perplexity_x", "openai_web_search"])
     assert "internal document search" in web_arm_limit([])
+
+
+def test_a_footnoted_statement_with_no_number_is_not_counted_as_verified():
+    answer = ("Nephrotoxicity is dose-related.[^1^]\n\n"
+              "[^1^]: https://example.org/review\n")
+
+    out = citations_resolve(answer, fetch_text=lambda url: "An unrelated page.")
+
+    assert out == [{"url": "https://example.org/review", "opens": True, "numbers": [],
+                    "contains_statement": None}]
+
+
+def test_a_link_first_cited_without_a_number_is_still_checked_for_a_later_number():
+    answer = ("Nephrotoxicity is dose-related.[^1^]\nIts PRR was 17.811.[^1^]\n\n"
+              "[^1^]: https://example.org/review\n")
+    fetched = []
+
+    def fetch(url):
+        fetched.append(url)
+        return "Nephrotoxicity is dose-related; the PRR was 9.2."
+
+    out = citations_resolve(answer, fetch_text=fetch)
+
+    assert [(r["numbers"], r["contains_statement"]) for r in out] == [([], None), (["17.811"], False)]
+    assert fetched == ["https://example.org/review"]
+
+
+def test_the_criteria_and_the_oracle_read_one_wire_shape():
+    """A dict content without an output gave the whole content to the pre-flight's link
+    search (its parameters included); the oracle reads no output there, and so does it now."""
+    from skill_audit import criteria, oracle
+    assert criteria._output_text is oracle.output_text
+    turn = {"actions": [{"tool_name": "exa_web_search",
+                         "content": {"parameters": {"query": "see https://a.org/x"}}}]}
+    agents = {"web": {"name": "web", "toolkit": {"tools": [{"tool_id": "exa_web_search"}]}},
+              "modelled": {"name": "modelled"}}
+
+    failures = preflight(agents, turn, log_lines=[])
+
+    assert any("gave no link" in f for f in failures)

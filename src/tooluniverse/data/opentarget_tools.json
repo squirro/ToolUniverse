@@ -3722,13 +3722,26 @@
   },
   {
     "name": "OpenTargets_get_associated_drugs_by_target_ensemblID",
-    "description": "Get known drugs and information (e.g. id, name, MoA) associated with a specific target ensemblID, including clinical trial phase and mechanism of action of the drugs.",
+    "description": "Get the known drugs and clinical candidates for a target ensemblID, each with its highest clinical stage and the diseases it is developed for. The list is paged: metadata.total is the source's own count of drugs for the target, metadata.has_more and metadata.next_page say whether more pages exist. Ask the next page, or a larger page_size, before reporting the list as complete.",
     "parameter": {
       "type": "object",
       "properties": {
         "ensemblId": {
           "type": "string",
           "description": "The Ensembl ID of the target."
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "The page of the drug list to return, starting at 1."
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "default": 25,
+          "description": "How many drugs one page holds. The response's metadata.total says how many the source holds."
         }
       },
       "required": [
@@ -3769,10 +3782,12 @@
                   "type": "object",
                   "properties": {
                     "count": {
-                      "type": "integer"
+                      "type": "integer",
+                      "description": "The source's own count of drugs for the target."
                     },
                     "rows": {
                       "type": "array",
+                      "description": "This page of the list.",
                       "items": {
                         "type": "object",
                         "properties": {
@@ -3785,31 +3800,30 @@
                               "name": {
                                 "type": "string"
                               },
-                              "maximumClinicalTrialPhase": {
-                                "type": "integer"
-                              },
-                              "isApproved": {
-                                "type": "boolean"
-                              },
-                              "hasBeenWithdrawn": {
-                                "type": "boolean"
+                              "maximumClinicalStage": {
+                                "type": "string"
                               }
                             }
                           },
                           "maxClinicalStage": {
                             "type": "string"
                           },
-                          "mechanismOfAction": {
-                            "type": "string"
-                          },
-                          "disease": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "name": {
-                                "type": "string"
+                          "diseases": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "disease": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
                               }
                             }
                           }
@@ -3821,9 +3835,41 @@
               }
             }
           }
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "description": "How many drugs the source holds for the target."
+            },
+            "page": {
+              "type": "integer"
+            },
+            "page_size": {
+              "type": "integer"
+            },
+            "returned": {
+              "type": "integer",
+              "description": "How many drugs this page holds."
+            },
+            "has_more": {
+              "type": "boolean"
+            },
+            "next_page": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "note": {
+              "type": "string"
+            }
+          }
         }
       }
-    }
+    },
+    "page_rows": "target.drugAndClinicalCandidates"
   },
   {
     "name": "OpenTargets_get_associated_diseases_by_drug_chemblId",

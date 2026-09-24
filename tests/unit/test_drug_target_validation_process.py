@@ -184,3 +184,34 @@ def test_without_a_disease_the_trials_search_runs_on_the_target_alone(tmp_path):
 
     (sent,) = [args for tool, args in calls if tool == "search_clinical_trials"]
     assert sent == {"query_term": "FOLR1", "pageSize": 1000}, "no placeholder, no null"
+
+
+def test_the_known_drugs_are_asked_for_whole_not_as_the_tools_first_page(tmp_path):
+    """The drugs tool pages its list; the clinical judgement reads every drug."""
+    handed, calls, asked = _drive(tmp_path)
+
+    (sent,) = [args for tool, args in calls
+               if tool == "OpenTargets_get_associated_drugs_by_target_ensemblID"]
+    assert sent == {"ensemblId": "ENSG00000110195", "page_size": 1000}
+
+
+def test_a_run_holding_one_page_of_the_drugs_owes_the_sources_total(tmp_path):
+    """Served one page of 25 of EGFR's 82, the report must say the source holds 82."""
+    from tooluniverse.skill_report_check import check_report
+
+    egfr = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "opentargets"
+                       / "egfr_drug_candidates_2026-09-24.json").read_text())
+    holder = egfr["data"]["target"]["drugAndClinicalCandidates"]
+    one_page = {"status": "success",
+                "data": {"target": {**egfr["data"]["target"],
+                                    "drugAndClinicalCandidates": {**holder, "rows": holder["rows"][:25]}}},
+                "metadata": {"total": 82, "returned": 25, "has_more": True, "next_page": 2}}
+    handed, calls, asked = _drive(
+        tmp_path, responses={"OpenTargets_get_associated_drugs_by_target_ensemblID": one_page})
+
+    (table,) = [t for t in handed["tables"] if t["table"] == "results.modulators"]
+    assert table["source_total"] == 82
+    assert len(handed["facts"]["drug_rows"]) == 25
+    owed = [f for f in check_report("The target has known drugs.", {"handover": handed})
+            if f["kind"] == "narrowing_not_stated"]
+    assert any("results.modulators" in f["text"] and "82" in f["text"] for f in owed)

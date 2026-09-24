@@ -151,6 +151,34 @@ def _ot_resolve_id(endpoint_url: str, query_string: str, entity: str) -> str | N
     return None
 
 
+def _at(data: dict, path: str):
+    for key in path.split("."):
+        data = data.get(key) if isinstance(data, dict) else None
+    return data
+
+
+def _page_rows(result: dict, path: str, page: int, page_size: int) -> dict:
+    """One page of a list the source answers whole, with the source's own total."""
+    holder = _at(result.get("data") or {}, path)
+    if not isinstance(holder, dict):
+        return result
+    rows = holder.get("rows") or []
+    total = holder.get("count", len(rows))
+    start = (page - 1) * page_size
+    holder["rows"] = rows[start:start + page_size]
+    returned = len(holder["rows"])
+    has_more = start + returned < len(rows)
+    first, last = (start + 1, start + returned) if returned else (0, 0)
+    note = (f"Rows {first}-{last} of the {total} the source holds."
+            if returned else f"Page {page} is past the end: the source holds {total}.")
+    if has_more:
+        note += f" Ask page {page + 1} for the next."
+    result.setdefault("metadata", {}).update({
+        "total": total, "page": page, "page_size": page_size, "returned": returned,
+        "has_more": has_more, "next_page": page + 1 if has_more else None, "note": note})
+    return result
+
+
 @register_tool("OpenTarget")
 class OpentargetTool(GraphQLTool):
     def __init__(self, tool_config):
@@ -159,6 +187,24 @@ class OpentargetTool(GraphQLTool):
 
     def run(self, arguments):
         arguments = copy.deepcopy(arguments)
+        paged = self.tool_config.get("page_rows")
+        if paged:
+            # The source answers the whole list; paging is the tool's, not a query variable.
+            try:
+                page = int(arguments.pop("page", 1))
+                page_size = int(arguments.pop(
+                    "page_size", self.parameters["page_size"].get("default", 25)))
+            except (TypeError, ValueError):
+                return {"status": "error", "error": "page and page_size must be integers"}
+            if page < 1 or page_size < 1:
+                return {"status": "error", "error": "page and page_size start at 1"}
+            result = self._query(arguments)
+            if result.get("status") == "success":
+                result = _page_rows(result, paged, page, page_size)
+            return result
+        return self._query(arguments)
+
+    def _query(self, arguments):
 
         # Normalize common aliases before resolution
         if "ensemblId" not in arguments and "gene_symbol" not in arguments:

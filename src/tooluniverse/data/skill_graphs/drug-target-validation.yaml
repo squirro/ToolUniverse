@@ -281,7 +281,8 @@ steps:
     requires: [identity]
     calls:
       - tool: OpenTargets_get_associated_drugs_by_target_ensemblID
-        arguments: {ensemblId: "{ensembl_id}"}
+        # The tool pages a list the source answers whole; one page this wide holds it.
+        arguments: {ensemblId: "{ensembl_id}", page_size: 1000}
       - tool: ChEMBL_search_targets
         arguments: {target_synonym__icontains: "{symbol}"}
     total: "data.target.drugAndClinicalCandidates.count"

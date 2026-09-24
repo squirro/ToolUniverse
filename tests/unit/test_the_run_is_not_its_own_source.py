@@ -85,7 +85,7 @@ def test_the_report_rules_say_a_number_from_before_the_skill_cannot_be_cited():
     """DSR-812: the early call's numbers are in no record, so they cannot be vouched."""
     rules = " ".join(WRITE_THE_REPORT).lower()
 
-    assert "before" in rules and ("run_skill" in rules or "skill" in rules), rules
+    assert "a tool you called before run_skill left no record here" in rules, rules
 
 
 # --------------------------------------------------------------- what must keep working

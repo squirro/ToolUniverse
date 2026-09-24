@@ -17,6 +17,7 @@ from tooluniverse.skill_run_client import (  # noqa: E402
     fetch_run_data,
     missing_inputs,
     progress,
+    resume,
     start,
     submit_report,
     wait_for_progress,
@@ -328,3 +329,52 @@ async def test_the_host_probe_names_why_the_host_cannot_take_a_run():
     assert "temporal:7233" in await host_unreachable(refused, timeout=0.5)
     assert "not serving" in await host_unreachable(failing_health, timeout=0.5)
     assert "Timeout" in await host_unreachable(hangs, timeout=0.1)
+
+
+# --- continue_skill: the call the agent's own loop makes ----------------------------
+
+NEXT_QUESTION = {"kind": "judge", "step": "b", "wants": ["m"], "context": {}}
+
+
+class AnsweredHandle(ScriptedHandle):
+    """Waits on its question until an answer is signalled, then asks the next step's."""
+
+    def __init__(self, run_id):
+        super().__init__([])
+        self.id = run_id
+
+    async def query(self, _name):
+        if self.signals:
+            return _status("b", ["a"], waiting=NEXT_QUESTION)
+        return _status("a", [], waiting=QUESTION)
+
+
+class ResumingClient:
+    def __init__(self):
+        self.handles = {}
+
+    def get_workflow_handle(self, run_id):
+        return self.handles.setdefault(run_id, AnsweredHandle(run_id))
+
+
+@pytest.mark.asyncio
+async def test_resume_signals_the_answer_to_its_own_run_before_it_waits():
+    client = ResumingClient()
+
+    out = await resume(client, "skill-demo-7", {"k": "v"})
+
+    assert client.handles["skill-demo-7"].signals == [{"k": "v"}]
+    assert out == {"status": "waiting", "run_id": "skill-demo-7", "question": NEXT_QUESTION,
+                   "step_id": "b", "step_label": "Phase b", "done": 1}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("answer", [None, {}])
+async def test_resume_without_an_answer_signals_nothing_and_reports_where_the_run_is(answer):
+    client = ResumingClient()
+
+    out = await resume(client, "skill-demo-8", answer)
+
+    assert client.handles["skill-demo-8"].signals == []
+    assert out["status"] == "waiting" and out["question"] == QUESTION
+    assert out["run_id"] == "skill-demo-8"

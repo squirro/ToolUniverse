@@ -22,6 +22,7 @@ from temporalio.worker import Replayer, Worker
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
+from tooluniverse.skill_ceilings import ceiling_for  # noqa: E402
 from tooluniverse.skill_graph import GRAPHS_DIR, load_graph  # noqa: E402
 from tooluniverse.skill_runner import SkillRunner  # noqa: E402
 from tooluniverse.skill_workflow import (  # noqa: E402
@@ -449,12 +450,23 @@ def _counting(delay_for):
 
 
 async def test_loop_iterations_run_at_once_but_never_more_than_the_source_ceiling():
-    respond, state = _counting(lambda term: 0.3)
+    """Each call waits until a full ceiling's worth are in flight together, so calls made
+    one at a time never get past the barrier; each then stays in flight a while, so a cap
+    that lets more through shows in the peak. No timing can fail a cap that holds."""
+    ceiling = ceiling_for("ChEMBL_lookup")
+    assert 1 < ceiling < 4, "the worker's four threads must be more than the cap under test"
+    together = threading.Barrier(ceiling, timeout=10)
+    def meet(_term):
+        together.wait()
+        return 0.3
+
+    respond, state = _counting(meet)
     terms = ["a", "b", "c", "d", "e", "f"]
     async with await WorkflowEnvironment.start_time_skipping() as env:
         bundle, calls = await _run(env, {"ChEMBL_lookup": respond}, LOOP, {"terms": terms})
 
-    assert state["peak"] == 2                      # ChEMBL's ceiling; 4 worker threads available
+    assert bundle["failures"] == [], "a call found no partner in flight"
+    assert state["peak"] <= ceiling
     assert bundle["facts"]["seen"] == terms        # declared order, not completion order
     assert len(calls) == 6
 
@@ -782,15 +794,16 @@ MAPPED = {
          "produces": ["requested_meddra"]},
     ],
 }
-FAERS_TERMS = {"result": [{"term": t} for t in ("DEAFNESS", "TINNITUS", "FALL", "NAUSEA")]}
-STRAY = {"requested_meddra": [{"of": "ototoxicity", "term": "HEARING DAMAGE", "reason": "r",
+FAERS_TERMS = __import__("json").loads((Path(__file__).resolve().parents[1] / "fixtures" / "openfda"
+                         / "faers_count_reactions_2026-09-24.json").read_text())["cisplatin"]
+STRAY = {"requested_meddra": [{"of": "nephrotoxicity", "term": "KIDNEY DAMAGE", "reason": "r",
                                "concept": ["ear"]}]}
 MAPPING = {"requested_meddra": [
-    {"of": "ototoxicity", "term": "DEAFNESS", "reason": "hearing loss is the ototoxic injury",
-     "concept": ["ear", "hearing", "vestibular"]},
-    {"of": "ototoxicity", "term": "FALL", "reason": "may follow from dizziness",
-     "concept": ["ear", "hearing", "vestibular"]}]}
-MAPPED_INPUTS = {"drug_name": "x", "requested_aes": ["ototoxicity"]}
+    {"of": "nephrotoxicity", "term": "ACUTE KIDNEY INJURY", "reason": "the renal injury itself",
+     "concept": ["kidney", "renal"]},
+    {"of": "nephrotoxicity", "term": "FALL", "reason": "may follow from renal hypotension",
+     "concept": ["kidney", "renal"]}]}
+MAPPED_INPUTS = {"drug_name": "cisplatin", "requested_aes": ["nephrotoxicity"]}
 
 
 def _recorded_lookup(term):
@@ -810,10 +823,10 @@ async def test_a_judged_mapping_is_checked_and_placed_on_temporal_too():
             env, {"count_reactions": FAERS_TERMS}, MAPPED, MAPPED_INPUTS, "run-mapped",
             before_result=lambda h, e: _answer(h, STRAY, MAPPING, seen=asked))
 
-    assert "HEARING DAMAGE" in asked[1]["waiting_for"]["problem"]
+    assert "KIDNEY DAMAGE" in asked[1]["waiting_for"]["problem"]
     assert [(r["of"], r["term"], r["placing"]) for r in handed["facts"]["requested_meddra"]] == [
-        ("ototoxicity", "DEAFNESS", "placed"), ("ototoxicity", "FALL", "not placed")]
-    assert handed["facts"]["requested_meddra_terms"] == ["DEAFNESS", "FALL"]
+        ("nephrotoxicity", "ACUTE KIDNEY INJURY", "placed"), ("nephrotoxicity", "FALL", "not placed")]
+    assert handed["facts"]["requested_meddra_terms"] == ["ACUTE KIDNEY INJURY", "FALL"]
     assert handed["mappings"] == ["requested_meddra"]
 
     replies = iter([STRAY, MAPPING])

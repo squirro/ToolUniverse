@@ -1,6 +1,7 @@
 """Skills as a process graph: `next_step` is pure. Given the graph and the steps already
 done it returns the one step to run now, with its tool calls and their arguments."""
 
+import re
 import sys
 from functools import lru_cache
 from pathlib import Path
@@ -150,10 +151,36 @@ def test_a_skill_without_a_graph_gets_no_directive():
     assert graph_directive("disease-research") == ""
 
 
-def test_the_directive_demotes_the_prose_phases_to_reference():
+@pytest.mark.parametrize("server_runs", [False, True])
+def test_the_directive_demotes_the_prose_phases_to_reference(server_runs):
     """Two sets of instructions that disagree is worse than either alone."""
-    text = graph_directive("adverse-event-detection").lower()
-    assert "reference" in text or "do not plan" in text
+    text = graph_directive("adverse-event-detection", server_runs=server_runs)
+    heading = text.splitlines()[0]
+    assert heading.startswith("# ") and heading.endswith("— do not plan from the phases below")
+    assert ("The phases further down are REFERENCE for what each step means; they are not "
+            "your plan.") in " ".join(text.split())
+
+
+_COUNTED_LINES = re.compile(r"\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten) "
+                            r"(?:lines|rules)\b[^.]*write_the_report", re.IGNORECASE)
+
+
+def _run_skill_description() -> str:
+    import ast
+    tree = ast.parse((Path(__file__).resolve().parents[2] / "src" / "tooluniverse" / "smcp.py").read_text())
+    (node,) = [n for n in ast.walk(tree) if isinstance(n, ast.AsyncFunctionDef) and n.name == "run_skill"]
+    return ast.get_docstring(node)
+
+
+@pytest.mark.parametrize("text", [
+    pytest.param(lambda: graph_directive("clinical-data-integration", server_runs=True), id="directive"),
+    pytest.param(_run_skill_description, id="run_skill"),
+])
+def test_the_agent_is_pointed_at_every_report_rule_and_told_no_count_of_them(text):
+    """A count written into the instruction goes stale when a rule is added."""
+    flat = " ".join(text().split())
+    assert "every line in `handover.write_the_report`" in flat
+    assert not _COUNTED_LINES.search(flat), _COUNTED_LINES.search(flat)
 
 
 # --- loading -----------------------------------------------------------------
@@ -178,7 +205,7 @@ def test_every_call_in_a_shipped_graph_names_a_tool():
 
 @lru_cache(maxsize=None)
 def _registry() -> dict:
-    """tool name -> declared parameter properties, from the shipped registry."""
+    """tool name -> its declared parameter schema, from the shipped registry."""
     import glob
     import json
     out: dict[str, dict] = {}
@@ -190,9 +217,14 @@ def _registry() -> dict:
         except (ValueError, OSError):
             continue
         if isinstance(loaded, list):
-            out.update({t["name"]: (t.get("parameter") or {}).get("properties") or {}
+            out.update({t["name"]: t.get("parameter") or {}
                         for t in loaded if isinstance(t, dict) and "name" in t})
     return out
+
+
+def _server_calls(skill):
+    return [(step["id"], call) for step in load_graph(skill)["steps"]
+            for call in step.get("calls", [])]
 
 
 @pytest.mark.parametrize("skill", SHIPPED)
@@ -200,25 +232,57 @@ def test_every_shipped_graph_calls_only_registered_tools(skill):
     """A graph that guesses a tool name is worse than the prose: the agent is told to trust it."""
     registry = _registry()
     assert registry, "no tools found in the registry"
-    unknown = sorted({call["tool"] for step in load_graph(skill)["steps"]
-                      for call in step.get("calls", [])
-                      if call["tool"] not in registry})
+    unknown = sorted({call["tool"] for _, call in _server_calls(skill) if call["tool"] not in registry})
     assert not unknown, f"{skill} names tools the registry does not hold: {unknown}"
+
+
+def _undeclared_arguments(calls, registry):
+    """A tool that declares no properties accepts no argument, so every one it is sent is wrong."""
+    return [f"{step}: {call['tool']}({name})" for step, call in calls
+            for name in (call.get("arguments") or {})
+            if name not in (registry.get(call["tool"], {}).get("properties") or {})]
+
+
+def _missing_required(calls, registry):
+    return [f"{step}: {call['tool']} lacks {name}" for step, call in calls
+            for name in registry.get(call["tool"], {}).get("required") or []
+            if name not in (call.get("arguments") or {})]
 
 
 @pytest.mark.parametrize("skill", SHIPPED)
 def test_a_graph_only_passes_arguments_the_tool_declares(skill):
     """A misspelled parameter is baked into the composed call and repeats on every run."""
-    declared = _registry()
-    wrong = []
-    for step in load_graph(skill)["steps"]:
-        for call in step.get("calls", []):
-            props = declared.get(call["tool"])
-            if not props:
-                continue
-            wrong += [f"{step['id']}: {call['tool']}({name})"
-                      for name in (call.get("arguments") or {}) if name not in props]
+    wrong = _undeclared_arguments(_server_calls(skill), _registry())
     assert not wrong, wrong
+
+
+@pytest.mark.parametrize("skill", SHIPPED)
+def test_a_graph_passes_every_argument_the_tool_requires(skill):
+    """A required argument left out fails the call on every run, whatever the facts."""
+    missing = _missing_required(_server_calls(skill), _registry())
+    assert not missing, missing
+
+
+def test_the_argument_guards_catch_what_they_name():
+    registry = {"bare": {"type": "object", "properties": {}},
+                "strict": {"properties": {"q": {}, "limit": {}}, "required": ["q"]}}
+    calls = [("s", {"tool": "bare", "arguments": {"x": 1}}),
+             ("s", {"tool": "strict", "arguments": {"limit": 5}})]
+    assert _undeclared_arguments(calls, registry) == ["s: bare(x)"]
+    assert _missing_required(calls, registry) == ["s: strict lacks q"]
+
+
+# The agent's own tools, as its client names them: a delegated call is made by the agent,
+# so it names one of these and never a registry tool the server could run itself.
+AGENT_TOOLS = {"exa_web_search", "OpenAI_Code_Interpreter", "OptimusKG_Search"}
+
+
+@pytest.mark.parametrize("skill", SHIPPED)
+def test_a_delegated_call_names_one_of_the_agents_own_tools(skill):
+    delegated = [(step["id"], call["tool"]) for step in load_graph(skill)["steps"]
+                 for call in step.get("delegate") or []]
+    assert all(tool not in _registry() for _, tool in delegated), delegated
+    assert [d for d in delegated if d[1] not in AGENT_TOOLS] == []
 
 
 def test_every_step_of_a_shipped_graph_is_reachable():

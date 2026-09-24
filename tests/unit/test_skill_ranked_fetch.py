@@ -82,18 +82,38 @@ def test_one_paper_found_under_two_reactions_is_read_once(tmp_path):
     assert papers["matched"] == by_reaction["matched"] - 1
 
 
-def test_three_thousand_abstracts_are_ranked_in_the_time_of_a_tool_call(tmp_path):
-    import time
+def test_ranking_reads_each_row_once_per_query_word_however_long_the_table(tmp_path, monkeypatch):
+    """Ranking stays in the time of a tool call because its work grows with the rows, not
+    with their square: each row is tokenised once and scanned a fixed number of times per
+    query word."""
+    from tooluniverse import skill_working_record
 
+    scans = {"tokenised": 0, "row": 0}
+    words = skill_working_record._words
+
+    class Scanned(list):
+        def __contains__(self, item):
+            scans["row"] += 1
+            return super().__contains__(item)
+
+        def count(self, item):
+            scans["row"] += 1
+            return super().count(item)
+
+    def counted(value):
+        scans["tokenised"] += 1
+        return Scanned(words(value))
+
+    monkeypatch.setattr(skill_working_record, "_words", counted)
     filler = ("cisplatin was given to patients in a cohort and outcomes were recorded over "
               "several cycles of treatment with supportive care ") * 12
     rows = [{"pmid": str(n), "abstract": filler + ("magnesium hydration" if n % 97 == 0 else "")}
             for n in range(3000)]
     record = _record(tmp_path, rows)
+    query = "magnesium hydration"
 
-    started = time.perf_counter()
-    out = record.fetch("literature_rows", columns=["pmid"], limit=5, rank_by="magnesium hydration")
-    elapsed = time.perf_counter() - started
+    out = record.fetch("literature_rows", columns=["pmid"], limit=5, rank_by=query)
 
     assert out["matched"] == 31 and int(out["rows"][0]["pmid"]) % 97 == 0
-    assert elapsed < 3.0, f"ranking took {elapsed:.2f} s"
+    assert scans["tokenised"] == len(rows) + 1, "each row and the query, once"
+    assert scans["row"] <= 2 * len(rows) * len(words(query)), scans

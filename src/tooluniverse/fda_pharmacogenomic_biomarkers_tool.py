@@ -153,7 +153,9 @@ class FDAPharmacogenomicBiomarkersTool(BaseTool):
                      f"marks \"{_ON_FDA_LIST}\" -- not the FDA table, which could not be read. "
                      "Cite each row by its ClinPGx link."),
             "count": len(rows),
+            "total": len(rows),
             "shown": len(shown),
+            "truncated": len(shown) < len(rows),
             "results": shown,
         }
 

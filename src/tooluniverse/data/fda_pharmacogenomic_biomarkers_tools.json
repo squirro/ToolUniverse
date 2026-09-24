@@ -34,6 +34,17 @@
             "number"
           ]
         },
+        "total": {
+          "type": [
+            "integer",
+            "number"
+          ],
+          "description": "ClinPGx fallback: every matching annotation ClinPGx holds, before the limit."
+        },
+        "truncated": {
+          "type": "boolean",
+          "description": "ClinPGx fallback: true when the limit held back rows (shown < total)."
+        },
         "shown": {
           "type": [
             "integer",

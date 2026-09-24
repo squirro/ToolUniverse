@@ -108,3 +108,12 @@ def test_without_a_token_direct_calls_fail_with_a_reason_and_toolunivers_still_w
     assert dispatch({"name": "UniProt_search", "arguments": {}}) == "tu"
     with pytest.raises(SquirroToolError, match="SQUIRRO_REPLAY_TOKEN"):
         dispatch({"name": NAME, "arguments": {}})
+
+
+def test_every_request_asks_for_json_since_the_token_endpoint_defaults_to_xml(requests_mock):
+    token, agent, run = _cluster(requests_mock)
+
+    _tools().execute(NAME, {})
+
+    for route in (token, agent, run):
+        assert route.last_request.headers["Accept"] == "application/json"

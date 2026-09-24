@@ -22,6 +22,8 @@ PREFIX = "squirro:"
 TIMEOUT = 300           # a Clinical Trials search can take minutes
 _TOKEN_MARGIN = 60      # renew this many seconds before the access token expires
 _AGENT_SECONDS = 300    # an agent's options are read at most this often
+# Squirro answers the token endpoint in XML unless JSON is asked for (seen on sr-dev).
+_JSON = {"Accept": "application/json"}
 
 
 class SquirroToolError(RuntimeError):
@@ -60,6 +62,7 @@ class SquirroTools:
             if self._token and self._token[1] > time.monotonic():
                 return self._token[0]
             r = self.session.post(f"{self.cluster}/api/user/oauth2/token", timeout=60,
+                                  headers=_JSON,
                                   data={"grant_type": "refresh_token",
                                         "refresh_token": self.refresh_token})
             if not r.ok:
@@ -75,7 +78,7 @@ class SquirroTools:
             cached = self._agents.get(key)
         if not cached or cached[1] <= time.monotonic():
             r = self.session.get(f"{self.cluster}/service/genai/v0/projects/{project}/agents/{agent}",
-                                 headers={"Authorization": f"Bearer {self._access_token()}"},
+                                 headers={**_JSON, "Authorization": f"Bearer {self._access_token()}"},
                                  timeout=60)
             if not r.ok:
                 raise SquirroToolError(f"the agent {agent} could not be read: HTTP {r.status_code}")
@@ -93,7 +96,7 @@ class SquirroTools:
         project, agent, tool_id = _parts(name)
         options = self._options(project, agent, tool_id)
         r = self.session.post(f"{self.cluster}/service/genai/v0/tools/execute", timeout=TIMEOUT,
-                              headers={"Authorization": f"Bearer {self._access_token()}"},
+                              headers={**_JSON, "Authorization": f"Bearer {self._access_token()}"},
                               json={"tool_id": tool_id, "tool_options": options,
                                     "inputs": dict(arguments or {})})
         if not r.ok:

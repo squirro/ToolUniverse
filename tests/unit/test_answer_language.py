@@ -75,3 +75,8 @@ def test_the_rule_names_the_search_query_trap_on_both_surfaces():
     waiting = progress("r", {"waiting_for": {"kind": "judge", "wants": ["x_reason"]}, "done": []})
     for text in (CITATION_CONTRACT, waiting["next"]):
         assert "search quer" in text and "language of the user's question" in text, text
+    # Live, a German query was followed by German reasons and a partly German answer every time;
+    # the body must not license a query in another language.
+    body = " ".join(CITATION_CONTRACT.split())
+    assert "may be in another language" not in body
+    assert "Write your search queries in the language of the user's question" in body

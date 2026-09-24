@@ -7981,6 +7981,4129 @@
      }
     }
    }
+  },
+  "https://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms?iri=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FMONDO_0004989": {
+   "status": 200,
+   "body": {
+    "_embedded": {
+     "terms": [
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0004989",
+       "lang": "en",
+       "description": [
+        "A carcinoma that arises from epithelial cells of the breast"
+       ],
+       "synonyms": [
+        "breast cancer",
+        "breast cancer, NOS",
+        "cancer of breast",
+        "cancer of the breast",
+        "cancer, breast",
+        "breast carcinoma",
+        "carcinoma of breast",
+        "carcinoma of the breast",
+        "mammary carcinoma"
+       ],
+       "annotation": {
+        "Conforms To": [
+         "http://purl.obolibrary.org/obo/mondo/patterns/carcinoma.yaml"
+        ],
+        "curated content resource": [
+         "https://www.malacards.org/card/breast_cancer"
+        ],
+        "database_cross_reference": [
+         "DOID:3459",
+         "EFO:0000305",
+         "HP:0003002",
+         "MEDGEN:146260",
+         "NCIT:C4872",
+         "SCTID:254838004",
+         "UMLS:C0678222"
+        ],
+        "has exact match": [
+         "http://identifiers.org/medgen/146260",
+         "http://identifiers.org/snomedct/254838004",
+         "http://linkedlifedata.com/resource/umls/id/C0678222",
+         "http://purl.obolibrary.org/obo/DOID_3459",
+         "http://purl.obolibrary.org/obo/NCIT_C4872",
+         "http://www.ebi.ac.uk/efo/EFO_0000305"
+        ],
+        "id": [
+         "MONDO:0004989"
+        ]
+       },
+       "label": "breast carcinoma",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0004989",
+       "obo_id": "MONDO:0004989",
+       "in_subset": [
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A carcinoma that arises from epithelial cells of the breast",
+         "oboXrefs": [
+          {
+           "database": null,
+           "id": "https://orcid.org/0000-0002-6601-2165",
+           "description": null,
+           "url": "https://orcid.org/0000-0002-6601-2165"
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "DOID",
+         "id": "3459",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/DOID_3459"
+        },
+        {
+         "database": "EFO",
+         "id": "0000305",
+         "description": "MONDO:equivalentTo",
+         "url": "http://www.ebi.ac.uk/efo/EFO_0000305"
+        },
+        {
+         "database": "HP",
+         "id": "0003002",
+         "description": "https://orcid.org/0000-0002-9584-9618",
+         "url": "http://purl.obolibrary.org/obo/HP_0003002"
+        },
+        {
+         "database": "MEDGEN",
+         "id": "146260",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/146260"
+        },
+        {
+         "database": "NCIT",
+         "id": "C4872",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C4872"
+        },
+        {
+         "database": "SCTID",
+         "id": "254838004",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/254838004"
+        },
+        {
+         "database": "UMLS",
+         "id": "C0678222",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C0678222"
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "breast carcinoma",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "3459",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_3459"
+          },
+          {
+           "database": "MONDO",
+           "id": "patterns/location",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "NCIT",
+           "id": "C4872",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C4872"
+          }
+         ]
+        },
+        {
+         "name": "carcinoma of breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "3459",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_3459"
+          },
+          {
+           "database": "MONDO",
+           "id": "patterns/carcinoma",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "NCIT",
+           "id": "C4872",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C4872"
+          }
+         ]
+        },
+        {
+         "name": "carcinoma of the breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C4872",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C4872"
+          }
+         ]
+        },
+        {
+         "name": "mammary carcinoma",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "3459",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_3459"
+          },
+          {
+           "database": "NCIT",
+           "id": "C4872",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C4872"
+          }
+         ]
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/graph"
+        }
+       }
+      }
+     ]
+    },
+    "_links": {
+     "self": {
+      "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms?iri=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FMONDO_0004989"
+     }
+    },
+    "page": {
+     "size": 1,
+     "totalElements": 1,
+     "totalPages": 1,
+     "number": 0
+    }
+   }
+  },
+  "https://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/hierarchicalAncestors?size=200": {
+   "status": 200,
+   "body": {
+    "_embedded": {
+     "terms": [
+      {
+       "iri": "http://purl.obolibrary.org/obo/BFO_0000001",
+       "lang": "en",
+       "description": [],
+       "synonyms": [],
+       "annotation": {
+        "editor note": [
+         "BFO 2 Reference: In all areas of empirical inquiry we encounter general terms of two sorts. First are general terms which refer to universals or types:animaltuberculosissurgical procedurediseaseSecond, are general terms used to refer to groups of entities which instantiate a given universal but do not correspond to the extension of any subuniversal of that universal because there is nothing intrinsic to the entities in question by virtue of which they \u2013 and only they \u2013 are counted as belonging to the given group. Examples are: animal purchased by the Emperortuberculosis diagnosed on a Wednesdaysurgical procedure performed on a patient from Stockholmperson identified as candidate for clinical trial #2056-555person who is signatory of Form 656-PPVpainting by Leonardo da VinciSuch terms, which represent what are called \u2018specializations\u2019 in [81"
+        ]
+       },
+       "label": "entity",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": false,
+       "has_children": true,
+       "is_root": true,
+       "short_form": "BFO_0000001",
+       "obo_id": "BFO:0000001",
+       "in_subset": null,
+       "obo_definition_citation": null,
+       "obo_xref": null,
+       "obo_synonym": null,
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000001?lang=en"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000001/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000001/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000001/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000001/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000001/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/BFO_0000002",
+       "lang": "en",
+       "description": [],
+       "synonyms": [],
+       "annotation": {
+        "editor note": [
+         "BFO 2 Reference: Continuant entities are entities which can be sliced to yield parts only along the spatial dimension, yielding for example the parts of your table which we call its legs, its top, its nails. \u2018My desk stretches from the window to the door. It has spatial parts, and can be sliced (in space) in two. With respect to time, however, a thing is a continuant.\u2019 [60, p. 240"
+        ]
+       },
+       "label": "continuant",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": false,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "BFO_0000002",
+       "obo_id": "BFO:0000002",
+       "in_subset": null,
+       "obo_definition_citation": null,
+       "obo_xref": null,
+       "obo_synonym": null,
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000002/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/BFO_0000016",
+       "lang": "en",
+       "description": [],
+       "synonyms": [],
+       "annotation": {
+        "editor note": [
+         "BFO 2 Reference: Dispositions exist along a strength continuum. Weaker forms of disposition are realized in only a fraction of triggering cases. These forms occur in a significant number of cases of a similar type."
+        ]
+       },
+       "label": "disposition",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": false,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "BFO_0000016",
+       "obo_id": "BFO:0000016",
+       "in_subset": null,
+       "obo_definition_citation": null,
+       "obo_xref": null,
+       "obo_synonym": null,
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000016/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/BFO_0000017",
+       "lang": "en",
+       "description": [],
+       "synonyms": [],
+       "annotation": {},
+       "label": "realizable entity",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": false,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "BFO_0000017",
+       "obo_id": "BFO:0000017",
+       "in_subset": null,
+       "obo_definition_citation": null,
+       "obo_xref": null,
+       "obo_synonym": null,
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000017/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/BFO_0000020",
+       "lang": "en",
+       "description": [],
+       "synonyms": [],
+       "annotation": {},
+       "label": "specifically dependent continuant",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": false,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "BFO_0000020",
+       "obo_id": "BFO:0000020",
+       "in_subset": null,
+       "obo_definition_citation": null,
+       "obo_xref": null,
+       "obo_synonym": null,
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FBFO_0000020/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0000001",
+       "lang": "en",
+       "description": [
+        "A disease is a disposition to undergo pathological processes that exists in an organism because of one or more disorders in that organism."
+       ],
+       "synonyms": [
+        "medical condition",
+        "condition",
+        "disease or disorder",
+        "disease or disorder, non-neoplastic",
+        "disease",
+        "diseases and disorders",
+        "diseases",
+        "disorder",
+        "disorders",
+        "other disease"
+       ],
+       "annotation": {
+        "database_cross_reference": [
+         "DOID:4",
+         "ICD9:799.9",
+         "MEDGEN:4347",
+         "MESH:D004194",
+         "NCIT:C2991",
+         "OGMS:0000031",
+         "Orphanet:377788",
+         "SCTID:64572001",
+         "UMLS:C0012634"
+        ],
+        "has exact match": [
+         "http://identifiers.org/medgen/4347",
+         "http://identifiers.org/mesh/D004194",
+         "http://identifiers.org/snomedct/64572001",
+         "http://linkedlifedata.com/resource/umls/id/C0012634",
+         "http://purl.obolibrary.org/obo/DOID_4",
+         "http://purl.obolibrary.org/obo/NCIT_C2991",
+         "http://www.orpha.net/ORDO/Orphanet_377788"
+        ],
+        "id": [
+         "MONDO:0000001"
+        ]
+       },
+       "label": "disease",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0000001",
+       "obo_id": "MONDO:0000001",
+       "in_subset": [
+        "ordo_disorder"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A disease is a disposition to undergo pathological processes that exists in an organism because of one or more disorders in that organism.",
+         "oboXrefs": [
+          {
+           "database": "OGMS",
+           "id": "0000031",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/OGMS_0000031"
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "DOID",
+         "id": "4",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/DOID_4"
+        },
+        {
+         "database": "ICD9",
+         "id": "799.9",
+         "description": "MONDO:relatedTo",
+         "url": null
+        },
+        {
+         "database": "MEDGEN",
+         "id": "4347",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/4347"
+        },
+        {
+         "database": "MESH",
+         "id": "D004194",
+         "description": "MONDO:equivalentTo",
+         "url": "http://id.nlm.nih.gov/mesh/D004194"
+        },
+        {
+         "database": "NCIT",
+         "id": "C2991",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C2991"
+        },
+        {
+         "database": "OGMS",
+         "id": "0000031",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/OGMS_0000031"
+        },
+        {
+         "database": "Orphanet",
+         "id": "377788",
+         "description": "MONDO:equivalentTo",
+         "url": "http://www.orpha.net/ORDO/Orphanet_377788"
+        },
+        {
+         "database": "SCTID",
+         "id": "64572001",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/64572001"
+        },
+        {
+         "database": "UMLS",
+         "id": "C0012634",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C0012634"
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "condition",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2991",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2991"
+          }
+         ]
+        },
+        {
+         "name": "disease or disorder",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2991",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2991"
+          }
+         ]
+        },
+        {
+         "name": "disease or disorder, non-neoplastic",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2991",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2991"
+          }
+         ]
+        },
+        {
+         "name": "disease",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "4",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_4"
+          },
+          {
+           "database": "NCIT",
+           "id": "C2991",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2991"
+          },
+          {
+           "database": "Orphanet",
+           "id": "377788",
+           "description": null,
+           "url": "http://www.orpha.net/ORDO/Orphanet_377788"
+          }
+         ]
+        },
+        {
+         "name": "diseases and disorders",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2991",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2991"
+          }
+         ]
+        },
+        {
+         "name": "diseases",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2991",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2991"
+          }
+         ]
+        },
+        {
+         "name": "disorder",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2991",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2991"
+          }
+         ]
+        },
+        {
+         "name": "disorders",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2991",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2991"
+          }
+         ]
+        },
+        {
+         "name": "other disease",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2991",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2991"
+          }
+         ]
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0000001/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0002657",
+       "lang": "en",
+       "description": [
+        "A disease involving the breast."
+       ],
+       "synonyms": [
+        "disease or disorder of breast",
+        "breast disease or disorder",
+        "breast disease",
+        "breast diseases",
+        "breast disorder",
+        "disease of breast",
+        "disorder of breast"
+       ],
+       "annotation": {
+        "Conforms To": [
+         "http://purl.obolibrary.org/obo/mondo/patterns/location.yaml"
+        ],
+        "curated content resource": [
+         "https://www.malacards.org/card/breast_disease"
+        ],
+        "database_cross_reference": [
+         "DOID:3463",
+         "EFO:0009483",
+         "ICD10CM:N60-N65",
+         "ICD9:610-612",
+         "ICD9:611.8",
+         "ICD9:611.9",
+         "MEDGEN:652",
+         "MESH:D001941",
+         "NCIT:C26709",
+         "SCTID:79604008",
+         "UMLS:C0006145"
+        ],
+        "has exact match": [
+         "http://identifiers.org/medgen/652",
+         "http://identifiers.org/mesh/D001941",
+         "http://identifiers.org/snomedct/79604008",
+         "http://linkedlifedata.com/resource/umls/id/C0006145",
+         "http://purl.bioontology.org/ontology/ICD10CM/N60-N65",
+         "http://purl.obolibrary.org/obo/DOID_3463",
+         "http://purl.obolibrary.org/obo/NCIT_C26709",
+         "http://www.ebi.ac.uk/efo/EFO_0009483"
+        ],
+        "id": [
+         "MONDO:0002657"
+        ]
+       },
+       "label": "breast disorder",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0002657",
+       "obo_id": "MONDO:0002657",
+       "in_subset": [
+        "harrisons_view",
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A disease involving the breast.",
+         "oboXrefs": [
+          {
+           "database": null,
+           "id": "https://orcid.org/0000-0002-6601-2165",
+           "description": null,
+           "url": "https://orcid.org/0000-0002-6601-2165"
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "DOID",
+         "id": "3463",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/DOID_3463"
+        },
+        {
+         "database": "EFO",
+         "id": "0009483",
+         "description": "MONDO:equivalentTo",
+         "url": "http://www.ebi.ac.uk/efo/EFO_0009483"
+        },
+        {
+         "database": "ICD10CM",
+         "id": "N60-N65",
+         "description": "https://orcid.org/0000-0002-4142-7153",
+         "url": "https://www.icd10data.com/search?s=N60-N65"
+        },
+        {
+         "database": "ICD9",
+         "id": "610-612",
+         "description": "DOID:3463",
+         "url": null
+        },
+        {
+         "database": "ICD9",
+         "id": "611.8",
+         "description": "MONDO:relatedTo",
+         "url": null
+        },
+        {
+         "database": "ICD9",
+         "id": "611.9",
+         "description": "MONDO:i2s",
+         "url": null
+        },
+        {
+         "database": "MEDGEN",
+         "id": "652",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/652"
+        },
+        {
+         "database": "MESH",
+         "id": "D001941",
+         "description": "MONDO:equivalentTo",
+         "url": "http://id.nlm.nih.gov/mesh/D001941"
+        },
+        {
+         "database": "NCIT",
+         "id": "C26709",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C26709"
+        },
+        {
+         "database": "SCTID",
+         "id": "79604008",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/79604008"
+        },
+        {
+         "database": "UMLS",
+         "id": "C0006145",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C0006145"
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "breast disease or disorder",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "design_pattern",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "MONDO",
+           "id": "patterns/location",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "breast disease",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "3463",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_3463"
+          },
+          {
+           "database": "MONDO",
+           "id": "patterns/location",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "NCIT",
+           "id": "C26709",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C26709"
+          }
+         ]
+        },
+        {
+         "name": "breast diseases",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C26709",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C26709"
+          }
+         ]
+        },
+        {
+         "name": "breast disorder",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C26709",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C26709"
+          }
+         ]
+        },
+        {
+         "name": "disease of breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/location_top",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "disorder of breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/location_top",
+           "description": null,
+           "url": null
+          }
+         ]
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/graph"
+        },
+        "disease_has_location": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0002657/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FRO_0004026"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0003274",
+       "lang": "en",
+       "description": [
+        "A primary or metastatic malignant neoplasm affecting the tissues of the thorax."
+       ],
+       "synonyms": [
+        "thoracic tumor",
+        "thorax neoplasm",
+        "tumor of thorax",
+        "cancer of thoracic segment of trunk",
+        "malignant neoplasm of the thorax",
+        "malignant neoplasm of thoracic segment of trunk",
+        "malignant neoplasm of thorax",
+        "malignant thoracic neoplasm",
+        "malignant thoracic segment of trunk neoplasm",
+        "malignant thoracic tumor",
+        "malignant thoracic tumour",
+        "malignant tumor of the thorax",
+        "malignant tumor of thorax",
+        "malignant tumour of the thorax",
+        "malignant tumour of thorax",
+        "thoracic segment of trunk cancer",
+        "thoracic tumour",
+        "tumour of thorax"
+       ],
+       "annotation": {
+        "Conforms To": [
+         "http://purl.obolibrary.org/obo/mondo/patterns/cancer.yaml"
+        ],
+        "curated content resource": [
+         "https://www.malacards.org/card/thoracic_cancer"
+        ],
+        "database_cross_reference": [
+         "DOID:5093",
+         "ICD10CM:C76.1",
+         "ICD9:195.1",
+         "MEDGEN:56320",
+         "NCIT:C3576",
+         "SCTID:188361007",
+         "UMLS:C0153661"
+        ],
+        "has exact match": [
+         "http://identifiers.org/medgen/56320",
+         "http://identifiers.org/snomedct/188361007",
+         "http://linkedlifedata.com/resource/umls/id/C0153661",
+         "http://purl.bioontology.org/ontology/ICD10CM/C76.1",
+         "http://purl.obolibrary.org/obo/DOID_5093",
+         "http://purl.obolibrary.org/obo/NCIT_C3576"
+        ],
+        "id": [
+         "MONDO:0003274"
+        ],
+        "term tracker item": [
+         "https://github.com/monarch-initiative/mondo/issues/9097"
+        ]
+       },
+       "label": "thoracic cancer",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0003274",
+       "obo_id": "MONDO:0003274",
+       "in_subset": [
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A primary or metastatic malignant neoplasm affecting the tissues of the thorax.",
+         "oboXrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3576",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3576"
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "DOID",
+         "id": "5093",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/DOID_5093"
+        },
+        {
+         "database": "ICD10CM",
+         "id": "C76.1",
+         "description": "https://orcid.org/0009-0001-6494-4831",
+         "url": null
+        },
+        {
+         "database": "ICD9",
+         "id": "195.1",
+         "description": "MONDO:i2s",
+         "url": null
+        },
+        {
+         "database": "MEDGEN",
+         "id": "56320",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/56320"
+        },
+        {
+         "database": "NCIT",
+         "id": "C3576",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C3576"
+        },
+        {
+         "database": "SCTID",
+         "id": "188361007",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/188361007"
+        },
+        {
+         "database": "UMLS",
+         "id": "C0153661",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C0153661"
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "cancer of thoracic segment of trunk",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/cancer",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "malignant neoplasm of the thorax",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3576",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3576"
+          }
+         ]
+        },
+        {
+         "name": "malignant neoplasm of thoracic segment of trunk",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/cancer",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "malignant neoplasm of thorax",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "ICD10CM",
+           "id": "C76.1",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "NCIT",
+           "id": "C3576",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3576"
+          }
+         ]
+        },
+        {
+         "name": "malignant thoracic neoplasm",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3576",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3576"
+          }
+         ]
+        },
+        {
+         "name": "malignant thoracic segment of trunk neoplasm",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/cancer",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "malignant thoracic tumor",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3576",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3576"
+          }
+         ]
+        },
+        {
+         "name": "malignant thoracic tumour",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "malignant tumor of the thorax",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3576",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3576"
+          }
+         ]
+        },
+        {
+         "name": "malignant tumor of thorax",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3576",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3576"
+          }
+         ]
+        },
+        {
+         "name": "malignant tumour of the thorax",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "malignant tumour of thorax",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "thoracic segment of trunk cancer",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/location",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "thoracic tumour",
+         "scope": "hasBroadSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "tumour of thorax",
+         "scope": "hasBroadSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0003274/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0004992",
+       "lang": "en",
+       "description": [
+        "A tumor composed of atypical neoplastic, often pleomorphic cells that invade other tissues. Malignant neoplasms often metastasize to distant anatomic sites and may recur after excision. The most common malignant neoplasms are carcinomas (adenocarcinomas or squamous cell carcinomas), Hodgkin and non-Hodgkin lymphomas, leukemias, melanomas, and sarcomas."
+       ],
+       "synonyms": [
+        "malignant neoplasm (disease)",
+        "CA",
+        "MT",
+        "cancer",
+        "cell type cancer",
+        "malignancy",
+        "malignant growth",
+        "malignant neoplasm",
+        "malignant neoplastic disease",
+        "malignant tumor",
+        "malignant tumour",
+        "neoplasm (disease), malignant",
+        "neoplasm, malignant"
+       ],
+       "annotation": {
+        "Conforms To": [
+         "http://purl.obolibrary.org/obo/mondo/patterns/malignant.yaml"
+        ],
+        "curated content resource": [
+         "https://www.malacards.org/card/cell_type_cancer"
+        ],
+        "database_cross_reference": [
+         "DOID:0050686",
+         "DOID:0050687",
+         "DOID:162",
+         "ICD9:195.8",
+         "ICD9:199",
+         "ICD9:199.1",
+         "ICDO:8000/3",
+         "MEDGEN:14297",
+         "NCIT:C9305",
+         "ONCOTREE:MT",
+         "SCTID:363346000",
+         "UMLS:C0006826",
+         "birnlex:406"
+        ],
+        "has exact match": [
+         "http://identifiers.org/medgen/14297",
+         "http://identifiers.org/snomedct/363346000",
+         "http://linkedlifedata.com/resource/umls/id/C0006826",
+         "http://purl.obolibrary.org/obo/DOID_0050686",
+         "http://purl.obolibrary.org/obo/DOID_0050687",
+         "http://purl.obolibrary.org/obo/DOID_162",
+         "http://purl.obolibrary.org/obo/NCIT_C9305"
+        ],
+        "id": [
+         "MONDO:0004992"
+        ]
+       },
+       "label": "cancer",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0004992",
+       "obo_id": "MONDO:0004992",
+       "in_subset": [
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A tumor composed of atypical neoplastic, often pleomorphic cells that invade other tissues. Malignant neoplasms often metastasize to distant anatomic sites and may recur after excision. The most common malignant neoplasms are carcinomas (adenocarcinomas or squamous cell carcinomas), Hodgkin and non-Hodgkin lymphomas, leukemias, melanomas, and sarcomas.",
+         "oboXrefs": [
+          {
+           "database": "NCIT",
+           "id": "C9305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9305"
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "DOID",
+         "id": "0050686",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/DOID_0050686"
+        },
+        {
+         "database": "DOID",
+         "id": "0050687",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/DOID_0050687"
+        },
+        {
+         "database": "DOID",
+         "id": "162",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/DOID_162"
+        },
+        {
+         "database": "ICD9",
+         "id": "195.8",
+         "description": "MONDO:relatedTo",
+         "url": null
+        },
+        {
+         "database": "ICD9",
+         "id": "199",
+         "description": "DOID:162",
+         "url": "http://www.icd9data.com/getICD9Code.ashx?icd9=199"
+        },
+        {
+         "database": "ICD9",
+         "id": "199.1",
+         "description": "MONDO:relatedTo",
+         "url": null
+        },
+        {
+         "database": "ICDO",
+         "id": "8000/3",
+         "description": "NCIT:C9305",
+         "url": null
+        },
+        {
+         "database": "MEDGEN",
+         "id": "14297",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/14297"
+        },
+        {
+         "database": "NCIT",
+         "id": "C9305",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C9305"
+        },
+        {
+         "database": "ONCOTREE",
+         "id": "MT",
+         "description": "MONDO:equivalentTo",
+         "url": null
+        },
+        {
+         "database": "SCTID",
+         "id": "363346000",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/363346000"
+        },
+        {
+         "database": "UMLS",
+         "id": "C0006826",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C0006826"
+        },
+        {
+         "database": "birnlex",
+         "id": "406",
+         "description": "EFO:0000311",
+         "url": "http://uri.neuinfo.org/nif/nifstd/birnlex_406"
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "CA",
+         "scope": "hasExactSynonym",
+         "type": "abbreviation",
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C9305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9305"
+          }
+         ]
+        },
+        {
+         "name": "cancer",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "162",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_162"
+          },
+          {
+           "database": "NCIT",
+           "id": "C9305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9305"
+          }
+         ]
+        },
+        {
+         "name": "cell type cancer",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "0050687",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_0050687"
+          },
+          {
+           "database": "MONDO",
+           "id": "0000404",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/MONDO_0000404"
+          }
+         ]
+        },
+        {
+         "name": "malignancy",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C9305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9305"
+          }
+         ]
+        },
+        {
+         "name": "malignant growth",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C9305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9305"
+          }
+         ]
+        },
+        {
+         "name": "malignant neoplasm",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "162",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_162"
+          },
+          {
+           "database": "NCIT",
+           "id": "C9305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9305"
+          }
+         ]
+        },
+        {
+         "name": "malignant neoplastic disease",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C9305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9305"
+          }
+         ]
+        },
+        {
+         "name": "malignant tumor",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "162",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_162"
+          },
+          {
+           "database": "NCIT",
+           "id": "C9305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9305"
+          }
+         ]
+        },
+        {
+         "name": "malignant tumour",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "neoplasm (disease), malignant",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/malignant",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "neoplasm, malignant",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C9305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9305"
+          }
+         ]
+        },
+        {
+         "name": "MT",
+         "scope": "hasRelatedSynonym",
+         "type": "abbreviation",
+         "xrefs": [
+          {
+           "database": "ONCOTREE",
+           "id": "MT",
+           "description": null,
+           "url": null
+          }
+         ]
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/graph"
+        },
+        "has_characteristic": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004992/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FRO_0000053"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0004993",
+       "lang": "en",
+       "description": [
+        "A malignant tumor arising from epithelial cells. Carcinomas that arise from glandular epithelium are called adenocarcinomas, those that arise from squamous epithelium are called squamous cell carcinomas, and those that arise from transitional epithelium are called transitional cell carcinomas. Morphologically, the malignant epithelial cells may display abnormal mitotic figures, anaplasia, and necrosis. Carcinomas are graded by the degree of cellular differentiation as well, moderately, or poorly differentiated. Carcinomas invade the surrounding tissues and tend to metastasize to other anatomic sites. Lung carcinoma, skin carcinoma, breast carcinoma, colon carcinoma, and prostate carcinoma are the most frequently seen carcinomas."
+       ],
+       "synonyms": [
+        "epithelioma",
+        "Other carcinoma",
+        "carcinoma",
+        "carcinoma, malignant",
+        "epithelial carcinoma",
+        "epithelioma malignant",
+        "malignant epithelial neoplasm",
+        "malignant epithelial tumor",
+        "malignant epithelial tumour",
+        "malignant epithelioma"
+       ],
+       "annotation": {
+        "database_cross_reference": [
+         "CSP:2000-1867",
+         "DOID:305",
+         "EFO:0000313",
+         "ICDO:8010/3",
+         "ICDO:8011/3",
+         "MEDGEN:2867",
+         "MESH:D002277",
+         "NCIT:C2916",
+         "SCTID:722688002",
+         "UMLS:C0007097"
+        ],
+        "has exact match": [
+         "http://identifiers.org/medgen/2867",
+         "http://identifiers.org/mesh/D002277",
+         "http://identifiers.org/snomedct/722688002",
+         "http://linkedlifedata.com/resource/umls/id/C0007097",
+         "http://purl.obolibrary.org/obo/DOID_305",
+         "http://purl.obolibrary.org/obo/NCIT_C2916",
+         "http://www.ebi.ac.uk/efo/EFO_0000313"
+        ],
+        "id": [
+         "MONDO:0004993"
+        ]
+       },
+       "label": "carcinoma",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0004993",
+       "obo_id": "MONDO:0004993",
+       "in_subset": [
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A malignant tumor arising from epithelial cells. Carcinomas that arise from glandular epithelium are called adenocarcinomas, those that arise from squamous epithelium are called squamous cell carcinomas, and those that arise from transitional epithelium are called transitional cell carcinomas. Morphologically, the malignant epithelial cells may display abnormal mitotic figures, anaplasia, and necrosis. Carcinomas are graded by the degree of cellular differentiation as well, moderately, or poorly differentiated. Carcinomas invade the surrounding tissues and tend to metastasize to other anatomic sites. Lung carcinoma, skin carcinoma, breast carcinoma, colon carcinoma, and prostate carcinoma are the most frequently seen carcinomas.",
+         "oboXrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2916",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2916"
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "CSP",
+         "id": "2000-1867",
+         "description": "DOID:305",
+         "url": null
+        },
+        {
+         "database": "DOID",
+         "id": "305",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/DOID_305"
+        },
+        {
+         "database": "EFO",
+         "id": "0000313",
+         "description": "MONDO:equivalentTo",
+         "url": "http://www.ebi.ac.uk/efo/EFO_0000313"
+        },
+        {
+         "database": "ICDO",
+         "id": "8010/3",
+         "description": "NCIT:C2916",
+         "url": null
+        },
+        {
+         "database": "ICDO",
+         "id": "8011/3",
+         "description": "NCIT:C2916",
+         "url": null
+        },
+        {
+         "database": "MEDGEN",
+         "id": "2867",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/2867"
+        },
+        {
+         "database": "MESH",
+         "id": "D002277",
+         "description": "MONDO:equivalentTo",
+         "url": "http://id.nlm.nih.gov/mesh/D002277"
+        },
+        {
+         "database": "NCIT",
+         "id": "C2916",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C2916"
+        },
+        {
+         "database": "SCTID",
+         "id": "722688002",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/722688002"
+        },
+        {
+         "database": "UMLS",
+         "id": "C0007097",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C0007097"
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "Other carcinoma",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2916",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2916"
+          }
+         ]
+        },
+        {
+         "name": "carcinoma",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_305"
+          },
+          {
+           "database": "NCIT",
+           "id": "C2916",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2916"
+          }
+         ]
+        },
+        {
+         "name": "carcinoma, malignant",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2916",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2916"
+          }
+         ]
+        },
+        {
+         "name": "epithelial carcinoma",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2916",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2916"
+          }
+         ]
+        },
+        {
+         "name": "epithelioma malignant",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2916",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2916"
+          }
+         ]
+        },
+        {
+         "name": "malignant epithelial neoplasm",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2916",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2916"
+          }
+         ]
+        },
+        {
+         "name": "malignant epithelial tumor",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2916",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2916"
+          }
+         ]
+        },
+        {
+         "name": "malignant epithelial tumour",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "malignant epithelioma",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "305",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_305"
+          },
+          {
+           "database": "NCIT",
+           "id": "C2916",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2916"
+          }
+         ]
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/graph"
+        },
+        "disease_has_location": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004993/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FRO_0004026"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0005070",
+       "lang": "en",
+       "description": [
+        "A benign or malignant tissue growth resulting from uncontrolled cell proliferation. Benign neoplastic cells resemble normal cells without exhibiting significant cytologic atypia, while malignant cells exhibit overt signs such as dysplastic features, atypical mitotic figures, necrosis, nuclear pleomorphism, and anaplasia. Representative examples of benign neoplasms include papillomas, cystadenomas, and lipomas; malignant neoplasms include carcinomas, sarcomas, lymphomas, and leukemias."
+       ],
+       "synonyms": [
+        "other neoplasm",
+        "tumor disease",
+        "tumor",
+        "cell process disease",
+        "disease of cellular proliferation",
+        "neoplasia",
+        "neoplasm (disease)",
+        "neoplasm",
+        "neoplastic disease",
+        "neoplastic growth",
+        "tumour disease",
+        "tumour"
+       ],
+       "annotation": {
+        "OBO foundry unique label": [
+         "neoplasm (disease)"
+        ],
+        "database_cross_reference": [
+         "ONCOTREE:OTHER",
+         "DOID:14566",
+         "EFO:0000616",
+         "HP:0002664",
+         "ICD10CM:C00-D49",
+         "ICD10CM:C7A-C7A",
+         "ICD10CM:C7B-C7B",
+         "ICD9:140-239",
+         "ICD9:239.8",
+         "ICD9:239.9",
+         "MEDGEN:10294",
+         "MESH:D009369",
+         "NCIT:C3262",
+         "SCTID:55342001",
+         "UMLS:C0027651"
+        ],
+        "has exact match": [
+         "http://identifiers.org/medgen/10294",
+         "http://identifiers.org/mesh/D009369",
+         "http://identifiers.org/snomedct/55342001",
+         "http://linkedlifedata.com/resource/umls/id/C0027651",
+         "http://purl.bioontology.org/ontology/ICD10CM/C00-D49",
+         "http://purl.obolibrary.org/obo/DOID_14566",
+         "http://purl.obolibrary.org/obo/NCIT_C3262",
+         "http://www.ebi.ac.uk/efo/EFO_0000616"
+        ],
+        "has narrower match": [
+         "http://purl.bioontology.org/ontology/ICD10CM/C7A-C7A",
+         "http://purl.bioontology.org/ontology/ICD10CM/C7B-C7B"
+        ],
+        "id": [
+         "MONDO:0005070"
+        ]
+       },
+       "label": "neoplasm",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0005070",
+       "obo_id": "MONDO:0005070",
+       "in_subset": [
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A benign or malignant tissue growth resulting from uncontrolled cell proliferation. Benign neoplastic cells resemble normal cells without exhibiting significant cytologic atypia, while malignant cells exhibit overt signs such as dysplastic features, atypical mitotic figures, necrosis, nuclear pleomorphism, and anaplasia. Representative examples of benign neoplasms include papillomas, cystadenomas, and lipomas; malignant neoplasms include carcinomas, sarcomas, lymphomas, and leukemias.",
+         "oboXrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3262",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3262"
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "ONCOTREE",
+         "id": "OTHER",
+         "description": null,
+         "url": null
+        },
+        {
+         "database": "DOID",
+         "id": "14566",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/DOID_14566"
+        },
+        {
+         "database": "EFO",
+         "id": "0000616",
+         "description": "MONDO:equivalentTo",
+         "url": "http://www.ebi.ac.uk/efo/EFO_0000616"
+        },
+        {
+         "database": "HP",
+         "id": "0002664",
+         "description": "MONDO:otherHierarchy",
+         "url": "http://purl.obolibrary.org/obo/HP_0002664"
+        },
+        {
+         "database": "ICD10CM",
+         "id": "C00-D49",
+         "description": "https://orcid.org/0000-0002-4142-7153",
+         "url": "https://www.icd10data.com/search?s=C00-D49"
+        },
+        {
+         "database": "ICD10CM",
+         "id": "C7A-C7A",
+         "description": "MONDO:mondoIsBroaderThanSource",
+         "url": "https://www.icd10data.com/search?s=C7A-C7A"
+        },
+        {
+         "database": "ICD10CM",
+         "id": "C7B-C7B",
+         "description": "MONDO:mondoIsBroaderThanSource",
+         "url": "https://www.icd10data.com/search?s=C7B-C7B"
+        },
+        {
+         "database": "ICD9",
+         "id": "140-239",
+         "description": "EFO:0000616",
+         "url": null
+        },
+        {
+         "database": "ICD9",
+         "id": "239.8",
+         "description": "MONDO:relatedTo",
+         "url": null
+        },
+        {
+         "database": "ICD9",
+         "id": "239.9",
+         "description": "MONDO:i2s",
+         "url": null
+        },
+        {
+         "database": "MEDGEN",
+         "id": "10294",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/10294"
+        },
+        {
+         "database": "MESH",
+         "id": "D009369",
+         "description": "MONDO:equivalentTo",
+         "url": "http://id.nlm.nih.gov/mesh/D009369"
+        },
+        {
+         "database": "NCIT",
+         "id": "C3262",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C3262"
+        },
+        {
+         "database": "SCTID",
+         "id": "55342001",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/55342001"
+        },
+        {
+         "database": "UMLS",
+         "id": "C0027651",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C0027651"
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "disease of cellular proliferation",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "14566",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_14566"
+          },
+          {
+           "database": "MONDO",
+           "id": "0002001",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/MONDO_0002001"
+          }
+         ]
+        },
+        {
+         "name": "neoplasia",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3262",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3262"
+          }
+         ]
+        },
+        {
+         "name": "neoplasm (disease)",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": null,
+           "id": "https://orcid.org/0000-0002-6601-2165",
+           "description": null,
+           "url": "https://orcid.org/0000-0002-6601-2165"
+          }
+         ]
+        },
+        {
+         "name": "neoplasm",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "14566",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_14566"
+          },
+          {
+           "database": "MONDO",
+           "id": "ambiguous",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "NCIT",
+           "id": "C3262",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3262"
+          }
+         ]
+        },
+        {
+         "name": "neoplastic disease",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3262",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3262"
+          }
+         ]
+        },
+        {
+         "name": "neoplastic growth",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3262",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3262"
+          }
+         ]
+        },
+        {
+         "name": "tumour disease",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "tumour",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "cell process disease",
+         "scope": "hasBroadSynonym",
+         "type": "dubious synonym",
+         "xrefs": []
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005070/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0005626",
+       "lang": "en",
+       "description": [
+        "A benign or malignant neoplasm that arises from and is composed of epithelial cells. This category include adenomas, papillomas, and carcinomas."
+       ],
+       "synonyms": [
+        "epithelial neoplasm",
+        "epithelioma"
+       ],
+       "annotation": {
+        "database_cross_reference": [
+         "EFO:0006858",
+         "MEDGEN:277963",
+         "MESH:D009375",
+         "NCIT:C3709",
+         "SCTID:118285006",
+         "UMLS:C1368683"
+        ],
+        "has exact match": [
+         "http://identifiers.org/medgen/277963",
+         "http://identifiers.org/mesh/D009375",
+         "http://identifiers.org/snomedct/118285006",
+         "http://linkedlifedata.com/resource/umls/id/C1368683",
+         "http://purl.obolibrary.org/obo/NCIT_C3709",
+         "http://www.ebi.ac.uk/efo/EFO_0006858"
+        ],
+        "id": [
+         "MONDO:0005626"
+        ]
+       },
+       "label": "epithelial neoplasm",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0005626",
+       "obo_id": "MONDO:0005626",
+       "in_subset": [
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A benign or malignant neoplasm that arises from and is composed of epithelial cells. This category include adenomas, papillomas, and carcinomas.",
+         "oboXrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3709",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3709"
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "EFO",
+         "id": "0006858",
+         "description": "MONDO:equivalentTo",
+         "url": "http://www.ebi.ac.uk/efo/EFO_0006858"
+        },
+        {
+         "database": "MEDGEN",
+         "id": "277963",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/277963"
+        },
+        {
+         "database": "MESH",
+         "id": "D009375",
+         "description": "MONDO:equivalentTo",
+         "url": "http://id.nlm.nih.gov/mesh/D009375"
+        },
+        {
+         "database": "NCIT",
+         "id": "C3709",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C3709"
+        },
+        {
+         "database": "SCTID",
+         "id": "118285006",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/118285006"
+        },
+        {
+         "database": "UMLS",
+         "id": "C1368683",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C1368683"
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "epithelial neoplasm",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3709",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3709"
+          }
+         ]
+        },
+        {
+         "name": "epithelioma",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3709",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3709"
+          }
+         ]
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/graph"
+        },
+        "disease_arises_from_alteration_in_structure": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005626/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FRO_0004030"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0007254",
+       "lang": "en",
+       "description": [
+        "A primary or metastatic malignant neoplasm involving the breast. The vast majority of cases are carcinomas arising from the breast parenchyma or the nipple. Malignant breast neoplasms occur more frequently in females than in males."
+       ],
+       "synonyms": [
+        "breast tumor",
+        "mammary tumor",
+        "primary breast cancer",
+        "breast cancer",
+        "breast tumour",
+        "cancer of breast",
+        "malignant breast neoplasm",
+        "malignant breast tumor",
+        "malignant breast tumour",
+        "malignant neoplasm of breast",
+        "malignant neoplasm of the breast",
+        "malignant tumor of breast",
+        "malignant tumor of the breast",
+        "malignant tumour of breast",
+        "malignant tumour of the breast",
+        "mammary tumour"
+       ],
+       "annotation": {
+        "Conforms To": [
+         "http://purl.obolibrary.org/obo/mondo/patterns/cancer.yaml"
+        ],
+        "database_cross_reference": [
+         "DOID:1612",
+         "ICD10CM:C50",
+         "ICD9:174.8",
+         "MEDGEN:651",
+         "NCIT:C9335",
+         "SCTID:254837009",
+         "UMLS:C0006142",
+         "icd11.foundation:1047754165"
+        ],
+        "has exact match": [
+         "http://id.who.int/icd/entity/1047754165",
+         "http://identifiers.org/medgen/651",
+         "http://identifiers.org/snomedct/254837009",
+         "http://linkedlifedata.com/resource/umls/id/C0006142",
+         "http://purl.bioontology.org/ontology/ICD10CM/C50",
+         "http://purl.obolibrary.org/obo/DOID_1612",
+         "http://purl.obolibrary.org/obo/NCIT_C9335"
+        ],
+        "id": [
+         "MONDO:0007254"
+        ]
+       },
+       "label": "breast cancer",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0007254",
+       "obo_id": "MONDO:0007254",
+       "in_subset": [
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A primary or metastatic malignant neoplasm involving the breast. The vast majority of cases are carcinomas arising from the breast parenchyma or the nipple. Malignant breast neoplasms occur more frequently in females than in males.",
+         "oboXrefs": [
+          {
+           "database": "NCIT",
+           "id": "C9335",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9335"
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "DOID",
+         "id": "1612",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/DOID_1612"
+        },
+        {
+         "database": "ICD10CM",
+         "id": "C50",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.icd10data.com/search?s=C50"
+        },
+        {
+         "database": "ICD9",
+         "id": "174.8",
+         "description": "DOID:1612",
+         "url": null
+        },
+        {
+         "database": "MEDGEN",
+         "id": "651",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/651"
+        },
+        {
+         "database": "NCIT",
+         "id": "C9335",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C9335"
+        },
+        {
+         "database": "SCTID",
+         "id": "254837009",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/254837009"
+        },
+        {
+         "database": "UMLS",
+         "id": "C0006142",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C0006142"
+        },
+        {
+         "database": "icd11.foundation",
+         "id": "1047754165",
+         "description": "https://orcid.org/0009-0001-6494-4831",
+         "url": null
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "breast cancer",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "1612",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_1612"
+          },
+          {
+           "database": "MONDO",
+           "id": "patterns/location",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "icd11.foundation",
+           "id": "1047754165",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "cancer of breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/cancer",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "icd11.foundation",
+           "id": "1047754165",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "malignant breast neoplasm",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/cancer",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "NCIT",
+           "id": "C9335",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9335"
+          }
+         ]
+        },
+        {
+         "name": "malignant breast tumor",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C9335",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9335"
+          }
+         ]
+        },
+        {
+         "name": "malignant breast tumour",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "malignant neoplasm of breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "1612",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_1612"
+          },
+          {
+           "database": "ICD10CM",
+           "id": "C50",
+           "description": null,
+           "url": "https://www.icd10data.com/search?s=C50"
+          },
+          {
+           "database": "MONDO",
+           "id": "patterns/cancer",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "NCIT",
+           "id": "C9335",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9335"
+          }
+         ]
+        },
+        {
+         "name": "malignant neoplasm of the breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C9335",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9335"
+          }
+         ]
+        },
+        {
+         "name": "malignant tumor of breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C9335",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9335"
+          }
+         ]
+        },
+        {
+         "name": "malignant tumor of the breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "DOID",
+           "id": "1612",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/DOID_1612"
+          },
+          {
+           "database": "NCIT",
+           "id": "C9335",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C9335"
+          }
+         ]
+        },
+        {
+         "name": "malignant tumour of breast",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": [
+          {
+           "database": "icd11.foundation",
+           "id": "1047754165",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "malignant tumour of the breast",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "breast tumour",
+         "scope": "hasBroadSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "mammary tumour",
+         "scope": "hasBroadSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0007254/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0021100",
+       "lang": "en",
+       "description": [
+        "A benign or malignant neoplasm of the breast parenchyma. It can originate from the ducts, lobules or the breast adipose tissue. Breast neoplasms are much more common in females than males."
+       ],
+       "synonyms": [
+        "neoplasm, breast",
+        "breast neoplasm (disease)",
+        "breast neoplasm",
+        "breast tumor",
+        "breast tumour",
+        "neoplasm of breast",
+        "neoplasm of the breast",
+        "tumor of breast",
+        "tumor of the breast",
+        "tumour of breast",
+        "tumour of the breast"
+       ],
+       "annotation": {
+        "Conforms To": [
+         "http://purl.obolibrary.org/obo/mondo/patterns/neoplasm.yaml"
+        ],
+        "database_cross_reference": [
+         "EFO:0003869",
+         "ICD9:239.3",
+         "MEDGEN:264172",
+         "MESH:D001943",
+         "NCIT:C2910",
+         "ONCOTREE:BREAST",
+         "SCTID:126926005",
+         "UMLS:C1458155"
+        ],
+        "has exact match": [
+         "http://identifiers.org/medgen/264172",
+         "http://identifiers.org/mesh/D001943",
+         "http://identifiers.org/snomedct/126926005",
+         "http://linkedlifedata.com/resource/umls/id/C1458155",
+         "http://purl.obolibrary.org/obo/NCIT_C2910",
+         "http://www.ebi.ac.uk/efo/EFO_0003869"
+        ],
+        "id": [
+         "MONDO:0021100"
+        ]
+       },
+       "label": "breast neoplasm",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0021100",
+       "obo_id": "MONDO:0021100",
+       "in_subset": [
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A benign or malignant neoplasm of the breast parenchyma. It can originate from the ducts, lobules or the breast adipose tissue. Breast neoplasms are much more common in females than males.",
+         "oboXrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2910",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2910"
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "EFO",
+         "id": "0003869",
+         "description": "MONDO:equivalentTo",
+         "url": "http://www.ebi.ac.uk/efo/EFO_0003869"
+        },
+        {
+         "database": "ICD9",
+         "id": "239.3",
+         "description": "MONDO:i2s",
+         "url": null
+        },
+        {
+         "database": "MEDGEN",
+         "id": "264172",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/264172"
+        },
+        {
+         "database": "MESH",
+         "id": "D001943",
+         "description": "MONDO:equivalentTo",
+         "url": "http://id.nlm.nih.gov/mesh/D001943"
+        },
+        {
+         "database": "NCIT",
+         "id": "C2910",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C2910"
+        },
+        {
+         "database": "ONCOTREE",
+         "id": "BREAST",
+         "description": "MONDO:equivalentTo",
+         "url": null
+        },
+        {
+         "database": "SCTID",
+         "id": "126926005",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/126926005"
+        },
+        {
+         "database": "UMLS",
+         "id": "C1458155",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C1458155"
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "breast neoplasm (disease)",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/location",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "breast neoplasm",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2910",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2910"
+          }
+         ]
+        },
+        {
+         "name": "breast tumor",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/neoplasm",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "NCIT",
+           "id": "C2910",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2910"
+          }
+         ]
+        },
+        {
+         "name": "breast tumour",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "neoplasm of breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/neoplasm",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "NCIT",
+           "id": "C2910",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2910"
+          }
+         ]
+        },
+        {
+         "name": "neoplasm of the breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2910",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2910"
+          }
+         ]
+        },
+        {
+         "name": "tumor of breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/neoplasm",
+           "description": null,
+           "url": null
+          },
+          {
+           "database": "NCIT",
+           "id": "C2910",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2910"
+          }
+         ]
+        },
+        {
+         "name": "tumor of the breast",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C2910",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C2910"
+          }
+         ]
+        },
+        {
+         "name": "tumour of breast",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "tumour of the breast",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021100/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0021350",
+       "lang": "en",
+       "description": [
+        "A neoplasm (disease) that involves the thoracic segment of trunk."
+       ],
+       "synonyms": [
+        "thoracic segment of trunk neoplasm",
+        "neoplasm of the thorax",
+        "neoplasm of thoracic segment of trunk",
+        "thoracic neoplasm",
+        "thoracic segment of trunk neoplasm (disease)",
+        "thoracic segment of trunk tumor",
+        "thoracic segment of trunk tumour",
+        "thoracic tumor",
+        "thoracic tumour",
+        "tumor of the thorax",
+        "tumor of thoracic segment of trunk",
+        "tumor of thorax",
+        "tumour of the thorax",
+        "tumour of thoracic segment of trunk",
+        "tumour of thorax"
+       ],
+       "annotation": {
+        "Conforms To": [
+         "http://purl.obolibrary.org/obo/mondo/patterns/neoplasm.yaml"
+        ],
+        "database_cross_reference": [
+         "ICD10CM:C30-C39",
+         "ICD9:239.89",
+         "MEDGEN:11793",
+         "NCIT:C3406",
+         "SCTID:255058005",
+         "UMLS:C0039981"
+        ],
+        "has exact match": [
+         "http://identifiers.org/medgen/11793",
+         "http://identifiers.org/snomedct/255058005",
+         "http://linkedlifedata.com/resource/umls/id/C0039981",
+         "http://purl.obolibrary.org/obo/NCIT_C3406"
+        ],
+        "has related match": [
+         "http://purl.bioontology.org/ontology/ICD10CM/C30-C39"
+        ],
+        "id": [
+         "MONDO:0021350"
+        ]
+       },
+       "label": "neoplasm of thorax",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0021350",
+       "obo_id": "MONDO:0021350",
+       "in_subset": [
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "A neoplasm (disease) that involves the thoracic segment of trunk.",
+         "oboXrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/location",
+           "description": null,
+           "url": null
+          }
+         ]
+        }
+       ],
+       "obo_xref": [
+        {
+         "database": "ICD10CM",
+         "id": "C30-C39",
+         "description": "https://orcid.org/0000-0002-4142-7153",
+         "url": "https://www.icd10data.com/search?s=C30-C39"
+        },
+        {
+         "database": "ICD9",
+         "id": "239.89",
+         "description": "MONDO:relatedTo",
+         "url": null
+        },
+        {
+         "database": "MEDGEN",
+         "id": "11793",
+         "description": "MONDO:equivalentTo",
+         "url": "https://www.ncbi.nlm.nih.gov/medgen/11793"
+        },
+        {
+         "database": "NCIT",
+         "id": "C3406",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.obolibrary.org/obo/NCIT_C3406"
+        },
+        {
+         "database": "SCTID",
+         "id": "255058005",
+         "description": "MONDO:equivalentTo",
+         "url": "http://purl.bioontology.org/ontology/SNOMEDCT/255058005"
+        },
+        {
+         "database": "UMLS",
+         "id": "C0039981",
+         "description": "MONDO:equivalentTo",
+         "url": "https://uts.nlm.nih.gov/uts/umls/concept/C0039981"
+        }
+       ],
+       "obo_synonym": [
+        {
+         "name": "neoplasm of the thorax",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3406",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3406"
+          }
+         ]
+        },
+        {
+         "name": "neoplasm of thoracic segment of trunk",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/neoplasm",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "thoracic neoplasm",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3406",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3406"
+          }
+         ]
+        },
+        {
+         "name": "thoracic segment of trunk neoplasm (disease)",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/location",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "thoracic segment of trunk tumor",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/neoplasm",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "thoracic segment of trunk tumour",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "thoracic tumor",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3406",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3406"
+          }
+         ]
+        },
+        {
+         "name": "thoracic tumour",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "tumor of the thorax",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3406",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3406"
+          }
+         ]
+        },
+        {
+         "name": "tumor of thoracic segment of trunk",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "MONDO",
+           "id": "patterns/neoplasm",
+           "description": null,
+           "url": null
+          }
+         ]
+        },
+        {
+         "name": "tumor of thorax",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": "NCIT",
+           "id": "C3406",
+           "description": null,
+           "url": "http://purl.obolibrary.org/obo/NCIT_C3406"
+          }
+         ]
+        },
+        {
+         "name": "tumour of the thorax",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "tumour of thoracic segment of trunk",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        },
+        {
+         "name": "tumour of thorax",
+         "scope": "hasExactSynonym",
+         "type": "UK spelling synonym",
+         "xrefs": []
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/graph"
+        },
+        "disease_has_location": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0021350/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FRO_0004026"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0023370",
+       "lang": "en",
+       "description": [
+        "Either an isolated neoplasm or a syndrome with neoplasm as a major feature."
+       ],
+       "synonyms": [],
+       "annotation": {
+        "id": [
+         "MONDO:0023370"
+        ]
+       },
+       "label": "neoplastic disease or syndrome",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0023370",
+       "obo_id": "MONDO:0023370",
+       "in_subset": [
+        "otar"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "Either an isolated neoplasm or a syndrome with neoplasm as a major feature.",
+         "oboXrefs": [
+          {
+           "database": null,
+           "id": "https://orcid.org/0000-0002-6601-2165",
+           "description": null,
+           "url": "https://orcid.org/0000-0002-6601-2165"
+          }
+         ]
+        }
+       ],
+       "obo_xref": null,
+       "obo_synonym": null,
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0023370/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0045024",
+       "lang": "en",
+       "description": [
+        "Any disorder that features disrupted cell proliferation. Includes hyperplasia, neoplastic syndrome and isolated neoplasm diseases as well as precancerous conditions."
+       ],
+       "synonyms": [
+        "cell proliferation disorder",
+        "neoplasm"
+       ],
+       "annotation": {
+        "Conforms To": [
+         "http://purl.obolibrary.org/obo/mondo/patterns/specific_disease_by_disrupted_process.yaml"
+        ],
+        "id": [
+         "MONDO:0045024"
+        ]
+       },
+       "label": "cancer or benign tumor",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0045024",
+       "obo_id": "MONDO:0045024",
+       "in_subset": [
+        "harrisons_view",
+        "otar",
+        "rare_grouping"
+       ],
+       "obo_definition_citation": [
+        {
+         "definition": "Any disorder that features disrupted cell proliferation. Includes hyperplasia, neoplastic syndrome and isolated neoplasm diseases as well as precancerous conditions.",
+         "oboXrefs": [
+          {
+           "database": null,
+           "id": "https://orcid.org/0000-0002-6601-2165",
+           "description": null,
+           "url": "https://orcid.org/0000-0002-6601-2165"
+          }
+         ]
+        }
+       ],
+       "obo_xref": null,
+       "obo_synonym": [
+        {
+         "name": "cell proliferation disorder",
+         "scope": "hasRelatedSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": null,
+           "id": "https://orcid.org/0000-0002-4142-7153",
+           "description": null,
+           "url": "https://orcid.org/0000-0002-4142-7153"
+          }
+         ]
+        },
+        {
+         "name": "neoplasm",
+         "scope": "hasNarrowSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": null,
+           "id": "https://www.cancer.gov/publications/dictionaries/cancer-terms/def/neoplasm",
+           "description": null,
+           "url": "https://www.cancer.gov/publications/dictionaries/cancer-terms/def/neoplasm"
+          }
+         ]
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/graph"
+        },
+        "disease_causes_disruption_of": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0045024/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FRO_0004024"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0700096",
+       "lang": "en",
+       "description": [],
+       "synonyms": [
+        "human disease or disorder"
+       ],
+       "annotation": {
+        "Creator": [
+         "https://orcid.org/0000-0002-4142-7153"
+        ],
+        "id": [
+         "MONDO:0700096"
+        ],
+        "present in taxon": [
+         "http://purl.obolibrary.org/obo/NCBITaxon_9606"
+        ],
+        "term tracker item": [
+         "https://github.com/monarch-initiative/mondo/issues/5858"
+        ]
+       },
+       "label": "human disease",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_0700096",
+       "obo_id": "MONDO:0700096",
+       "in_subset": [
+        "rare_grouping"
+       ],
+       "obo_definition_citation": null,
+       "obo_xref": null,
+       "obo_synonym": [
+        {
+         "name": "human disease or disorder",
+         "scope": "hasExactSynonym",
+         "type": null,
+         "xrefs": [
+          {
+           "database": null,
+           "id": "https://orcid.org/0000-0001-5208-3432",
+           "description": null,
+           "url": "https://orcid.org/0000-0001-5208-3432"
+          }
+         ]
+        }
+       ],
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/graph"
+        },
+        "in_taxon": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FRO_0002162"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_7770006",
+       "lang": "en",
+       "description": [
+        "This term is intended solely for classification purposes and should not be used for direct data annotation.",
+        "A grouping class for human diseases classified by the body system or anatomical component primarily affected."
+       ],
+       "synonyms": [],
+       "annotation": {
+        "id": [
+         "MONDO:7770006"
+        ]
+       },
+       "label": "disease by body system or component",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_7770006",
+       "obo_id": "MONDO:7770006",
+       "in_subset": null,
+       "obo_definition_citation": [
+        {
+         "definition": "A grouping class for human diseases classified by the body system or anatomical component primarily affected.",
+         "oboXrefs": [
+          {
+           "database": null,
+           "id": "https://orcid.org/0000-0003-2360-2664",
+           "description": null,
+           "url": "https://orcid.org/0000-0003-2360-2664"
+          }
+         ]
+        }
+       ],
+       "obo_xref": null,
+       "obo_synonym": null,
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770006/graph"
+        }
+       }
+      },
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_7770008",
+       "lang": "en",
+       "description": [
+        "This term is intended solely for classification purposes and should not be used for direct data annotation.",
+        "A grouping class for human diseases classified by their etiologic mechanism, encompassing primarily intrinsic (genetic, genomic), primarily extrinsic (e.g., infections, toxins, radiation), and complex multifactorial (e.g. nutritional) causes."
+       ],
+       "synonyms": [],
+       "annotation": {
+        "id": [
+         "MONDO:7770008"
+        ]
+       },
+       "label": "disease by etiologic mechanism",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": false,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": true,
+       "is_root": false,
+       "short_form": "MONDO_7770008",
+       "obo_id": "MONDO:7770008",
+       "in_subset": null,
+       "obo_definition_citation": [
+        {
+         "definition": "A grouping class for human diseases classified by their etiologic mechanism, encompassing primarily intrinsic (genetic, genomic), primarily extrinsic (e.g., infections, toxins, radiation), and complex multifactorial (e.g. nutritional) causes.",
+         "oboXrefs": [
+          {
+           "database": null,
+           "id": "https://orcid.org/0000-0003-2360-2664",
+           "description": null,
+           "url": "https://orcid.org/0000-0003-2360-2664"
+          }
+         ]
+        }
+       ],
+       "obo_xref": null,
+       "obo_synonym": null,
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008?lang=en"
+        },
+        "parents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008/parents"
+        },
+        "ancestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008/ancestors"
+        },
+        "hierarchicalParents": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008/hierarchicalParents"
+        },
+        "hierarchicalAncestors": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008/hierarchicalAncestors"
+        },
+        "jstree": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008/jstree"
+        },
+        "children": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008/children"
+        },
+        "descendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008/descendants"
+        },
+        "hierarchicalChildren": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008/hierarchicalChildren"
+        },
+        "hierarchicalDescendants": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008/hierarchicalDescendants"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_7770008/graph"
+        }
+       }
+      }
+     ]
+    },
+    "_links": {
+     "self": {
+      "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004989/hierarchicalAncestors?page=0&size=200"
+     }
+    },
+    "page": {
+     "size": 200,
+     "totalElements": 20,
+     "totalPages": 1,
+     "number": 0
+    }
+   }
+  },
+  "https://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms?iri=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FMONDO_0015964": {
+   "status": 200,
+   "body": {
+    "_embedded": {
+     "terms": [
+      {
+       "iri": "http://purl.obolibrary.org/obo/MONDO_0015964",
+       "lang": "en",
+       "description": [
+        "Obsolete in Orphanet"
+       ],
+       "synonyms": [],
+       "annotation": {
+        "database_cross_reference": [
+         "Orphanet:183598"
+        ],
+        "has exact match": [
+         "http://www.orpha.net/ORDO/Orphanet_183598"
+        ],
+        "has obsolescence reason": [
+         "http://purl.obolibrary.org/obo/OMO_0001000"
+        ],
+        "id": [
+         "MONDO:0015964"
+        ],
+        "term tracker item": [
+         "https://github.com/monarch-initiative/mondo/issues/254",
+         "https://github.com/monarch-initiative/mondo/issues/2662"
+        ]
+       },
+       "label": "obsolete obsolete rare genetic palpebral, lacrimal system and conjunctival disease",
+       "ontology_name": "mondo",
+       "ontology_prefix": "MONDO",
+       "ontology_iri": "http://purl.obolibrary.org/obo/mondo/mondo-international.owl",
+       "is_obsolete": true,
+       "term_replaced_by": null,
+       "is_defining_ontology": true,
+       "has_children": false,
+       "is_root": true,
+       "short_form": "MONDO_0015964",
+       "obo_id": "MONDO:0015964",
+       "in_subset": null,
+       "obo_definition_citation": null,
+       "obo_xref": [
+        {
+         "database": "Orphanet",
+         "id": "183598",
+         "description": "MONDO:obsoleteEquivalentObsolete",
+         "url": "http://www.orpha.net/ORDO/Orphanet_183598"
+        }
+       ],
+       "obo_synonym": null,
+       "is_preferred_root": false,
+       "_links": {
+        "self": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0015964?lang=en"
+        },
+        "graph": {
+         "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0015964/graph"
+        }
+       }
+      }
+     ]
+    },
+    "_links": {
+     "self": {
+      "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms?iri=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FMONDO_0015964"
+     }
+    },
+    "page": {
+     "size": 1,
+     "totalElements": 1,
+     "totalPages": 1,
+     "number": 0
+    }
+   }
+  },
+  "https://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0015964/hierarchicalAncestors?size=200": {
+   "status": 200,
+   "body": {
+    "_links": {
+     "self": {
+      "href": "http://www.ebi.ac.uk/ols4/api/ontologies/mondo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0015964/hierarchicalAncestors?page=0&size=200"
+     }
+    },
+    "page": {
+     "size": 200,
+     "totalElements": 0,
+     "totalPages": 0,
+     "number": 0
+    }
+   }
   }
  }
 }

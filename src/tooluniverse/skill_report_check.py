@@ -196,18 +196,39 @@ def _unstated_narrowing(draft: str, received: Any) -> list[dict]:
     return failures
 
 
+def _named(term: str, draft: str) -> bool:
+    return bool(re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", draft or "", re.I))
+
+
+def _id_forms(term: str) -> list[str]:
+    """MONDO:0004989 as the draft may write it: colon, underscore or the IRI's tail."""
+    tail = term.rstrip("/").rsplit("/", 1)[-1]
+    return list(dict.fromkeys([term, tail, tail.replace("_", ":", 1), tail.replace(":", "_", 1)]))
+
+
 def _unshown_mappings(draft: str, received: Any) -> list[dict]:
-    """A mapped term the report never names: the reader cannot judge a mapping it does not see."""
+    """A mapped term the report never names: the reader cannot judge a mapping it does not see.
+    A retired term must be called obsolete, and its replacement named when it has one."""
     handover = received.get("handover") if isinstance(received, dict) else None
     handover = handover or {}
     failures = []
     for name in handover.get("mappings") or []:
         for row in (handover.get("facts") or {}).get(name) or []:
             term = str(row.get("term", ""))
-            if term and not re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", draft or "", re.I):
+            if term and not _named(term, draft):
                 failures.append({"kind": "mapping_not_shown", "text": f"{name}: {term}",
                                  "context": f"show how {row.get('of', 'the question')!r} was read: "
                                             "each term with its reason and its placing"})
+            if not row.get("obsolete_term"):
+                continue
+            successor = str(row.get("replaced_by") or "")
+            if not _named("obsolete", draft) or (
+                    successor and not any(_named(form, draft) for form in _id_forms(successor))):
+                failures.append({"kind": "mapping_obsolete_not_shown",
+                                 "text": f"{name}: {term}",
+                                 "context": (f"say that {row['obsolete_term']} is obsolete"
+                                             + (f" and name its replacement {successor}, "
+                                                "on which it was placed" if successor else ""))})
     return failures
 
 

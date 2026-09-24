@@ -738,7 +738,10 @@ WRITE_THE_REPORT = [
     "failures, blocked, unresolved, steps_skipped and excluded. A skipped step with "
     "decided: false was never decided, not decided against; a row's `unparseable` holds "
     "the text a number could not be read from, so that row's verdict is unknown, not no; "
-    "a mapped row's `note` says why its placing is uncertain.",
+    "a mapped row's `note` says why its placing is uncertain. A mapped row with "
+    "`obsolete_term` names a term its ontology retired: say it is obsolete, and when the row "
+    "has `replaced_by`, name that replacement beside the source's id, since the placing "
+    "stands on the replacement.",
 ]
 
 
@@ -831,7 +834,8 @@ def placed_mapping(spec: dict, outcome: dict, lookup: Callable[[str], dict] | No
                                      ("placing", "ontology", "under")},
                            "ontology_term": verdict.get("term"),
                            "ontology_label": verdict.get("label"),
-                           **({"note": verdict["note"]} if verdict.get("note") else {})})
+                           **{k: verdict[k] for k in ("obsolete_term", "replaced_by", "note")
+                              if verdict.get(k)}})
         facts[name] = placed
         facts[f"{name}_terms"] = list(dict.fromkeys(r["term"] for r in placed))
     return {**outcome, "facts": facts}

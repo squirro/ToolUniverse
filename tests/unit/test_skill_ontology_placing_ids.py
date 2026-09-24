@@ -94,3 +94,72 @@ def test_a_term_with_an_unknown_prefix_still_goes_to_label_search(fetched):
     assert fetched and all("/search?" in url for url in fetched)
     assert set(responses) == set(skill_ontology_placing.ONTOLOGIES)
     assert place(responses, OVARY)["placing"] == "unknown"
+
+
+# --- a retired term -----------------------------------------------------------------------
+#
+# EFO retired EFO_0000305 for MONDO_0004989; Open Targets can still hand over the EFO id.
+
+BREAST = ["breast", "cancer"]
+DISEASE_MAPPING = {"mapping": {"disease_choice": {
+    "of": "disease", "onto": {"rows": "disease_candidates", "field": "id"}}}}
+
+
+def _placed_row(term, concept):
+    outcome = {"facts": {"disease_choice": [{"of": "the disease", "term": term,
+                                             "reason": "the disease itself", "concept": concept}]}}
+    return placed_mapping(DISEASE_MAPPING, outcome, lookup)["facts"]["disease_choice"][0]
+
+
+def test_an_obsolete_id_with_a_replacement_is_placed_on_the_replacement_and_names_both(fetched):
+    row = _placed_row("EFO_0000305", BREAST)
+
+    assert row["term"] == "EFO_0000305"                     # the source's id is kept
+    assert row["placing"] == "placed" and row["ontology"] == "mondo"
+    assert row["ontology_term"] == "MONDO:0004989" and row["ontology_label"] == "breast carcinoma"
+    assert row["obsolete_term"] == "EFO:0000305" and row["replaced_by"] == "MONDO:0004989"
+    assert "obsolete" in row["note"] and "MONDO:0004989" in row["note"]
+
+
+def test_an_obsolete_id_with_no_replacement_reads_obsolete_and_says_so(fetched):
+    row = _placed_row("MONDO_0015964", BREAST)
+
+    assert row["placing"] == "obsolete"
+    assert row["obsolete_term"] == "MONDO:0015964" and "replaced_by" not in row
+    assert "no replacement" in row["note"] and "not placed" in row["note"]
+
+
+def _mapping_failures(draft, row):
+    from tooluniverse.skill_report_check import check_report
+    received = {"handover": {"facts": {"disease_choice": [row]},
+                             "mappings": ["disease_choice"], "tables": []}}
+    return [f for f in check_report(draft, received) if f["kind"].startswith("mapping_")]
+
+
+def test_the_report_must_call_a_replaced_term_obsolete_and_name_its_replacement(fetched):
+    row = _placed_row("EFO_0000305", BREAST)
+
+    silent = _mapping_failures("Breast cancer, read as EFO_0000305 (placed under breast disorder).", row)
+    shown = _mapping_failures("Breast cancer, read as EFO_0000305, which EFO made obsolete; placed "
+                              "on its replacement MONDO_0004989 under breast disorder.", row)
+
+    assert [f["kind"] for f in silent] == ["mapping_obsolete_not_shown"]
+    assert "MONDO:0004989" in silent[0]["context"]
+    assert shown == []
+
+
+def test_the_report_still_requires_the_source_id_of_a_replaced_term(fetched):
+    """Naming only the replacement would hide which id the source was read onto."""
+    row = _placed_row("EFO_0000305", BREAST)
+
+    failures = _mapping_failures("Breast cancer is obsolete here; placed on MONDO:0004989.", row)
+
+    assert [f["kind"] for f in failures] == ["mapping_not_shown"]
+
+
+def test_the_report_must_call_an_unreplaced_obsolete_term_obsolete(fetched):
+    row = _placed_row("MONDO_0015964", BREAST)
+
+    assert [f["kind"] for f in _mapping_failures("Read as MONDO_0015964, not placed.", row)] == \
+        ["mapping_obsolete_not_shown"]
+    assert _mapping_failures("Read as MONDO_0015964: obsolete, with no replacement.", row) == []

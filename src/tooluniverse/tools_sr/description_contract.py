@@ -22,9 +22,10 @@ another tool's parameter *without* saying which tool is a genuine defect and sti
 one that names the tool is a legitimate hand-off.
 
 That takes 62 to 4. All four remaining were read by hand and are enumerated *values* of a
-declared parameter -- ``dataset`` "defaults to ``gnomad_r3``", ``field`` has "common
-choices". They are waived by name rather than cleared by a fifth heuristic, because
-inventing one more rule to clear the last finding is how a guard stops describing anything.
+declared parameter. One is read from the schema, not guessed: a token equal to a declared
+parameter's own ``default`` or ``enum`` entry is a value (``dataset`` "defaults to
+``gnomad_r4``"). The rest are values only the prose offers (``field`` has "common
+choices") and are waived by name.
 
 **The finding is that this corpus has no true positive of this class today.** All 62 hits
 resolve to legitimate prose. The rule therefore ships blocking at zero, and its value is
@@ -70,9 +71,6 @@ WAIVED: dict[str, dict[str, str]] = {
         "set_id": "a 'common choices' value for the declared `field` parameter",
         "indications_and_usage": "a 'common choices' value for the declared `field`",
         "dosage_and_administration": "a 'common choices' value for the declared `field`",
-    },
-    "gnomad_get_variant": {
-        "gnomad_r3": "the documented default value of the declared `dataset` parameter",
     },
 }
 
@@ -146,6 +144,21 @@ def _prose(tool: dict) -> str:
     return " ".join(parts)
 
 
+def _offered_values(properties: dict) -> set[str]:
+    """The values the schema itself offers: each parameter's default and enum entries.
+
+    Prose that quotes one of these is naming a value, not another parameter.
+    """
+    offered: set[str] = set()
+    for spec in properties.values():
+        if not isinstance(spec, dict):
+            continue
+        if isinstance(spec.get("default"), str):
+            offered.add(spec["default"])
+        offered.update(v for v in (spec.get("enum") or []) if isinstance(v, str))
+    return offered
+
+
 def _sentence_around(text: str, start: int, end: int) -> str:
     opens = text.rfind(".", 0, start) + 1
     closes = text.find(".", end)
@@ -167,6 +180,7 @@ def undeclared_parameters(tools: dict[str, dict]) -> list[Finding]:
         # `pref_name` beside a declared `pref_name__contains` is the field the filter runs
         # on, being explained. Not a second parameter.
         filter_bases = {key.split("__")[0] for key in declared if "__" in key}
+        offered = _offered_values(properties)
         returns = _return_fields(tool)
         waived = WAIVED.get(tool_name, {})
         prose = _prose(tool)
@@ -178,6 +192,8 @@ def undeclared_parameters(tools: dict[str, dict]) -> list[Finding]:
                 continue  # a backticked English word, not a parameter reference
             if token in seen or token in declared or token in filter_bases:
                 continue
+            if token in offered:
+                continue  # a value this schema offers, quoted as prose
             if token in returns or token in names or token in waived:
                 continue
             sentence = _sentence_around(prose, match.start(), match.end())

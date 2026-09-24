@@ -200,7 +200,8 @@ def test_no_description_names_a_filter_its_schema_does_not_declare():
 # that simply is not an input to this tool. Four subtractions, each earned by inspecting
 # the hits -- return-schema fields, registry tool names, the base of a declared filter, and
 # a token whose sentence names another tool -- take that to 4. All four were read by hand
-# and are enumerated values of a declared parameter, so they are waived by name.
+# and are enumerated values of a declared parameter. A schema default or enum entry is
+# cleared by reading the schema; values only the prose offers are waived by name.
 #
 # The finding is that this corpus has no true positive of this class today. The rule ships
 # blocking at zero, and its whole value is in what it stops arriving.
@@ -335,3 +336,23 @@ def test_no_waiver_has_gone_stale():
         prose = description_contract._prose(tool)
         for token in tokens:
             assert f"`{token}`" in prose, (tool_name, token)
+
+
+@pytest.mark.unit
+def test_a_value_the_schema_itself_offers_is_prose_not_a_parameter_reference():
+    """`gnomad_r4` in "defaults to `gnomad_r4`" is the declared parameter's own default."""
+    tools = {"t": {"description": "picks a set; defaults to `gnomad_r4`, or try `gnomad_r3`.",
+                   "parameter": {"properties": {
+                       "dataset": {"default": "gnomad_r4",
+                                   "enum": ["gnomad_r4", "gnomad_r3"]}}}}}
+
+    assert description_contract.undeclared_parameters(tools) == []
+
+
+@pytest.mark.unit
+def test_a_value_the_schema_does_not_offer_is_still_reported():
+    """The exemption is the schema's own values, not any value-looking token."""
+    tools = {"t": {"description": "defaults to `gnomad_r4`; see `gnomad_r2_1`.",
+                   "parameter": {"properties": {"dataset": {"default": "gnomad_r4"}}}}}
+
+    assert [f.token for f in description_contract.undeclared_parameters(tools)] == ["gnomad_r2_1"]

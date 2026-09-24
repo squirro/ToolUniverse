@@ -35,6 +35,7 @@ def _closed_list_value(value: Any) -> bool:
 
 
 def _cut(value: Any) -> Any:
+    """A preview cell; a longer one is truncated and ends in an ellipsis."""
     text = value if isinstance(value, str) else json.dumps(value, default=str)
     return value if len(text) <= PREVIEW_CHARS else text[:PREVIEW_CHARS] + "…"
 
@@ -164,6 +165,7 @@ class WorkingRecord:
 
         A column with few distinct values is a closed list (a phase, a status): its values
         and their counts are listed, for reading -- the selection is the code tool's.
+        `rows` is the table's total, so the capped preview is never read as the table.
         """
         rows = self._rows(name)
         columns = list(dict.fromkeys(column for row in rows for column in row))

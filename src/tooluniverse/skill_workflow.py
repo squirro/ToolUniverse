@@ -461,7 +461,8 @@ class SkillWorkflow:
             tool=step["calls"][0]["tool"], argument=argument, value=original,
             problem=f"returned nothing for {original!r}"))
         suggestions = (answer or {}).get(argument) or []
-        for attempt, candidate in enumerate(suggestions[:MAX_REPAIRS], start=1):
+        tried = suggestions[:MAX_REPAIRS]
+        for attempt, candidate in enumerate(tried, start=1):
             retry_calls = substitute(step["calls"], argument, candidate)
             made.extend(retry_calls)
             failures = await self._calls(retry_calls, attempt=attempt)
@@ -473,7 +474,7 @@ class SkillWorkflow:
         if answer is not None:
             self._run["blocked"].append({
                 "step": step["id"],
-                "reason": (f"{argument}={original!r} could not be resolved after "
-                           f"{MAX_REPAIRS} suggested alternatives"),
+                "reason": (f"{argument}={original!r} could not be resolved after trying "
+                           f"{len(tried)} of {len(suggestions)} available suggested alternatives"),
             })
         return outcome, failures

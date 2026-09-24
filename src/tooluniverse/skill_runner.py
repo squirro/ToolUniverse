@@ -239,7 +239,8 @@ def _fewest(rule: dict, facts: dict) -> list | None:
 
     Which phenotypes discriminate is "which are annotated to the fewest
     diseases" — arithmetic. A tie exactly at the cut is the one case left to the
-    model, which is asked because the name stays unresolved.
+    model, which is asked because the name stays unresolved. The cut is the answer the
+    rule asks for, not a truncation of one.
     """
     rows = facts.get(rule["rows"])
     if rows is None:
@@ -1321,8 +1322,9 @@ class SkillRunner:
         asked(run, question, answer)
         # One answer shape for every question: the wanted name mapped to its
         # value — here a list of alternatives. A bare list is still taken.
-        suggestions = answer.get(argument) if isinstance(answer, dict) else answer
-        for candidate in (suggestions or [])[: self.MAX_REPAIRS]:
+        suggestions = (answer.get(argument) if isinstance(answer, dict) else answer) or []
+        tried = suggestions[: self.MAX_REPAIRS]
+        for candidate in tried:
             retried, retry_failures = [], []
             retry_calls = substitute(step["calls"], argument, candidate)
             made.extend(retry_calls)
@@ -1338,8 +1340,8 @@ class SkillRunner:
             results, failures = retried, retry_failures
         run["blocked"].append({
             "step": step["id"],
-            "reason": (f"{argument}={original!r} could not be resolved after "
-                       f"{self.MAX_REPAIRS} suggested alternatives"),
+            "reason": (f"{argument}={original!r} could not be resolved after trying "
+                       f"{len(tried)} of {len(suggestions)} available suggested alternatives"),
         })
         return results, failures
 

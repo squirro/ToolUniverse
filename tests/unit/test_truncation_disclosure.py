@@ -61,6 +61,31 @@ def test_a_newly_added_undisclosed_cap_is_found(tmp_path):
     assert findings[0].function == "search"
 
 
+def test_shortening_a_string_is_not_a_cap(tmp_path):
+    """A clipped error body or id is prose, not part of a collection."""
+    (tmp_path / "new_tool.py").write_text(
+        "def fail(response, exc, rows):\n"
+        "    a = (response.text or '')[:120]\n"
+        "    b = str(exc)[:80]\n"
+        "    c = f'{rows}'[:40]\n"
+        "    return a + b + c\n"
+    )
+
+    assert truncation.undisclosed_slices(tmp_path) == []
+
+
+def test_a_collection_beside_a_string_is_still_a_cap(tmp_path):
+    """`rows or []` may be a list, so it is not exempt; nor is a bare name."""
+    (tmp_path / "new_tool.py").write_text(
+        "def a(rows):\n"
+        "    return (rows or [])[:5]\n"
+        "def b(response, rows):\n"
+        "    return (response.text or rows)[:5]\n"
+    )
+
+    assert [f.function for f in truncation.undisclosed_slices(tmp_path)] == ["a", "b"]
+
+
 def test_a_cap_that_discloses_is_not_reported(tmp_path):
     """Modelled on the FAERS note: say the list was cut and give the whole size."""
     (tmp_path / "good_tool.py").write_text(

@@ -796,6 +796,35 @@ def mapping_choices(spec: dict, facts: dict) -> dict | None:
     return choices or None
 
 
+def judge_question(step_id: str, spec: dict, wants: list[str], facts: dict) -> dict:
+    """The question for the names a step judges. A Saved Analysis's Choice (`choose`) goes
+    to the user, never to the model (ADR-0020); every other judgement goes to the model."""
+    if spec.get("choose"):
+        return question_for(step_id, "choose", wants, facts, notes=spec.get("notes"),
+                            **choose_detail(spec, facts))
+    return question_for(step_id, "judge", wants, facts, notes=spec.get("notes"),
+                        choices=mapping_choices(spec, facts))
+
+
+def picks_as_lists(spec: dict, outcome: dict) -> dict:
+    """A Choice picked as one value is a list of one, so the step that loops over it runs."""
+    for name in spec.get("choose") or {}:
+        if isinstance(outcome["facts"].get(name), (str, int, float)):
+            outcome["facts"][name] = [outcome["facts"][name]]
+    return outcome
+
+
+def choose_detail(spec: dict, facts: dict) -> dict:
+    """A Choice's candidates, from the new output, and the recorded picks still among them."""
+    choices, preselected = {}, {}
+    for name, rule in (spec.get("choose") or {}).items():
+        candidates = [c for c in (facts.get(rule["from"]) or []) if c is not None]
+        choices[name] = candidates
+        preselected[name] = [r for r in rule.get("recorded") or []
+                             if any(_same(r, c) for c in candidates)]
+    return {"choices": choices, "preselected": preselected}
+
+
 def mapping_problem(spec: dict, outcome: dict, facts: dict) -> str | None:
     """A mapped term the source does not list, or a row without the shape asked for."""
     for name, rule in (spec.get("mapping") or {}).items():
@@ -1706,12 +1735,10 @@ class SkillRunner:
         # A name an extraction or compute already supplied is never put to the model.
         wants = [n for n in (spec.get("judge") or []) if n not in outcome["facts"]]
         if wants:
-            question = question_for(
-                step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
-                notes=spec.get("notes"),
-                choices=mapping_choices(spec, {**run["facts"], **outcome["facts"]}),
-            )
-            outcome = self._answered(spec, step, wants, outcome, run, question)
+            question = judge_question(step["id"], spec, wants,
+                                      {**run["facts"], **outcome["facts"]})
+            outcome = picks_as_lists(spec, self._answered(spec, step, wants, outcome, run,
+                                                          question))
         self._keep_evidence(run_id, run, outcome)
         apply(run, step["id"], failures, outcome, calls=made)
         # The caller sees an unknown as an explicit None; facts never hold one.

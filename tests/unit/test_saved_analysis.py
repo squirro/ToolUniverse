@@ -270,3 +270,109 @@ def test_the_only_value_is_taken_from_the_new_output_not_the_recorded_one():
 
 def test_both_shapes_pass_the_save_checks():
     assert problems(LOOP) == [] and problems(ONLY) == []
+
+
+# -- Choice at replay (SA-05, ADR-0020): the user picks from the NEW candidates ----------
+
+from rdflib import Graph as _Graph  # noqa: E402
+
+from tooluniverse.skill_graph_bbo import from_bbo  # noqa: E402
+from tooluniverse.skill_run_client import progress  # noqa: E402
+
+# As the converter proposes "map the gene, then the structure of the FIRST accession" (1 of 3).
+CHOICE = {"skill": "analyses/z", "inputs": ["gene_names"], "steps": [
+    {"id": "t1_c1", "label": "Turn 1: map", "produces": ["qualifier_candidates"],
+     "extract": {"qualifier_candidates": "results[].to"},
+     "calls": [{"tool": "map", "arguments": {"gene_names": "{gene_names}"}}]},
+    {"id": "t1_c2_pick", "label": "Turn 1: pick qualifier", "requires": ["t1_c1"], "calls": [],
+     "judge": ["qualifier_pick"], "produces": ["qualifier_pick"],
+     "check": {"qualifier_pick": {"only_in": "qualifier_candidates"}},
+     "choose": {"qualifier_pick": {"from": "qualifier_candidates", "recorded": ["Q92826"]}}},
+    {"id": "t1_c2", "label": "Turn 1: structure", "requires": ["t1_c2_pick"],
+     "for_each": "qualifier_pick", "as": "qualifier",
+     "calls": [{"tool": "structure", "arguments": {"qualifier": "{qualifier}"}}]},
+]}
+
+
+def _choose(new_candidates, answers):
+    calls, questions, answers = [], [], list(answers)
+    runner = SkillRunner(
+        CHOICE,
+        execute=lambda t, a: calls.append((t, a)) or (
+            {"results": [{"to": c} for c in new_candidates]} if t == "map" else {}),
+        ask=lambda q: questions.append(q) or (answers.pop(0) if answers else None))
+    run_id = runner.start({"gene_names": "KRAS"})["run_id"]
+    for _ in range(10):
+        if runner.advance(run_id) is None or runner.state(run_id).get("finished"):
+            break
+    return calls, questions
+
+
+def test_a_choice_asks_the_user_with_the_new_candidates_and_the_old_pick_preselected():
+    _, questions = _choose(["P01116", "Q92826", "E5FF39"], [{"qualifier_pick": ["P01116"]}])
+
+    (q,) = questions
+    assert q["kind"] == "choose" and q["wants"] == ["qualifier_pick"]
+    assert q["choices"] == {"qualifier_pick": ["P01116", "Q92826", "E5FF39"]}
+    assert q["preselected"] == {"qualifier_pick": ["Q92826"]}
+
+
+def test_a_recorded_pick_the_new_output_lacks_is_not_preselected():
+    _, questions = _choose(["P01116", "E5FF39"], [{"qualifier_pick": ["P01116"]}])
+
+    assert questions[0]["preselected"] == {"qualifier_pick": []}
+
+
+def test_the_users_pick_drives_the_calls_that_use_it():
+    calls, _ = _choose(["P01116", "Q92826", "E5FF39"], [{"qualifier_pick": ["P01116", "E5FF39"]}])
+
+    assert [a["qualifier"] for t, a in calls if t == "structure"] == ["P01116", "E5FF39"]
+
+
+def test_a_single_picked_value_counts_as_a_list_of_one():
+    calls, _ = _choose(["P01116", "Q92826"], [{"qualifier_pick": "P01116"}])
+
+    assert [a["qualifier"] for t, a in calls if t == "structure"] == ["P01116"]
+
+
+def test_a_pick_from_outside_the_candidates_is_asked_again_then_left_unresolved():
+    calls, questions = _choose(["P01116", "Q92826"],
+                               [{"qualifier_pick": ["HOXB13"]}, {"qualifier_pick": ["X"]}])
+
+    assert len(questions) == 2 and "HOXB13" in questions[1]["problem"]
+    assert not [c for c in calls if c[0] == "structure"]
+
+
+def test_a_choice_survives_the_graphdb_round_trip():
+    assert from_bbo(_Graph().parse(data=to_bbo(CHOICE), format="turtle")) == CHOICE
+    assert problems(CHOICE) == []
+
+
+def test_the_waiting_reply_sends_a_choice_to_the_user_not_to_the_model():
+    out = progress("r1", {"step_id": "t1_c2_pick", "done": ["t1_c1"], "waiting_for": {
+        "kind": "choose", "wants": ["qualifier_pick"], "choices": {"qualifier_pick": ["A"]},
+        "preselected": {"qualifier_pick": []}}})
+
+    assert out["status"] == "waiting"
+    assert "user" in out["next"] and "do not choose" in out["next"].lower()
+
+
+def test_a_call_whose_tool_is_not_a_tool_name_is_refused_before_anything_is_written(
+        requests_mock):
+    put = _put(requests_mock)
+    bad = {"steps": [{"id": "s", "calls": [{"tool": "Identity & Classification",
+                                            "arguments": {}}]}]}
+
+    status, out = handle_save({**BODY, "definition": bad}, TOKEN, TOKEN, _store())
+
+    assert status == 422 and "tool names" in out["error"] and not put.called
+
+
+def test_a_definition_that_would_not_read_back_whole_is_refused_as_the_callers_to_fix(
+        requests_mock):
+    put = _put(requests_mock)
+
+    status, out = handle_save({**BODY, "definition": {**DEFINITION, "inputs": []}},
+                              TOKEN, TOKEN, _store())
+
+    assert status == 422 and "rebuild" in out["error"] and not put.called

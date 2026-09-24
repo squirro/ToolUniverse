@@ -915,3 +915,44 @@ async def test_a_judged_mapping_is_checked_and_placed_on_temporal_too():
     replies = iter([STRAY, MAPPING])
     assert _handed(handed) == _in_memory({"count_reactions": FAERS_TERMS}, MAPPED, MAPPED_INPUTS,
                                          ask=lambda q: next(replies), lookup=_recorded_lookup)
+
+
+# A Saved Analysis's Choice (SA-05, ADR-0020): the same pause on Temporal as in memory.
+CHOSEN = {
+    "skill": "analyses/choice", "inputs": ["gene_names"],
+    "steps": [
+        {"id": "t1_c1", "produces": ["qualifier_candidates"],
+         "extract": {"qualifier_candidates": "results[].to"},
+         "calls": [{"tool": "map", "arguments": {"gene_names": "{gene_names}"}}]},
+        {"id": "t1_c2_pick", "requires": ["t1_c1"], "calls": [],
+         "judge": ["qualifier_pick"], "produces": ["qualifier_pick"],
+         "check": {"qualifier_pick": {"only_in": "qualifier_candidates"}},
+         "choose": {"qualifier_pick": {"from": "qualifier_candidates", "recorded": ["Q92826"]}}},
+        {"id": "t1_c2", "requires": ["t1_c2_pick"], "for_each": "qualifier_pick", "as": "qualifier",
+         "calls": [{"tool": "structure", "arguments": {"qualifier": "{qualifier}"}}]},
+    ],
+}
+NEW_MAP = {"map": {"results": [{"to": "P01116"}, {"to": "Q92826"}]}, "structure": {"ok": True}}
+
+
+async def test_a_choice_waits_for_the_users_pick_and_behaves_as_in_memory():
+    asked = []
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, calls = await _run(env, NEW_MAP, CHOSEN, {"gene_names": "KRAS"}, "run-choice",
+                                   before_result=lambda h, e: _answer(
+                                       h, {"qualifier_pick": "P01116"}, seen=asked))
+
+    question = asked[0]["waiting_for"]
+    assert question["kind"] == "choose" and question["step"] == "t1_c2_pick"
+    assert question["choices"] == {"qualifier_pick": ["P01116", "Q92826"]}
+    assert question["preselected"] == {"qualifier_pick": ["Q92826"]}
+    assert ("structure", {"qualifier": "P01116"}) in calls
+    assert bundle["facts"]["qualifier_pick"] == ["P01116"]
+
+    in_memory = []
+    runner = SkillRunner(CHOSEN, execute=lambda t, a: in_memory.append((t, a)) or NEW_MAP[t],
+                         ask=lambda q: {"qualifier_pick": "P01116"})
+    run_id = runner.start({"gene_names": "KRAS"})["run_id"]
+    while not runner.advance(run_id).get("finished"):
+        pass
+    assert in_memory == calls

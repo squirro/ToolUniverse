@@ -34,13 +34,14 @@ from .skill_runner import (
     check_facts,
     handover_of,
     is_upstream_failure,
+    judge_question,
     judged,
     keep_evidence,
-    mapping_choices,
     mapping_problem,
     materialised,
     new_run,
     next_runnable,
+    picks_as_lists,
     placed_mapping,
     question_for,
     recomputed,
@@ -271,10 +272,10 @@ class SkillWorkflow:
             # Only names the step could not resolve itself go to the model.
             wants = [n for n in (spec.get("judge") or []) if n not in outcome["facts"]]
             if wants:
-                outcome = await self._answered(spec, step, wants, outcome, question_for(
-                    step["id"], "judge", wants, {**run["facts"], **outcome["facts"]},
-                    notes=spec.get("notes"),
-                    choices=mapping_choices(spec, {**run["facts"], **outcome["facts"]})))
+                outcome = picks_as_lists(spec, await self._answered(
+                    spec, step, wants, outcome,
+                    judge_question(step["id"], spec, wants,
+                                   {**run["facts"], **outcome["facts"]})))
             tables = self._process.get("tables") or {}
             if any(tables.get(name) == "evidence" for name in outcome["facts"]):
                 kept = await workflow.execute_activity(

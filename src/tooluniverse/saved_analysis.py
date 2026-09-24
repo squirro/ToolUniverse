@@ -12,8 +12,12 @@ from __future__ import annotations
 import re
 
 from .skill_graph import graph_problems, undeclared_tables
+from .skill_process_store import SkillProcessMismatch
 
 ANALYSES_PREFIX = "analyses/"
+
+# A ToolUniverse tool name; it also becomes part of an IRI in the published graph.
+_TOOL = re.compile(r"[A-Za-z0-9_.-]+")
 
 # Squirro ids are URL-safe base64 tokens; anything else would be spliced into an IRI.
 _PROMPT_ID = re.compile(r"[A-Za-z0-9_-]{8,64}")
@@ -35,6 +39,9 @@ def problems(definition: dict) -> list[str]:
     if not isinstance(definition, dict) or not definition.get("steps"):
         return ["it has no steps"]
     found = []
+    names = [c.get("tool") for step in definition["steps"] for c in step.get("calls") or []]
+    if bad := [n for n in names if not isinstance(n, str) or not _TOOL.fullmatch(n)]:
+        found.append(f"it calls {bad}, which are not tool names")
     if undeclared := undeclared_tables(definition):
         found.append(f"it collects {undeclared} without declaring them under `tables:`")
     return found + graph_problems(definition)
@@ -72,7 +79,8 @@ def handle_save(body, token: str | None, expected_token: str, store) -> tuple[in
         return 400, {"error": "`definition` must be an object"}
     try:
         iri = save(store, prompt_id, definition, author)
-    except SavedAnalysisRefused as exc:
+    except (SavedAnalysisRefused, SkillProcessMismatch) as exc:
+        # A definition that would not read back whole is the caller's to fix, not a crash.
         return 422, {"error": str(exc)}
     return 200, {"iri": iri, "prompt_id": prompt_id}
 

@@ -153,6 +153,7 @@ _JSON_SPECS = {
     "narrowed": SRP.narrowedBecause,
     "total": SRP.sourceTotalPath,
     "mapping": SRP.mappingSpec,
+    "choose": SRP.chooseSpec,   # a Saved Analysis's Choice: the user picks (ADR-0020)
 }
 
 

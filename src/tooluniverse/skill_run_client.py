@@ -41,6 +41,14 @@ def progress(run_id: str, status: dict, handover: dict | None = None) -> dict:
                          "Write it in the language of the user's question.")}
     base = {"run_id": run_id, "step_id": status.get("step_id"),
             "step_label": status.get("step_label"), "done": len(status.get("done") or [])}
+    if (status.get("waiting_for") or {}).get("kind") == "choose":
+        return {"status": "waiting", "question": status["waiting_for"], **base,
+                "next": "This question is for the USER. Do not choose yourself. Show the user "
+                        "each list in `question.choices`, mark the values in "
+                        "`question.preselected` as the ones picked last time, and ask which to "
+                        "use. Then call continue_skill(run_id, answer={<name>: [the values the "
+                        "user picked, copied exactly]}). Write to the user in the language of "
+                        "their question."}
     if status.get("waiting_for"):
         return {"status": "waiting", "question": status["waiting_for"], **base,
                 "next": "Answer with continue_skill(run_id, answer={...}); write every reason "

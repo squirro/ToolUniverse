@@ -1439,6 +1439,13 @@ class SMCP(FastMCP):
             `finished`, write the answer as `handover.report` instructs, then
             submit_report(run_id, draft) before you answer the user.
 
+            A `waiting` question of kind "choose" is for the USER, not for you: where the
+            saved conversation used only some of a result's values, the user picks again
+            from the new ones. Show the user each list in `question.choices`, mark the
+            values in `question.preselected` as last time's picks, ask which to use, and
+            pass their pick with continue_skill(run_id, answer={<name>: [...]}). Never pick
+            yourself, even when one value looks obviously right.
+
             Args:
                 prompt_id: the id in the message, e.g. "K_IZog8LROOP2gPODyN2uQ".
                 inputs: every `<input> = <value>` pair of the message, e.g.

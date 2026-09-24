@@ -30,8 +30,9 @@ AVAILABLE tools (use only these):
   gnomad_get_gene_constraints, humanbase_ppi_analysis, intact_search_interactions,
   search_clinical_trials
 
-DSR-644 re-grounding (2026-08-04): CTD_*, Pharos_* and drugbank_* are excluded from the
-shipped image and were removed from the list above. CTD chemical-gene → DGIdb (D1);
+DSR-644 re-grounding (2026-08-04): CTD_* and drugbank_* are excluded from the shipped image
+and were removed from the list above. Pharos_* was excluded then and is served again since
+2026-09-24; this body keeps the derived tier below. CTD chemical-gene → DGIdb (D1);
 CTD chemical-disease → OpenTargets drug indications (D6); Pharos TDL → a tier DERIVED from
 OpenTargets tractability (D8); drugbank → OpenTargets/ChEMBL/DGIdb/STRING, which already
 cover every dimension this body needs.

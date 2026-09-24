@@ -384,7 +384,7 @@ class EuropePMCTool(BaseTool):
             query = f"({query}) AND ({clause})"
         if require_has_ft:
             query = f"({query}) AND HAS_FT:Y"
-        articles = self._search(
+        articles, hit_count = self._search(
             query,
             limit,
             enrich_missing_abstract=enrich_missing_abstract,
@@ -393,7 +393,7 @@ class EuropePMCTool(BaseTool):
         failed = len(articles) == 1 and articles[0].get("error")
         metadata = {"count": 0 if failed else len(articles), "query": query,
                     "source": "Europe PMC",
-                    "total": getattr(self, "_last_hit_count", None)}
+                    "total": hit_count}
         if extract_terms_from_fulltext or enrich_missing_abstract:
             # Caps that narrow the answer. Applied silently they read as the literature
             # having nothing more to give.
@@ -495,7 +495,8 @@ class EuropePMCTool(BaseTool):
         page_size = max(1, min(limit, EUROPEPMC_PAGE_MAX))
         core_results, lite_results = [], []
         cursor = "*"
-        self._last_hit_count = None
+        # Returned, never kept on self: one cached instance serves concurrent calls.
+        hit_count = None
         while len(core_results) < limit:
             core_response = request_with_retry(
                 self.session, "GET", self.base_url,
@@ -512,18 +513,18 @@ class EuropePMCTool(BaseTool):
             if core_response.status_code != 200:
                 return [self._error_item(f"Europe PMC API error {core_response.status_code}",
                                          reason=core_response.reason,
-                                         retryable=core_response.status_code in (408, 429, 500, 502, 503, 504))]
+                                         retryable=core_response.status_code in (408, 429, 500, 502, 503, 504))], hit_count
             try:
                 core_payload = core_response.json()
             except ValueError:
-                return [self._error_item("Europe PMC returned invalid JSON", retryable=True)]
+                return [self._error_item("Europe PMC returned invalid JSON", retryable=True)], hit_count
             if "errCode" in core_payload:
                 # A refusal inside a 200 must not read as "no literature".
                 return [self._error_item(
                     f"Europe PMC error {core_payload.get('errCode')}: {core_payload.get('errMsg')}",
-                    retryable=False)]
-            if self._last_hit_count is None:
-                self._last_hit_count = core_payload.get("hitCount")
+                    retryable=False)], hit_count
+            if hit_count is None:
+                hit_count = core_payload.get("hitCount")
             page = core_payload.get("resultList", {}).get("result", [])
             core_results.extend(page)
             if lite_response.status_code == 200:
@@ -813,7 +814,7 @@ class EuropePMCTool(BaseTool):
                         processed += 1
                         continue
 
-        return articles
+        return articles, hit_count
 
 
 @register_tool("EuropePMCFullTextSnippetsTool")

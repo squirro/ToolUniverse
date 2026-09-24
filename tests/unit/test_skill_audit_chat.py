@@ -79,3 +79,25 @@ def test_a_turn_with_a_result_frame_is_returned_and_nothing_is_saved(tmp_path):
 
     assert (turn.answer, turn.calls, turn.error) == ("PRR 54.766", ["run_skill"], None)
     assert list(tmp_path.iterdir()) == []
+
+
+def test_the_studio_proxy_client_sends_the_same_runtime_config_as_the_direct_client(monkeypatch):
+    """The proxy path builds its own request; the conversation id must reach the tools there too."""
+    from skill_audit import squirro_chat
+
+    sent = []
+
+    class Refused:
+        ok, status_code = False, 503
+
+    def post(url, **kwargs):
+        sent.append(kwargs)
+        return Refused()
+
+    monkeypatch.setattr(squirro_chat.requests, "post", post)
+
+    squirro_chat.StudioProxyChatClient("https://c/", "r", "p").ask("A", "q")
+
+    (body,) = [call["json"] for call in sent]
+    assert body == squirro_chat.payload_for("A", "q", body["conversation_id"], "r", "https://c", "p")
+    assert body["runtime_config"]["conversation_id"] == body["conversation_id"]

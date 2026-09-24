@@ -215,8 +215,8 @@ class StudioProxyChatClient(SquirroChatClient):
         self._refresh = refresh_token
 
     def ask(self, agent_id: str, instruction: str, *, timeout: int = 600) -> Turn:
-        payload = {"instruction": instruction, "agent_id": agent_id,
-                   "conversation_id": str(uuid.uuid4())}
+        payload = payload_for(agent_id, instruction, str(uuid.uuid4()),
+                              self._refresh, self.cluster, self.project_id)
         url = STUDIO_PROXY_URL.format(cluster=self.cluster, project=self.project_id)
         try:
             resp = requests.post(url, params={"token": self._refresh},

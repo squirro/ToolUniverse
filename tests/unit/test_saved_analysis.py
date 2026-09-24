@@ -172,10 +172,15 @@ class _Store:
 
 
 class _Handle:
+    """Crosses a step boundary on its second poll, so the client returns without waiting."""
     id = "run"
 
+    def __init__(self):
+        self.polls = 0
+
     async def query(self, _name):
-        return {"finished": False, "step_id": "turn1_call1", "step_label": "Turn 1",
+        self.polls += 1
+        return {"finished": False, "step_id": f"turn1_call{self.polls}", "step_label": "Turn 1",
                 "done": [], "remaining": 1, "waiting_for": None}
 
 
@@ -463,3 +468,42 @@ def test_a_missing_argument_counts_as_null_so_the_agents_defaults_do_not_fail_th
 def test_a_delegated_step_passes_the_save_checks_and_the_round_trip():
     assert problems(DELEGATED) == []
     assert from_bbo(_Graph().parse(data=to_bbo(DELEGATED), format="turtle")) == DELEGATED
+
+
+# -- Typed Inputs (SA-09): a promoted number, a list typed as one value -------------------
+
+TYPED = {"skill": "analyses/t", "inputs": ["size", "drug_list"],
+         "constants": {"input_types": {"size": "integer", "drug_list": "list"}},
+         "steps": [{"id": "t1_c1", "for_each": "drug_list", "as": "drug",
+                    "calls": [{"tool": "t", "arguments": {"drug": "{drug}", "size": "{size}"}}]}]}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("given, expected", [
+    ({"size": "10", "drug_list": "cisplatin, carboplatin"},
+     {"size": 10, "drug_list": ["cisplatin", "carboplatin"]}),
+    ({"size": 7, "drug_list": ["a", "b"]}, {"size": 7, "drug_list": ["a", "b"]}),
+    ({"size": "12.0", "drug_list": "only one"}, {"size": 12, "drug_list": ["only one"]}),
+])
+async def test_typed_inputs_are_converted_before_the_run_starts(given, expected):
+    client = _Client()
+
+    out = await replay(client, _Store(TYPED), PROMPT_ID, given)
+
+    assert out["status"] == "running"
+    assert client.started[0].inputs == expected
+
+
+@pytest.mark.asyncio
+async def test_an_input_that_is_not_its_type_is_refused_with_the_expected_type():
+    client = _Client()
+
+    out = await replay(client, _Store(TYPED), PROMPT_ID, {"size": "ten", "drug_list": "a"})
+
+    assert out["status"] == "schema_mismatch" and "size" in out["hint"] and "integer" in out["hint"]
+    assert client.started == []
+
+
+def test_typed_inputs_survive_the_graphdb_round_trip():
+    assert from_bbo(_Graph().parse(data=to_bbo(TYPED), format="turtle")) == TYPED
+    assert problems(TYPED) == []

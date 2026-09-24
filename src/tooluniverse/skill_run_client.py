@@ -27,6 +27,35 @@ def missing_inputs(process: dict, inputs: dict) -> list[str]:
     return [name for name in process.get("inputs", []) if inputs.get(name) in (None, "")]
 
 
+def typed_inputs(process: dict, inputs: dict) -> tuple[dict, list[str]]:
+    """Inputs converted to the types a Saved Analysis declares (`constants.input_types`).
+
+    A replay's Inputs arrive as the agent read them from the replay text, so a count is "10"
+    and a list is "cisplatin, carboplatin". Returns the converted inputs and, for each value
+    that does not fit its type, why. A process without declared types is left as it is.
+    """
+    types = (process.get("constants") or {}).get("input_types") or {}
+    out, bad = dict(inputs), []
+    for name, kind in types.items():
+        value = out.get(name)
+        if value is None:
+            continue
+        try:
+            if kind == "list":
+                out[name] = value if isinstance(value, list) else \
+                    [part.strip() for part in str(value).split(",") if part.strip()]
+            elif kind in ("integer", "number"):
+                number = float(value)
+                if kind == "integer":
+                    if number != int(number):
+                        raise ValueError(value)
+                    number = int(number)
+                out[name] = number
+        except (TypeError, ValueError):
+            bad.append(f"{name} must be {'an' if kind == 'integer' else 'a'} {kind}, not {value!r}")
+    return out, bad
+
+
 def run_id_for(skill: str) -> str:
     return f"skill-{skill}-{uuid.uuid4().hex[:8]}"
 
@@ -113,6 +142,10 @@ async def start(client: Any, store: Any, skill: str, inputs: dict, *,
                 "required_inputs": process.get("inputs", []),
                 "optional_inputs": process.get("optional_inputs", []),
                 "hint": "bind these from the question, then call run_skill again"}
+    inputs, bad = typed_inputs(process, inputs or {})
+    if bad:
+        return {"status": "schema_mismatch", "required_inputs": process.get("inputs", []),
+                "hint": "; ".join(bad) + ". Pass each input in that type, then call again."}
     undecided = undecided_inputs(process, inputs or {})
     if undecided:
         return {"status": "confirm_inputs", "undecided_inputs": undecided,

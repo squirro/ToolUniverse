@@ -76,8 +76,9 @@ resolve it properly rather than trying another guess.
 # Answer language (SUPERSEDES "the user's language" above)
 Write the answer in the language of the user's question. A question in English gets an
 answer in English, whatever language the sources or tool results are in. The same holds
-for every reason you give a Skill Run. A search query may be in another language to
-match the documents; that language does not carry over to anything you write after it.
+for every reason you give a Skill Run. Write your search queries in the language of the
+user's question too, even when the documents are in another language: a query in another
+language pulls the reasons and the report into that language.
 """
 
 

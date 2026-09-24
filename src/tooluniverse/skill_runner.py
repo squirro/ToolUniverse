@@ -1193,6 +1193,8 @@ def checked(spec: dict, step_id: str, wants: list[str], outcome: dict, facts: di
     if not rules:
         return outcome, None
     produced = {n: outcome["facts"][n] for n in wants if n in outcome["facts"]}
+    # A check may name a list this same step extracted, not only one held before it.
+    facts = {**facts, **outcome["facts"]}
     if failures is None:
         failures = check_facts(rules, produced, facts, tables=tables)
         rows_by_key = materialised(rules, produced, facts, tables=tables)

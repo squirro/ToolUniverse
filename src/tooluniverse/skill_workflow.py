@@ -363,7 +363,8 @@ class SkillWorkflow:
         produced = {n: outcome["facts"][n] for n in wants if n in outcome["facts"]}
         return await workflow.execute_activity(
             check_answer,
-            AnswerToCheck(workflow.info().workflow_id, rules, produced, self._run["facts"]),
+            AnswerToCheck(workflow.info().workflow_id, rules, produced,
+                          {**self._run["facts"], **outcome["facts"]}),
             start_to_close_timeout=CALL_TIMEOUT,
             retry_policy=RetryPolicy(maximum_attempts=3))
 

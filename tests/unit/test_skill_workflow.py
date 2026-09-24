@@ -703,6 +703,53 @@ async def test_a_selection_answered_as_keys_becomes_the_tables_rows_on_temporal_
     assert handed["unresolved"] == [] and handed["blocked"] == []
 
 
+# A check on a judged value sees the lists its own step extracted.
+CHOOSING = {
+    "skill": "choosing", "inputs": ["class_id"], "tables": {"member_rows": "fact"},
+    "steps": [
+        {"id": "choose",
+         "calls": [{"tool": "class_members", "arguments": {"class_id": "{class_id}"}}],
+         "extract": {"class_members": "data[].name"},
+         "collect": {"member_rows": {"path": "data", "flatten": True, "fields": ["name", "atc"]}},
+         "judge": ["comparator", "comparator_row"],
+         "check": {"comparator": [{"only_in": "class_members"}],
+                   "comparator_row": [{"selected_from": {"table": "member_rows", "key": "name",
+                                                         "where": {"atc": "L01XA02"}}}]},
+         "produces": ["class_members", "member_rows", "comparator", "comparator_row"]},
+    ],
+}
+MEMBERS = {"class_members": {"data": [{"name": "cisplatin", "atc": "L01XA01"},
+                                      {"name": "carboplatin", "atc": "L01XA02"}]}}
+
+
+async def test_a_check_reads_the_list_its_own_step_extracted_on_temporal_too():
+    seen = []
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        handed, _ = await _run(
+            env, MEMBERS, CHOOSING, {"class_id": "L01XA"}, "run-choose",
+            before_result=lambda h, e: _answer(
+                h, {"comparator": "carboplatin", "comparator_row": ["carboplatin"]}, seen=seen))
+
+    assert handed["blocked"] == [], handed["blocked"]
+    assert len(seen) == 1, "a correct choice is not asked again"
+    assert handed["facts"]["comparator"] == "carboplatin"
+    assert handed["facts"]["comparator_row"] == [{"name": "carboplatin", "atc": "L01XA02"}]
+
+
+async def test_a_check_beside_no_table_reads_the_list_its_own_step_extracted_on_temporal_too():
+    step = {**CHOOSING["steps"][0], "judge": ["comparator"],
+            "check": {"comparator": [{"only_in": "class_members"}]},
+            "produces": ["class_members", "member_rows", "comparator"]}
+    seen = []
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        handed, _ = await _run(
+            env, MEMBERS, {**CHOOSING, "steps": [step]}, {"class_id": "L01XA"}, "run-choose-plain",
+            before_result=lambda h, e: _answer(h, {"comparator": "carboplatin"}, seen=seen))
+
+    assert handed["blocked"] == [], handed["blocked"]
+    assert len(seen) == 1 and handed["facts"]["comparator"] == "carboplatin"
+
+
 UPSTREAM = {"status": "error", "error": "Monarch answered HTTP 502 (Bad Gateway)",
             "upstream_status": 502, "retryable": True,
             "error_details": {"type": "ToolServerError", "retriable": True}}

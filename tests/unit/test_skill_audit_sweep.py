@@ -227,3 +227,24 @@ def test_a_finished_bundle_is_kept_whole_in_the_trace():
 
     assert len(kept[0]["content"]["output"]) == MAX_OUTPUT
     assert kept[1]["content"]["output"] == big
+
+
+def test_a_compact_finished_bundle_is_kept_whole_too():
+    from skill_audit.sweep import MAX_OUTPUT
+    big = json.dumps({"status": "finished", "bundle": {"facts": {"x": "y" * (2 * MAX_OUTPUT)}}},
+                     separators=(",", ":"))
+
+    kept = trim_actions([{"tool_name": "continue_skill", "content": {"output": big}}])
+
+    assert kept[0]["content"]["output"] == big
+
+
+def test_content_serialised_as_a_string_is_trimmed_not_crashed_on():
+    action = {"tool_name": "execute_tool", "status": "finished",
+              "content": json.dumps({"parameters": {"tool_name": "UniProt_search"},
+                                     "output": '{"results": [1]}'})}
+
+    kept = trim_actions([action])
+
+    assert kept[0]["content"] == {"parameters": {"tool_name": "UniProt_search"},
+                                  "output": '{"results": [1]}'}

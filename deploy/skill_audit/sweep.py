@@ -32,7 +32,8 @@ from threading import Lock
 
 import yaml
 
-from skill_audit.oracle import body_tool_coverage, score, verdict
+from skill_audit.oracle import (body_tool_coverage, is_finished, output_text,
+                                 parameters_of, score, verdict)
 from skill_audit.squirro_chat import SquirroChatClient
 
 DEPLOY = Path(__file__).resolve().parents[1]
@@ -147,18 +148,15 @@ def trim_actions(actions: list[dict]) -> list[dict]:
     """
     kept = []
     for action in actions or []:
-        content = action.get("content") or {}
-        output = content.get("output")
-        if not isinstance(output, str):
-            output = json.dumps(output) if output is not None else ""
+        output = output_text(action)
         # The finished Skill Run bundle is the evidence the number check reads
         # and is larger than the cap: it is kept whole.
         whole = (action.get("tool_name") in ("run_skill", "continue_skill")
-                 and '"status": "finished"' in output[:200])
+                 and is_finished(output))
         kept.append({
             "tool_name": action.get("tool_name"),
             "status": action.get("status"),
-            "content": {"parameters": content.get("parameters") or {},
+            "content": {"parameters": parameters_of(action),
                         "output": output if whole else output[:MAX_OUTPUT]},
         })
     return kept

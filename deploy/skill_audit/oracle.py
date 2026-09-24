@@ -77,7 +77,8 @@ WEB_TOOLS = frozenset({
 # Reaching for either of these IS taking the skill route.
 SKILL_TOOLS = ("find_skill", "get_skill")
 
-_ENVELOPE_HEAD = re.compile(r'\s*\{\s*"status"\s*:\s*"(success|error)"')
+_ENVELOPE_HEAD = re.compile(r'\s*\{\s*"status"\s*:\s*"(success|error|failed|failure)"')
+_FAILED_STATES = frozenset({"error", "failed", "failure"})
 _TOOL_CALL = re.compile(r"`([A-Za-z][A-Za-z0-9_]{2,})`\s*\(")
 _FOOTNOTE_DEF = re.compile(r"^\[\^[^\]]+\]:\s*(.*)$", re.MULTILINE)
 _NOT_FOUND = re.compile(r"tool\s+'[^']+'\s+not found|not a registered tool|"
@@ -110,6 +111,18 @@ _DECLINE = re.compile(
     re.IGNORECASE,
 )
 _EMPTY_CONTAINERS = ("results", "hits", "data", "items", "records", "rows")
+# A failure told in words rather than raised. Read at the head of a reply only:
+# a result's own text (an abstract, a label) may say "error" or "failed" anywhere.
+_PROSE_FAILURE = re.compile(
+    r"^\s*(?:error|failed|failure)\b\s*[:.!-]|"
+    r"\bfailed to (?:fetch|retrieve|connect|call|execute|query|load|get|parse|contact)\b|"
+    r"\brequest (?:failed|timed out)\b|\btimed out\b|"
+    r"\bstatus(?: code)?:? [45]\d\d\b|\b(?:[45]\d\d )?(?:internal server error|"
+    r"service (?:temporarily )?unavailable|bad gateway|gateway time-?out|too many requests)\b|"
+    r"\brate limit(?:ed| exceeded)\b|\b40[13] (?:forbidden|unauthori[sz]ed)\b",
+    re.IGNORECASE,
+)
+_PROSE_HEAD = 300
 
 
 @dataclass
@@ -169,31 +182,70 @@ def body_tool_coverage(body: str | None, fired: list[str]) -> dict:
     }
 
 
-def _output_text(action: dict) -> str:
-    content = action.get("content") or {}
+def _content(action: dict) -> dict | str:
+    """An action's content: a dict on the wire, or that dict serialised to a string."""
+    content = action.get("content")
+    if isinstance(content, str):
+        try:
+            parsed = json.loads(content)
+        except ValueError:
+            return content
+        return parsed if isinstance(parsed, dict) else content
+    return content if isinstance(content, dict) else {}
+
+
+def output_text(action: dict) -> str:
+    """The text a tool gave back. A bare string content is the output itself."""
+    content = _content(action)
+    if isinstance(content, str):
+        return content
     output = content.get("output")
     if output is None:
         return ""
-    return output if isinstance(output, str) else json.dumps(output)
+    return output if isinstance(output, str) else json.dumps(output, default=str)
 
 
-def _parameters(action: dict) -> dict:
-    content = action.get("content") or {}
-    params = content.get("parameters")
+
+def parameters_of(action: dict) -> dict:
+    content = _content(action)
+    params = content.get("parameters") if isinstance(content, dict) else None
     return params if isinstance(params, dict) else {}
 
 
 def _dispatched_tool(action: dict) -> str | None:
     """The real TU tool behind an execute_tool call."""
-    params = _parameters(action)
+    params = parameters_of(action)
     name = params.get("tool_name") or params.get("name")
     return name if isinstance(name, str) else None
 
 
 def _loaded_skill(action: dict) -> str | None:
-    params = _parameters(action)
+    params = parameters_of(action)
     name = params.get("name") or params.get("skill_name")
     return name if isinstance(name, str) else None
+
+
+def _lists_in(value) -> list[list]:
+    """Every list in a payload, found through its dicts (not inside the lists)."""
+    if isinstance(value, list):
+        return [value]
+    if isinstance(value, dict):
+        return [lst for v in value.values() for lst in _lists_in(v)]
+    return []
+
+
+def _texts_outside_lists(value) -> int:
+    """Non-empty text fields outside any list: a record's own content."""
+    if isinstance(value, str):
+        return 1 if value.strip() else 0
+    if isinstance(value, dict):
+        return sum(_texts_outside_lists(v) for v in value.values())
+    return 0
+
+
+# An empty search echoes its query and a note; a record (a disease, a substance)
+# with an empty side list carries its own name, definition, identifiers.
+_RECORD_TEXTS = 3
 
 
 def _is_empty_result(text: str) -> bool:
@@ -213,8 +265,25 @@ def _is_empty_result(text: str) -> bool:
                       if k.lower() in _EMPTY_CONTAINERS]
         if containers:
             return all(not c for c in containers)
+        # Any key name: a payload whose every list is empty holds no rows,
+        # unless it is itself a record.
+        lists = _lists_in(parsed)
+        if lists:
+            return (all(not lst for lst in lists)
+                    and _texts_outside_lists(parsed) < _RECORD_TEXTS)
         return not parsed
     return False
+
+
+def _failure_outcome(message: str) -> str:
+    """What a reported failure was: a wrong call, an empty answer, or a real error."""
+    for pattern, outcome in ((_NOT_FOUND, "not_found"),
+                             (_SCHEMA_REJECT, "schema"),
+                             (_NO_MATCHES, "empty"),
+                             (_LOOKUP_MISS, "miss")):
+        if pattern.search(message):
+            return outcome
+    return "error"
 
 
 def classify_call(text: str, status: str | None = None) -> str:
@@ -239,14 +308,7 @@ def classify_call(text: str, status: str | None = None) -> str:
         if head:
             if head.group(1) == "success":
                 return "ok"
-            message = stripped[:2000]
-            for pattern, outcome in ((_NOT_FOUND, "not_found"),
-                                     (_SCHEMA_REJECT, "schema"),
-                                     (_NO_MATCHES, "empty"),
-                                     (_LOOKUP_MISS, "miss")):
-                if pattern.search(message):
-                    return outcome
-            return "error"
+            return _failure_outcome(stripped[:2000])
 
     if isinstance(envelope, dict):
         state = envelope.get("status")
@@ -255,16 +317,12 @@ def classify_call(text: str, status: str | None = None) -> str:
         details = envelope.get("error_details")
         if isinstance(details, dict):
             message += " " + str(details.get("type", ""))
-        if state == "error" or (state is None and envelope.get("error")):
-            if _NOT_FOUND.search(message):
-                return "not_found"
-            if _SCHEMA_REJECT.search(message):
-                return "schema"
-            if _NO_MATCHES.search(message):
-                return "empty"
-            if _LOOKUP_MISS.search(message):
-                return "miss"
-            return "error"
+        failed = (state in _FAILED_STATES or envelope.get("success") is False
+                  or (state is None and envelope.get("error")))
+        # No envelope status: a message that reports a failure is one.
+        if failed or (state is None
+                      and _PROSE_FAILURE.search(message.strip()[:_PROSE_HEAD])):
+            return _failure_outcome(message)
         payload = envelope.get("data", envelope)
         return "empty" if _is_empty_result(json.dumps(payload)) else "ok"
 
@@ -274,6 +332,8 @@ def classify_call(text: str, status: str | None = None) -> str:
         return "schema"
     if _RAISED.search(stripped):
         return "error"
+    if _PROSE_FAILURE.search(stripped[:_PROSE_HEAD]):
+        return _failure_outcome(stripped[:2000])
     return "empty" if _is_empty_result(stripped) else "ok"
 
 
@@ -389,7 +449,7 @@ def score(
         tool = _dispatched_tool(action)
         if tool:
             fired.append(tool)
-        text = _output_text(action)
+        text = output_text(action)
         outcome = classify_call(text, action.get("status"))
         if outcome == "not_found":
             findings.append(_finding("tool_not_found",
@@ -433,6 +493,22 @@ def score(
     return findings
 
 
+_FINISHED = re.compile(r'"status"\s*:\s*"finished"')
+
+
+def is_finished(text: str) -> bool:
+    """A Skill Run reply that says the run finished, however it was serialised.
+
+    Parsed, only the reply's own status counts. Cut mid-string by the output
+    cap, the status is looked for as a token, whitespace free.
+    """
+    try:
+        parsed = json.loads(text)
+    except (ValueError, TypeError):
+        return bool(_FINISHED.search(text or ""))
+    return isinstance(parsed, dict) and parsed.get("status") == "finished"
+
+
 def finished_bundle(actions: list[dict]) -> str | None:
     """The text of the finished Skill Run bundle in a modelled trace, or None.
 
@@ -442,8 +518,8 @@ def finished_bundle(actions: list[dict]) -> str | None:
     for action in actions or []:
         if action.get("tool_name") not in ("run_skill", "continue_skill"):
             continue
-        out = _output_text(action)
-        if '"status": "finished"' in out:
+        out = output_text(action)
+        if is_finished(out):
             return out
     return None
 

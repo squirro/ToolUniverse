@@ -24,7 +24,7 @@ import time
 from pathlib import Path
 
 from .squirro_chat import SquirroChatClient, StudioProxyChatClient
-from .oracle import finished_bundle, uncited_numbers
+from .oracle import finished_bundle, output_text, parameters_of, uncited_numbers
 from .sweep import _load_dotenv, trim_actions
 
 DEPLOY = Path(__file__).resolve().parents[1]
@@ -91,6 +91,9 @@ def _rounded_forms(value: str) -> set[str]:
 # Not a PRR: "95% CI", "COVID-19", the footnote marker [^3^], the isotope ^{177}Lu.
 _PRR = re.compile(r"PRR[^0-9\n]{0,24}?(?<![-{^\[])(\d{1,4}(?:\.\d{1,3})?)(?![\d.^])(?!\s*\\?%)")
 _CELL_NUMBER = re.compile(r"(\d{1,4}(?:\.\d{1,3})?)")
+# Bundle keys, read whatever the serialiser's whitespace.
+_CALLS = re.compile(r'"calls"\s*:\s*(\{.*?\})', re.S)
+_DELEGATE = re.compile(r'"kind"\s*:\s*"delegate"')
 
 
 def prr_values(answer: str) -> list[str]:
@@ -129,18 +132,17 @@ def score(turn_actions: list[dict], answer: str, bundle_path: Path | None = None
     uncited = uncited_numbers(answer, bundle_text) if bundle_text is not None else []
     evidence: set[str] = set()
     for action in turn_actions:
-        output = (action.get("content") or {}).get("output") or ""
-        for value in numbers_in(output):
+        for value in numbers_in(output_text(action)):
             evidence |= _rounded_forms(value)
     stated = prr_values(answer)
     traceable = [v for v in stated if _rounded_forms(v) & evidence]
     reached = set()
     for a in turn_actions:
         if a.get("tool_name") == "execute_tool":
-            reached.add(((a.get("content") or {}).get("parameters") or {}).get("tool_name"))
+            reached.add(parameters_of(a).get("tool_name"))
         elif a.get("tool_name") in ("run_skill", "continue_skill"):
             # The server made the calls; the finished bundle names them per step.
-            m = re.search(r'"calls": (\{.*?\})', (a.get("content") or {}).get("output") or "", re.S)
+            m = _CALLS.search(output_text(a))
             if m:
                 try:
                     for tools in json.loads(m.group(1)).values():
@@ -158,7 +160,7 @@ def score(turn_actions: list[dict], answer: str, bundle_path: Path | None = None
         "used_get_skill": any(a.get("tool_name") == "get_skill" for a in turn_actions),
         "delegated_questions": sum(
             1 for a in turn_actions if a.get("tool_name") in ("run_skill", "continue_skill")
-            and '"kind": "delegate"' in ((a.get("content") or {}).get("output") or "")),
+            and _DELEGATE.search(output_text(a))),
         "execute_tool_calls": sum(1 for a in turn_actions if a.get("tool_name") == "execute_tool"),
         "answer_len": len(answer or ""),
         "uncited_numbers": [u["number"] for u in uncited],

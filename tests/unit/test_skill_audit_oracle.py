@@ -11,6 +11,7 @@ known environment artefacts (provider bio-risk refusal, cold container) are
 `retry` — they must not be counted as skill defects.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -613,3 +614,115 @@ def test_a_four_decimal_score_is_cited_by_its_bundle_value():
     """Open Targets and OptimusKG scores are written to four decimals in reports."""
     bundle = '{"facts": {"opentargets_rows": [{"score": 0.37883043841234567}, {"score": 9.18142}]}}'
     assert uncited_numbers("NEU1 scores 0.3788; liver median TPM 9.1814.", bundle) == []
+
+
+# --- an empty result under any key, a failure told in words -----------------------
+
+@pytest.mark.parametrize("payload", [
+    '{"articles": [], "query": "SSTR2 terbium"}',
+    '{"status": "success", "data": {"studies": [], "total_count": 0}}',
+    '{"target": "ENSG00000180616", "associations": []}',
+    '{"result": {"hits_by_source": {"pubmed": [], "epmc": []}}}',
+])
+def test_an_empty_list_under_any_key_is_an_empty_result(payload):
+    assert classify_call(payload) == "empty"
+
+
+def test_a_starved_run_keyed_by_studies_and_articles_is_warned():
+    actions = [
+        _action("get_skill", parameters={"name": "infectious-disease"}),
+        _exec("BVBRC_search_taxonomy", output='{"studies": []}'),
+        _exec("UniProt_search", output='{"articles": [], "query": "H5N1"}'),
+    ]
+    findings = score("infectious-disease", actions=actions,
+                     answer="Some prose.", error=None, body=BODY)
+    assert "zero_rows" in _codes(findings)
+
+
+def test_a_record_with_an_empty_side_list_is_a_result():
+    """Orphanet_get_disease on sr-dev: a full disease record whose Synonyms is []."""
+    record = ('{"status": "success", "data": {"ORPHAcode": "646", '
+              '"Preferred term": "Niemann-Pick disease type C", '
+              '"Definition": "A rare lysosomal lipid storage disease.", "Synonyms": []}}')
+    assert classify_call(record) == "ok"
+
+
+def test_rows_under_an_unusual_key_are_a_result():
+    assert classify_call('{"gene": "SSTR2", "associations": [{"disease": "NET"}], '
+                         '"warnings": []}') == "ok"
+
+
+@pytest.mark.parametrize("text", [
+    "Error: upstream returned status 503",
+    "Failed to fetch data from the UniProt REST endpoint after 3 attempts.",
+    "The request timed out while waiting for ClinicalTrials.gov to answer.",
+    "429 Too Many Requests: rate limit exceeded for this API key",
+    '{"message": "Failed to retrieve records from Europe PMC"}',
+    '{"status": "failed", "message": "worker crashed"}',
+    '{"success": false, "detail": "backend unavailable"}',
+])
+def test_a_failure_reported_in_prose_is_not_clean(text):
+    assert classify_call(text) == "error"
+
+
+def test_a_prose_failure_that_says_nothing_matched_is_empty_not_broken():
+    assert classify_call("Error: no results found for the given query") == "empty"
+
+
+def test_a_real_result_that_mentions_error_in_its_text_stays_clean():
+    abstract = ("Dosimetry of [177Lu]Lu-DOTATATE: the measurement error of SPECT "
+                "quantification was below 5%, and one arm failed to reach significance. "
+                "Standard error bars are shown in Figure 2; no error was attributed to "
+                "the timed acquisition protocol.")
+    assert classify_call(abstract) == "ok"
+    assert classify_call('{"status": "success", "data": {"abstract": "Error: '
+                         'measurement failed to reach significance"}}') == "ok"
+
+
+# --- the bundle check reads the reply, not its whitespace ------------------------
+
+def _compact_modelled_turn(answer):
+    bundle = {"facts": {"prrs": [393.41, 7.524]}}
+    return [
+        _action("get_skill", parameters={"name": "clinical-data-integration"}, output="# skill"),
+        _action("run_skill", parameters={"skill": "clinical-data-integration"},
+                output=json.dumps({"status": "running", "run_id": "r1"}, separators=(",", ":"))),
+        _action("continue_skill", parameters={"run_id": "r1"},
+                output=json.dumps({"status": "finished", "run_id": "r1", "bundle": bundle},
+                                  separators=(",", ":"))),
+    ], answer
+
+
+def test_a_compactly_serialised_finished_run_is_still_a_served_run():
+    actions, answer = _compact_modelled_turn("PRR 393.4 for the tumour.")
+    codes = _codes(score("clinical-data-integration", actions, answer, error=None))
+    assert "skill_without_tools" not in codes
+
+
+def test_a_compactly_serialised_bundle_still_gets_the_number_check():
+    actions, answer = _compact_modelled_turn("PRR 393.4; a union-cohort ROR of 10.861.")
+    findings = score("clinical-data-integration", actions, answer, error=None)
+    uncited = [f for f in findings if f.code == "uncited_number"]
+    assert [n["number"] for n in uncited[0].evidence["numbers"]] == ["10.861"]
+
+
+def test_a_running_reply_with_a_finished_step_is_not_a_finished_run():
+    """Only the reply's own status says the run finished; a step inside it does not."""
+    from skill_audit.oracle import finished_bundle
+    running = '{"status": "running", "steps": [{"name": "faers", "status": "finished"}]}'
+    cut = '{"status":"finished","bundle":{"facts":{"n":1}'          # cut by the output cap
+    assert finished_bundle([_action("continue_skill", output=running)]) is None
+    assert finished_bundle([_action("continue_skill", output=cut)]) == cut
+
+
+def test_content_serialised_as_a_string_is_read_like_a_dict():
+    """The oracle and the criteria module read one wire shape: content may be
+    the dict or that dict as a JSON string."""
+    as_string = {"tool_name": "execute_tool",
+                 "content": json.dumps({"parameters": {"tool_name": "UniProt_search"},
+                                        "output": '{"results": []}'})}
+    actions = [_action("get_skill", parameters={"name": "infectious-disease"}), as_string]
+    findings = score("infectious-disease", actions=actions,
+                     answer="Some prose.", error=None, body=BODY)
+    starved = next(f for f in findings if f.code == "zero_rows")
+    assert starved.evidence["calls"] == ["UniProt_search"]

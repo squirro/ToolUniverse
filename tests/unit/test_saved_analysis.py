@@ -15,6 +15,7 @@ from rdflib import Graph
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from tooluniverse.saved_analysis import (  # noqa: E402
+    problems,
     SavedAnalysisRefused,
     analysis_skill,
     save,
@@ -216,3 +217,56 @@ async def test_replay_of_a_bad_prompt_id_is_an_error_and_reads_nothing():
     out = await replay(client, store, "../adverse-event-detection", {})
 
     assert out["status"] == "error" and store.asked == [] and client.started == []
+
+
+# -- Derived values at replay (SA-03): the converter's shapes run on NEW outputs ---------
+
+from tooluniverse.skill_runner import SkillRunner  # noqa: E402
+
+# As the delivery repo's converter proposes them for "search AR-V7 trials, then each one's
+# details" (three recorded calls for three trials) and "map the gene, then its structure".
+LOOP = {"skill": "analyses/x", "inputs": ["intervention"], "steps": [
+    {"id": "t1_c1", "label": "Turn 1: search", "produces": ["nct_id_list"],
+     "extract": {"nct_id_list": "studies[].nct_id"},
+     "calls": [{"tool": "search", "arguments": {"intervention": "{intervention}"}}]},
+    {"id": "t1_c2", "label": "Turn 1: get_study", "requires": ["t1_c1"],
+     "for_each": "nct_id_list", "as": "nct_id",
+     "calls": [{"tool": "get_study", "arguments": {"nct_id": "{nct_id}", "sections": "summary"}}]},
+]}
+ONLY = {"skill": "analyses/y", "inputs": ["gene_names"], "steps": [
+    {"id": "t1_c1", "label": "Turn 1: map", "produces": ["qualifier"],
+     "extract": {"qualifier": "results.0.to"},
+     "calls": [{"tool": "map", "arguments": {"gene_names": "{gene_names}"}}]},
+    {"id": "t1_c2", "label": "Turn 1: structure", "requires": ["t1_c1"],
+     "calls": [{"tool": "structure", "arguments": {"qualifier": "{qualifier}"}}]},
+]}
+
+
+def _replay(graph, inputs, outputs):
+    calls = []
+    runner = SkillRunner(graph, execute=lambda t, a: calls.append((t, a)) or outputs.get(t, {}))
+    run_id = runner.start(inputs)["run_id"]
+    for _ in range(10):
+        if runner.advance(run_id) is None or runner.state(run_id).get("finished"):
+            break
+    return calls
+
+
+def test_a_loop_makes_one_call_for_every_item_of_the_new_output():
+    new = {"search": {"studies": [{"nct_id": f"NCT0{n}"} for n in range(1, 5)]}}
+
+    calls = _replay(LOOP, {"intervention": "KRAS"}, new)
+
+    assert calls[0] == ("search", {"intervention": "KRAS"})
+    assert [a for t, a in calls if t == "get_study"] == [
+        {"nct_id": f"NCT0{n}", "sections": "summary"} for n in range(1, 5)]
+
+
+def test_the_only_value_is_taken_from_the_new_output_not_the_recorded_one():
+    calls = _replay(ONLY, {"gene_names": "KRAS"}, {"map": {"results": [{"to": "P01116"}]}})
+
+    assert ("structure", {"qualifier": "P01116"}) in calls
+
+
+def test_both_shapes_pass_the_save_checks():
+    assert problems(LOOP) == [] and problems(ONLY) == []

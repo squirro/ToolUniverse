@@ -137,7 +137,7 @@ every step and every tool call itself.
    the rows you need with `fetch_run_data(run_id=..., table=..., columns=[...])`.
    Every number comes from `handover.facts` or from rows you fetched; state
    `failures`, `blocked`, `unresolved`, `steps_skipped` and `excluded` as gaps.
-   Follow the five lines in `handover.write_the_report`.
+   Follow every line in `handover.write_the_report`.
 4. Before you answer the user, hand the whole draft to
    `submit_report(run_id=..., draft=...)`. `accepted`: send it. `revise`: correct
    each named statement and submit once more. `accepted_with_failures`: send it

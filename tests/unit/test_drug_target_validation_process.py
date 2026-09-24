@@ -230,7 +230,32 @@ def test_a_run_holding_the_whole_list_of_drugs_is_not_asked_for_a_narrowing(tmp_
 
     (table,) = [t for t in handed["tables"] if t["table"] == "results.modulators"]
     assert table["source_total"] == 82
-    assert table["rows"] >= 82, "the drugs the run holds, not the calls the step made"
+    assert table["held"] == 82, "the drugs the run holds, not the calls the step made"
     owed = [f for f in check_report("The target has known drugs.", {"handover": handed})
             if f["kind"] == "narrowing_not_stated" and "results.modulators" in f["text"]]
     assert owed == []
+
+
+def test_another_tools_rows_do_not_hide_a_narrowing_of_the_drugs(tmp_path):
+    """25 of 82 drugs beside 60 ChEMBL targets is still 25 of 82: the report owes the total."""
+    from tooluniverse.skill_report_check import check_report
+
+    egfr = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "opentargets"
+                       / "egfr_drug_candidates_2026-09-24.json").read_text())
+    holder = egfr["data"]["target"]["drugAndClinicalCandidates"]
+    one_page = {"status": "success",
+                "data": {"target": {**egfr["data"]["target"],
+                                    "drugAndClinicalCandidates": {**holder, "rows": holder["rows"][:25]}}},
+                "metadata": {"total": 82, "returned": 25, "has_more": True, "next_page": 2}}
+    chembl = {"status": "success",
+              "data": [{"target_chembl_id": f"CHEMBL{n}", "pref_name": f"EGFR complex {n}"}
+                       for n in range(60)]}
+    handed, calls, asked = _drive(
+        tmp_path, responses={"OpenTargets_get_associated_drugs_by_target_ensemblID": one_page,
+                             "ChEMBL_search_targets": chembl})
+
+    (table,) = [t for t in handed["tables"] if t["table"] == "results.modulators"]
+    assert (table["rows"], table["source_total"]) == (85, 82)
+    owed = [f for f in check_report("The target has known drugs.", {"handover": handed})
+            if f["kind"] == "narrowing_not_stated" and "results.modulators" in f["text"]]
+    assert owed, "the 25 drugs held must be read against the 82, not the 85 rows of the step"

@@ -26,7 +26,7 @@ from .skill_graph import (
     stalled_steps,
 )
 from .skill_ontology_placing import place
-from .skill_working_record import WorkingRecord
+from .skill_working_record import WorkingRecord, payload_rows
 
 _OPS: dict[str, Callable[[Any, Any], bool]] = {
     ">=": lambda a, b: a >= b,
@@ -667,7 +667,7 @@ WRITE_THE_REPORT = [
     "State a finding only from a source you read: an abstract, a page, a row -- never from a "
     "title alone.",
     "Wherever this run holds less than the source, say both numbers: how much the source holds "
-    "(source_total) and how much you read of it.",
+    "(source_total) and how much this run holds of it (held).",
     "A number published in a paper or a page stands beside a number this run computed, each "
     "with its source and period; never merge the two.",
     "Cite only what this run received. A tool you called before run_skill left no record "
@@ -788,6 +788,13 @@ def keep_evidence(record: WorkingRecord, tables: dict | None, outcome: dict) -> 
     return described
 
 
+def _per_total_call(results: list, items: list | None, measure: Callable[[Any], Any]) -> Any:
+    """`measure` of the call(s) a step's total comes from: one per loop item, else the first call."""
+    if items and len(items) == len(results):
+        return {str(item): measure(payload) for item, payload in zip(items, results)}
+    return measure(results[0]) if results else None
+
+
 def source_total(spec: dict, results: list, items: list | None) -> Any:
     """How much the source holds for this step's calls, by the path the step declares.
 
@@ -797,16 +804,25 @@ def source_total(spec: dict, results: list, items: list | None) -> Any:
     path = spec.get("total")
     if not path:
         return "unknown"
-    found = []
-    for payload in results:
+
+    def total(payload: Any) -> Any:
         try:
-            found.append(_dig(payload, path))
+            return _dig(payload, path)
         except SkillPathError:
-            found.append(None)               # a bad path holds no total, same as a source that gave none
-    if items and len(items) == len(found):
-        return {str(item): (total if total is not None else "unknown")
-                for item, total in zip(items, found)}
-    return found[0] if found and found[0] is not None else "unknown"
+            return None                      # a bad path holds no total, same as a source that gave none
+    found = _per_total_call(results, items, total)
+    if isinstance(found, dict):
+        return {item: (t if t is not None else "unknown") for item, t in found.items()}
+    return found if found is not None else "unknown"
+
+
+def held_rows(results: list, items: list | None) -> Any:
+    """The rows the run holds from the call(s) `source_total` reads, in its shape.
+
+    A step's other tools add rows to its table, never to what its total is read against.
+    """
+    return _per_total_call(results, items,
+                           lambda payload: 0 if payload is None else len(payload_rows(payload)))
 
 
 def absorb_recorded(record: WorkingRecord, tables: dict | None, spec: dict,
@@ -817,7 +833,10 @@ def absorb_recorded(record: WorkingRecord, tables: dict | None, spec: dict,
     outcome["evidence"] = keep_evidence(record, tables, outcome)
     if results:
         described = record.describe(f"results.{spec['id']}")
-        described["source_total"] = source_total(spec, results, loop_items(spec, calls))
+        items = loop_items(spec, calls)
+        described["source_total"] = source_total(spec, results, items)
+        if spec.get("total"):
+            described["held"] = held_rows(results, items)
         outcome["evidence"].append(described)
     repair = spec.get("repair")
     outcome["resolved"] = resolved(spec, repair, results) if repair else True

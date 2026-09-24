@@ -1394,7 +1394,7 @@ class SMCP(FastMCP):
 
             The server reads the draft against what you received: the hand-over's facts and
             every row you fetched. Every number and every link must be there, and wherever
-            the run holds less than its source (a table's `source_total` above its `rows`)
+            the run holds less than its source (a table's `source_total` above its `held`)
             the draft must give both numbers.
 
             Write the draft in the language of the user's question.

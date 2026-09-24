@@ -58,7 +58,7 @@ report: >-
   or a file. Trials are the table `trial_rows`, one row per trial with its
   phase and status: read the rows you need with fetch_run_data and cite each trial as
   https://clinicaltrials.gov/study/<nct_id>. Each table's description gives
-  `source_total` beside `rows`: wherever the run holds less than the source, say so
+  `source_total` beside `held`: wherever the run holds less than the source, say so
   ("the 200 most relevant of 4,120"). Read pharmacogenomic findings as risk-narrowing;
   an empty CPIC result means no guideline exists, which is an answer. The web pages
   are the table `web_rows`, one row per page with the query it answered: read them

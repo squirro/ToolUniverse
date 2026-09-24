@@ -51,7 +51,7 @@ def _record_lists(data: dict) -> list[list]:
     return [found for v in data.values() if isinstance(v, dict) for found in _record_lists(v)]
 
 
-def _rows_of(payload: Any) -> list[dict]:
+def payload_rows(payload: Any) -> list[dict]:
     """The rows inside one tool result: its one list of records, even under holders
     (data.target.drugs.rows), else the result as one row."""
     data = payload.get("data", payload) if isinstance(payload, dict) else payload
@@ -163,7 +163,7 @@ class WorkingRecord:
     def _rows(self, name: str) -> list[dict]:
         if name.startswith(RESULTS):
             return [row for payload in self.results(name[len(RESULTS):])
-                    for row in _rows_of(payload)]
+                    for row in payload_rows(payload)]
         db = self._open()
         try:
             found = db.execute("SELECT json FROM row WHERE name = ? ORDER BY row_n",

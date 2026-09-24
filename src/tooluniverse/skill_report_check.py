@@ -176,8 +176,11 @@ def _unstated_narrowing(draft: str, received: Any) -> list[dict]:
     for table in tables:
         totals = table.get("source_total")
         totals = totals if isinstance(totals, dict) else {"": totals}
+        # `held` counts only the call(s) behind each total; `rows` also counts the step's other tools.
+        held = table.get("held", table.get("rows", 0))
         for item, total in totals.items():
-            if not isinstance(total, (int, float)) or total <= table.get("rows", 0):
+            have = held.get(item, 0) if isinstance(held, dict) else held
+            if not isinstance(total, (int, float)) or total <= have:
                 continue
             # A loop's total is owed for the items the report discusses, not for every item.
             if item and not re.search(r"(?<!\w)" + re.escape(item) + r"(?!\w)", draft or "", re.I):
@@ -188,7 +191,7 @@ def _unstated_narrowing(draft: str, received: Any) -> list[dict]:
                                  "text": f"{table['table']}{where}: the source holds {int(total)}; "
                                          "say how many this run holds",
                                  "context": "the totals are in handover.tables[].source_total, "
-                                            "the rows held in handover.tables[].rows: state both"})
+                                            "the rows held in handover.tables[].held: state both"})
     return failures
 
 

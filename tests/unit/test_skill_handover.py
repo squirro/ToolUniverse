@@ -265,6 +265,34 @@ def test_a_results_table_counts_the_records_under_the_sources_holders_not_the_ca
 
     (table,) = [t for t in runner.handover(run_id)["tables"] if t["table"] == "results.drugs"]
     served = record.fetch("results.drugs")
-    assert (table["rows"], table["source_total"]) == (3, 3)
+    assert (table["rows"], table["source_total"], table["held"]) == (3, 3, 3)
     assert served["total_rows"] == 3
     assert [r["name"] for r in served["rows"]] == ["A", "B", "C"]
+
+
+def test_a_loops_totals_are_read_against_the_rows_each_item_holds(tmp_path):
+    """One search per reaction: all 2 papers of one reaction must not cover 1 of 3 of another."""
+    from tooluniverse.skill_report_check import check_report
+
+    loop = {"skill": "loop", "inputs": ["reactions"],
+            "steps": [{"id": "literature", "for_each": "reactions", "as": "reaction",
+                       "total": "metadata.total",
+                       "calls": [{"tool": "PubMed_search_articles",
+                                  "arguments": {"query": "{reaction}"}}]}]}
+    pages = {"NAUSEA": ([{"pmid": "1"}, {"pmid": "2"}], 2), "DEAFNESS": ([{"pmid": "3"}], 3)}
+
+    def execute(tool, arguments):
+        rows, total = pages[arguments["query"]]
+        return {"status": "success", "data": rows, "metadata": {"total": total}}
+
+    runner, run_id, _ = _finished_run(tmp_path, loop, execute=execute,
+                                      inputs={"reactions": ["NAUSEA", "DEAFNESS"]})
+    handed = runner.handover(run_id)
+    (table,) = [t for t in handed["tables"] if t["table"] == "results.literature"]
+
+    assert table["rows"] == 3
+    assert table["held"] == {"NAUSEA": 2, "DEAFNESS": 1}
+    owed = [f["text"] for f in check_report("Nausea and deafness were searched.",
+                                            {"handover": handed})
+            if f["kind"] == "narrowing_not_stated"]
+    assert owed == ["results.literature, DEAFNESS: the source holds 3; say how many this run holds"]

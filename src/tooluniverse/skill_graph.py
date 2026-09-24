@@ -34,6 +34,48 @@ def undeclared_tables(graph: dict) -> list[str]:
             if declared.get(name) not in ("fact", "evidence")]
 
 
+# The rules that make a named value; `judge` and `delegate` ask the agent for it.
+_MAKING_RULES = ("extract", "collect", "combine", "compute", "derive")
+
+
+def _made_by(step: dict) -> set[str]:
+    """The names this step can make, whatever `produces` claims."""
+    made = {name for key in _MAKING_RULES for name in (step.get(key) or {})}
+    made |= set(step.get("judge") or [])
+    if step.get("delegate"):
+        made |= set(step.get("produces") or [])
+    # A judged mapping also leaves the flat list of its terms.
+    made |= {f"{name}_terms" for name in (step.get("mapping") or {})}
+    return made
+
+
+def unbound_gates(graph: dict) -> list[str]:
+    """Gates on a name no input, constant or step can supply: shut on every run."""
+    bindable = (set(graph.get("inputs") or []) | set(graph.get("optional_inputs") or [])
+                | set(graph.get("constants") or {}))
+    for step in graph.get("steps", []):
+        bindable |= _made_by(step)
+    return [f"{step['id']}: {step['when']}" for step in graph.get("steps", [])
+            if step.get("when") and step["when"] not in bindable]
+
+
+def unmade_products(graph: dict) -> list[str]:
+    """Names a step says it produces that none of its own rules can make."""
+    return [f"{step['id']}: {name}" for step in graph.get("steps", [])
+            for name in step.get("produces") or [] if name not in _made_by(step)]
+
+
+def graph_problems(graph: dict) -> list[str]:
+    """Why a process cannot be run as written; empty when it can."""
+    problems = []
+    if gates := unbound_gates(graph):
+        problems.append(f"gates on {gates}, which no input, constant or step can supply")
+    if promised := unmade_products(graph):
+        problems.append(f"declares {promised} under `produces`, which no extract, collect, "
+                        "combine, compute, derive, judge or delegate of that step makes")
+    return problems
+
+
 def load_graph(skill: str, graphs_dir: str | Path | None = None) -> dict:
     """Load the process graph for one skill."""
     directory = Path(graphs_dir) if graphs_dir else GRAPHS_DIR
@@ -50,6 +92,8 @@ def load_graph(skill: str, graphs_dir: str | Path | None = None) -> dict:
         raise SkillGraphError(
             f"graph for {skill!r} collects {undeclared} without declaring them under `tables:` "
             "as `fact` (the agent gets it whole) or `evidence` (described, then fetched)")
+    if problems := graph_problems(graph):
+        raise SkillGraphError(f"graph for {skill!r} {'; '.join(problems)}")
     return graph
 
 

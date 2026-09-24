@@ -6,6 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import pytest
+import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -16,7 +17,9 @@ from tooluniverse.skill_graph import (  # noqa: E402
     load_graph,
     next_step,
     skipped_gates,
+    unbound_gates,
     undeclared_tables,
+    unmade_products,
 )
 
 pytestmark = pytest.mark.unit
@@ -328,3 +331,89 @@ def test_a_skipped_gate_says_whether_its_condition_was_decided():
 
     assert rejected[0]["decided"] is True
     assert never[0]["decided"] is False
+
+
+# --- a gate and a declared product must each have something that can make them ----
+
+def _write(tmp_path, name, steps, extra=""):
+    (tmp_path / f"{name}.yaml").write_text(
+        f"skill: {name}\ninputs: [drug_name]\n{extra}steps:\n{steps}")
+
+
+def test_a_gate_on_a_name_nothing_can_bind_is_refused_by_name(tmp_path):
+    _write(tmp_path, "shut", (
+        "  - id: signals\n    calls: []\n"
+        "  - id: comparative\n    requires: [signals]\n    when: comparator\n    calls: []\n"))
+
+    with pytest.raises(SkillGraphError, match="comparator"):
+        load_graph("shut", graphs_dir=tmp_path)
+
+
+@pytest.mark.parametrize("extra, steps", [
+    ("optional_inputs: [comparator]\n", ""),
+    ("constants:\n  comparator: carboplatin\n", ""),
+    ("", "    extract: {comparator: data.name}\n"),
+    ("", "    judge: [comparator]\n    produces: [comparator]\n"),
+    ("", "    delegate:\n      - tool: web_search\n        arguments: {query: '{drug_name}'}\n"
+         "    produces: [comparator]\n"),
+], ids=["optional-input", "constant", "extract", "judge", "delegate"])
+def test_a_gate_opens_on_an_input_a_constant_or_a_name_a_step_makes(tmp_path, extra, steps):
+    _write(tmp_path, "open", (
+        "  - id: choose\n    calls: []\n" + steps
+        + "  - id: comparative\n    requires: [choose]\n    when: comparator\n    calls: []\n"), extra)
+
+    assert load_graph("open", graphs_dir=tmp_path)["skill"] == "open"
+
+
+def test_a_gate_opens_on_the_term_list_a_judged_mapping_makes(tmp_path):
+    _write(tmp_path, "mapped", (
+        "  - id: terms\n    calls: []\n    judge: [chosen]\n    produces: [chosen]\n"
+        "    mapping:\n      chosen: {of: drug_name, onto: {rows: rows, field: term}}\n"
+        "  - id: loop\n    requires: [terms]\n    when: chosen_terms\n    calls: []\n"))
+
+    assert load_graph("mapped", graphs_dir=tmp_path)["skill"] == "mapped"
+
+
+def test_a_declared_product_no_rule_makes_is_refused_by_name(tmp_path):
+    _write(tmp_path, "promise", (
+        "  - id: identity\n    calls: []\n"
+        "    extract: {setid: data.0.setid}\n    produces: [setid, approval_history]\n"))
+
+    with pytest.raises(SkillGraphError, match="approval_history"):
+        load_graph("promise", graphs_dir=tmp_path)
+    graph = yaml.safe_load((tmp_path / "promise.yaml").read_text())
+    assert unmade_products(graph) == ["identity: approval_history"]
+
+
+@pytest.mark.parametrize("rules", [
+    "    extract: {made: data.x}\n",
+    "    collect: {made: {path: data}}\n",
+    "    combine: {made: {union: [a, b]}}\n",
+    "    compute: {made: {op: sum, of: [a]}}\n",
+    "    derive: {made: {from: rows, field: x, op: '>=', value: 1}}\n",
+    "    judge: [made]\n",
+    "    delegate:\n      - tool: web_search\n        arguments: {query: '{drug_name}'}\n",
+], ids=["extract", "collect", "combine", "compute", "derive", "judge", "delegate"])
+def test_a_declared_product_is_made_by_one_of_the_seven_rules(tmp_path, rules):
+    _write(tmp_path, "made", "  - id: step\n    calls: []\n" + rules + "    produces: [made]\n",
+           "tables: {made: fact}\n")
+
+    assert load_graph("made", graphs_dir=tmp_path)["skill"] == "made"
+
+
+def test_a_product_made_by_another_step_is_still_refused(tmp_path):
+    """`produces` is what this step makes; a name another step extracts is not this step's."""
+    _write(tmp_path, "elsewhere", (
+        "  - id: a\n    calls: []\n    extract: {setid: data.0.setid}\n    produces: [setid]\n"
+        "  - id: b\n    requires: [a]\n    calls: []\n    produces: [setid]\n"))
+
+    with pytest.raises(SkillGraphError, match="setid"):
+        load_graph("elsewhere", graphs_dir=tmp_path)
+
+
+@pytest.mark.parametrize("skill", SHIPPED)
+def test_every_shipped_graph_passes_both_guards(skill):
+    graph = yaml.safe_load((GRAPHS_DIR / f"{skill}.yaml").read_text(encoding="utf-8"))
+
+    assert unbound_gates(graph) == []
+    assert unmade_products(graph) == []

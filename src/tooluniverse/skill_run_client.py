@@ -71,7 +71,7 @@ async def wait_for_progress(handle: Any, *, window: float = POLL_WINDOW,
 async def start(client: Any, store: Any, skill: str, inputs: dict, *,
                 task_queue: str | None = None) -> dict:
     """Load the process, validate the inputs, start the run, wait for the first tick."""
-    from .skill_graph import undeclared_tables
+    from .skill_graph import graph_problems, undeclared_tables
     from .skill_process_store import SkillProcessNotFound
     from .skill_workflow import TASK_QUEUE, SkillRunInput, SkillWorkflow
 
@@ -83,6 +83,10 @@ async def start(client: Any, store: Any, skill: str, inputs: dict, *,
         return {"status": "error",
                 "error": f"the published process for {skill!r} collects {undeclared} without "
                          "declaring them under `tables:`; it cannot run until it is republished"}
+    if problems := graph_problems(process):
+        return {"status": "error",
+                "error": f"the published process for {skill!r} {'; '.join(problems)}; "
+                         "it cannot run until it is republished"}
     declared = set(process.get("inputs", [])) | set(process.get("optional_inputs", []))
     unknown = [name for name in (inputs or {}) if name not in declared]
     if unknown:

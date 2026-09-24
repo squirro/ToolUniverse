@@ -119,7 +119,7 @@ steps:
         path: "data.0.title"
         regex: "\\(([^)]+)\\)"
         default_from: drug_name
-    produces: [setid, faers_name, inn, approval_history]
+    produces: [setid, faers_name, inn]
 
   - id: label
     label: "Phase 1 — FDA label, the ground truth"

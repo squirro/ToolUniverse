@@ -4,7 +4,7 @@
 # Each step names its calls, what to extract and what must run before it. The
 # body's "do not skip" gateways are `when:` conditions here.
 #
-# Facts the agent feeds back: chembl_id, top_aes, requested_meddra, strong_signal, comparator.
+# Facts the agent feeds back: requested_meddra, and the comparator it picks from the drug's class.
 
 skill: adverse-event-detection
 inputs: [drug_name]
@@ -171,9 +171,52 @@ steps:
       hERG, AMES and ClinTox have no served tool — write "no tool available",
       never estimate.
 
+  - id: drug_class
+    label: "Phase 5a — the drug's own class, from RxClass"
+    requires: [disproportionality]
+    when: strong_signal
+    calls:
+      - tool: RxClass_get_drug_classes
+        arguments: {drug_name: "{drug_name}", rela_source: "ATC"}
+    # The first ATC class is the one the comparison is drawn from.
+    extract:
+      class_id: "data.0.classId"
+      class_name: "data.0.className"
+    produces: [class_id, class_name]
+    notes: >-
+      Only when a signal is strong. A drug RxClass does not classify has no class to
+      compare within: the report says so, and the comparative step is skipped.
+
+  - id: class_members
+    label: "Phase 5b — the members of that class, from RxClass"
+    requires: [drug_class]
+    when: class_id
+    calls:
+      - tool: RxClass_get_class_members
+        arguments: {class_id: "{class_id}", rela_source: "ATC"}
+    extract:
+      class_members: "data[].name"
+    produces: [class_members]
+    notes: The ingredients RxClass files under the class; the comparator is chosen from them.
+
+  - id: comparator_choice
+    label: "Phase 5c — a class member to compare against, chosen by the agent"
+    requires: [class_members]
+    when: class_members
+    calls: []
+    # A check reads facts already held, so the members arrive one step earlier.
+    judge: [comparator]
+    check:
+      comparator: [{only_in: class_members}]
+    produces: [comparator]
+    notes: >-
+      Answer `comparator` with ONE name copied exactly from `class_members`, never the
+      drug itself: the member most used for the same indication, so FAERS holds enough
+      reports on it to compare. Say in the report why it was chosen.
+
   - id: comparative
     label: "Phase 5 — comparative safety against a class member"
-    requires: [disproportionality]
+    requires: [comparator_choice]
     when: comparator
     for_each: strong_aes
     as: adverse_event
@@ -184,8 +227,8 @@ steps:
           drug2: "{comparator}"
           adverse_event: "{adverse_event}"
     notes: >-
-      Only when a comparator is known. A signal present across the class is
-      mechanism-based; one unique to this drug is molecule-specific.
+      Only when a comparator was chosen from the class. A signal present across the
+      class is mechanism-based; one unique to this drug is molecule-specific.
 
   - id: interactions
     label: "Phase 6 — interactions and pharmacogenomics"

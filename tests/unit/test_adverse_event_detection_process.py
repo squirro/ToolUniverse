@@ -16,6 +16,16 @@ pytestmark = pytest.mark.unit
 
 TERMS = ["NAUSEA", "DEAFNESS", "FALL"]
 
+RECORDED = Path(__file__).resolve().parents[1] / "fixtures" / "skill_processes" / "adverse_event_detection"
+
+
+def _recorded(tool, arguments):
+    """The response recorded for this exact call, or None when the tool was not recorded."""
+    path = RECORDED / f"{tool}_2026-09-24.json"
+    if not path.is_file():
+        return None
+    return json.loads(path.read_text())[json.dumps(arguments, sort_keys=True)]
+
 
 def _recorded_lookup(term):
     recorded = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "ols"
@@ -23,8 +33,10 @@ def _recorded_lookup(term):
     return recorded.get(term, {})
 
 
-def _agent(question):
+def _agent(question, comparator="carboplatin"):
     wants, context = question["wants"], question["context"]
+    if "comparator" in wants:
+        return {"comparator": comparator}
     if "requested_meddra" in wants:
         (word,) = context["requested_aes"]
         listed = [row["term"] for row in context["faers_term_rows"]]
@@ -34,11 +46,15 @@ def _agent(question):
     return {name: "stub" for name in wants}
 
 
-def _drive(requested_aes=None):
+def _drive(requested_aes=None, comparators=("carboplatin",)):
     calls, asked = [], []
+    comparators = list(comparators)
 
     def execute(tool, arguments):
         calls.append((tool, arguments))
+        recorded = _recorded(tool, arguments)
+        if recorded is not None:
+            return recorded
         if tool == "OpenTargets_get_drug_chembId_by_generic_name":
             # the shape the tool audit recorded (aspirin -> CHEMBL25 first, then its salts)
             return {"status": "success", "data": {"search": {"hits": [
@@ -53,6 +69,8 @@ def _drive(requested_aes=None):
 
     def agent(question):
         asked.append(question)
+        if "comparator" in question["wants"]:
+            return _agent(question, comparators.pop(0) if len(comparators) > 1 else comparators[0])
         return _agent(question)
 
     runner = SkillRunner(load_graph("adverse-event-detection"), execute=execute, ask=agent,
@@ -96,7 +114,7 @@ def test_the_facts_the_process_feeds_forward_are_the_servers_not_the_agents():
     `top_aes` and the grading are extracted and computed instead."""
     handed, calls, asked = _drive()
 
-    assert asked == []
+    assert [q["wants"] for q in asked] == [["comparator"]], "only the comparator is the agent's"
     assert handed["facts"]["chembl_id"] == "CHEMBL11359"
     assert [a for tool, a in calls if tool == "OpenTargets_get_drug_indications_by_chemblId"] == [
         {"chemblId": "CHEMBL11359"}]
@@ -104,3 +122,26 @@ def test_the_facts_the_process_feeds_forward_are_the_servers_not_the_agents():
         ("DEAFNESS", True), ("FALL", False), ("NAUSEA", False)]
     assert handed["facts"]["strong_aes"] == ["DEAFNESS"] and handed["facts"]["strong_signal"] is True
     assert [a["adverse_event"] for tool, a in calls if tool == "FAERS_stratify_by_demographics"] == ["DEAFNESS"]
+
+
+# --- the comparative step: the agent names a member of the drug's own class ----------
+
+def test_the_comparative_step_runs_against_a_class_member_the_agent_chose():
+    handed, calls, asked = _drive()
+
+    (question,) = [q for q in asked if q["wants"] == ["comparator"]]
+    # the choice is put to the agent with the class the source gives, whole
+    assert question["context"]["class_name"] == "Platinum compounds"
+    assert "carboplatin" in question["context"]["class_members"]
+    assert [a for tool, a in calls if tool == "FAERS_compare_drugs"] == [
+        {"drug1": "cisplatin", "drug2": "carboplatin", "adverse_event": "DEAFNESS"}]
+    assert "comparative" in handed["steps_done"]
+    assert "comparative" not in {s["step"] for s in handed["steps_skipped"]}
+
+
+def test_a_comparator_outside_the_class_is_asked_again_with_the_class():
+    handed, calls, asked = _drive(comparators=("aspirin", "oxaliplatin"))
+
+    first, second = [q for q in asked if q["wants"] == ["comparator"]]
+    assert "aspirin" in second["problem"] and "class_members" in second["problem"]
+    assert [a["drug2"] for tool, a in calls if tool == "FAERS_compare_drugs"] == ["oxaliplatin"]

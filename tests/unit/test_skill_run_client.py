@@ -29,6 +29,8 @@ PROCESS = {"skill": "demo", "inputs": ["drug_name"], "optional_inputs": ["reques
            "steps": [{"id": "a", "calls": []}]}
 LEAKY = {**PROCESS, "steps": PROCESS["steps"] + [
     {"id": "literature", "calls": [], "collect": {"papers": {"path": "data.articles"}}}]}
+SHUT = {**PROCESS, "steps": PROCESS["steps"] + [
+    {"id": "comparative", "requires": ["a"], "when": "comparator", "calls": []}]}
 QUESTION = {"kind": "judge", "step": "a", "wants": ["k"], "context": {}}
 
 
@@ -120,6 +122,8 @@ class FakeClient:
     (None, "no-such", {"drug_name": "x"}, {"status": "error"}, "no-such"),
     # the definition in GraphDB does not pass through the YAML loader; the rule still holds
     (LEAKY, "demo", {"drug_name": "x"}, {"status": "error"}, "papers"),
+    # nor does a gate that nothing can open
+    (SHUT, "demo", {"drug_name": "x"}, {"status": "error"}, "comparator"),
     # absent is not an answer: the question may name what the optional input is for
     (PROCESS, "demo", {"drug_name": "x"},
      {"status": "confirm_inputs", "undecided_inputs": ["requested_aes"]}, None),
@@ -127,7 +131,7 @@ class FakeClient:
     (PROCESS, "demo", {"drug_name": "x", "requested_aes": None, "focus_adverse_events": ["y"]},
      {"status": "schema_mismatch", "unknown_inputs": ["focus_adverse_events"],
       "required_inputs": ["drug_name"], "optional_inputs": ["requested_aes"]}, None),
-], ids=["missing", "no-process", "undeclared-table", "undecided", "unknown-input"])
+], ids=["missing", "no-process", "undeclared-table", "unbound-gate", "undecided", "unknown-input"])
 async def test_a_run_that_cannot_start_says_why_and_starts_nothing(
         process, skill, inputs, expected, needle):
     client = FakeClient(ScriptedHandle([_status("a", [])]))

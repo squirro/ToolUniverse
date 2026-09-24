@@ -507,3 +507,26 @@ async def test_an_input_that_is_not_its_type_is_refused_with_the_expected_type()
 def test_typed_inputs_survive_the_graphdb_round_trip():
     assert from_bbo(_Graph().parse(data=to_bbo(TYPED), format="turtle")) == TYPED
     assert problems(TYPED) == []
+
+
+# -- Skill turns (SA-07): run_skill as a Delegated call with nested inputs ----------------
+
+SKILL_CALL = {"tool": "run_skill", "arguments": {"skill": "rare-disease-diagnosis", "inputs": {
+    "case_age_years": 4, "symptoms": "{symptoms}"}}}
+SKILL_RULE = {"t1_c1_made": {"made_as_asked": {"calls": [SKILL_CALL]}}}
+
+
+def test_a_run_skill_call_made_as_asked_passes_with_its_nested_inputs():
+    made = [{"tool": "run_skill", "arguments": {"skill": "rare-disease-diagnosis", "inputs": {
+        "symptoms": ["seizures", "ataxia"], "case_age_years": 4}}}]
+
+    assert check_facts(SKILL_RULE, {"t1_c1_made": made},
+                       {"symptoms": ["seizures", "ataxia"]}) == []
+
+
+def test_a_run_skill_call_with_other_inputs_fails_the_check():
+    made = [{"tool": "run_skill", "arguments": {"skill": "rare-disease-diagnosis", "inputs": {
+        "symptoms": ["seizures"], "case_age_years": 4}}}]
+
+    (failure,) = check_facts(SKILL_RULE, {"t1_c1_made": made}, {"symptoms": ["seizures", "ataxia"]})
+    assert failure["check"] == "made_as_asked"

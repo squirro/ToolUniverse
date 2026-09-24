@@ -1451,7 +1451,10 @@ class SMCP(FastMCP):
             exactly as given, changing nothing. Then answer, for each name in `wants`: the
             name ending in `_made` with the list of calls you made, as
             [{"tool": ..., "arguments": {...}}]; every other name with the value at the path
-            `question.notes` gives, copied exactly from that call's result.
+            `question.notes` gives, copied exactly from that call's result. When a call is
+            run_skill, follow that skill run to its end as run_skill describes, answering
+            its questions yourself, but do not write or submit its report: the replay's
+            report comes at the end.
 
             Args:
                 prompt_id: the id in the message, e.g. "K_IZog8LROOP2gPODyN2uQ".

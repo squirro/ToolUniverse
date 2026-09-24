@@ -37,7 +37,8 @@ def progress(run_id: str, status: dict, handover: dict | None = None) -> dict:
         return {"status": "finished", "run_id": run_id, "handover": handover,
                 "next": (f"Write the report from `handover` as its `report` and `write_the_report` "
                          f"say, then call submit_report(run_id=\"{run_id}\", draft=<the whole "
-                         "report>) before you answer the user. Answer only with what it accepts.")}
+                         "report>) before you answer the user. Answer only with what it accepts. "
+                         "Write it in the language of the user's question.")}
     base = {"run_id": run_id, "step_id": status.get("step_id"),
             "step_label": status.get("step_label"), "done": len(status.get("done") or [])}
     if status.get("waiting_for"):

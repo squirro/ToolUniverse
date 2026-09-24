@@ -1397,6 +1397,8 @@ class SMCP(FastMCP):
             the run holds less than its source (a table's `source_total` above its `rows`)
             the draft must give both numbers.
 
+            Write the draft in the language of the user's question.
+
             Returns:
                 `accepted`: answer the user with the draft as it is.
                 `revise`: `failures` names each statement nothing vouches for, with its

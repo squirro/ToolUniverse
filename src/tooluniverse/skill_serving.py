@@ -72,6 +72,10 @@ guess one, do not reshape the user's, and do not assume one database's identifie
 in another. Resolve it first with the lookup/search tool for that database, then pass
 back what it returned. A reply like "not found: <id>. Use <format>" means you guessed —
 resolve it properly rather than trying another guess.
+
+# Answer language (SUPERSEDES "the user's language" above)
+Write the answer in the language of the user's question. A question in English gets an
+answer in English, whatever language the sources or tool results are in.
 """
 
 

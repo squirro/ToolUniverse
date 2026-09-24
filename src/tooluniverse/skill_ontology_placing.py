@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Any
@@ -60,29 +61,76 @@ def place(responses: dict[str, dict], concept: Any) -> dict:
     return verdict
 
 
+# Prefixes the processes' sources hand over as ids, with the ontology that defines them and
+# the IRI stem OLS files them under. An unlisted prefix is read as a label.
+_ID_PREFIXES = {
+    "MONDO": ("mondo", "http://purl.obolibrary.org/obo/MONDO_"),
+    "HP": ("hp", "http://purl.obolibrary.org/obo/HP_"),
+    "EFO": ("efo", "http://www.ebi.ac.uk/efo/EFO_"),
+    "ORPHANET": ("ordo", "http://www.orpha.net/ORDO/Orphanet_"),
+    "DOID": ("doid", "http://purl.obolibrary.org/obo/DOID_"),
+    "NCIT": ("ncit", "http://purl.obolibrary.org/obo/NCIT_"),
+}
+_ID = re.compile(r"^(?:https?://\S+/)?([A-Za-z]+)[_:](\d+)$")
+
+
+def ontology_id(term: str) -> tuple[str, str] | None:
+    """(ontology, IRI) when the term is an id: PREFIX_0001, PREFIX:0001 or its IRI; else None."""
+    match = _ID.match(term.strip())
+    if not match or match.group(1).upper() not in _ID_PREFIXES:
+        return None
+    ontology, stem = _ID_PREFIXES[match.group(1).upper()]
+    return ontology, stem + match.group(2)
+
+
 def _get(url: str, timeout: int = 30) -> Any:
     request = urllib.request.Request(url, headers={"User-Agent": "tooluniverse-skills",
                                                    "Accept": "application/json"})
     with urllib.request.urlopen(request, timeout=timeout) as response:
-        return json.load(response)
+        # OLS term pages carry raw control characters inside definitions.
+        return json.loads(response.read(), strict=False)
+
+
+def _hit(doc: dict) -> dict:
+    return {k: doc.get(k) for k in ("iri", "obo_id", "label", "ontology_name")}
+
+
+def _ancestors(ontology: str, iri: str) -> list[dict]:
+    quoted = urllib.parse.quote(urllib.parse.quote(iri, safe=""), safe="")
+    above = _get(f"{OLS}/ontologies/{ontology}/terms/{quoted}/hierarchicalAncestors?size=200")
+    return [{"iri": t["iri"], "label": t["label"]}
+            for t in above.get("_embedded", {}).get("terms", [])]
+
+
+def _by_id(ontology: str, iri: str) -> dict[str, dict]:
+    """The term the id names, in its own ontology; an id OLS does not know is found nowhere."""
+    try:
+        page = _get(f"{OLS}/ontologies/{ontology}/terms?" + urllib.parse.urlencode({"iri": iri}))
+        hits = [_hit(doc) for doc in page.get("_embedded", {}).get("terms", [])]
+        ancestors = _ancestors(ontology, hits[0]["iri"]) if hits else []
+        return {ontology: {"search": hits, "ancestors": ancestors}}
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return {ontology: {"search": [], "ancestors": []}}
+        return {ontology: {"error": f"HTTPError: {exc.code}"}}
+    except Exception as exc:                              # noqa: BLE001 — evidence, never a gate
+        return {ontology: {"error": f"{type(exc).__name__}: {str(exc)[:80]}"}}
 
 
 def lookup(term: str, ontologies: tuple[str, ...] = ONTOLOGIES) -> dict[str, dict]:
-    """The recorded shape `place` reads, fetched live: exact label or synonym, then ancestors."""
+    """The recorded shape `place` reads, fetched live: an id by its IRI, else exact label or
+    synonym; then ancestors."""
+    named = ontology_id(term)
+    if named:
+        return _by_id(*named)
     responses: dict[str, dict] = {}
     for ontology in ontologies:
         try:
             found = _get(f"{OLS}/search?" + urllib.parse.urlencode(
                 {"q": term.lower(), "ontology": ontology, "rows": 1,
                  "queryFields": "label,synonym", "exact": "true"}))
-            hits = [{k: doc.get(k) for k in ("iri", "obo_id", "label", "ontology_name")}
-                    for doc in found["response"]["docs"]]
-            ancestors = []
-            if hits:
-                iri = urllib.parse.quote(urllib.parse.quote(hits[0]["iri"], safe=""), safe="")
-                above = _get(f"{OLS}/ontologies/{ontology}/terms/{iri}/hierarchicalAncestors?size=200")
-                ancestors = [{"iri": t["iri"], "label": t["label"]}
-                             for t in above.get("_embedded", {}).get("terms", [])]
+            hits = [_hit(doc) for doc in found["response"]["docs"]]
+            ancestors = _ancestors(ontology, hits[0]["iri"]) if hits else []
             responses[ontology] = {"search": hits, "ancestors": ancestors}
         except Exception as exc:                          # noqa: BLE001 — evidence, never a gate
             responses[ontology] = {"error": f"{type(exc).__name__}: {str(exc)[:80]}"}

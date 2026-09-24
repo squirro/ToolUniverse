@@ -45,7 +45,8 @@ def _vouched_numbers(received: Any) -> set[str]:
 # allow-list: the run's own prose -- its failures, what it could not decide, the arguments
 # it sent, the steps it skipped -- describes the run, not an answer, and must never vouch
 # a statement. A hand-over key added later vouches nothing until it is named here.
-_VOUCHING = ("facts", "tables", "mappings", "excluded", "fetched")
+# "sources" are the links the server stamped on the run's own calls: tool-side, like a row.
+_VOUCHING = ("facts", "tables", "mappings", "excluded", "fetched", "sources")
 
 # The key the engine writes into a row to say it could not read a value there. Its content
 # is the text the read failed on, so it vouches nothing: a cell marked unreadable cannot

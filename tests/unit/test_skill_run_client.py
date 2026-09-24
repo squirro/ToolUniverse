@@ -26,6 +26,9 @@ from tooluniverse.skill_working_record import WorkingRecord  # noqa: E402
 
 pytestmark = pytest.mark.unit
 
+WAITING_NEXT = ("Answer with continue_skill(run_id, answer={...}); write every reason "
+                "in the language of the user's question.")
+
 PROCESS = {"skill": "demo", "inputs": ["drug_name"], "optional_inputs": ["requested_aes"],
            "steps": [{"id": "a", "calls": []}]}
 LEAKY = {**PROCESS, "steps": PROCESS["steps"] + [
@@ -70,7 +73,7 @@ def test_the_three_shapes():
     assert "submit_report(run_id=\"r1\"" in finished["next"] and "before you answer" in finished["next"]
     assert progress("r1", _status("a", [], waiting=QUESTION)) == {
         "status": "waiting", "run_id": "r1", "question": QUESTION,
-        "step_id": "a", "step_label": "Phase a", "done": 0}
+        "step_id": "a", "step_label": "Phase a", "done": 0, "next": WAITING_NEXT}
     assert progress("r1", _status("b", ["a"], remaining=3)) == {
         "status": "running", "run_id": "r1", "step_id": "b", "step_label": "Phase b",
         "done": 1, "remaining": 3}
@@ -365,7 +368,7 @@ async def test_resume_signals_the_answer_to_its_own_run_before_it_waits():
 
     assert client.handles["skill-demo-7"].signals == [{"k": "v"}]
     assert out == {"status": "waiting", "run_id": "skill-demo-7", "question": NEXT_QUESTION,
-                   "step_id": "b", "step_label": "Phase b", "done": 1}
+                   "step_id": "b", "step_label": "Phase b", "done": 1, "next": WAITING_NEXT}
 
 
 @pytest.mark.asyncio
@@ -378,3 +381,60 @@ async def test_resume_without_an_answer_signals_nothing_and_reports_where_the_ru
     assert client.handles["skill-demo-8"].signals == []
     assert out["status"] == "waiting" and out["question"] == QUESTION
     assert out["run_id"] == "skill-demo-8"
+
+
+# --- the run's own source links: stamped by the server on each call, so citable ----------
+
+def _record_with_a_stamped_call(tmp_path):
+    record = WorkingRecord(tmp_path, "skill-demo-1")
+    record.put_result("phenotypes", 0, "Orphanet_get_phenotypes", {"orphacode": 580},
+                      {"data": [{"hpo_id": "HP:0001744"}],
+                       "source_url": "https://www.orpha.net/en/disease/detail/580"})
+    return tmp_path
+
+
+@pytest.mark.asyncio
+async def test_a_link_the_server_stamped_on_a_call_of_this_run_is_vouched(tmp_path):
+    draft = ("Splenomegaly is listed for this disease [^1^].\n"
+             "[^1^]: [Orphanet](https://www.orpha.net/en/disease/detail/580)")
+    client = FinishedClient(ScriptedHandle([_status("z", ["z"], finished=True)], result=HANDOVER))
+
+    out = await submit_report(client, "skill-demo-1", draft, directory=_record_with_a_stamped_call(tmp_path))
+
+    assert out["status"] == "accepted", out["failures"]
+
+
+@pytest.mark.asyncio
+async def test_a_link_no_call_of_this_run_stamped_is_still_refused(tmp_path):
+    """The stamp vouches its own page, not the site: a page the run never looked up stays out."""
+    draft = ("Splenomegaly is listed [^1^], and so is fever [^2^].\n"
+             "[^1^]: [Orphanet](https://www.orpha.net/en/disease/detail/99)\n"
+             "[^2^]: [Elsewhere](https://example.org/record/580)")
+    client = FinishedClient(ScriptedHandle([_status("z", ["z"], finished=True)], result=HANDOVER))
+
+    out = await submit_report(client, "skill-demo-1", draft, directory=_record_with_a_stamped_call(tmp_path))
+
+    refused = {f["text"] for f in out["failures"] if f["kind"] == "unvouched_link"}
+    assert refused == {"https://www.orpha.net/en/disease/detail/99", "https://example.org/record/580"}
+
+
+@pytest.mark.asyncio
+async def test_revise_tells_the_agent_to_submit_again_before_it_answers(tmp_path):
+    draft = "PRR 54.77 for ototoxicity, against a Canadian PRR of about 53.44."
+    client = FinishedClient(ScriptedHandle([_status("z", ["z"], finished=True)], result=HANDOVER))
+
+    out = await submit_report(client, "skill-demo-1", draft, directory=_records(tmp_path))
+
+    assert out["status"] == "revise"
+    assert "Do not answer the user yet" in out["hint"]
+
+
+def test_an_orphanet_call_on_a_code_is_stamped_with_the_readers_page():
+    from tooluniverse.tools_sr.source_url_templates import declared_url
+
+    config = {"type": "OrphanetTool"}
+    for arguments in ({"orphacode": 580}, {"orpha_code": "580"}, {"orpha_id": 580}):
+        assert declared_url("Orphanet_get_phenotypes", arguments, config) == (
+            "https://www.orpha.net/en/disease/detail/580"), arguments
+    # a free-text search names no disease page, so it keeps the call it made
+    assert declared_url("Orphanet_search_diseases", {"query": "gaucher"}, config) is None

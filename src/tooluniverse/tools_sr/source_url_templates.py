@@ -57,6 +57,14 @@ FAMILY_TEMPLATES: dict[str, tuple[str, ...]] = {
         f"{_OT}/drug/{{chemblId}}",
     ),
     "OpentargetToolDrugNameMatch": (f"{_OT}/search?q={{drugName}}",),
+    # The reader's page for one ORPHAcode. The site sits behind a bot check, so the scheme
+    # is Orphanet's published one, not one a probe can confirm. The three argument names
+    # are the aliases the tool definitions accept.
+    "OrphanetTool": (
+        "https://www.orpha.net/en/disease/detail/{orphacode}",
+        "https://www.orpha.net/en/disease/detail/{orpha_code}",
+        "https://www.orpha.net/en/disease/detail/{orpha_id}",
+    ),
     # Record-bearing GET families: their API URL reproduces the query, but the human record
     # page is what reads as credible in a footnote. A call carrying none of these argument
     # names keeps its intercepted API URL.

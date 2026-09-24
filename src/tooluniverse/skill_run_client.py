@@ -42,7 +42,9 @@ def progress(run_id: str, status: dict, handover: dict | None = None) -> dict:
     base = {"run_id": run_id, "step_id": status.get("step_id"),
             "step_label": status.get("step_label"), "done": len(status.get("done") or [])}
     if status.get("waiting_for"):
-        return {"status": "waiting", "question": status["waiting_for"], **base}
+        return {"status": "waiting", "question": status["waiting_for"], **base,
+                "next": "Answer with continue_skill(run_id, answer={...}); write every reason "
+                        "in the language of the user's question."}
     return {"status": "running", "remaining": status.get("remaining", 0), **base}
 
 
@@ -155,7 +157,8 @@ async def submit_report(client: Any, run_id: str, draft: str, *, directory=None)
 
     handover = await client.get_workflow_handle(run_id).result()
     record = WorkingRecord.existing(directory or records_dir(), run_id)
-    received = {"handover": handover, "fetched": record.served() if record else {}}
+    received = {"handover": handover, "fetched": record.served() if record else {},
+                "sources": record.sources() if record else []}
     failures = check_report(draft, received)
     if not failures:
         return {"status": "accepted", "run_id": run_id, "failures": []}
@@ -165,7 +168,8 @@ async def submit_report(client: Any, run_id: str, draft: str, *, directory=None)
         return {"status": "revise", "run_id": run_id, "failures": failures,
                 "hint": ("these statements are not in the facts you were handed or the rows you "
                          "fetched: take each from its row and cite that row, fetch the row that "
-                         "holds it, or remove it; then submit again -- " + named)}
+                         "holds it, or remove it; then submit again. Do not answer the user yet: "
+                         "the report goes out only after submit_report accepts it -- " + named)}
     return {"status": "accepted_with_failures", "run_id": run_id, "failures": failures,
             "append_to_report": ("Not verified against the run's data: " + named)}
 

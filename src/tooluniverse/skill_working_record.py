@@ -148,6 +148,23 @@ class WorkingRecord:
             return [by_call[n] for n in sorted(by_call)]
         return [by_call.get(n) for n in range(width)]
 
+    def sources(self) -> list[str]:
+        """Every link the server stamped on a call of this run, each once, in call order."""
+        db = self._open()
+        try:
+            found = db.execute(
+                "SELECT payload FROM result r WHERE attempt = (SELECT MAX(attempt) FROM result "
+                "WHERE step = r.step) ORDER BY step, call_n").fetchall()
+        finally:
+            db.close()
+        links: dict[str, None] = {}
+        for (text,) in found:
+            payload = json.loads(text)
+            link = payload.get("source_url") if isinstance(payload, dict) else None
+            if isinstance(link, str) and link.startswith("http"):
+                links[link] = None
+        return list(links)
+
     def put_table(self, name: str, rows: list) -> None:
         rows = [r if isinstance(r, dict) else {"value": r} for r in rows]
         db = self._open()

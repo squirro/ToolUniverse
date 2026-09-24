@@ -915,3 +915,15 @@ async def test_a_judged_mapping_is_checked_and_placed_on_temporal_too():
     replies = iter([STRAY, MAPPING])
     assert _handed(handed) == _in_memory({"count_reactions": FAERS_TERMS}, MAPPED, MAPPED_INPUTS,
                                          ask=lambda q: next(replies), lookup=_recorded_lookup)
+
+
+async def test_the_durable_repair_says_how_many_suggestions_it_tried_of_how_many():
+    """Three offered, two tried: the reason must not read as if every suggestion failed."""
+    responses = _disease_responses(repaired="never suggested")
+    suggestions = {"name": ["Rett syndrome", "Rett disease", "RTT"]}
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(
+            env, responses, DISEASE_REPAIR, {"disease": "Rett's"}, "run-disease-repair-count",
+            before_result=lambda h, e: _answer(h, suggestions))
+
+    assert any("trying 2 of 3 available" in b["reason"] for b in bundle["blocked"]), bundle["blocked"]

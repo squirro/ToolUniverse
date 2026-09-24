@@ -444,7 +444,8 @@ class SkillWorkflow:
                                    "arguments": step["calls"][0]["arguments"],
                                    "error": problem}]
         retry_failures: list = []
-        for attempt, candidate in enumerate(suggestions[:MAX_REPAIRS], start=1):
+        tried = suggestions[:MAX_REPAIRS]
+        for attempt, candidate in enumerate(tried, start=1):
             retry_calls = repair_calls(spec, step["calls"], argument, candidate, self._run["facts"])
             made.extend(retry_calls)
             retry_failures = await self._calls(retry_calls, attempt=attempt)
@@ -457,8 +458,8 @@ class SkillWorkflow:
         if answer is not None:
             self._run["blocked"].append({
                 "step": step["id"],
-                "reason": (f"{argument}={original!r} could not be resolved after "
-                           f"{MAX_REPAIRS} suggested alternatives"),
+                "reason": (f"{argument}={original!r} could not be resolved after trying "
+                           f"{len(tried)} of {len(suggestions)} available suggested alternatives"),
             })
         # The failure the repair started from is kept, so a source outage never reads
         # to the reader as a wrong identifier.

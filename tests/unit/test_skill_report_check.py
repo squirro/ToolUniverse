@@ -173,7 +173,7 @@ def test_a_cell_the_engine_marked_unreadable_does_not_vouch_the_number_in_it():
 def test_a_blocked_reason_does_not_vouch_the_count_inside_it():
     received = {"handover": {"facts": {"drug_name": "cisplatin"}, "blocked": [
         {"step": "lookup",
-         "reason": "name='Rett\\'s' could not be resolved after 2 suggested alternatives"}]}}
+         "reason": "name='Rett\\'s' could not be resolved after trying 2 of 3 available suggested alternatives"}]}}
 
     failures = check_report("2 comparator drugs were screened.", received)
 

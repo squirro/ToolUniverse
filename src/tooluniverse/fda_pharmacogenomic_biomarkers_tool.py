@@ -2,7 +2,18 @@ from typing import Dict, Any, List, Optional
 import requests
 import re
 from .base_tool import BaseTool
+from .http_utils import upstream_error
 from .tool_registry import register_tool
+
+# fda.gov's Akamai edge refuses some networks outright. From sr-dev (2026-09-24) the
+# host gets 403 "Access Denied" and the container is redirected to an apology page
+# that answers 404; the same URL answers 200 from other networks. No machine-readable
+# copy of this table is reachable from sr-dev: the FDA's PDF version sits behind the
+# same edge, and openFDA labels carry a pharmacogenomics section only for some drugs
+# (abacavir's HLA-B warning is not in it). So on sr-dev this tool reports a failure;
+# ClinPGx label annotations (biomarkerStatus "On FDA Biomarker List") are the nearest
+# reachable substitute.
+_BLOCKED = "fda.gov refuses automated requests from this network"
 
 
 @register_tool("FDAPharmacogenomicBiomarkersTool")
@@ -40,9 +51,21 @@ class FDAPharmacogenomicBiomarkersTool(BaseTool):
             # TODO: Add caching mechanism if available in the ecosystem
             # For now, we fetch every time or rely on potential requests caching if configured globally
             response = requests.get(self.FDA_URL, headers=self.HEADERS, timeout=30)
+            if response.status_code == 403 or "apology" in (response.url or ""):
+                return upstream_error(
+                    f"{_BLOCKED} (HTTP {response.status_code} at {response.url})",
+                    response.status_code, retryable=False,
+                )
             response.raise_for_status()
 
             records = self._parse_html_table(response.text)
+            # The full table always has rows; none means we were not served it.
+            if not records:
+                return upstream_error(
+                    f"FDA page answered {response.status_code} without the biomarker "
+                    "table; likely a bot-check page",
+                    response.status_code, retryable=False,
+                )
 
             # Filter results
             filtered_results = []

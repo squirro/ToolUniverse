@@ -238,6 +238,9 @@ steps:
         arguments: {drug_name: "{drug_name}"}
       - tool: fda_pharmacogenomic_biomarkers
         arguments: {drug_name: "{drug_name}"}
+    notes: >-
+      fda.gov refuses automated requests from sr-dev, so fda_pharmacogenomic_biomarkers
+      fails there: report the FDA biomarker table as not reachable, never as "no biomarker".
 
   - id: literature
     label: "Phase 7 — literature evidence"

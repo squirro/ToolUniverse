@@ -53,3 +53,14 @@ def test_submit_report_description_fixes_the_answer_language():
 
     SMCP._add_skill_run_tools(_Host(), "localhost:7233")
     assert RULE.search(registered["submit_report"]), registered["submit_report"]
+
+
+def test_a_question_the_run_asks_says_its_reasons_follow_the_question_language():
+    """The reasons go into the Run Record, which a reader may open."""
+    from tooluniverse.skill_run_client import progress
+
+    out = progress("skill-demo-1", {"waiting_for": {"kind": "judge", "step": "s", "wants": ["x_reason"]},
+                                    "step_id": "s", "done": []})
+
+    assert out["status"] == "waiting"
+    assert "language of the user's question" in out.get("next", "")

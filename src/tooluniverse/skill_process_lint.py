@@ -62,8 +62,9 @@ PROSE_ARGUMENTS = ("task",)      # instructions to the agent's code tool, not a 
 def _call_arguments(step: dict):
     for key in ("calls", "delegate"):
         for n, call in enumerate(step.get(key) or []):
-            for name, value in (call.get("arguments") or {}).items():
-                yield f"{key}[{n}].arguments.{name}", name, value
+            for field in ("arguments", "optional_arguments"):
+                for name, value in (call.get(field) or {}).items():
+                    yield f"{key}[{n}].{field}.{name}", name, value
 
 
 def _prose(process: dict):

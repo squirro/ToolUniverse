@@ -170,3 +170,17 @@ def test_a_wide_association_table_arrives_whole(tmp_path):
         responses={"OpenTargets_get_diseases_phenotypes_by_target_ensembl": wide})
 
     assert len(handed["facts"]["disease_rows"]) == 300, "a cap trimmed the source's table"
+
+
+def test_the_trials_search_carries_the_questions_disease_beside_the_target(tmp_path):
+    handed, calls, asked = _drive(tmp_path, disease="ovarian cancer")
+
+    (sent,) = [args for tool, args in calls if tool == "search_clinical_trials"]
+    assert sent == {"query_term": "FOLR1", "condition": "ovarian cancer", "pageSize": 1000}
+
+
+def test_without_a_disease_the_trials_search_runs_on_the_target_alone(tmp_path):
+    handed, calls, asked = _drive(tmp_path, disease=None)
+
+    (sent,) = [args for tool, args in calls if tool == "search_clinical_trials"]
+    assert sent == {"query_term": "FOLR1", "pageSize": 1000}, "no placeholder, no null"

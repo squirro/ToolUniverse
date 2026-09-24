@@ -417,3 +417,18 @@ def test_every_shipped_graph_passes_both_guards(skill):
 
     assert unbound_gates(graph) == []
     assert unmade_products(graph) == []
+
+
+@pytest.mark.parametrize("facts, expected", [
+    ({"target": "EGFR", "disease": "lung cancer"}, {"q": "EGFR", "condition": "lung cancer"}),
+    ({"target": "EGFR"}, {"q": "EGFR"}),
+    ({"target": "EGFR", "disease": None}, {"q": "EGFR"}),
+    ({"target": "EGFR", "disease": ""}, {"q": "EGFR"}),
+])
+def test_an_optional_argument_is_sent_only_when_the_run_holds_its_value(facts, expected):
+    """An absent value leaves the argument out; it never travels as null or as a placeholder."""
+    graph = {"skill": "demo", "steps": [{"id": "search", "calls": [
+        {"tool": "T", "arguments": {"q": "{target}"},
+         "optional_arguments": {"condition": "{disease}"}}]}]}
+
+    assert next_step(graph, done=[], facts=facts)["calls"] == [{"tool": "T", "arguments": expected}]

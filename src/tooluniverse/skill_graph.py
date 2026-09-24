@@ -192,6 +192,16 @@ def _fill(value: Any, facts: dict) -> Any:
     return _PLACEHOLDER.sub(lambda m: str(facts[m.group(1)]), value)
 
 
+def _call_arguments(call: dict, facts: dict) -> dict:
+    """The call's arguments, plus each optional one whose placeholders the run holds."""
+    arguments = _fill(call.get("arguments", {}), facts)
+    for name, value in (call.get("optional_arguments") or {}).items():
+        wanted = _PLACEHOLDER.findall(value) if isinstance(value, str) else []
+        if all(facts.get(n) not in (None, "", []) for n in wanted):
+            arguments[name] = _fill(value, facts)
+    return arguments
+
+
 def _vacuous(step: dict, facts: dict) -> bool:
     """A loop over an empty list: nothing to call, and nothing to wait for."""
     loop = step.get("for_each")
@@ -228,7 +238,7 @@ def _expand_calls(step: dict, facts: dict) -> list[dict]:
     calls = step.get("calls", [])
     loop = step.get("for_each")
     if not loop:
-        return [{"tool": c["tool"], "arguments": _fill(c.get("arguments", {}), facts)}
+        return [{"tool": c["tool"], "arguments": _call_arguments(c, facts)}
                 for c in calls]
     if loop not in facts:
         raise SkillGraphError(
@@ -240,7 +250,7 @@ def _expand_calls(step: dict, facts: dict) -> list[dict]:
             continue            # a miss is not an entity: no call is made for it
         scoped = {**facts, variable: item}
         expanded.extend(
-            {"tool": c["tool"], "arguments": _fill(c.get("arguments", {}), scoped)}
+            {"tool": c["tool"], "arguments": _call_arguments(c, scoped)}
             for c in calls
         )
     return expanded

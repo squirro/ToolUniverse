@@ -379,11 +379,16 @@ steps:
     calls:
       - tool: search_clinical_trials
         arguments: {query_term: "{symbol}", pageSize: 1000}
+        # Sent only when the run holds the disease; without it the search is the target's.
+        optional_arguments: {condition: "{disease}"}
     total: "data.total_count"
     collect:
       trial_rows: {path: "data.studies", flatten: true,
                    fields: ["NCT ID as nct_id", "brief_title as title", "overall_status as status", "phase", "condition"]}
     produces: [trial_rows]
+    notes: >-
+      With a disease named, the rows are the trials that name the target in that disease;
+      without one, every trial that names the target. Say which in the report.
 
   - id: clinical_judged
     label: "Phase 4b -- the clinical precedent sub-score"

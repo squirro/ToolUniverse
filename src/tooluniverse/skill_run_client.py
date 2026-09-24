@@ -72,12 +72,12 @@ async def start(client: Any, store: Any, skill: str, inputs: dict, *,
                 task_queue: str | None = None) -> dict:
     """Load the process, validate the inputs, start the run, wait for the first tick."""
     from .skill_graph import graph_problems, undeclared_tables
-    from .skill_process_store import SkillProcessNotFound
+    from .skill_process_store import SkillProcessMismatch, SkillProcessNotFound
     from .skill_workflow import TASK_QUEUE, SkillRunInput, SkillWorkflow
 
     try:
         process, prov = store.load(skill)
-    except SkillProcessNotFound as exc:
+    except (SkillProcessNotFound, SkillProcessMismatch) as exc:
         return {"status": "error", "error": str(exc)}
     if undeclared := undeclared_tables(process):
         return {"status": "error",
@@ -167,3 +167,35 @@ async def submit_report(client: Any, run_id: str, draft: str, *, directory=None)
                          "holds it, or remove it; then submit again -- " + named)}
     return {"status": "accepted_with_failures", "run_id": run_id, "failures": failures,
             "append_to_report": ("Not verified against the run's data: " + named)}
+
+
+
+HOST_PROBE_TIMEOUT = 3.0    # seconds get_skill waits to learn whether the host is up
+
+
+async def host_unreachable(connect: Any, *, timeout: float = HOST_PROBE_TIMEOUT) -> str | None:
+    """Why the durable host cannot take a run now, or None when it can."""
+    from datetime import timedelta
+
+    try:
+        client = await asyncio.wait_for(connect(), timeout)
+        healthy = await asyncio.wait_for(
+            client.service_client.check_health(timeout=timedelta(seconds=timeout)), timeout)
+    except Exception as exc:                               # noqa: BLE001 — the reason is the answer
+        return f"{type(exc).__name__}: {exc}"
+    return None if healthy else "the host's health check answered not serving"
+
+
+async def served_directive(skill: str, probe: Any) -> str:
+    """The header for a graphed skill's served body, decided at turn time.
+
+    `probe` is None when no host is configured, else an async callable naming why the
+    host cannot take a run now (None when it can). The body promises a server run only
+    when the host answers; otherwise the agent drives the steps itself.
+    """
+    from .skill_graph import graph_directive, has_graph
+
+    if not has_graph(skill):
+        return ""
+    server_runs = probe is not None and await probe() is None
+    return graph_directive(skill, server_runs=server_runs)

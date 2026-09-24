@@ -553,6 +553,19 @@ async def test_a_failed_record_write_is_a_warning_and_the_run_still_finishes():
     assert "503" in bundle["record"]["error"]
 
 
+async def test_a_failed_record_write_is_named_in_the_report_instructions():
+    """The reader must be told the run has no permanent record; only the rules say so."""
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        failed, _ = await _run(env, OK, GRAPH, {"drug_name": "cisplatin"},
+                               record=RuntimeError("GraphDB 503"))
+        written, _ = await _run(env, OK, GRAPH, {"drug_name": "cisplatin"}, run_id="run-ok")
+
+    added = [line for line in failed["write_the_report"]
+             if line not in written["write_the_report"]]
+    assert len(added) == 1, failed["write_the_report"]
+    assert "not recorded" in added[0] and "503" in added[0]
+
+
 # --- check: a model answer is held against the rows before it becomes a fact -------
 
 CHECKED = {

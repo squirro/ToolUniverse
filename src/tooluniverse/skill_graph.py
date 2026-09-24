@@ -106,7 +106,8 @@ def graph_directive(skill: str, server_runs: bool = False) -> str:
 
     It states which instructions govern and demotes the prose phases to reference. With
     `server_runs` the server executes the process; the model starts it, answers its
-    questions and writes the report.
+    questions and writes the report. Pass `server_runs` only when the host can take a
+    run now: the body is read as binding for the turn.
     """
     if not has_graph(skill):
         return ""
@@ -142,7 +143,11 @@ every step and every tool call itself.
    each named statement and submit once more. `accepted_with_failures`: send it
    with `append_to_report` added at the end.
 
-Do not call `execute_tool` for any step of this skill yourself.
+Do not call `execute_tool` for any step of this skill yourself -- unless `run_skill`
+answers `error`. Then the server cannot run the skill this turn: tell the user so in
+one line, with the error, and run the steps yourself with
+`next_skill_step(skill="{skill}", done=[], facts={{...}})`, every call it returns
+through `execute_tool` exactly as given, until it answers `finished`.
 
 ---
 """

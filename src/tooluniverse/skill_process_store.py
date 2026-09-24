@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import requests
 from rdflib import Graph
 
-from .skill_graph_bbo import from_bbo, provenance, to_bbo
+from .skill_graph_bbo import definition_hash, from_bbo, provenance, to_bbo
 
 SKILLS_BASE = "https://data.swissrockets.com/skills/"
 DEFAULT_REPOSITORY = "skill-processes"
@@ -43,6 +43,10 @@ _REPOSITORY_CONFIG = """\
 
 class SkillProcessNotFound(LookupError):
     """No published process for that skill in the store."""
+
+
+class SkillProcessMismatch(RuntimeError):
+    """The process rebuilt from the store is not the definition its hash names."""
 
 
 def named_graph(skill: str) -> str:
@@ -77,10 +81,13 @@ class Store:
     def publish(self, process: dict, git_commit: str | None = None) -> str:
         """Replace the skill's named graph with this process. Returns the graph IRI."""
         iri = named_graph(process["skill"])
+        turtle = to_bbo(process, git_commit=git_commit)
+        # A copy the reader cannot rebuild whole would be refused at every run start.
+        rebuilt(Graph().parse(data=turtle, format="turtle"), process["skill"])
         response = requests.put(
             f"{self.endpoint}/repositories/{self.repository}/rdf-graphs/service",
             params={"graph": iri},
-            data=to_bbo(process, git_commit=git_commit).encode(),
+            data=turtle.encode(),
             headers={"Content-Type": "text/turtle; charset=utf-8"},
             auth=self.auth, timeout=TIMEOUT)
         response.raise_for_status()
@@ -129,4 +136,21 @@ class Store:
         if len(g) == 0:
             raise SkillProcessNotFound(
                 f"no Skill Process published for {skill!r} in {self.repository} at {self.endpoint}")
-        return from_bbo(g), provenance(g)
+        return rebuilt(g, skill)
+
+
+def rebuilt(g: Graph, skill: str) -> tuple[dict, dict]:
+    """The process read back from its graph, and its provenance.
+
+    The hash is recomputed on what was rebuilt, so a step key the reader does not carry
+    is a refusal, not a smaller process running under the full definition's hash.
+    """
+    process, prov = from_bbo(g), provenance(g)
+    actual = definition_hash(process)
+    if actual != prov["definition_hash"]:
+        raise SkillProcessMismatch(
+            f"the published process for {skill!r} does not rebuild to the definition it was "
+            f"published from (published hash {prov['definition_hash'][:12] or 'none'}, "
+            f"rebuilt {actual[:12]}): the store and this server disagree on the process's "
+            "keys, so it cannot run until it is republished from this server's version")
+    return process, prov

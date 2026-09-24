@@ -263,7 +263,8 @@ def test_a_step_tells_the_model_driven_caller_which_names_it_must_judge():
 def test_with_temporal_the_directive_points_at_run_skill_and_forbids_self_execution():
     text = graph_directive("clinical-data-integration", server_runs=True)
     assert "run_skill(" in text and "continue_skill(" in text
-    assert "next_skill_step" not in text
+    # the model-driven loop is named only as what to do when run_skill errors
+    assert "next_skill_step" not in text.partition("answers `error`")[0]
     assert "Do not call `execute_tool`" in text
     # and without Temporal the model-driven loop is still the instruction
     assert "next_skill_step" in graph_directive("clinical-data-integration")
@@ -432,3 +433,13 @@ def test_an_optional_argument_is_sent_only_when_the_run_holds_its_value(facts, e
          "optional_arguments": {"condition": "{disease}"}}]}]}
 
     assert next_step(graph, done=[], facts=facts)["calls"] == [{"tool": "T", "arguments": expected}]
+
+
+def test_the_server_run_directive_says_what_to_do_when_run_skill_errors():
+    """The run can still fail at turn time; the body must not leave the agent with nothing."""
+    text = graph_directive("clinical-data-integration", server_runs=True)
+    before, _, after = text.partition("answers `error`")
+
+    assert after, "the directive names no `error` answer"
+    assert "next_skill_step(" in after and "tell the user" in after.lower()
+    assert "next_skill_step" not in before          # the fallback is only for an error

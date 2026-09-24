@@ -635,6 +635,16 @@ WRITE_THE_REPORT = [
 ]
 
 
+def report_rules(record: dict | None) -> list[str]:
+    """The rules for this run's report: the shared ones, and the Run Record's absence."""
+    if not record or record.get("status") != "failed":
+        return list(WRITE_THE_REPORT)
+    return WRITE_THE_REPORT + [
+        "This run was not recorded: its permanent Run Record could not be written "
+        f"({record.get('error') or 'no reason given'}). Say so in the report, in one line, "
+        "so the reader knows there is no lasting record of what this run read and decided."]
+
+
 def handover_of(graph: dict, run: dict) -> dict:
     """What the agent is handed once at the end: the facts, and a description of each wide table.
 

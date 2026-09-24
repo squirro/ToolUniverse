@@ -1047,7 +1047,7 @@ class SMCP(FastMCP):
         from mcp.types import ToolAnnotations
 
         from .skill_index import build_index, search
-        from .skill_graph import graph_directive
+        from .skill_run_client import served_directive
         from .skill_serving import (
             SkillNotFound,
             available_skills,
@@ -1056,8 +1056,10 @@ class SMCP(FastMCP):
         )
 
         skills_dir = self.skills_dir
-        # Temporal configured means the server runs Skill Processes.
+        # Temporal configured means the server may run Skill Processes; whether it can is
+        # asked at each get_skill, through the probe the run tools register.
         temporal_address = __import__("os").environ.get("TEMPORAL_ADDRESS") or None
+        run_host: dict = {}
         # Build the find_skill catalog index ONCE — the served set is fixed at container start.
         skill_index = build_index(skills_dir)
 
@@ -1124,9 +1126,9 @@ class SMCP(FastMCP):
                 return f"ERROR: {exc}"
             if plain:
                 return body
-            # A graphed skill is driven, not read: the header names who runs it.
-            return graph_directive(normalize_skill_name(name),
-                                   server_runs=bool(temporal_address)) + body
+            # A graphed skill is driven, not read: the header names who runs it this turn.
+            return await served_directive(normalize_skill_name(name),
+                                          run_host.get("probe")) + body
 
         @self.tool(
             annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False)
@@ -1224,7 +1226,7 @@ class SMCP(FastMCP):
             return json.dumps(step, ensure_ascii=False)
 
         if temporal_address:
-            self._add_skill_run_tools(temporal_address)
+            run_host["probe"] = self._add_skill_run_tools(temporal_address)
 
         self.logger.info(
             f"Registered get_skill + find_skill + next_skill_step tools "
@@ -1233,11 +1235,12 @@ class SMCP(FastMCP):
             f"run_skill={'on' if temporal_address else 'off'})"
         )
 
-    def _add_skill_run_tools(self, temporal_address: str) -> None:
+    def _add_skill_run_tools(self, temporal_address: str):
         """Register the Skill Run tools; the server runs a Skill Process on Temporal.
 
         Only when TEMPORAL_ADDRESS is set: a missing setting is an absent tool, not a
-        silent fallback. The logic lives in `skill_run_client`.
+        silent fallback. The logic lives in `skill_run_client`. Returns the probe that
+        says whether the host can take a run now.
         """
         import json
         import os
@@ -1245,7 +1248,7 @@ class SMCP(FastMCP):
         from mcp.types import ToolAnnotations
 
         from .skill_process_store import Store
-        from .skill_run_client import resume, start
+        from .skill_run_client import host_unreachable, resume, start
 
         namespace = os.environ.get("TEMPORAL_NAMESPACE") or "skills"
         state: dict = {}
@@ -1292,7 +1295,7 @@ class SMCP(FastMCP):
                 fetch_run_data(run_id, table, ...). Every number comes from
                 handover.facts or from rows you fetched; report
                 failures/blocked/unresolved/steps_skipped/excluded as gaps. Follow
-                the five lines in `handover.write_the_report`: they hold for every
+                every line in `handover.write_the_report`: they hold for every
                 skill, and submit_report checks the draft against them.
               - `schema_mismatch` → bind the `missing_inputs` from the question
                 and call run_skill again.
@@ -1301,6 +1304,9 @@ class SMCP(FastMCP):
                 again. Bind each one the question names; pass each of the others
                 as null. Absent is not an answer — an input the question names
                 and you leave out changes what the run computes.
+              - `error` → the server cannot run this skill this turn. Tell the
+                user so in one line, with the error, then run the steps yourself
+                with next_skill_step(skill, done=[], facts={...}).
 
             Args:
                 skill: skill id with a published Skill Process, e.g.
@@ -1410,6 +1416,11 @@ class SMCP(FastMCP):
             except Exception as exc:                       # noqa: BLE001
                 out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
             return json.dumps(out, ensure_ascii=False, default=str)
+
+        async def probe() -> str | None:
+            return await host_unreachable(client)
+
+        return probe
 
     def _expose_tooluniverse_tools(self):
         """Convert and register loaded ToolUniverse tools as MCP-compatible tools.

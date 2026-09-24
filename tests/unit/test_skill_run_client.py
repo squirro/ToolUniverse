@@ -246,3 +246,85 @@ async def test_a_draft_with_an_unvouched_number_is_sent_back_once_then_goes_out_
     assert second["status"] == "accepted_with_failures"
     assert second["failures"][0]["text"] == "53.44"
     assert "53.44" in second["append_to_report"]
+
+
+@pytest.mark.asyncio
+async def test_a_published_process_the_store_cannot_give_back_whole_is_an_error_the_agent_sees(
+        requests_mock, monkeypatch):
+    """The run executes what the store returns; a key the reader drops must not run."""
+    from tooluniverse import skill_graph_bbo
+    from tooluniverse.skill_graph import load_graph
+    from tooluniverse.skill_process_store import Store
+
+    endpoint = "http://graphdb.test:7200"
+    requests_mock.post(f"{endpoint}/repositories/skill-processes",
+                       text=skill_graph_bbo.to_bbo(load_graph("adverse-event-detection")),
+                       headers={"Content-Type": "text/turtle"})
+    specs = {k: v for k, v in skill_graph_bbo._JSON_SPECS.items() if k != "compute"}
+    monkeypatch.setattr(skill_graph_bbo, "_JSON_SPECS", specs)
+    client = FakeClient(ScriptedHandle([_status("a", [])]))
+
+    out = await start(client, Store(endpoint=endpoint), "adverse-event-detection",
+                      {"drug_name": "cisplatin", "requested_aes": None})
+
+    assert client.started == []
+    assert out["status"] == "error"
+    assert "republish" in out["error"]
+
+
+# --- the served body promises a server run only when the host can take one now -----
+
+@pytest.mark.asyncio
+async def test_the_served_body_promises_a_server_run_only_while_the_host_answers():
+    from tooluniverse.skill_run_client import served_directive
+
+    async def up():
+        return None
+
+    async def down():
+        return "ConnectError: connection refused"
+
+    skill = "clinical-data-integration"
+    assert "THE SERVER RUNS" in await served_directive(skill, up)
+    unreachable = await served_directive(skill, down)
+    assert "THE SERVER RUNS" not in unreachable and "next_skill_step(" in unreachable
+    assert "THE SERVER RUNS" not in await served_directive(skill, None)   # no host configured
+
+
+class _Health:
+    def __init__(self, healthy):
+        self.healthy = healthy
+
+    async def check_health(self, *, timeout=None):
+        if isinstance(self.healthy, Exception):
+            raise self.healthy
+        return self.healthy
+
+
+class _Client:
+    def __init__(self, healthy):
+        self.service_client = _Health(healthy)
+
+
+@pytest.mark.asyncio
+async def test_the_host_probe_names_why_the_host_cannot_take_a_run():
+    import asyncio
+
+    from tooluniverse.skill_run_client import host_unreachable
+
+    async def healthy():
+        return _Client(True)
+
+    async def refused():
+        raise ConnectionRefusedError("temporal:7233")
+
+    async def failing_health():
+        return _Client(RuntimeError("not serving"))
+
+    async def hangs():
+        await asyncio.sleep(10)
+
+    assert await host_unreachable(healthy, timeout=0.5) is None
+    assert "temporal:7233" in await host_unreachable(refused, timeout=0.5)
+    assert "not serving" in await host_unreachable(failing_health, timeout=0.5)
+    assert "Timeout" in await host_unreachable(hangs, timeout=0.1)

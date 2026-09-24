@@ -132,3 +132,43 @@ def test_a_failed_record_raises_for_the_caller_to_soften(requests_mock):
                       status_code=503)
     with pytest.raises(requests.HTTPError):
         _store().record("@prefix prov: <http://www.w3.org/ns/prov#> .", "skill-demo-1234")
+
+
+# --- the definition that runs is the definition the hash names -------------------
+# The round trip through RDF is lossless only while the reader knows every step key. A key
+# it does not know is dropped silently, and the run would execute less than the hash says.
+
+from tooluniverse import skill_graph_bbo  # noqa: E402
+from tooluniverse.skill_process_store import SkillProcessMismatch  # noqa: E402
+
+
+def _without_key(monkeypatch, key):
+    specs = dict(skill_graph_bbo._JSON_SPECS)
+    specs.pop(key)
+    monkeypatch.setattr(skill_graph_bbo, "_JSON_SPECS", specs)
+
+
+def test_a_load_that_rebuilds_less_than_was_published_is_refused(requests_mock, monkeypatch):
+    process = load_graph("adverse-event-detection")
+    requests_mock.post(f"{ENDPOINT}/repositories/skill-processes",
+                       text=to_bbo(process, git_commit="abc1234"),
+                       headers={"Content-Type": "text/turtle"})
+    _without_key(monkeypatch, "compute")          # the reader no longer knows `compute`
+
+    with pytest.raises(SkillProcessMismatch) as exc:
+        _store().load("adverse-event-detection")
+
+    assert "adverse-event-detection" in str(exc.value)
+    assert "republish" in str(exc.value)
+
+
+def test_a_publish_the_reader_could_not_rebuild_whole_is_refused_before_it_is_sent(
+        requests_mock, monkeypatch):
+    put = requests_mock.put(
+        f"{ENDPOINT}/repositories/skill-processes/rdf-graphs/service", status_code=204)
+    _without_key(monkeypatch, "compute")          # the writer no longer carries `compute`
+
+    with pytest.raises(SkillProcessMismatch):
+        _store().publish(load_graph("adverse-event-detection"))
+
+    assert not put.called

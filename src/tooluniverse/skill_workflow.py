@@ -44,6 +44,7 @@ from .skill_runner import (
     placed_mapping,
     question_for,
     recomputed,
+    report_rules,
     substitute,
     tables_checked,
     upstream_failure_text,
@@ -286,6 +287,7 @@ class SkillWorkflow:
         handover = handover_of(process, run)
         handover["run_id"] = workflow.info().workflow_id
         handover["record"] = await self._record(inp)
+        handover["write_the_report"] = report_rules(handover["record"])
         self._finished = True
         return handover
 

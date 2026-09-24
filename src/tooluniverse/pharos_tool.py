@@ -62,19 +62,34 @@ class PharosTool(BaseTool):
         self, query: str, variables: Optional[Dict] = None
     ) -> Dict[str, Any]:
         """Execute a GraphQL query against Pharos API."""
-        try:
-            payload = {"query": query}
-            if variables:
-                payload["variables"] = variables
-
-            response = requests.post(
-                PHAROS_GRAPHQL_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=self.timeout,
-            )
-            response.raise_for_status()
-            result = response.json()
+        payload = {"query": query}
+        if variables:
+            payload["variables"] = variables
+        # A cold query outlives the gateway (504 at about 60 s) while the backend
+        # finishes and caches it, so one retry usually answers in about a second.
+        for attempt in (1, 2):
+            try:
+                response = requests.post(
+                    PHAROS_GRAPHQL_URL,
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                    timeout=self.timeout,
+                )
+                if response.status_code == 504 and attempt == 1:
+                    continue
+                response.raise_for_status()
+                result = response.json()
+            except requests.exceptions.Timeout:
+                if attempt == 1:
+                    continue
+                return {
+                    "status": "error",
+                    "error": f"Pharos API timeout after {self.timeout}s, twice",
+                }
+            except requests.exceptions.RequestException as e:
+                return {"status": "error", "error": f"Pharos API request failed: {str(e)}"}
+            except Exception as e:
+                return {"status": "error", "error": f"Unexpected error: {str(e)}"}
 
             if "errors" in result:
                 return {
@@ -82,17 +97,14 @@ class PharosTool(BaseTool):
                     "error": result["errors"][0].get("message", "GraphQL error"),
                     "errors": result["errors"],
                 }
-
             return {"status": "success", "data": result.get("data", {})}
-        except requests.exceptions.Timeout:
-            return {
-                "status": "error",
-                "error": f"Pharos API timeout after {self.timeout}s",
-            }
-        except requests.exceptions.RequestException as e:
-            return {"status": "error", "error": f"Pharos API request failed: {str(e)}"}
-        except Exception as e:
-            return {"status": "error", "error": f"Unexpected error: {str(e)}"}
+
+    @staticmethod
+    def _tdl_facet(arguments: Dict[str, Any]) -> Dict[str, Any]:
+        tdl = arguments.get("tdl")
+        if not tdl:
+            return {}
+        return {"facets": [{"facet": "Target Development Level", "values": [tdl]}]}
 
     def _get_target(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -173,10 +185,10 @@ class PharosTool(BaseTool):
 
         # Simple term-based search
         query = """
-        query SearchTargets($term: String!, $top: Int!) {
-            targets(filter: {term: $term}, top: $top) {
+        query SearchTargets($term: String!, $top: Int!, $facets: [IFilterFacet]) {
+            targets(filter: {term: $term, facets: $facets}) {
                 count
-                targets {
+                targets(top: $top) {
                     name
                     sym
                     uniprot
@@ -193,6 +205,7 @@ class PharosTool(BaseTool):
             "term": query_term,
             "top": min(top, 100),  # Cap at 100
         }
+        variables.update(self._tdl_facet(arguments))
 
         result = self._execute_graphql(query, variables)
 
@@ -254,10 +267,10 @@ class PharosTool(BaseTool):
 
         # Use associatedDisease filter
         query = """
-        query GetDiseaseTargets($disease: String!, $top: Int!) {
-            targets(filter: {associatedDisease: $disease}, top: $top) {
+        query GetDiseaseTargets($disease: String!, $top: Int!, $facets: [IFilterFacet]) {
+            targets(filter: {associatedDisease: $disease, facets: $facets}) {
                 count
-                targets {
+                targets(top: $top) {
                     name
                     sym
                     uniprot
@@ -270,6 +283,7 @@ class PharosTool(BaseTool):
         """
 
         variables = {"disease": disease, "top": min(top, 100)}
+        variables.update(self._tdl_facet(arguments))
 
         result = self._execute_graphql(query, variables)
 

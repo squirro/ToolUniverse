@@ -233,11 +233,15 @@ USER 10001
 #     the failure one line later. Excluding it turns a misleading `error` row
 #     into an honest `excluded` one.
 #
-# Sixth wave: 29 tools whose upstream gives nothing usable, each having failed
-# IDENTICALLY in two sweeps a day apart. One reading is not evidence -- on
-# 2026-08-02 USGSWater, RNAcentral, UniChem and SwissTargetPrediction looked
-# just as dead and all four recovered by 2026-08-03.
-#   Pharos_*      502 for two days.   TargetMine_*  503.
+# Sixth wave: 25 tools (29 before Pharos was re-admitted) whose upstream gives
+# nothing usable, each having failed IDENTICALLY in two sweeps a day apart. One
+# reading is not evidence -- on 2026-08-02 USGSWater, RNAcentral, UniChem and
+# SwissTargetPrediction looked just as dead and all four recovered by 2026-08-03.
+#   TargetMine_*  503.
+#   (Pharos_* was here for two days of 502. Re-admitted 2026-09-24: probed from
+#   sr-dev through the served ToolUniverse, all four answer. A cold query can
+#   outlive the Pharos gateway, which answers 504 at about 60 s and then caches,
+#   so pharos_tool.py retries once.)
 #   POWO_* T3DB_* CellMarker_*        403, bot-blocked.
 #   ZINC_*        HTTP 200 with an HTML challenge page on every route, which is
 #                 why the wrapper reports "Invalid JSON" and not a status code.
@@ -443,8 +447,6 @@ CMD ["python3.11", "-m", "tooluniverse.tools_sr.smcp_entry", \
      "python_script_runner", "phykit_batch_analysis", "run_deseq2_analysis", \
      "FlyBase_get_gene_expression", "ZFIN_get_gene_expression", \
      "Finish", "ToolDescriptionOptimizer", "ToolDiscover", \
-     "Pharos_get_disease_targets", "Pharos_get_target", "Pharos_get_tdl_summary", \
-     "Pharos_search_targets", \
      "CellMarker_list_cell_types", "CellMarker_search_by_cell_type", \
      "CellMarker_search_by_gene", "CellMarker_search_cancer_markers", \
      "ZINC_get_compound", "ZINC_get_purchasable", "ZINC_search_by_properties", \

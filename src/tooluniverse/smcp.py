@@ -1227,6 +1227,8 @@ class SMCP(FastMCP):
 
         if temporal_address:
             run_host["probe"] = self._add_skill_run_tools(temporal_address)
+            # Saves are pointless where nothing can replay them.
+            self._add_saved_analysis_route()
 
         self.logger.info(
             f"Registered get_skill + find_skill + next_skill_step tools "
@@ -1419,10 +1421,81 @@ class SMCP(FastMCP):
                 out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
             return json.dumps(out, ensure_ascii=False, default=str)
 
+        @self.tool(
+            annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False)
+        )
+        async def replay_analysis(prompt_id: str, inputs: dict | None = None) -> str:
+            """Replay a Saved Analysis: run its recorded tool calls again on new Inputs.
+
+            USE THIS when the user's message starts with `Replay saved analysis`. The
+            message has the form
+              Replay saved analysis "<name>" (id <prompt_id>) with <input> = <value>, ...
+            Call this tool at once with that id and those values, each under its name
+            exactly as written, and do nothing else first: do not search, do not answer
+            the question yourself, do not run a skill. The server makes the saved calls.
+
+            Then follow the run exactly as for run_skill: continue_skill(run_id) while it
+            is `running`; answer a `waiting` question as run_skill describes; when it is
+            `finished`, write the answer as `handover.report` instructs, then
+            submit_report(run_id, draft) before you answer the user.
+
+            Args:
+                prompt_id: the id in the message, e.g. "K_IZog8LROOP2gPODyN2uQ".
+                inputs: every `<input> = <value>` pair of the message, e.g.
+                    {"target": "AR-V7"}. A value the user gave as a list stays a list.
+
+            Returns:
+                The same shapes as run_skill. `schema_mismatch` names the expected inputs:
+                tell the user which names the analysis takes, and stop.
+            """
+            from .saved_analysis import replay
+
+            try:
+                out = await replay(await client(), Store.from_env(), prompt_id, inputs or {})
+            except Exception as exc:                       # noqa: BLE001
+                out = {"status": "error", "error": f"{type(exc).__name__}: {exc}"}
+            return json.dumps(out, ensure_ascii=False, default=str)
+
         async def probe() -> str | None:
             return await host_unreachable(client)
 
         return probe
+
+    def _add_saved_analysis_route(self):
+        """POST /analyses: the only writer of Saved Analyses (ADR-0019).
+
+        A plain HTTP route, not an MCP tool, so the agent cannot call it. Only when
+        SMCP_SAVE_TOKEN is set: without the token there is no route, so an unconfigured
+        host cannot be written to. The Studio plugin sends the token in `X-Save-Token`.
+        """
+        import os
+
+        expected = os.environ.get("SMCP_SAVE_TOKEN")
+        if not expected:
+            self.logger.info("POST /analyses off (SMCP_SAVE_TOKEN is not set)")
+            return
+
+        from starlette.requests import Request
+        from starlette.responses import JSONResponse
+
+        from .saved_analysis import handle_save
+        from .skill_process_store import Store
+
+        @self.custom_route("/analyses", methods=["POST"], include_in_schema=False)
+        async def save_analysis(request: Request) -> JSONResponse:
+            try:
+                body = await request.json()
+            except Exception:                              # noqa: BLE001
+                return JSONResponse({"error": "the body must be JSON"}, status_code=400)
+            try:
+                status, out = handle_save(body, request.headers.get("x-save-token"),
+                                          expected, Store.from_env())
+            except Exception as exc:                       # noqa: BLE001 — GraphDB down
+                self.logger.exception("POST /analyses failed")
+                status, out = 502, {"error": f"{type(exc).__name__}: {exc}"}
+            return JSONResponse(out, status_code=status)
+
+        self.logger.info("POST /analyses on")
 
     def _expose_tooluniverse_tools(self):
         """Convert and register loaded ToolUniverse tools as MCP-compatible tools.

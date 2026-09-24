@@ -30,8 +30,13 @@ def definition_hash(graph: dict) -> str:
         json.dumps(graph, sort_keys=True, default=str).encode()).hexdigest()
 
 
-def to_bbo(graph: dict, git_commit: str | None = None) -> str:
-    """Serialise one process graph as BBO Turtle."""
+def to_bbo(graph: dict, git_commit: str | None = None, author: str | None = None,
+           prompt_id: str | None = None) -> str:
+    """Serialise one process graph as BBO Turtle.
+
+    A Skill Process carries the git commit it was published from; a Saved Analysis carries
+    its author and Prompt Library id instead (ADR-0019). None of them enters the hash.
+    """
     skill = graph["skill"]
     g = Graph()
     for prefix, ns in (("bbo", BBO), ("srp", SRP), ("srproc", SR), ("srres", RES)):
@@ -51,6 +56,10 @@ def to_bbo(graph: dict, git_commit: str | None = None) -> str:
         g.add((process, SRP.constantsSpec, Literal(json.dumps(graph["constants"], sort_keys=True))))
     if git_commit:
         g.add((process, SRP.gitCommit, Literal(git_commit)))
+    if author:
+        g.add((process, SRP.author, Literal(author)))
+    if prompt_id:
+        g.add((process, SRP.promptId, Literal(prompt_id)))
 
     # Inputs are the one boundary the model binds, so they are declared, not implied.
     for order, name in enumerate(graph.get("inputs", [])):
@@ -259,6 +268,8 @@ def provenance(g: Graph) -> dict:
     return {
         "definition_hash": str(g.value(process, SRP.definitionHash) or ""),
         "git_commit": str(g.value(process, SRP.gitCommit) or "") or None,
+        "author": str(g.value(process, SRP.author) or "") or None,
+        "prompt_id": str(g.value(process, SRP.promptId) or "") or None,
     }
 
 

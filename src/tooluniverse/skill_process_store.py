@@ -78,10 +78,11 @@ class Store:
 
     # -- publish -------------------------------------------------------------------
 
-    def publish(self, process: dict, git_commit: str | None = None) -> str:
+    def publish(self, process: dict, git_commit: str | None = None, *,
+                author: str | None = None, prompt_id: str | None = None) -> str:
         """Replace the skill's named graph with this process. Returns the graph IRI."""
         iri = named_graph(process["skill"])
-        turtle = to_bbo(process, git_commit=git_commit)
+        turtle = to_bbo(process, git_commit=git_commit, author=author, prompt_id=prompt_id)
         # A copy the reader cannot rebuild whole would be refused at every run start.
         rebuilt(Graph().parse(data=turtle, format="turtle"), process["skill"])
         response = requests.put(

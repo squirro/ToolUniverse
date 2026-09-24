@@ -204,7 +204,7 @@ steps:
     requires: [class_members]
     when: class_members
     calls: []
-    # A check reads facts already held, so the members arrive one step earlier.
+    # The members come from the step before, so the choice reads a list already settled.
     judge: [comparator]
     check:
       comparator: [{only_in: class_members}]

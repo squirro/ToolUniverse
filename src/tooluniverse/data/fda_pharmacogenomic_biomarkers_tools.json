@@ -2,7 +2,7 @@
   {
     "name": "fda_pharmacogenomic_biomarkers",
     "type": "FDAPharmacogenomicBiomarkersTool",
-    "description": "Retrieve pharmacogenomic biomarkers from FDA drug labels. This tool fetches the Table of Pharmacogenomic Biomarkers in Drug Labeling from the FDA website and allows filtering by drug name or biomarker.",
+    "description": "Retrieve pharmacogenomic biomarkers from FDA drug labels. Reads the FDA Table of Pharmacogenomic Biomarkers in Drug Labeling (source \"FDA\") and filters it by drug name or biomarker. When fda.gov refuses the request, answers instead from ClinPGx (formerly PharmGKB) annotations of FDA labels marked \"On FDA Biomarker List\": then source is \"ClinPGx\", fallback_from is \"fda.gov\", fda_table says why the FDA table was not read, and each row carries its ClinPGx url. Those rows are ClinPGx data, not the FDA table. If neither source answers, or ClinPGx lists nothing while fda.gov refuses, the call fails: whether the FDA table lists the drug is then unknown.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -56,9 +56,47 @@
               },
               "LabelingSection": {
                 "type": "string"
+              },
+              "Alleles": {
+                "type": "string"
+              },
+              "PGxLevel": {
+                "type": "string",
+                "description": "ClinPGx's PGx level for the label (ClinPGx rows)."
+              },
+              "Annotation": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "description": "ClinPGx page for the annotation (ClinPGx rows)."
+              },
+              "DosingInformation": {
+                "type": "boolean"
               }
             }
           }
+        },
+        "source": {
+          "type": "string",
+          "description": "\"FDA\" (the FDA table) or \"ClinPGx\" (fallback when fda.gov refused)."
+        },
+        "source_url": {
+          "type": "string"
+        },
+        "fallback_from": {
+          "type": "string",
+          "description": "\"fda.gov\" when the rows come from ClinPGx instead of the FDA table."
+        },
+        "fda_table": {
+          "type": "string",
+          "description": "Why the FDA table was not read (ClinPGx answers only)."
+        },
+        "note": {
+          "type": "string"
         }
       }
     },

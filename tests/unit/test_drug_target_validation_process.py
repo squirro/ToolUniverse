@@ -259,3 +259,85 @@ def test_another_tools_rows_do_not_hide_a_narrowing_of_the_drugs(tmp_path):
     owed = [f for f in check_report("The target has known drugs.", {"handover": handed})
             if f["kind"] == "narrowing_not_stated" and "results.modulators" in f["text"]]
     assert owed, "the 25 drugs held must be read against the 82, not the 85 rows of the step"
+
+
+# --- measured activity from ChEMBL -------------------------------------------------
+#
+# Recorded live when the ChEMBL REST API answered 200 again: the target search by the
+# target's UniProt accession, and every activity ChEMBL holds for the target it names.
+
+CHEMBL = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "dtv"
+                     / "chembl_folr1_2026-09-24.json").read_text())
+CHEMBL_SERVED = {k: v for k, v in CHEMBL.items() if not k.startswith("_")}
+
+
+def test_the_measured_activity_of_the_target_arrives_from_chembl_as_evidence(tmp_path):
+    handed, calls, asked = _drive(tmp_path, responses=CHEMBL_SERVED)
+    facts = handed["facts"]
+
+    # the ChEMBL target is found by the accession the run holds, one protein, not a substring
+    (searched,) = [a for t, a in calls if t == "ChEMBL_search_targets"]
+    assert searched == {"target_components__accession": "P15328", "target_type": "SINGLE PROTEIN"}
+    assert facts["chembl_target_id"] == "CHEMBL2121"
+    (sent,) = [a for t, a in calls if t == "ChEMBL_get_target_activities"]
+    assert sent == {"target_chembl_id__exact": "CHEMBL2121", "limit": 1000}
+
+    served = CHEMBL["ChEMBL_get_target_activities"]["data"]["activities"]
+    (table,) = [t for t in handed["tables"] if t["table"] == "results.chembl_activities"]
+    assert (table["source_total"], table["held"]) == (190, len(served))
+    # wide: described and fetched from, never handed whole
+    assert "activity_rows" not in facts
+    (rows,) = [t for t in handed["tables"] if t["table"] == "activity_rows"]
+    assert rows["rows"] == len(served)
+    assert {"molecule_chembl_id", "type", "relation", "value", "units", "pchembl"} <= set(rows["columns"])
+    # the chemical-matter judgement is asked once the measurements are in the run
+    (judged,) = [q for q in asked if "chemical_class" in q["wants"]]
+    order = [s["step"] if isinstance(s, dict) else s for s in handed["steps_done"]]
+    assert order.index("chembl_activities") < order.index("druggability_judged")
+    assert "activity_rows" in json.dumps(judged)
+    assert "stalled" not in handed and handed["blocked"] == []
+
+
+def test_without_a_chembl_target_the_activity_step_is_skipped_and_the_report_is_told(tmp_path):
+    handed, calls, asked = _drive(tmp_path)       # ChEMBL timed out when recorded
+
+    assert not [t for t, _ in calls if t == "ChEMBL_get_target_activities"]
+    assert "chembl_activities" in {s["step"] for s in handed["steps_skipped"]}
+    assert handed["facts"]["druggability_total"] == 20, "the judgement still runs on the rest"
+
+
+def test_a_target_with_more_activity_than_one_page_owes_the_sources_total(tmp_path):
+    """Served 1000 of 58847 measurements, the report must say the source holds 58847."""
+    from tooluniverse.skill_report_check import check_report
+
+    import copy
+    page = copy.deepcopy(CHEMBL["ChEMBL_get_target_activities"])
+    template = page["data"]["activities"][0]
+    page["data"]["activities"] = [{**template, "activity_id": n} for n in range(1000)]
+    page["data"]["page_meta"]["total_count"] = 58847
+    handed, _, _ = _drive(tmp_path, responses={**CHEMBL_SERVED, "ChEMBL_get_target_activities": page})
+
+    (table,) = [t for t in handed["tables"] if t["table"] == "results.chembl_activities"]
+    assert (table["source_total"], table["held"]) == (58847, 1000)
+    owed = [f for f in check_report("The target has measured activity.", {"handover": handed})
+            if f["kind"] == "narrowing_not_stated" and "results.chembl_activities" in f["text"]]
+    assert owed and "58847" in owed[0]["text"]
+
+
+def test_the_probe_rows_are_read_from_the_chemical_probes_answer_of_the_live_schema(tmp_path):
+    """Open Targets dropped probeMinerScore; the step still reads each probe from the new shape."""
+    import tooluniverse.graphql_tool as graphql
+
+    live = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "opentargets"
+                       / "egfr_chemical_probes_2026-09-24.json").read_text())
+    served = graphql.remove_none_and_empty_values(json.loads(json.dumps(live)))
+    handed, _, _ = _drive(
+        tmp_path, responses={"OpenTargets_get_chemical_probes_by_target_ensemblID": served})
+
+    probes = live["data"]["target"]["chemicalProbes"]
+    rows = handed["facts"]["probe_rows"]
+    assert [r["id"] for r in rows] == [p["id"] for p in probes]
+    assert rows[0] == {"id": probes[0]["id"], "isHighQuality": probes[0]["isHighQuality"],
+                       "probesDrugsScore": probes[0]["probesDrugsScore"]}
+    assert not [f for f in handed["failures"]
+                if f["tool"] == "OpenTargets_get_chemical_probes_by_target_ensemblID"]

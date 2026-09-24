@@ -12,8 +12,9 @@ GROUNDED ON sr-dev: most PATH-0 OpenTargets_*_by_ensembl(ID) tools the source sk
 leans on are NOT deployed on this cluster; their sections are routed through the
 available alternatives below. EXCEPTION re-verified 2026-08-04 (audit verdict ok_data,
 now routed here): OpenTargets_get_target_tractability_by_ensemblID. DisGeNET (no API key)
-is substituted by OpenTargets association-targets. Pharos_* and BioGRID_* are excluded
-from the shipped image (DSR-644); §6 and §9 are re-routed accordingly.
+is substituted by OpenTargets association-targets. BioGRID_* is excluded from the shipped
+image (DSR-644); Pharos_* was too, and is served again since 2026-09-24. §6 and §9 stay
+re-routed.
 Use ONLY the named tools below — they are verified present.
 -->
 
@@ -116,8 +117,8 @@ TARGET–DISEASE / VARIANT evidence — grade from what you retrieved:
 - T3  Computational / expression-change / single observational study.
 - T4  Annotation or catalog entry only (e.g. a bare gene-disease mention).
 
-DRUGGABILITY — DERIVE the tier from the §7 tractability buckets. No served tool returns a
-TDL class; never call a tier a "Pharos TDL class":
+DRUGGABILITY — DERIVE the tier from the §7 tractability buckets. This body does not call
+Pharos; never call a derived tier a "Pharos TDL class":
 - T1  an SM or AB `Approved Drug` bucket true, or maxClinicalStage=APPROVAL — or a
       DGIdb/ChEMBL/GtoPdb APPROVED drug exists.
 - T2  `Advanced Clinical`, `Phase 1 Clinical`, `High-Quality Ligand` or `Structure with

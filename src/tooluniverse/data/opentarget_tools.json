@@ -2139,7 +2139,8 @@
   },
   {
     "name": "OpenTargets_get_target_enabling_packages_by_ensemblID",
-    "description": "Retrieve the Target Enabling Packages (TEP) associated with a specific target ensemblID.",
+    "description": "RETIRED -- do not call. Open Targets no longer serves target enabling packages: its schema has no `tep` field and no other field holds them (checked 2026-09-24). Every call answers an error saying so.",
+    "retired": "Open Targets no longer serves target enabling packages: its schema has no `tep` field and no other field holds them (checked 2026-09-24).",
     "parameter": {
       "type": "object",
       "properties": {
@@ -3534,7 +3535,7 @@
         "ensemblId"
       ]
     },
-    "query_schema": "\n      query getTargetChemicalProbes($ensemblId: String!) {\n        target(ensemblId: $ensemblId) {\n          chemicalProbes {\n            id\n            control\n            drugId\n            mechanismOfAction\n            isHighQuality\n            origin\n            probeMinerScore\n            probesDrugsScore\n            scoreInCells\n            scoreInOrganisms\n            targetFromSourceId\n            urls {\n              niceName\n              url\n            }\n          }\n        }\n      }\n    ",
+    "query_schema": "\n      query getTargetChemicalProbes($ensemblId: String!) {\n        target(ensemblId: $ensemblId) {\n          chemicalProbes {\n            id\n            control\n            drugId\n            mechanismOfAction\n            isHighQuality\n            origin\n            probesDrugsScore\n            scoreInCells\n            scoreInOrganisms\n            targetFromSourceId\n            urls {\n              niceName\n              url\n            }\n          }\n        }\n      }\n    ",
     "label": [
       "OpenTarget",
       "Drug Information",

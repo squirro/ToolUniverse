@@ -158,3 +158,14 @@ def test_a_row_that_packs_several_lists_is_refused_because_they_fall_out_of_step
     assert (found.kind, found.step, found.field) == (
         "parallel_lists", "literature", "collect.literature_rows")
     assert violations(one_list) == []
+
+
+def test_the_chembl_activity_page_is_measured_so_a_call_below_it_is_caught():
+    """ChEMBL answered 1000 rows for a limit of 2000 (measured 2026-09-24)."""
+    from tooluniverse.skill_process_lint import source_maxima
+
+    process = _process({"id": "activities", "calls": [
+        {"tool": "ChEMBL_get_target_activities", "arguments": {"target_chembl_id__exact": "{t}"}}]})
+
+    (found,) = violations(process, maxima=source_maxima())
+    assert (found.kind, found.text) == ("source_default", "limit is not set, the source allows 1000")

@@ -260,6 +260,8 @@ steps:
     notes: >-
       Most drugs have no CPIC guideline — only about thirty gene-drug pairs do.
       An empty result is normal and is reported as "No CPIC guideline".
+      fda.gov refuses automated requests from sr-dev, so fda_pharmacogenomic_biomarkers
+      fails there: report the FDA biomarker table as not reachable, never as "no biomarker".
 
   - id: trials
     label: "Phase 4 — registry entries and safety endpoints"

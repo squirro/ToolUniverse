@@ -16,6 +16,7 @@ Base URL: https://api.cellmodelpassports.sanger.ac.uk
 """
 
 import requests
+from statistics import median
 from typing import Dict, Any, List, Optional
 from .base_tool import BaseTool
 from .tool_registry import register_tool
@@ -249,82 +250,200 @@ class DepMapTool(BaseTool):
         except Exception as e:
             return {"status": "error", "error": f"Unexpected error: {str(e)}"}
 
+    # One page holds every screen today (1269); more are paged.
+    _CRISPR_PAGE_SIZE = 2000
+    _MOST_DEPENDENT_SHOWN = 10
+
     def _get_gene_dependencies(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Get CRISPR gene dependency data.
+        CRISPR knockout scores for one gene across the screened cancer lines.
 
-        Returns gene effect scores indicating essentiality in cancer cell lines.
-        Negative scores indicate the gene is essential (cell death upon knockout).
+        Reads `/genes/{id}/datasets/crispr_ko` (one row per screen, Sanger and
+        Broad) and `/genes/{id}/essentiality_profiles`. A gene with no rows is
+        an error that says so, never a success without numbers.
         """
         gene_symbol = arguments.get("gene_symbol")
-        arguments.get("model_id")
+        model_id = arguments.get("model_id")
 
         if not gene_symbol:
             return {"status": "error", "error": "gene_symbol parameter is required"}
 
         try:
-            # Use DepMap_search_genes internally for reliable matching
             search_result = self._search_genes({"query": gene_symbol})
-
             if search_result.get("status") != "success":
                 return search_result
 
             genes = search_result.get("data", {}).get("genes", [])
-            exact_matches = [g for g in genes if g.get("exact_match")]
-            matched_gene = exact_matches[0] if exact_matches else None
-
-            if matched_gene is None and genes:
-                # No exact match — report candidates
+            matched = next((g for g in genes if g.get("exact_match")), None)
+            if matched is None:
+                similar = [g.get("symbol") for g in genes[:5]]
                 return {
-                    "status": "success",
-                    "data": {
-                        "gene_symbol": gene_symbol,
-                        "exact_match": None,
-                        "candidates": genes[:5],
-                        "warning": (
-                            f"No exact match for '{gene_symbol}'. "
-                            f"Similar: {[g['symbol'] for g in genes[:5]]}. "
-                            "Use DepMap_search_genes for disambiguation."
-                        ),
-                    },
-                }
-
-            if matched_gene is None:
-                return {
-                    "status": "success",
-                    "data": {
-                        "gene_symbol": gene_symbol,
-                        "exact_match": None,
-                        "message": (
-                            f"Gene '{gene_symbol}' not found in DepMap. "
-                            "The Sanger Cell Model Passports API has "
-                            "limited gene search capabilities."
-                        ),
-                    },
-                }
-
-            return {
-                "status": "success",
-                "data": {
-                    "gene_symbol": gene_symbol,
-                    "matched_gene": matched_gene,
-                    "note": (
-                        "Gene effect scores: negative = essential "
-                        "(cell death upon knockout), zero = no effect, "
-                        "positive = growth advantage. "
-                        "Full dependency profiles at depmap.org."
+                    "status": "error",
+                    "error": (
+                        f"'{gene_symbol}' is not in the DepMap gene catalogue, so "
+                        "there are no CRISPR scores for it."
+                        + (f" Similar symbols: {similar}." if similar else "")
                     ),
-                },
-            }
+                    "candidates": genes[:5],
+                    "candidates_total": len(genes),
+                }
+
+            gene_id = matched["gene_id"]
+            source_url = f"{DEPMAP_BASE_URL}/genes/{gene_id}/datasets/crispr_ko"
+            rows, screens_total = self._crispr_rows(source_url)
+            profiles = self._essentiality_profiles(gene_id)
         except requests.exceptions.Timeout:
             return {
                 "status": "error",
                 "error": f"DepMap API timeout after {self.timeout}s",
+                "retryable": True,
             }
         except requests.exceptions.RequestException as e:
-            return {"status": "error", "error": f"DepMap API request failed: {str(e)}"}
+            return {
+                "status": "error",
+                "error": f"DepMap API request failed: {type(e).__name__}: {e}",
+                "retryable": True,
+            }
         except Exception as e:
             return {"status": "error", "error": f"Unexpected error: {str(e)}"}
+
+        if model_id:
+            rows = [r for r in rows if r["model_id"] == model_id]
+        if not rows:
+            where = f" in model {model_id}" if model_id else ""
+            return {
+                "status": "error",
+                "error": (
+                    f"DepMap has no CRISPR knockout rows for {gene_symbol} "
+                    f"({gene_id}){where}: the gene was not screened, so its "
+                    "dependency is unknown, not absent."
+                ),
+                "source_url": source_url,
+                "screens_total": screens_total,
+            }
+        return {
+            "status": "success",
+            "data": self._summarise_crispr(
+                gene_symbol, matched, model_id, rows, screens_total,
+                profiles, source_url,
+            ),
+        }
+
+    def _crispr_rows(self, url: str):
+        """Every crispr_ko row for a gene, and the total the API reports.
+
+        Pages by number: the API's `next` link drops `page[size]`.
+        """
+        rows: List[Dict[str, Any]] = []
+        total = None
+        number = 1
+        while True:
+            resp = requests.get(
+                url,
+                params={"page[size]": self._CRISPR_PAGE_SIZE, "page[number]": number},
+                timeout=self.timeout,
+            )
+            resp.raise_for_status()
+            body = resp.json()
+            if total is None:
+                total = (body.get("meta") or {}).get("count")
+            page = body.get("data") or []
+            for item in page:
+                attrs = item.get("attributes") or {}
+                model = (item.get("relationships") or {}).get("model") or {}
+                rows.append({
+                    "model_id": (model.get("data") or {}).get("id"),
+                    "source": attrs.get("source"),
+                    "bf_scaled": attrs.get("bf_scaled"),
+                    "fc_clean_qn": attrs.get("fc_clean_qn"),
+                    "qc_pass": attrs.get("qc_pass"),
+                })
+            if not page or total is None or len(rows) >= total:
+                break
+            number += 1
+        return rows, total if total is not None else len(rows)
+
+    def _essentiality_profiles(self, gene_id: str) -> List[Dict[str, Any]]:
+        resp = requests.get(
+            f"{DEPMAP_BASE_URL}/genes/{gene_id}/essentiality_profiles",
+            timeout=self.timeout,
+        )
+        resp.raise_for_status()
+        return [i.get("attributes") or {} for i in resp.json().get("data") or []]
+
+    def _summarise_crispr(self, gene_symbol, matched, model_id, rows,
+                          screens_total, profiles, source_url):
+        def _stats(subset):
+            bf = [r["bf_scaled"] for r in subset if r["bf_scaled"] is not None]
+            fc = [r["fc_clean_qn"] for r in subset if r["fc_clean_qn"] is not None]
+            dependent = sum(1 for v in bf if v < 0)
+            return {
+                "screens": len(subset),
+                "dependent_screens": dependent,
+                "dependent_fraction": round(dependent / len(bf), 3) if bf else None,
+                "median_bf_scaled": round(median(bf), 3) if bf else None,
+                "median_fc_clean_qn": round(median(fc), 3) if fc else None,
+            }
+
+        passed = [r for r in rows if r["qc_pass"] is not False]
+        overall = _stats(passed)
+        sources = sorted({r["source"] for r in passed if r["source"]})
+        ranked = sorted(
+            (r for r in passed if r["bf_scaled"] is not None),
+            key=lambda r: r["bf_scaled"],
+        )
+        shown = ranked[: self._MOST_DEPENDENT_SHOWN]
+
+        # Two profiles (Sanger, merged) can disagree; any "true" counts.
+        flags = [str(p.get("common_essential")).lower() for p in profiles]
+        common_essential = (
+            True if "true" in flags else False if "false" in flags else None
+        )
+        tissue_specific = sorted({
+            k[len("adm_status_"):]
+            for p in profiles for k, v in p.items()
+            if k.startswith("adm_status_") and v
+        })
+
+        return {
+            "gene_symbol": gene_symbol,
+            "gene_id": matched.get("gene_id"),
+            "hgnc_id": matched.get("hgnc_id"),
+            "model_id": model_id,
+            "source_url": source_url,
+            "screens_total": screens_total,
+            "screens_held": len(rows),
+            "screens_failing_qc": len(rows) - len(passed),
+            **overall,
+            "by_source": [
+                {"source": s, **_stats([r for r in passed if r["source"] == s])}
+                for s in sources
+            ],
+            "common_essential": common_essential,
+            "core_fitness_pancan": any(p.get("core_fitness_pancan") for p in profiles),
+            "tissue_specific_fitness": tissue_specific,
+            "most_dependent": [
+                {
+                    **{k: r[k] for k in ("model_id", "source", "bf_scaled", "fc_clean_qn")},
+                    "model_url": (
+                        "https://cellmodelpassports.sanger.ac.uk/passports/"
+                        f"{r['model_id']}"
+                    ),
+                }
+                for r in shown
+            ],
+            "most_dependent_truncated": len(ranked) > len(shown),
+            "note": (
+                "Sanger Cell Model Passports CRISPR knockout screens (Sanger and "
+                "Broad). bf_scaled: scaled Bayes factor, negative = the line "
+                "depends on the gene (a screen counts as dependent below 0). "
+                "fc_clean_qn: corrected log fold change, negative = depletion. "
+                "Medians are over screens passing QC; most_dependent lists the "
+                f"{len(shown)} lowest bf_scaled of {len(ranked)} scored screens. "
+                "tissue_specific_fitness names tissues where the gene is a "
+                "cancer-type-specific fitness gene."
+            ),
+        }
 
     def _search_genes(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """

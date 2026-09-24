@@ -143,7 +143,7 @@
     },
     {
         "name": "DepMap_get_gene_dependencies",
-        "description": "Get gene dependency information from CRISPR knockout screens. Returns gene IDs and annotations. Negative gene effect scores indicate essentiality (cell death upon knockout).",
+        "description": "CRISPR knockout dependency scores for a gene across cancer cell lines (Sanger Cell Model Passports: Sanger and Broad screens). Returns the median scaled Bayes factor and corrected fold change (negative = the line depends on the gene), how many screens show a dependency, per-source summaries, the common-essential flag, tissues where it is a cancer-type-specific fitness gene, and the most dependent lines. Returns status 'error' with the reason when the gene has no screen rows.",
         "parameter": {
             "type": "object",
             "properties": {
@@ -153,7 +153,7 @@
                 },
                 "model_id": {
                     "type": "string",
-                    "description": "Optional: Filter by specific cell line"
+                    "description": "Optional: Cell Model Passport ID (e.g. 'SIDM00001') to restrict the scores to one cell line"
                 }
             },
             "required": ["gene_symbol"]
@@ -174,10 +174,24 @@
                     "type": "object",
                     "properties": {
                         "gene_symbol": {"type": "string"},
-                        "genes": {"type": "array"}
+                        "gene_id": {"type": "string"},
+                        "source_url": {"type": "string"},
+                        "screens_total": {"type": "integer"},
+                        "screens_held": {"type": "integer"},
+                        "dependent_screens": {"type": "integer"},
+                        "dependent_fraction": {"type": ["number", "null"]},
+                        "median_bf_scaled": {"type": ["number", "null"]},
+                        "median_fc_clean_qn": {"type": ["number", "null"]},
+                        "by_source": {"type": "array"},
+                        "common_essential": {"type": ["boolean", "null"]},
+                        "tissue_specific_fitness": {"type": "array"},
+                        "most_dependent": {"type": "array"},
+                        "most_dependent_truncated": {"type": "boolean"},
+                        "note": {"type": "string"}
                     }
                 },
-                "error": {"type": "string"}
+                "error": {"type": "string"},
+                "retryable": {"type": "boolean"}
             }
         },
         "label": ["DepMap", "CRISPR", "Dependencies"],

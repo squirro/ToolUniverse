@@ -9,6 +9,9 @@
     },
     "PubMed_search_articles": {
       "limit": 200
+    },
+    "ChEMBL_get_target_activities": {
+      "limit": 1000
     }
   },
   "entities": {

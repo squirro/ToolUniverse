@@ -39,7 +39,9 @@ report: >-
   relevant with fetch_run_data(rank_by=<the disease and the mechanism>, limit=<how many you
   will read>), state the source's total beside what the run holds, cite each paper by its own
   `url`); 3 Druggability (the tractability rows that are true, the target class, the
-  AlphaFold confidence, the chemical probes); 4 Known modulators (`drug_rows`, each with its
+  AlphaFold confidence, the chemical probes, the measured activity: `activity_rows` is
+  evidence, state the source's total beside what the run holds and give each measurement you
+  cite with its molecule, type, relation, value, units and `pchembl`); 4 Known modulators (`drug_rows`, each with its
   stage); 5 Clinical precedent (`trial_rows` is evidence: fetch the ones you discuss, cite
   each as https://clinicaltrials.gov/study/<nct_id>, state the total); 6 Safety (expression in
   the critical tissues from `expression_rows`, the mouse models, the boxed warnings found);
@@ -63,6 +65,8 @@ constants:
   clinical_options: [approved_same_disease, approved_other_disease, phase_3, phase_2, phase_1, preclinical_only, none]
   functional_options: [crispr_knockout_phenotype, sirna_knockdown_phenotype, biochemical_assay, overexpression_only, none]
   model_options: [patient_derived_xenograft, genetically_engineered_mouse, cell_line, in_silico_only, none]
+  # ChEMBL's type for a target that is one protein; an accession also sits in complexes and families.
+  chembl_single_protein: "SINGLE PROTEIN"
   # GTEx tissue ids of the tissues the skill calls critical (heart, liver, kidney, brain, blood).
   critical_tissues: [Heart_Atrial_Appendage, Heart_Left_Ventricle, Liver, Kidney_Cortex, Kidney_Medulla,
                      Brain_Cortex, Brain_Cerebellum, Whole_Blood]
@@ -87,6 +91,7 @@ tables:
   gwas_rows: evidence        # wide; the agent reads what it needs
   literature_rows: evidence
   trial_rows: evidence
+  activity_rows: evidence    # every measurement ChEMBL holds for the target
   web_rows: evidence
 
 steps:
@@ -275,7 +280,7 @@ steps:
       tractability_rows: {path: "data.target.tractability", flatten: true, fields: ["modality", "label", "value"]}
       class_rows: {path: "data.target.targetClass", flatten: true, fields: ["label", "level"]}
       probe_rows: {path: "data.target.chemicalProbes", flatten: true,
-                   fields: ["id", "isHighQuality", "probeMinerScore", "probesDrugsScore"]}
+                   fields: ["id", "isHighQuality", "probesDrugsScore"]}
     produces: [alphafold_confidence, tractability_rows, class_rows, probe_rows]
 
   - id: modulators
@@ -286,21 +291,44 @@ steps:
         # The tool pages a list the source answers whole; one page this wide holds it.
         arguments: {ensemblId: "{ensembl_id}", page_size: 1000}
       - tool: ChEMBL_search_targets
-        arguments: {target_synonym__icontains: "{symbol}"}
+        # The accession names one protein; a synonym is a substring and also hits its relatives.
+        arguments: {target_components__accession: "{uniprot_id}", target_type: "{chembl_single_protein}"}
     total: "data.target.drugAndClinicalCandidates.count"
+    extract:
+      chembl_target_id: "data.targets.0.target_chembl_id"
     collect:
       drug_rows: {path: "data.target.drugAndClinicalCandidates.rows", flatten: true,
                   fields: ["drug.id as chembl_id", "drug.name as name", "maxClinicalStage as stage",
                            "diseases[].disease.name as indications"]}
       drug_names: {path: "data.target.drugAndClinicalCandidates.rows[].drug.name", flatten: true}
-    produces: [drug_rows, drug_names]
+    produces: [drug_rows, drug_names, chembl_target_id]
     notes: >-
-      ChEMBL's search can fail at the source; a failure here is recorded and the chemical-matter
-      judgement reads the drugs, probes and tractability instead.
+      ChEMBL's search can fail at the source; a failure here is recorded, the measured activity
+      is skipped, and the chemical-matter judgement reads the drugs, probes and tractability instead.
+
+  - id: chembl_activities
+    label: "Phase 3b -- measured activity against the target"
+    requires: [modulators]
+    when: chembl_target_id
+    calls:
+      - tool: ChEMBL_get_target_activities
+        arguments: {target_chembl_id__exact: "{chembl_target_id}", limit: 1000}
+    total: "data.page_meta.total_count"
+    collect:
+      activity_rows: {path: "data.activities", flatten: true,
+                      fields: ["molecule_chembl_id", "molecule_pref_name as molecule", "standard_type as type",
+                               "standard_relation as relation", "standard_value as value",
+                               "standard_units as units", "pchembl_value as pchembl", "assay_type",
+                               "assay_description", "document_chembl_id", "document_year as year"]}
+    produces: [activity_rows]
+    notes: >-
+      Each row is one measurement ChEMBL holds for the target: the molecule, the measure
+      (IC50, Ki, Kd, EC50, ...), its value and units, and `pchembl`, the source's -log10 of the
+      molar potency (7 is 100 nM, 6 is 1 uM; empty when the measure is not a potency).
 
   - id: druggability_judged
     label: "Phase 2/3 -- the druggability sub-scores, from the data in hand"
-    requires: [druggability, modulators]
+    requires: [druggability, modulators, chembl_activities]
     calls: []
     judge: [structural_class, chemical_class, target_class, druggability_reason]
     check:
@@ -316,7 +344,9 @@ steps:
     notes: >-
       Choose each option from its list, from the data only: `tractability_rows` (which labels
       are true, per modality), `alphafold_confidence` (below 70 is low), `probe_rows`,
-      `drug_rows` and their stages, `class_rows`. `druggability_reason` names the rows behind
+      `drug_rows` and their stages, `class_rows`, and for `chemical_class` the measured
+      potencies in `activity_rows` (fetch the rows with a `pchembl`: 7 or more is below 100 nM,
+      6 or more below 1 uM). `druggability_reason` names the rows behind
       each choice in one sentence each. The points are the skill's tables, applied by the server.
 
   - id: expression

@@ -132,6 +132,9 @@ MISS_CASES = {
     "pluck": _case(
         {"op": "pluck", "rows": "rows", "field": "hpo_id"},
         {"rows": POISON + [{"hpo_id": "HP:0001"}]}),
+    "same_name": _case(
+        {"op": "same_name", "rows": "rows", "field": "name", "asked": "asked"},
+        {"rows": POISON + [{"name": "A disease", "asked": "a disease"}]}),
     # These four read a single value rather than a rows fact, so the poison they can meet
     # is a miss in the value itself, not a None among records.
     "band": _case(

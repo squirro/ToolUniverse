@@ -17,7 +17,8 @@ from tooluniverse.skill_graph import (  # noqa: E402
 from tooluniverse.skill_runner import (  # noqa: E402
     SkillPathError, SkillRunner, _derive, _dig, _fewest, _flag, _hierarchy_rows, _pluck,
     _prevalence_tier, absorb, apply, carries, check_facts, new_run, next_runnable,
-    normalised_executor, placed_mapping, question_for, resolved, source_total, substitute)
+    normalised_executor, placed_mapping, question_for, resolved, same_name, source_total,
+    substitute)
 
 pytestmark = pytest.mark.unit
 
@@ -1317,25 +1318,76 @@ def test_every_decisive_candidate_is_looked_up_in_orphanet_by_name():
     by_name = [a["query"] for t, a in calls if t == "Orphanet_search_diseases" and a["limit"] == 1]
     assert state["facts"]["decisive_candidates"] == decisive and len(decisive) == 20
     assert by_name == decisive
-    # One row per hit, as Orphanet spells it: code and preferred term together.
+    # One row per hit, as Orphanet spells it, beside the name asked.
     assert state["facts"]["orphanet_matches"][0] == {
-        "ORPHAcode": 580, "Preferred term": "Mucopolysaccharidosis type 2", "Date": "2026-07-02 10:13:59"}
-    assert state["facts"]["orphanet_matches"] == [
-        _recorded_response("Orphanet_search_diseases", query=name, limit=1)["data"]["results"][0]
-        for name in decisive]
-    assert state["facts"]["orphanet_codes"][:3] == [580, 363294, 79430]
+        "ORPHAcode": 580, "Preferred term": "Mucopolysaccharidosis type 2",
+        "candidate": "mucopolysaccharidosis type 2"}
+    hits = [_recorded_response("Orphanet_search_diseases", query=name, limit=1)["data"]["results"][0]
+            for name in decisive]
+    assert [(r["ORPHAcode"], r["Preferred term"], r["candidate"]) for r in state["facts"]["orphanet_hits"]] == [
+        (h["ORPHAcode"], h["Preferred term"], name) for h, name in zip(hits, decisive)]
+    assert state["facts"]["orphanet_codes"][:3] == [580, 351, 300496]
+    assert len(state["facts"]["orphanet_codes"]) == 13      # 7 of 20 top hits are other diseases
     assert "resolve_candidates" in state["done"]
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "resolve_candidates keeps Orphanet's top hit whatever its name: 'mucopolysaccharidosis-plus "
-    "syndrome' becomes Peters plus syndrome, 'DEGCAGS syndrome' becomes Genetic syndromic Pierre "
-    "Robin syndrome, and their phenotypes and genes enter the differential"))
 def test_a_candidate_whose_orphanet_top_hit_is_another_disease_gets_no_match_row():
-    state, _ = _rare_disease_run()
+    state, calls = _rare_disease_run()
     matched = {row["Preferred term"] for row in state["facts"]["orphanet_matches"]}
     assert not matched & {"Peters plus syndrome", "Genetic syndromic Pierre Robin syndrome",
                           "X-linked reticulate pigmentary disorder"}
+    looked_up = {int(a["orphacode"]) for t, a in calls if t.startswith("Orphanet_get_")}
+    assert not looked_up & {363294, 709, 85453}
+
+
+def test_the_handover_names_each_unresolved_candidate_with_the_name_orphanet_returned():
+    state, _ = _rare_disease_run()
+    set_aside = state["excluded"]["resolve_candidates"]["orphanet_matches"]
+    by_candidate = {row["candidate"]: row["Preferred term"] for row in set_aside}
+    assert by_candidate["DEGCAGS syndrome"] == "Genetic syndromic Pierre Robin syndrome"
+    assert by_candidate["mucopolysaccharidosis-plus syndrome"] == "Peters plus syndrome"
+    assert by_candidate["intellectual developmental disorder, X-linked, syndromic, with pigmentary "
+                        "mosaicism and coarse facies"] == "X-linked reticulate pigmentary disorder"
+    assert all(row["not_resolved"] for row in set_aside)
+    kept = {row["candidate"] for row in state["facts"]["orphanet_matches"]}
+    assert not kept & set(by_candidate)
+
+
+@pytest.mark.parametrize("asked, returned", [
+    ("mucopolysaccharidosis-plus syndrome", "Peters plus syndrome"),
+    ("DEGCAGS syndrome", "Genetic syndromic Pierre Robin syndrome"),
+    ("intellectual developmental disorder, X-linked, syndromic, with pigmentary mosaicism and "
+     "coarse facies", "X-linked reticulate pigmentary disorder"),
+    ("Hermansky-Pudlak syndrome 2", "Hermansky-Pudlak syndrome"),
+    ("autosomal recessive spinocerebellar ataxia 20", "Spinocerebellar ataxia type 20"),
+    ("GM1 gangliosidosis", "Gangliosidosis"),
+])
+def test_names_of_different_diseases_are_not_the_same_name(asked, returned):
+    assert not same_name(asked, returned)
+
+
+@pytest.mark.parametrize("asked, returned", [
+    ("multiple congenital anomalies-hypotonia-seizures syndrome 2",
+     "Multiple congenital anomalies-hypotonia-seizures syndrome type 2"),
+    ("mucolipidosis type II", "Mucolipidosis type 2"),
+    ("galactosialidosis", "Galactosialidosis"),
+    ("leukodystrophy, hypomyelinating, 12", "Hypomyelinating leukodystrophy type 12"),
+    ("Sandhoff disease", "Sandhoff"),
+])
+def test_one_disease_spelled_two_ways_is_the_same_name(asked, returned):
+    assert same_name(asked, returned)
+
+
+def test_same_name_keeps_the_rows_whose_name_is_the_one_asked_and_sets_the_rest_aside():
+    rows = [{"candidate": "mucolipidosis type II", "ORPHAcode": 576, "Preferred term": "Mucolipidosis type II"},
+            {"candidate": "DEGCAGS syndrome", "ORPHAcode": 363294,
+             "Preferred term": "Genetic syndromic Pierre Robin syndrome"}]
+    spec = {"id": "s", "compute": {
+        "matches": {"op": "same_name", "rows": "hits", "field": "Preferred term", "asked": "candidate"},
+        "codes": {"op": "pluck", "rows": "matches", "field": "ORPHAcode"}}}
+    out = absorb(spec, [], facts={"hits": rows})
+    assert out["facts"]["matches"] == [rows[0]] and out["facts"]["codes"] == [576]
+    assert out["excluded"] == {"matches": [{**rows[1], "not_resolved": True}]}
 
 
 def test_collect_can_flatten_one_list_per_call_into_one_list():
@@ -1360,7 +1412,8 @@ def test_genes_come_from_orphanet_per_resolved_candidate_never_from_the_model():
     state, calls = _rare_disease_run()
     assert [int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_genes"] == state["facts"]["orphanet_codes"]
     genes = state["facts"]["genes"]
-    assert genes[:4] == ["IDS", "BLOC1S3", "DTNBP1", "BLOC1S6"] and len(genes) == len(set(genes)) == 28
+    assert genes[:4] == ["IDS", "CTSA", "PIGA", "GLB1"] and len(genes) == len(set(genes)) == 12
+    assert "BLOC1S3" not in genes, "a gene of a disease Orphanet returned in the candidate's place"
     assert "HEXB" in genes and genes.count("NEU1") == 1, "a gene two candidates share is kept once"
     assert "genes" not in {n for q in state["asked"] for n in q["wants"] if q["kind"] == "judge"}
     assert [q["step"] for q in state["asked"] if q["kind"] == "judge"] == [
@@ -1554,9 +1607,10 @@ def test_overlap_and_grade_are_computed_by_the_server_without_a_question():
     assert (rows["580"]["n"], rows["580"]["N"], rows["580"]["overlap_pct"], rows["580"]["grade"]) == (3, 3, 100, "T1")
     assert rows["580"]["matched_hpo_ids"] == ["HP:0000280", "HP:0001433", "HP:0001263"]
     assert (rows["79255"]["n"], rows["79255"]["grade"]) == (2, "T2")
-    assert (rows["79430"]["n"], rows["79430"]["grade"]) == (0, "T4")
-    # a candidate whose phenotype lookup returned no annotation has no overlap row
-    assert "363294" not in rows and "85453" not in rows
+    # a candidate whose phenotype lookup returned no annotation has no overlap row,
+    # and a top hit that is another disease is never looked up at all
+    assert "300496" not in rows
+    assert not {"79430", "363294", "85453"} & set(rows)
 
 
 def test_a_question_stubs_facts_larger_than_a_payload_cap():
@@ -1650,18 +1704,17 @@ def test_the_shipped_process_ranks_the_differential_on_the_server_from_its_rows(
     assert [int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_epidemiology"] == state["facts"]["orphanet_codes"]
     assert "rank_differential" not in {q["step"] for q in state["asked"]}     # no question asked
     ranked = state["facts"]["ranked_rows"]
-    assert [r["rank"] for r in ranked] == list(range(1, 16))
+    assert [r["rank"] for r in ranked] == list(range(1, 13))
     assert [r["orpha_code"] for r in ranked] == [
         "93473", "580", "576", "93400", "309282", "309155", "3166",   # fit, carry both
         "821", "351", "796", "79255",                                 # fit, carry one of two
-        "709", "79430",                                               # fit, carry neither
-        "93399", "101110"]                                            # onset later than 4 years
+        "93399"]                                                      # onset later than 4 years
     first = ranked[0]
     assert (first["onset_fit"], first["carries_discriminating"], first["prevalence_tier"]) == (
         "fits", "both", "1-9 / 1 000 000")
     assert (first["grade"], first["overlap_pct"]) == ("T1", 100)   # overlap travels with the row
-    assert ranked[-2]["preferred_term"] == "Juvenile sialidosis type 2"
-    assert ranked[-2]["onset_fit"] == "later than patient" and ranked[-2]["overlap_pct"] == 100
+    assert ranked[-1]["preferred_term"] == "Juvenile sialidosis type 2"
+    assert ranked[-1]["onset_fit"] == "later than patient" and ranked[-1]["overlap_pct"] == 100
 
 
 def test_prevalence_tier_is_the_class_most_studies_agree_on_not_one_outlier():

@@ -78,8 +78,7 @@ def test_with_the_age_bound_the_differential_is_ranked_on_onset_fit():
 
     ranked = handed["facts"]["ranked_rows"]
     assert [(r["preferred_term"], r["onset_fit"], r["rank"]) for r in ranked] == [
-        ("Hypocalcemic vitamin D-dependent rickets", "fits", 1),
-        ("Majeed syndrome", "fits", 2)]
+        ("Majeed syndrome", "fits", 1)]
     assert {r["carries_discriminating"] for r in ranked} == {"both"}
     assert "rank_differential" in handed["steps_done"]
     assert handed["failures"] == [] and handed["blocked"] == [] and "stalled" not in handed
@@ -89,3 +88,14 @@ def test_without_an_age_onset_is_not_assessed():
     handed, _ = _drive()
 
     assert {r["onset_fit"] for r in handed["facts"]["ranked_rows"]} == {"not assessed (no patient age)"}
+
+
+def test_a_candidate_whose_orphanet_top_hit_is_another_disease_is_handed_over_as_not_resolved():
+    handed, calls = _drive(age_years=4)
+
+    set_aside = {(r["candidate"], r["Preferred term"])
+                 for r in handed["excluded"]["resolve_candidates"]["orphanet_matches"]}
+    assert set_aside == {("plasma cell myeloma", "Plasma cell leukemia"),
+                         ("vitamin D-dependent rickets, type 1",
+                          "Hypocalcemic vitamin D-dependent rickets")}
+    assert [a["orphacode"] for tool, a in calls if tool == "Orphanet_get_genes"] == [77297]

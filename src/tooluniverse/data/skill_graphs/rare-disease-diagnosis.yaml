@@ -71,15 +71,16 @@ report: >-
   https://hpo.jax.org/browse/term/<HP id>, each ranked disease as
   https://www.orpha.net/en/disease/detail/<ORPHAcode> taken from its row in
   `facts.orphanet_matches` (match on the preferred term; a disease with no row
-  is "no Orphanet entry found" and gets no link), each
+  is "no Orphanet entry found", or "not resolved in Orphanet" when
+  `excluded.resolve_candidates` names it, and gets no link), each
   paper as https://europepmc.org/article/MED/<PMID>, each Open Targets row as
   https://platform.opentargets.org/disease/<MONDO id>, each Orphanet gene claim
   by its PMID, each gene as
   https://www.ncbi.nlm.nih.gov/gene/<entrezgene from the MyGene result> and its
   expression as https://gtexportal.org/home/gene/<symbol>. Every footnote is a
   real https link and every item has its own — never one footnote for a whole
-  table. End with a Limitations section built from `failures`, `blocked` and
-  `unresolved`, and from any symptom that resolved to no HP: id.
+  table. End with a Limitations section built from `failures`, `blocked`,
+  `unresolved` and `excluded`, and from any symptom that resolved to no HP: id.
 
 # What the agent gets whole (fact) and what it gets described and fetches from (evidence).
 # A table a later step reads must be a fact. The kind decides, never the size.
@@ -88,6 +89,7 @@ tables:
   hpo_ids: fact
   term_counts: fact
   hpo_hierarchy_calls: fact
+  orphanet_hits: fact
   orphanet_matches: fact
   orphanet_codes: fact
   disease_phenotypes: fact
@@ -227,16 +229,25 @@ steps:
       - tool: Orphanet_search_diseases
         arguments: {query: "{candidate}", limit: 1}
     # The joint tool gives names only. One lookup per name carries the hit as a
-    # row — code and preferred term together — so a name Orphanet does not know
-    # is absent rather than shifting every later index.
+    # row — code, preferred term and the name asked — so a name Orphanet does not
+    # know is absent rather than shifting every later index.
     collect:
-      orphanet_matches: {path: "data.results.0"}
-      orphanet_codes: {path: "data.results.0.ORPHAcode"}
-    produces: [orphanet_matches, orphanet_codes]
+      orphanet_hits: {path: "data.results.0", fields: ["ORPHAcode", "Preferred term", "$item as candidate"]}
+    # Orphanet's top hit is often another disease. A hit counts only when its
+    # preferred term and the candidate hold the same words once lower-cased, with
+    # punctuation read as spaces, Roman numerals as numbers and "type", "syndrome"
+    # and "disease" dropped, in any order. The search gives no synonyms to match on.
+    compute:
+      orphanet_matches: {op: same_name, rows: orphanet_hits, field: "Preferred term", asked: candidate}
+      orphanet_codes: {op: pluck, rows: orphanet_matches, field: ORPHAcode}
+    produces: [orphanet_hits, orphanet_matches, orphanet_codes]
     notes: >-
       One call per decisive candidate, the top hit only. A candidate with no hit
       has no row in orphanet_matches: report it as "no Orphanet entry found" and
-      give it no link. Never guess a code.
+      give it no link. A candidate listed under excluded.resolve_candidates is
+      not resolved: Orphanet's top hit was another disease, named there. Report
+      it as "not resolved in Orphanet (top hit: <that name>)" and give it no link,
+      no phenotypes, genes, prevalence or inheritance. Never guess a code.
 
   - id: disease_phenotypes
     label: "Phase 2b.2 — each candidate's own phenotype set, from Orphanet"

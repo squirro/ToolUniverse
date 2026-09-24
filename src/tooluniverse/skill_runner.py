@@ -345,6 +345,49 @@ def _pluck_all(rule: dict, facts: dict) -> list | None:
             if (row.get(where) if where else True) and row.get(rule["field"]) is not None]
 
 
+_ROMAN = {"i": "1", "ii": "2", "iii": "3", "iv": "4", "v": "5", "vi": "6", "vii": "7",
+          "viii": "8", "ix": "9", "x": "10"}
+_NAME_FILLER = {"type", "syndrome", "disease"}
+
+
+def _name_words(name: Any) -> list[str]:
+    words = re.split(r"[^0-9a-z]+", str(name or "").lower())
+    return sorted(_ROMAN.get(w, w) for w in words if w and w not in _NAME_FILLER)
+
+
+def same_name(asked: Any, returned: Any) -> bool:
+    """Two names name the same thing when, lower-cased, with punctuation read as spaces,
+    Roman numerals read as numbers and the words "type", "syndrome" and "disease"
+    dropped, they hold the same words in any order."""
+    words = _name_words(asked)
+    return bool(words) and words == _name_words(returned)
+
+
+def _same_name_split(rule: dict, facts: dict) -> tuple[list[dict], list[dict]] | None:
+    rows = _rows_of(rule, facts)
+    if rows is None:
+        return None
+    kept, aside = [], []
+    for row in rows:
+        if same_name(row.get(rule["asked"]), row.get(rule["field"])):
+            kept.append(row)
+        else:
+            aside.append({**row, "not_resolved": True})
+    return kept, aside
+
+
+def _same_name(rule: dict, facts: dict) -> list[dict] | None:
+    """The rows whose `field` names what their `asked` field asked for (see `same_name`)."""
+    split = _same_name_split(rule, facts)
+    return None if split is None else split[0]
+
+
+def _same_name_excluded(rule: dict, facts: dict) -> list[dict]:
+    """The rows whose source name is another thing: not resolved, each with both names."""
+    split = _same_name_split(rule, facts)
+    return [] if split is None else split[1]
+
+
 class _Refused:
     """A compute that cannot proceed on what it was given, with the reason."""
 
@@ -418,7 +461,12 @@ _COMPUTE_OPS: dict[str, Callable[[dict, dict], Any]] = {"rank_differential": _ra
                                                        "hierarchy": _hierarchy_rows,
                                                        "flag": _flag, "pluck": _pluck,
                                                        "band": _band, "map": _map, "sum": _sum,
-                                                       "lookup": _lookup, "first": _first}
+                                                       "lookup": _lookup, "first": _first,
+                                                       "same_name": _same_name}
+
+# What an op set aside, recorded under `excluded` so the report can say so.
+_SET_ASIDE: dict[str, Callable[[dict, dict], list]] = {"pluck": _pluck_excluded,
+                                                      "same_name": _same_name_excluded}
 
 
 def _compute(rule: dict, facts: dict) -> Any:
@@ -455,8 +503,9 @@ def _computed(spec: dict, pending: dict, facts: dict, extracted: dict,
             elif value is not None:
                 extracted[name] = value
                 settled.append(name)
-                if rule.get("exclude_pattern"):
-                    dropped = _pluck_excluded(rule, {**facts, **extracted})
+                set_aside = _SET_ASIDE.get(rule.get("op"))
+                if set_aside:
+                    dropped = set_aside(rule, {**facts, **extracted})
                     if dropped:
                         excluded[name] = dropped
         if not settled:

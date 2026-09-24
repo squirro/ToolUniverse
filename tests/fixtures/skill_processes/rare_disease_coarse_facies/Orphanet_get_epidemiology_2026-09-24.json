@@ -1,0 +1,955 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. Every response is whole.",
+ "{\"orphacode\": 580}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "580",
+   "preferred_term": "Mucopolysaccharidosis type 2",
+   "prevalences": [
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 100 000",
+     "geographic": "Italy",
+     "qualification": "Value and class",
+     "mean_value": "1.21",
+     "source": "11953730[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Netherlands",
+     "qualification": "Value and class",
+     "mean_value": "0.67",
+     "source": "10480370[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 100 000",
+     "geographic": "Sweden",
+     "qualification": "Value and class",
+     "mean_value": "6.5",
+     "source": "18681890[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Norway",
+     "qualification": "Value and class",
+     "mean_value": "0.13",
+     "source": "18681890[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 100 000",
+     "geographic": "Norway",
+     "qualification": "Value and class",
+     "mean_value": "4.4",
+     "source": "18681890[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Denmark",
+     "qualification": "Value and class",
+     "mean_value": "0.27",
+     "source": "18681890[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 100 000",
+     "geographic": "Portugal",
+     "qualification": "Value and class",
+     "mean_value": "1.09",
+     "source": "14685153[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Germany",
+     "qualification": "Value and class",
+     "mean_value": "0.64",
+     "source": "16435194[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Europe",
+     "qualification": "Value and class",
+     "mean_value": "0.7",
+     "source": "ORPHANET",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Sweden",
+     "qualification": "Value and class",
+     "mean_value": "0.31",
+     "source": "18681890[PMID]_25274184[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 100 000",
+     "geographic": "Denmark",
+     "qualification": "Value and class",
+     "mean_value": "9.1",
+     "source": "18681890[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Czech Republic",
+     "qualification": "Value and class",
+     "mean_value": "0.43",
+     "source": "20490927[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Ireland",
+     "qualification": "Value and class",
+     "mean_value": "0.71",
+     "source": "9439667[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 100 000",
+     "geographic": "Taiwan, Province of China",
+     "qualification": "Value and class",
+     "mean_value": "1.07",
+     "source": "19396827[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Australia",
+     "qualification": "Value and class",
+     "mean_value": "0.74",
+     "source": "9918480[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 100 000",
+     "geographic": "Estonia",
+     "qualification": "Value and class",
+     "mean_value": "2.16",
+     "source": "22480138[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Canada",
+     "qualification": "Value and class",
+     "mean_value": "0.1",
+     "source": "10617747[PMID]_[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Europe",
+     "qualification": "Value and class",
+     "mean_value": "0.2",
+     "source": "European Medicines Agency 2018 [OTHER]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Worldwide",
+     "qualification": "Value and class",
+     "mean_value": "0.68",
+     "source": "ORPHANET",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Poland",
+     "qualification": "Value and class",
+     "mean_value": "0.46",
+     "source": "25472774[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Switzerland",
+     "qualification": "Value and class",
+     "mean_value": "0.46",
+     "source": "28595941[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Korea, Republic of",
+     "qualification": "Value and class",
+     "mean_value": "0.74",
+     "source": "25364648[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Tunisia",
+     "qualification": "Value and class",
+     "mean_value": "0.29",
+     "source": "20209839[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "United States",
+     "qualification": "Value and class",
+     "mean_value": "0.26",
+     "source": "34051828[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Brazil",
+     "qualification": "Value and class",
+     "mean_value": "0.37",
+     "source": "31926052[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Japan",
+     "qualification": "Value and class",
+     "mean_value": "0.84",
+     "source": "28595941[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "<1 / 1 000 000",
+     "geographic": "United States",
+     "qualification": "Value and class",
+     "mean_value": "0.07",
+     "source": "34051828[PMID]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 27
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "580"
+  }
+ },
+ "{\"orphacode\": 363294}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "363294",
+   "preferred_term": "",
+   "prevalences": [],
+   "prevalence_count": 0
+  },
+  "metadata": {
+   "note": "No epidemiology data found"
+  }
+ },
+ "{\"orphacode\": 79430}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "79430",
+   "preferred_term": "Hermansky-Pudlak syndrome",
+   "prevalences": [
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Worldwide",
+     "qualification": "Value and class",
+     "mean_value": "0.15",
+     "source": "ORPHANET",
+     "validation_status": "Not yet validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-5 / 10 000",
+     "geographic": "Puerto rico",
+     "qualification": "Value and class",
+     "mean_value": "55.0",
+     "source": "7573033[PMID]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 2
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "79430"
+  }
+ },
+ "{\"orphacode\": 351}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "351",
+   "preferred_term": "Galactosialidosis",
+   "prevalences": [
+    {
+     "type": "Point prevalence",
+     "class": "Unknown",
+     "geographic": "Worldwide",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET",
+     "validation_status": "Not yet validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Sweden",
+     "qualification": "Value and class",
+     "mean_value": "0.14",
+     "source": "25274184[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Cases/families",
+     "class": null,
+     "geographic": "Worldwide",
+     "qualification": "Case(s)",
+     "mean_value": "100.0",
+     "source": "23915561[PMID]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 3
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "351"
+  }
+ },
+ "{\"orphacode\": 300496}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "300496",
+   "preferred_term": "Multiple congenital anomalies-hypotonia-seizures syndrome type 2",
+   "prevalences": [
+    {
+     "type": "Cases/families",
+     "class": null,
+     "geographic": "Worldwide",
+     "qualification": "Case(s)",
+     "mean_value": "24.0",
+     "source": "16783569[PMID]_22305531[PMID]_24357517[PMID]_24259288[PMID]_24259184[PMID]_24706016[PMID]_26545172[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "<1 / 1 000 000",
+     "geographic": "Worldwide",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET_26545172[PMID]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 2
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "300496"
+  }
+ },
+ "{\"orphacode\": 79255}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "79255",
+   "preferred_term": "GM1 gangliosidosis type 1",
+   "prevalences": [
+    {
+     "type": "Cases/families",
+     "class": null,
+     "geographic": "Worldwide",
+     "qualification": "Case(s)",
+     "mean_value": "200.0",
+     "source": "ORPHANET",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "Unknown",
+     "geographic": "Worldwide",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 2
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "79255"
+  }
+ },
+ "{\"orphacode\": 709}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "709",
+   "preferred_term": "Peters plus syndrome",
+   "prevalences": [
+    {
+     "type": "Cases/families",
+     "class": null,
+     "geographic": "Worldwide",
+     "qualification": "Case(s)",
+     "mean_value": "100.0",
+     "source": "20301637[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "<1 / 1 000 000",
+     "geographic": "Worldwide",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET_20301637[PMID]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 2
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "709"
+  }
+ },
+ "{\"orphacode\": 93400}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93400",
+   "preferred_term": "",
+   "prevalences": [],
+   "prevalence_count": 0
+  },
+  "metadata": {
+   "note": "No epidemiology data found"
+  }
+ },
+ "{\"orphacode\": 576}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "576",
+   "preferred_term": "Mucolipidosis type II",
+   "prevalences": [
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Europe",
+     "qualification": "Value and class",
+     "mean_value": "0.34",
+     "source": "10480370[PMID]_14685153[PMID]_ 25274184[PMID]_ORPHANET",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "<1 / 1 000 000",
+     "geographic": "Europe",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Portugal",
+     "qualification": "Value and class",
+     "mean_value": "0.81",
+     "source": "14685153[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Netherlands",
+     "qualification": "Value and class",
+     "mean_value": "0.16",
+     "source": "10480370[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "<1 / 1 000 000",
+     "geographic": "Sweden",
+     "qualification": "Value and class",
+     "mean_value": "0.05",
+     "source": "25274184[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-5 / 10 000",
+     "geographic": "Specific population",
+     "qualification": "Value and class",
+     "mean_value": "16.2",
+     "source": "18190596[PMID]_1937486[PMID]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 6
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "576"
+  }
+ },
+ "{\"orphacode\": 309282}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309282",
+   "preferred_term": "",
+   "prevalences": [],
+   "prevalence_count": 0
+  },
+  "metadata": {
+   "note": "No epidemiology data found"
+  }
+ },
+ "{\"orphacode\": 137639}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "137639",
+   "preferred_term": "Hypomyelinating leukodystrophy-ataxia-hypodontia-hypomyelination syndrome",
+   "prevalences": [
+    {
+     "type": "Cases/families",
+     "class": null,
+     "geographic": "Worldwide",
+     "qualification": "Case(s)",
+     "mean_value": "8.0",
+     "source": "15851747[PMID]_17712733[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "<1 / 1 000 000",
+     "geographic": "Worldwide",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET_15851747[PMID]_17712733[PMID]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 2
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "137639"
+  }
+ },
+ "{\"orphacode\": 85453}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "85453",
+   "preferred_term": "X-linked reticulate pigmentary disorder",
+   "prevalences": [
+    {
+     "type": "Cases/families",
+     "class": null,
+     "geographic": "Worldwide",
+     "qualification": "Family(ies)",
+     "mean_value": "6.0",
+     "source": "ORPHANET",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "<1 / 1 000 000",
+     "geographic": "Worldwide",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET",
+     "validation_status": "Not yet validated"
+    }
+   ],
+   "prevalence_count": 2
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "85453"
+  }
+ },
+ "{\"orphacode\": 821}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "821",
+   "preferred_term": "Sotos syndrome",
+   "prevalences": [
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 100 000",
+     "geographic": "Worldwide",
+     "qualification": "Value and class",
+     "mean_value": "7.1",
+     "source": "20301652[PMID]",
+     "validation_status": "Not yet validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 100 000",
+     "geographic": "Worldwide",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "20301652[PMID]",
+     "validation_status": "Not yet validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Europe",
+     "qualification": "Value and class",
+     "mean_value": "0.5",
+     "source": "EUROCAT European surveillance of congenital anomalies 2005-2012[OTHER]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Europe",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET_EUROCAT European surveillance of congenital anomalies 2005-2010[OTHER]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 4
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "821"
+  }
+ },
+ "{\"orphacode\": 796}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "796",
+   "preferred_term": "Sandhoff disease",
+   "prevalences": [
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 100 000",
+     "geographic": "Portugal",
+     "qualification": "Value and class",
+     "mean_value": "1.49",
+     "source": "14685153[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Netherlands",
+     "qualification": "Value and class",
+     "mean_value": "0.34",
+     "source": "10480370[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Czech Republic",
+     "qualification": "Value and class",
+     "mean_value": "0.19",
+     "source": "20490927[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Australia",
+     "qualification": "Value and class",
+     "mean_value": "0.26",
+     "source": "9918480[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Turkey",
+     "qualification": "Value and class",
+     "mean_value": "0.95",
+     "source": "15275696[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "United States",
+     "qualification": "Value and class",
+     "mean_value": "0.3",
+     "source": "2955697[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Europe",
+     "qualification": "Value and class",
+     "mean_value": "0.67",
+     "source": "[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Europe",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET",
+     "validation_status": "Not yet validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Sweden",
+     "qualification": "Value and class",
+     "mean_value": "0.38",
+     "source": "25274184[PMID]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 9
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "796"
+  }
+ },
+ "{\"orphacode\": 93473}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93473",
+   "preferred_term": "Hurler syndrome",
+   "prevalences": [
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Germany",
+     "qualification": "Value and class",
+     "mean_value": "0.64",
+     "source": "16435194[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Denmark",
+     "qualification": "Value and class",
+     "mean_value": "0.38",
+     "source": "18681890[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Denmark",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "18681890[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 100 000",
+     "geographic": "Portugal",
+     "qualification": "Value and class",
+     "mean_value": "1.05",
+     "source": "14685153[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "<1 / 1 000 000",
+     "geographic": "Taiwan, Province of China",
+     "qualification": "Value and class",
+     "mean_value": "0.06",
+     "source": "19396827[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Australia",
+     "qualification": "Value and class",
+     "mean_value": "0.93",
+     "source": "14608657[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Europe",
+     "qualification": "Value and class",
+     "mean_value": "0.7",
+     "source": "ORPHANET_16435194[PMID]_14685153[PMID]_18681890[PMID]_18796143[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 1 000 000",
+     "geographic": "Europe",
+     "qualification": "Value and class",
+     "mean_value": "0.5",
+     "source": "[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "1-9 / 1 000 000",
+     "geographic": "United Kingdom",
+     "qualification": "Value and class",
+     "mean_value": "0.76",
+     "source": "18796143[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "<1 / 1 000 000",
+     "geographic": "United States",
+     "qualification": "Value and class",
+     "mean_value": "0.07",
+     "source": "34051828[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Prevalence at birth",
+     "class": "1-9 / 1 000 000",
+     "geographic": "United States",
+     "qualification": "Value and class",
+     "mean_value": "0.26",
+     "source": "34051828[PMID]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 11
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "93473"
+  }
+ },
+ "{\"orphacode\": 309155}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309155",
+   "preferred_term": "",
+   "prevalences": [],
+   "prevalence_count": 0
+  },
+  "metadata": {
+   "note": "No epidemiology data found"
+  }
+ },
+ "{\"orphacode\": 101110}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "101110",
+   "preferred_term": "Spinocerebellar ataxia type 20",
+   "prevalences": [
+    {
+     "type": "Cases/families",
+     "class": null,
+     "geographic": "Worldwide",
+     "qualification": "Case(s)",
+     "mean_value": "20.0",
+     "source": "[EXPERT]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "<1 / 1 000 000",
+     "geographic": "Worldwide",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 2
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "101110"
+  }
+ },
+ "{\"orphacode\": 93399}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93399",
+   "preferred_term": "",
+   "prevalences": [],
+   "prevalence_count": 0
+  },
+  "metadata": {
+   "note": "No epidemiology data found"
+  }
+ },
+ "{\"orphacode\": 309144}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309144",
+   "preferred_term": "",
+   "prevalences": [],
+   "prevalence_count": 0
+  },
+  "metadata": {
+   "note": "No epidemiology data found"
+  }
+ },
+ "{\"orphacode\": 3166}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "3166",
+   "preferred_term": "Sialuria",
+   "prevalences": [
+    {
+     "type": "Cases/families",
+     "class": null,
+     "geographic": "Worldwide",
+     "qualification": "Case(s)",
+     "mean_value": "5.0",
+     "source": "11486897[PMID]",
+     "validation_status": "Validated"
+    },
+    {
+     "type": "Point prevalence",
+     "class": "<1 / 1 000 000",
+     "geographic": "Worldwide",
+     "qualification": "Class only",
+     "mean_value": "0.0",
+     "source": "ORPHANET_11486897[PMID]",
+     "validation_status": "Validated"
+    }
+   ],
+   "prevalence_count": 2
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "3166"
+  }
+ }
+}

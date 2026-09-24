@@ -1,0 +1,136 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. `data` is cut to its first 3 records, which the process does not read whole; counts and totals are the source's.",
+ "{\"limit\": 10, \"query\": \"Mucopolysaccharidosis type 2\"}": {
+  "status": "success",
+  "data": [
+   {
+    "title": "Ommaya reservoir placement using ultrasound guidance via anterior fontanelle combined with frameless electromagnetic neuronavigation in patients with mucopolysaccharidosis type 2: Case reports and review of the literature.",
+    "abstract": "Mucopolysaccharidosis type II (MPS II) results from the genetic deficiency of a lysosomal enzyme and is associated with central nervous system (CNS) dysfunction. In Japan, in addition to intravenous enzyme administration, intracerebroventricular enzyme delivery through the Ommaya reservoir has recently gained approval. Nevertheless, the ideal approach for safely implanting the reservoir into the narrow ventricles of infantile MPS II patients remains uncertain. In this report, we present two cases of successful reservoir placement in infantile MPS II patients using ultrasound guidance via the anterior fontanelle, coupled with flameless electromagnetic neuronavigation.",
+    "authors": [
+     "Mizushima M",
+     "Kawabori M",
+     "Yamazaki K",
+     "Egawa K",
+     "Fujimura M"
+    ],
+    "journal": "Childs Nerv Syst",
+    "year": "2024",
+    "doi": "10.1007/s00381-023-06265-9",
+    "url": "https://europepmc.org/article/MED/38165414",
+    "source_db": "MED",
+    "article_id": "38165414",
+    "pmid": "38165414",
+    "pmcid": null,
+    "doi_url": "https://doi.org/10.1007/s00381-023-06265-9",
+    "fulltext_xml_url": null,
+    "citations": 1,
+    "open_access": false,
+    "keywords": [
+     "Enzyme Replacement Therapy",
+     "Idursulfase",
+     "Anterior Fontanelle",
+     "Ommaya Reservoir",
+     "Mucopolysaccharidosis Type 2"
+    ],
+    "source": "Europe PMC",
+    "data_quality": {
+     "has_abstract": true,
+     "has_authors": true,
+     "has_journal": true,
+     "has_year": true,
+     "has_doi": true,
+     "has_citations": true,
+     "has_keywords": true,
+     "has_url": true
+    }
+   },
+   {
+    "title": "Dysostosis in mucopolysaccharidosis type 2: A case of longitudinal follow up and literature review.",
+    "abstract": "Mucopolysaccharidosis type 2 is a congenital lysosomal disease characterized by iduronate-2-sulfatase deficiency, which leads to excessive accumulation of glycosaminoglycans in tissue. Dysostosis, which primarily involves decreased bone mineralization with morphological changes in the bone, is a major skeletal condition in mucopolysaccharidosis, but its pathophysiology is not well known. Here, we report a case of mucopolysaccharidosis type 2 diagnosed at the age of 2 years with longitudinal follow-up data for more than 15 years. Although the patient underwent bone marrow transplantation, the developmental quotient did not improve, and cranial hyperostosis progressed prominently with a faintly dilated perivascular space. Other dysostoses and contraction of the joints were observed but did not improve either.",
+    "authors": [
+     "Sasaki T",
+     "Ogata M",
+     "Kajihama A",
+     "Nakau K",
+     "Okizaki A"
+    ],
+    "journal": "Radiol Case Rep",
+    "year": "2021",
+    "doi": "10.1016/j.radcr.2021.01.003",
+    "url": "https://europepmc.org/article/MED/33488893",
+    "source_db": "MED",
+    "article_id": "33488893",
+    "pmid": "33488893",
+    "pmcid": "PMC7809250",
+    "doi_url": "https://doi.org/10.1016/j.radcr.2021.01.003",
+    "fulltext_xml_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7809250/fullTextXML",
+    "citations": 0,
+    "open_access": true,
+    "keywords": [
+     "Dysostosis",
+     "Cranial Hyperostosis",
+     "Mucopolysaccharidosis Type 2"
+    ],
+    "source": "Europe PMC",
+    "data_quality": {
+     "has_abstract": true,
+     "has_authors": true,
+     "has_journal": true,
+     "has_year": true,
+     "has_doi": true,
+     "has_citations": false,
+     "has_keywords": true,
+     "has_url": true
+    }
+   },
+   {
+    "title": "Unmasking Mucopolysaccharidosis Type I in a Patient With Wolf-Hirschhorn Syndrome: Diagnostic Overshadowing.",
+    "abstract": "Mucopolysaccharidosis Type I (MPS I) is a rare lysosomal storage disorder caused by α-l-iduronidase deficiency, leading to glycosaminoglycan accumulation and multisystem involvement. Wolf-Hirschhorn Syndrome (WHS) is a chromosomal disorder characterized by growth delay, dysmorphism, and developmental impairment. Because the IDUA gene is located within the 4p16.3 region, the coexistence of WHS and MPS I is biologically plausible but rarely documented. We describe a 2-year-old child of North African origin presenting with dysmorphic features, developmental delay, and thoracolumbar kyphosis. Chromosomal microarray analysis identified a 5.8 Mb deletion at 4p16.3-p16.2, confirming WHS at 17 months. However, additional clinical features remained unexplained. Incidentally, during a routine blood test, a blood smear revealed lymphocytes with metachromatic inclusions, raising suspicion of a lysosomal storage disorder. An enzymatic assay confirmed α-l-iduronidase deficiency, and molecular analysis identified biallelic pathogenic alterations in the IDUA gene located on chromosome 4p16.3, establishing the diagnosis of MPS I at 18 months. Enzyme replacement therapy was initiated at 19 months and was associated with stabilization of the somatic manifestations of MPS I, including improvement in respiratory symptoms. This observation highlights the risk of diagnostic overshadowing in rare diseases. A confirmed genetic diagnosis should not preclude further investigations when clinical features are discordant.",
+    "authors": [
+     "Cifuentes-Uribe K",
+     "Girard S",
+     "Froissart R",
+     "Pettazzoni M",
+     "Guffon N"
+    ],
+    "journal": "JIMD Rep",
+    "year": "2026",
+    "doi": "10.1002/jmd2.70117",
+    "url": "https://europepmc.org/article/MED/42707122",
+    "source_db": "MED",
+    "article_id": "42707122",
+    "pmid": "42707122",
+    "pmcid": "PMC13547081",
+    "doi_url": "https://doi.org/10.1002/jmd2.70117",
+    "fulltext_xml_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13547081/fullTextXML",
+    "citations": 0,
+    "open_access": true,
+    "keywords": [
+     "Dual Diagnosis",
+     "Diagnostic Overshadowing",
+     "Mucopolysaccharidosis Type I",
+     "Lysosomal Storage Disorder",
+     "Wolf–hirschhorn Syndrome",
+     "Gasser Cells"
+    ],
+    "source": "Europe PMC",
+    "data_quality": {
+     "has_abstract": true,
+     "has_authors": true,
+     "has_journal": true,
+     "has_year": true,
+     "has_doi": true,
+     "has_citations": false,
+     "has_keywords": true,
+     "has_url": true
+    }
+   }
+  ],
+  "metadata": {
+   "count": 10,
+   "query": "Mucopolysaccharidosis type 2",
+   "source": "Europe PMC",
+   "total": 16649
+  }
+ }
+}

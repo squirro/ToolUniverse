@@ -1,0 +1,85 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner), called with `arguments`, the shape the process sends. `response.data` is cut to its first 3 papers; metadata is the source's.",
+ "arguments": {
+  "query": "cisplatin AND ACUTE KIDNEY INJURY",
+  "limit": 200,
+  "sort": "relevance"
+ },
+ "response": {
+  "status": "success",
+  "data": [
+   {
+    "pmid": "31226747",
+    "title": "Recent Advances in Models, Mechanisms, Biomarkers, and Interventions in Cisplatin-Induced Acute Kidney Injury.",
+    "authors": [
+     "Holditch SJ",
+     "Brown CN",
+     "Lombardi AM",
+     "Nguyen KN",
+     "Edelstein CL"
+    ],
+    "journal": "International journal of molecular sciences",
+    "pub_date": "2019 Jun 20",
+    "pub_year": "2019",
+    "doi": "10.3390/ijms20123011",
+    "pmcid": "PMC6627318",
+    "article_type": "Journal Article, Review",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/31226747/",
+    "doi_url": "https://doi.org/10.3390/ijms20123011",
+    "pmc_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6627318/",
+    "abstract": "Cisplatin is a widely used chemotherapeutic agent used to treat solid tumours, such as ovarian, head and neck, and testicular germ cell. A known complication of cisplatin administration is acute kidney injury (AKI). The development of effective tumour interventions with reduced nephrotoxicity relies heavily on understanding the molecular pathophysiology of cisplatin-induced AKI. Rodent models have provided mechanistic insight into the pathophysiology of cisplatin-induced AKI. In the subsequent review, we provide a detailed discussion of recent advances in the cisplatin-induced AKI phenotype, principal mechanistic findings of injury and therapy, and pre-clinical use of AKI rodent models. Cisplatin-induced AKI murine models faithfully develop gross manifestations of clinical AKI such as decreased kidney function, increased expression of tubular injury biomarkers, and tubular injury evident by histology. Pathways involved in AKI include apoptosis, necrosis, inflammation, and increased oxidative stress, ultimately providing a translational platform for testing the therapeutic efficacy of potential interventions. This review provides a discussion of the foundation laid by cisplatin-induced AKI rodent models for our current understanding of AKI molecular pathophysiology.",
+    "abstract_source": "PubMed"
+   },
+   {
+    "pmid": "37649595",
+    "title": "TRPM2 protects against cisplatin-induced acute kidney injury and mitochondrial dysfunction via modulating autophagy.",
+    "authors": [
+     "Yu B",
+     "Jin L",
+     "Yao X",
+     "Zhang Y",
+     "Zhang G"
+    ],
+    "journal": "Theranostics",
+    "pub_date": "2023",
+    "pub_year": "2023",
+    "doi": "10.7150/thno.84655",
+    "pmcid": "PMC10465213",
+    "article_type": "Journal Article, Research Support, Non-U.S. Gov't",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/37649595/",
+    "doi_url": "https://doi.org/10.7150/thno.84655",
+    "pmc_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10465213/",
+    "abstract": "Background: Cisplatin is a widely used anti-tumor agent but its use is frequently limited by nephrotoxicity. Transient receptor potential melastatin 2 (TRPM2) is a non-selective cation channel which is generally viewed as a sensor of oxidative stress, and increasing evidence supports its link with autophagy, a critical process for organelle homeostasis. Methods: Cisplatin-induced cell injury and mitochondrial damage were both assessed in WT and Trpm2-knockout mice and primary cells. RNA sequencing, immunofluorescence staining, immunoblotting and flowcytometry were applied to interpret the mechanism of TRPM2 in cisplatin nephrotoxicity. Results: Knockout of TRPM2 exacerbates renal dysfunction, tubular injury and cell apoptosis in a model of acute kidney injury (AKI) induced by treatment with cisplatin. Cisplatin-caused tubular mitochondrial damage is aggravated in TRPM2-deficient mice and cells and, conversely, alleviated by treatment with Mito-TEMPO, a mitochondrial ROS scavenger. TRPM2 deficiency hinders cisplatin-induced autophagy via blockage of Ca2+ influx and subsequent up-regulation of AKT-mTOR signaling. Consistently, cisplatin-induced tubular mitochondrial damage, cell apoptosis and renal dysfunction in TRPM2-deficient mice are mitigated by treatment with a mTOR inhibitor. Conclusion: Our results suggest that the TRPM2 channel plays a protective role in cisplatin-induced AKI via modulating the Ca2+-AKT-mTOR signaling pathway and autophagy, providing novel insights into the pathogenesis of kidney injury.",
+    "abstract_source": "PubMed"
+   },
+   {
+    "pmid": "38805781",
+    "title": "Baicalein alleviates cisplatin-induced acute kidney injury by inhibiting ALOX12-dependent ferroptosis.",
+    "authors": [
+     "Guo S",
+     "Zhou L",
+     "Liu X",
+     "Gao L",
+     "Li Y"
+    ],
+    "journal": "Phytomedicine : international journal of phytotherapy and phytopharmacology",
+    "pub_date": "2024 Jul 25",
+    "pub_year": "2024",
+    "doi": "10.1016/j.phymed.2024.155757",
+    "pmcid": null,
+    "article_type": "Journal Article",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/38805781/",
+    "doi_url": "https://doi.org/10.1016/j.phymed.2024.155757",
+    "pmc_url": null,
+    "abstract": "In acute kidney injury (AKI), ferroptosis is the main mechanism of cell death in the renal tubular epithelium. Baicalein, a traditional Chinese medicine monomer, plays a protective role in various kidney diseases; however, the effect of baicalein on ferroptosis in AKI still needs further exploration.\nIn this study, we explored the role of baicalein and its specific mechanism in mediating ferroptosis in cisplatin-induced AKI.\nWe used a cisplatin-induced AKI model to study the effects of baicalein on renal tissue and tubular epithelial cell injury. The effects of baicalein on tubular epithelial cell ferroptosis were detected in cisplatin-induced AKI and further verified by folic acid-induced AKI. The Swiss Target Prediction online database was used to predict the possible mechanism by which baicalein regulates ferroptosis, and the specific target proteins were further verified. Molecular docking and SPR were used to further determine the binding potential of baicalein to the target protein. Finally, RNA interference (RNAi) technology and enzymatic inhibition were used to determine whether baicalein regulates ferroptosis through target proteins.\nBaicalein alleviated cisplatin- and folic acid-induced renal dysfunction and pathological damage and improved cisplatin-induced HK2 cell injury. Mechanistically, baicalein reduced the expression of 12-lipoxygenase (ALOX12), which inhibits phospholipid peroxidation and ferroptosis in AKI. Molecular docking and SPR demonstrated direct binding between baicalein and ALOX12. Finally, we found that silencing ALOX12 had a regulatory effect similar to that of baicalein. Comparable results were also obtained with the ALOX12 inhibitor ML355.\nThis was the first study to confirm that baicalein regulates ferroptosis both in vitro and in vivo in cisplatin-induced AKI and to verify the regulatory effect of baicalein in folic acid-induced AKI. Our results reveal the critical role of ALOX12 in kidney damage and ferroptosis caused by cisplatin and emphasize the regulatory effect of baicalein on renal tubular epithelial cell ferroptosis mediated by ALOX12. Baicalein is an effective drug for treating AKI, and ALOX12 is a potential drug target.",
+    "abstract_source": "PubMed"
+   }
+  ],
+  "metadata": {
+   "count": 200,
+   "total": 2682,
+   "query": "cisplatin AND ACUTE KIDNEY INJURY",
+   "source": "PubMed"
+  }
+ }
+}

@@ -1,0 +1,1096 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. `data.geneExpression` is cut to its first 3 records, which the process does not read whole; counts and totals are the source's.",
+ "{\"gene_symbol\": \"IDS\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000010404.17",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 47.7092,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000010404.17",
+     "geneSymbol": "IDS",
+     "unit": "TPM"
+    },
+    {
+     "median": 33.4069,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000010404.17",
+     "geneSymbol": "IDS",
+     "unit": "TPM"
+    },
+    {
+     "median": 20.4927,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000010404.17",
+     "geneSymbol": "IDS",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"BLOC1S3\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000189114.6",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 12.3265,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000189114.6",
+     "geneSymbol": "BLOC1S3",
+     "unit": "TPM"
+    },
+    {
+     "median": 8.452810000000001,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000189114.6",
+     "geneSymbol": "BLOC1S3",
+     "unit": "TPM"
+    },
+    {
+     "median": 8.804689999999999,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000189114.6",
+     "geneSymbol": "BLOC1S3",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"DTNBP1\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000047579.19",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 16.56,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000047579.19",
+     "geneSymbol": "DTNBP1",
+     "unit": "TPM"
+    },
+    {
+     "median": 12.2727,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000047579.19",
+     "geneSymbol": "DTNBP1",
+     "unit": "TPM"
+    },
+    {
+     "median": 7.2297,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000047579.19",
+     "geneSymbol": "DTNBP1",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"BLOC1S6\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000104164.10",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 23.4636,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000104164.10",
+     "geneSymbol": "BLOC1S6",
+     "unit": "TPM"
+    },
+    {
+     "median": 23.505,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000104164.10",
+     "geneSymbol": "BLOC1S6",
+     "unit": "TPM"
+    },
+    {
+     "median": 16.7645,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000104164.10",
+     "geneSymbol": "BLOC1S6",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"BLOC1S5\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000188428.19",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 11.6377,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000188428.19",
+     "geneSymbol": "BLOC1S5",
+     "unit": "TPM"
+    },
+    {
+     "median": 8.57569,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000188428.19",
+     "geneSymbol": "BLOC1S5",
+     "unit": "TPM"
+    },
+    {
+     "median": 8.79992,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000188428.19",
+     "geneSymbol": "BLOC1S5",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"HPS3\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000163755.8",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 15.913,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000163755.8",
+     "geneSymbol": "HPS3",
+     "unit": "TPM"
+    },
+    {
+     "median": 12.049000000000001,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000163755.8",
+     "geneSymbol": "HPS3",
+     "unit": "TPM"
+    },
+    {
+     "median": 14.8479,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000163755.8",
+     "geneSymbol": "HPS3",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"HPS5\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000110756.17",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 7.75737,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000110756.17",
+     "geneSymbol": "HPS5",
+     "unit": "TPM"
+    },
+    {
+     "median": 9.317739999999999,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000110756.17",
+     "geneSymbol": "HPS5",
+     "unit": "TPM"
+    },
+    {
+     "median": 9.55518,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000110756.17",
+     "geneSymbol": "HPS5",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"HPS6\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000166189.7",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 11.6387,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000166189.7",
+     "geneSymbol": "HPS6",
+     "unit": "TPM"
+    },
+    {
+     "median": 8.522969999999999,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000166189.7",
+     "geneSymbol": "HPS6",
+     "unit": "TPM"
+    },
+    {
+     "median": 12.8814,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000166189.7",
+     "geneSymbol": "HPS6",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"HPS1\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000107521.18",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 38.0833,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000107521.18",
+     "geneSymbol": "HPS1",
+     "unit": "TPM"
+    },
+    {
+     "median": 29.4532,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000107521.18",
+     "geneSymbol": "HPS1",
+     "unit": "TPM"
+    },
+    {
+     "median": 34.3799,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000107521.18",
+     "geneSymbol": "HPS1",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"HPS4\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000100099.20",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 19.6154,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000100099.20",
+     "geneSymbol": "HPS4",
+     "unit": "TPM"
+    },
+    {
+     "median": 14.1395,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000100099.20",
+     "geneSymbol": "HPS4",
+     "unit": "TPM"
+    },
+    {
+     "median": 16.5601,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000100099.20",
+     "geneSymbol": "HPS4",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"AP3D1\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000065000.15",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 58.3486,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000065000.15",
+     "geneSymbol": "AP3D1",
+     "unit": "TPM"
+    },
+    {
+     "median": 56.7596,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000065000.15",
+     "geneSymbol": "AP3D1",
+     "unit": "TPM"
+    },
+    {
+     "median": 66.8548,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000065000.15",
+     "geneSymbol": "AP3D1",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"AP3B1\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000132842.13",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 20.4833,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000132842.13",
+     "geneSymbol": "AP3B1",
+     "unit": "TPM"
+    },
+    {
+     "median": 16.2743,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000132842.13",
+     "geneSymbol": "AP3B1",
+     "unit": "TPM"
+    },
+    {
+     "median": 15.3787,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000132842.13",
+     "geneSymbol": "AP3B1",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"CTSA\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000064601.16",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 136.415,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000064601.16",
+     "geneSymbol": "CTSA",
+     "unit": "TPM"
+    },
+    {
+     "median": 123.277,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000064601.16",
+     "geneSymbol": "CTSA",
+     "unit": "TPM"
+    },
+    {
+     "median": 495.62199999999996,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000064601.16",
+     "geneSymbol": "CTSA",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"PIGA\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000165195.15",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 7.55515,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000165195.15",
+     "geneSymbol": "PIGA",
+     "unit": "TPM"
+    },
+    {
+     "median": 7.54467,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000165195.15",
+     "geneSymbol": "PIGA",
+     "unit": "TPM"
+    },
+    {
+     "median": 2.0741099999999997,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000165195.15",
+     "geneSymbol": "PIGA",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"GLB1\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000170266.15",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 24.8804,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000170266.15",
+     "geneSymbol": "GLB1",
+     "unit": "TPM"
+    },
+    {
+     "median": 22.844,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000170266.15",
+     "geneSymbol": "GLB1",
+     "unit": "TPM"
+    },
+    {
+     "median": 40.5567,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000170266.15",
+     "geneSymbol": "GLB1",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"B3GLCT\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000187676.7",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 6.916339999999999,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000187676.7",
+     "geneSymbol": "B3GLCT",
+     "unit": "TPM"
+    },
+    {
+     "median": 5.359780000000001,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000187676.7",
+     "geneSymbol": "B3GLCT",
+     "unit": "TPM"
+    },
+    {
+     "median": 2.98616,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000187676.7",
+     "geneSymbol": "B3GLCT",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"NEU1\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000204386.10",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 43.8196,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000204386.10",
+     "geneSymbol": "NEU1",
+     "unit": "TPM"
+    },
+    {
+     "median": 45.4736,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000204386.10",
+     "geneSymbol": "NEU1",
+     "unit": "TPM"
+    },
+    {
+     "median": 92.245,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000204386.10",
+     "geneSymbol": "NEU1",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"GNPTAB\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000111670.14",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 14.2705,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000111670.14",
+     "geneSymbol": "GNPTAB",
+     "unit": "TPM"
+    },
+    {
+     "median": 9.75793,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000111670.14",
+     "geneSymbol": "GNPTAB",
+     "unit": "TPM"
+    },
+    {
+     "median": 5.83782,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000111670.14",
+     "geneSymbol": "GNPTAB",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"MAN2B1\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000104774.12",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 69.9389,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000104774.12",
+     "geneSymbol": "MAN2B1",
+     "unit": "TPM"
+    },
+    {
+     "median": 51.9336,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000104774.12",
+     "geneSymbol": "MAN2B1",
+     "unit": "TPM"
+    },
+    {
+     "median": 37.1666,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000104774.12",
+     "geneSymbol": "MAN2B1",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"POLR3A\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000148606.12",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 6.589919999999999,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000148606.12",
+     "geneSymbol": "POLR3A",
+     "unit": "TPM"
+    },
+    {
+     "median": 5.9875,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000148606.12",
+     "geneSymbol": "POLR3A",
+     "unit": "TPM"
+    },
+    {
+     "median": 6.93888,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000148606.12",
+     "geneSymbol": "POLR3A",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"POLA1\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000101868.10",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 6.28797,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000101868.10",
+     "geneSymbol": "POLA1",
+     "unit": "TPM"
+    },
+    {
+     "median": 5.33245,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000101868.10",
+     "geneSymbol": "POLA1",
+     "unit": "TPM"
+    },
+    {
+     "median": 2.87117,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000101868.10",
+     "geneSymbol": "POLA1",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"NSD1\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000165671.19",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 11.7849,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000165671.19",
+     "geneSymbol": "NSD1",
+     "unit": "TPM"
+    },
+    {
+     "median": 10.2944,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000165671.19",
+     "geneSymbol": "NSD1",
+     "unit": "TPM"
+    },
+    {
+     "median": 9.52988,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000165671.19",
+     "geneSymbol": "NSD1",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"APC2\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000115266.11",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 0.18992699999999998,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000115266.11",
+     "geneSymbol": "APC2",
+     "unit": "TPM"
+    },
+    {
+     "median": 0.17089300000000002,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000115266.11",
+     "geneSymbol": "APC2",
+     "unit": "TPM"
+    },
+    {
+     "median": 0.193955,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000115266.11",
+     "geneSymbol": "APC2",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"HEXB\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000049860.13",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 92.7589,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000049860.13",
+     "geneSymbol": "HEXB",
+     "unit": "TPM"
+    },
+    {
+     "median": 73.3351,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000049860.13",
+     "geneSymbol": "HEXB",
+     "unit": "TPM"
+    },
+    {
+     "median": 56.6336,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000049860.13",
+     "geneSymbol": "HEXB",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"IDUA\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000127415.12",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 22.1785,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000127415.12",
+     "geneSymbol": "IDUA",
+     "unit": "TPM"
+    },
+    {
+     "median": 21.0408,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000127415.12",
+     "geneSymbol": "IDUA",
+     "unit": "TPM"
+    },
+    {
+     "median": 22.247,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000127415.12",
+     "geneSymbol": "IDUA",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"SCA20\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "SCA20",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": []
+  },
+  "note": "No expression data found. Could not resolve 'SCA20' to a versioned GENCODE ID. Try providing an Ensembl gene ID (e.g., 'ENSG00000141510') or use GTEx_get_median_gene_expression with a versioned ID (e.g., 'ENSG00000141510.16')."
+ },
+ "{\"gene_symbol\": \"GM2A\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000196743.8",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 24.8493,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000196743.8",
+     "geneSymbol": "GM2A",
+     "unit": "TPM"
+    },
+    {
+     "median": 20.5284,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000196743.8",
+     "geneSymbol": "GM2A",
+     "unit": "TPM"
+    },
+    {
+     "median": 29.0772,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000196743.8",
+     "geneSymbol": "GM2A",
+     "unit": "TPM"
+    }
+   ]
+  }
+ },
+ "{\"gene_symbol\": \"GNE\"}": {
+  "status": "success",
+  "source": "GTEx",
+  "endpoint": "expression/clusteredMedianGeneExpression",
+  "query": {
+   "gencodeId": "ENSG00000159921.14",
+   "datasetId": "gtex_v8"
+  },
+  "data": {
+   "geneExpression": [
+    {
+     "median": 17.5632,
+     "tissueSiteDetailId": "Adipose_Subcutaneous",
+     "ontologyId": "UBERON:0002190",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000159921.14",
+     "geneSymbol": "GNE",
+     "unit": "TPM"
+    },
+    {
+     "median": 14.4883,
+     "tissueSiteDetailId": "Adipose_Visceral_Omentum",
+     "ontologyId": "UBERON:0010414",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000159921.14",
+     "geneSymbol": "GNE",
+     "unit": "TPM"
+    },
+    {
+     "median": 10.4217,
+     "tissueSiteDetailId": "Adrenal_Gland",
+     "ontologyId": "UBERON:0002369",
+     "datasetId": "gtex_v8",
+     "gencodeId": "ENSG00000159921.14",
+     "geneSymbol": "GNE",
+     "unit": "TPM"
+    }
+   ]
+  }
+ }
+}

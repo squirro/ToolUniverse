@@ -1176,61 +1176,18 @@ def test_every_shipped_process_finishes_with_stub_tools_and_a_stub_oracle(skill)
 
 
 def test_rare_disease_diagnosis_runs_start_to_finish_with_judgement():
-    """Three judgement points, one HP id per symptom, genes per resolved candidate,
-    no step blocked and no fact unresolved."""
-    responses = {
-        "get_HPO_ID_by_phenotype": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0001433"}]}},
-        # the intersection answers an envelope, so the run can tell it from a failure
-        "get_joint_associated_diseases_by_HPO_ID_list": {
-            "status": "success", "data": {"diseases": ["Gaucher disease"], "total": 1}},
-        "Orphanet_search_diseases": {"data": {"results": [
-            {"ORPHAcode": 355, "Preferred term": "Gaucher disease"}]}},
-        "Orphanet_get_genes": {"data": {"orpha_code": "355", "genes": [{"Symbol": "GBA"}]}},
-        "HPO_get_diseases_by_phenotype": {"data": {"diseases": [{"id": f"D{i}"} for i in range(190)]}},
-        "HPO_get_term_hierarchy": {"data": [{"id": "HP:0003271", "name": "Visceromegaly"}]},
-        "Orphanet_get_phenotypes": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
-                                             "phenotypes": [{"hpo_id": "HP:0001433", "hpo_term": "Hepatosplenomegaly"}]}},
-        "Orphanet_get_natural_history": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
-                                                  "type_of_inheritance": ["Autosomal recessive"],
-                                                  "average_age_of_onset": ["All ages"]}},
-        "Orphanet_get_epidemiology": {"data": {"orpha_code": "355", "preferred_term": "Gaucher disease",
-                                               "prevalences": [{"class": "1-9 / 100 000"}]}},
-        "OpenTargets_get_disease_ids_by_name": {"data": {"search": {"hits": [
-            {"id": "MONDO_0018150", "name": "Gaucher disease"}]}}},
-        "OpenTargets_get_associated_targets_by_disease_efoId": {"data": {"disease": {
-            "id": "MONDO_0018150", "name": "Gaucher disease", "associatedTargets": {"rows": [
-                {"target": {"approvedSymbol": "GBA"}, "score": 0.9}]}}}},
-        "EuropePMC_search_articles": {"data": [{"title": "GBA in Gaucher"}]},
-        "MyGene_query_genes": {"data": {"hits": [{"symbol": "GBA"}]}},
-        "GTEx_get_expression_summary": {"data": []},
-    }
-    answers = {"primary_keyword": "lysosomal storage disorder",
-               "working_hypothesis": "Gaucher disease",
-               "discriminating_features": ["hepatosplenomegaly"],
-               "discriminating_hpo_ids": ["HP:0001433"],
-               "top_candidate": "Gaucher disease",
-               "optimuskg_genes": [{"gene": "GBA", "relation": "CAUSES", "evidence_score": 0.8}],
-               "overlap_rows": [{"orpha_code": "355", "preferred_term": "Gaucher disease", "n": 1, "N": 1,
-                                 "overlap_pct": 100, "grade": "T1", "matched_hpo_ids": ["HP:0001433"]}]}
-    calls, asked = [], []
-    runner = SkillRunner(
-        load_graph("rare-disease-diagnosis"),
-        execute=lambda tool, a: calls.append((tool, a)) or responses[tool],
-        ask=lambda q: asked.append(q) or {n: answers[n] for n in q["wants"]})
-    run_id = _run_to_end(runner, {"symptoms": ["hepatosplenomegaly", "coarse facies"]})
-    state = runner.state(run_id)
-    assert state["blocked"] == [] and state["unresolved"] == []
-    assert state["facts"]["hpo_ids"] == ["HP:0001433", "HP:0001433"]
-    assert [(q["step"], q["kind"]) for q in asked if q["kind"] == "judge"] == [
-        ("hypothesis", "judge"), ("discriminating", "judge"), ("keyword_search", "judge")]
-    assert {q["step"] for q in asked if q["kind"] == "delegate"} == {"gene_evidence_optimuskg"}
-    assert state["facts"]["overlap_rows"][0]["grade"] == "T1"
-    assert state["facts"]["genes"] == ["GBA"]
+    """Two judgement points and one delegation, one HP id per symptom, genes per resolved
+    candidate, no step blocked and no fact unresolved."""
+    state, calls = _rare_disease_run()
+    assert state["blocked"] == [] and state["unresolved"] == [] and state["failures"] == []
+    assert state["facts"]["hpo_ids"] == ["HP:0000280", "HP:0001433", "HP:0001263"]
+    assert [(q["step"], q["kind"]) for q in state["asked"] if q["kind"] == "judge"] == [
+        ("hypothesis", "judge"), ("keyword_search", "judge")]
+    assert {q["step"] for q in state["asked"] if q["kind"] == "delegate"} == {"gene_evidence_optimuskg"}
     assert ("get_joint_associated_diseases_by_HPO_ID_list",
-            {"HPO_ID_list": ["HP:0001433"], "limit": 30}) in calls
-    assert ("Orphanet_search_diseases",
-            {"query": "lysosomal storage disorder", "limit": 20}) in calls
-    assert ("MyGene_query_genes", {"query": "GBA",
+            {"HPO_ID_list": ["HP:0000280", "HP:0001433", "HP:0001263"], "limit": 20}) in calls
+    assert ("Orphanet_search_diseases", {"query": "mucopolysaccharidosis", "limit": 20}) in calls
+    assert ("MyGene_query_genes", {"query": "IDS",
             "fields": "symbol,name,entrezgene,ensembl.gene,summary"}) in calls
     assert "variant" not in state["done"], "no variant supplied, so that phase is off"
 
@@ -1304,103 +1261,81 @@ def test_a_question_carries_the_steps_notes_so_the_agent_knows_what_shape_to_ans
                                            "Pick the rarest two."]
 
 
-# The shipped rare-disease process resolves its differential to Orphanet: the joint
-# tool answers bare names, so each candidate is looked up by name and its code carried.
-HITS = {"Hunter syndrome": [{"ORPHAcode": 580, "Preferred term": "Mucopolysaccharidosis type 2"}],
-        "GM1 gangliosidosis": [{"ORPHAcode": 354, "Preferred term": "GM1 gangliosidosis"}],
-        "lysosomal storage disorder": [{"ORPHAcode": 93448, "Preferred term": "LSD group"}]}
+# The shipped rare-disease process driven on recorded responses: one live run of the
+# process, every call's response keyed by its arguments. A call the recording does not
+# hold means the process changed what it asks for, and the run must be recorded again.
+RARE = Path(__file__).resolve().parents[1] / "fixtures" / "skill_processes" / "rare_disease_coarse_facies"
+RARE_TOOLS = ("get_HPO_ID_by_phenotype", "HPO_get_diseases_by_phenotype", "HPO_get_term_hierarchy",
+              "get_joint_associated_diseases_by_HPO_ID_list", "Orphanet_search_diseases",
+              "Orphanet_get_phenotypes", "Orphanet_get_natural_history", "Orphanet_get_epidemiology",
+              "Orphanet_get_genes", "EuropePMC_search_articles", "OpenTargets_get_disease_ids_by_name",
+              "OpenTargets_get_associated_targets_by_disease_efoId", "MyGene_query_genes",
+              "GTEx_get_expression_summary")
+RARE_CASE = {"symptoms": ["coarse facies", "hepatosplenomegaly", "global developmental delay"],
+             "age_years": 4}
+RARE_ANSWERS = {"primary_keyword": "mucopolysaccharidosis",
+                "working_hypothesis": ["Mucopolysaccharidosis type 2", "Mucopolysaccharidosis type 1",
+                                       "GM1 gangliosidosis"],
+                "discriminating_features": ["hepatosplenomegaly", "coarse facies"],
+                "top_candidate": "Mucopolysaccharidosis type 2",
+                "optimuskg_genes": [{"gene": "IDS", "relation": "CAUSES", "evidence_score": 0.9}]}
 
 
-def _rare_disease_run(orphanet_hits):
-    calls = []
-    responses = {
-        "get_HPO_ID_by_phenotype": {"data": {"items": [{"id": "MP:1"}, {"id": "HP:0000280"}]}},
-        "get_joint_associated_diseases_by_HPO_ID_list": {"status": "success", "data": {
-            "diseases": ["Hunter syndrome", "GM1 gangliosidosis", "Sialuria"], "total": 3}},
-        "EuropePMC_search_articles": {"data": []},
-        "MyGene_query_genes": {"data": {"hits": [{"_id": "3423", "symbol": "IDS",
-                                                  "name": "iduronate 2-sulfatase", "entrezgene": "3423",
-                                                  "ensembl": {"gene": "ENSG00000010404"}}]}},
-        "GTEx_get_expression_summary": {"data": []},
-        "OpenTargets_get_associated_targets_by_disease_efoId": {"data": {"disease": {
-            "id": "MONDO_0011758", "name": "Hurler syndrome", "associatedTargets": {"rows": [
-                {"target": {"approvedSymbol": "IDUA"}, "score": 0.85},
-                {"target": {"approvedSymbol": "SLC26A1"}, "score": 0.56}]}}}},
-    }
-    orphanet_genes = {580: [{"Symbol": "IDS"}], 354: [{"Symbol": "GLB1"}, {"Symbol": "IDS"}]}
-    mondo_ids = {"Hunter syndrome": "MONDO_0010674", "GM1 gangliosidosis": "MONDO_0018149"}
+def _recorded(tool):
+    return json.loads((RARE / f"{tool}_2026-09-24.json").read_text())
+
+
+RECORDED_RARE = {tool: _recorded(tool) for tool in RARE_TOOLS}
+
+
+def _rare_disease_run():
+    calls, asked = [], []
 
     def dispatch(call):
-        tool, arguments = call["name"], call["arguments"]
-        calls.append((tool, arguments))
-        code = int(arguments["orphacode"]) if "orphacode" in arguments else None
-        term = {580: "MPS II", 354: "GM1"}.get(code, "?")
-        if tool == "Orphanet_search_diseases":
-            hits = orphanet_hits.get(arguments["query"], [])
-            return {"status": "success", "data": {"results": hits, "count": len(hits)}}
-        if tool == "Orphanet_get_genes":
-            return {"status": "success", "data": {"orpha_code": str(code),
-                                                  "genes": orphanet_genes.get(code, [])}}
-        if tool == "Orphanet_get_natural_history":
-            return {"status": "success", "data": {
-                "orpha_code": str(code), "preferred_term": term,
-                "type_of_inheritance": ["X-linked recessive"] if code == 580 else ["Autosomal recessive"],
-                "average_age_of_onset": ["Childhood"]}}
-        if tool == "Orphanet_get_phenotypes":
-            return {"status": "success", "data": {
-                "orpha_code": str(code), "preferred_term": term,
-                "phenotypes": [{"hpo_id": "HP:0000280", "hpo_term": "Coarse facial features",
-                                "frequency": "Very frequent (99-80%)"}]}}
-        if tool == "Orphanet_get_epidemiology":
-            return {"status": "success", "data": {
-                "orpha_code": str(code), "preferred_term": "?",
-                "prevalences": [{"class": "1-9 / 100 000"}] if code == 580 else []}}
-        if tool == "HPO_get_diseases_by_phenotype":
-            return {"data": {"diseases": [{"id": f"D{i}"} for i in range(190)]}}
-        if tool == "HPO_get_term_hierarchy":
-            return {"data": [{"id": "HP:0000271", "name": "Abnormal facial shape"}]
-                    if arguments["direction"] == "parents"
-                    else [{"id": "HP:0000339", "name": "Pugilistic facies"}]}
-        if tool == "OpenTargets_get_disease_ids_by_name":
-            mondo = mondo_ids.get(arguments["name"])
-            return {"data": {"search": {"hits": [{"id": mondo, "name": arguments["name"]}] if mondo else []}}}
-        return responses[tool]
-
-    answers = {"primary_keyword": "lysosomal storage disorder",
-               "working_hypothesis": ["storage disorder"],
-               "discriminating_features": ["coarse facies"],
-               "discriminating_hpo_ids": ["HP:0000280"],
-               "top_candidate": "Hunter syndrome", "genes": [],
-               "optimuskg_genes": [{"gene": "IDS", "relation": "CAUSES", "evidence_score": 0.9}],
-               "overlap_rows": [{"orpha_code": "580", "preferred_term": "MPS II", "n": 1, "N": 1,
-                                 "overlap_pct": 100, "grade": "T1", "matched_hpo_ids": ["HP:0000280"]}]}
-    asked = []
+        calls.append((call["name"], call["arguments"]))
+        return RECORDED_RARE[call["name"]][json.dumps(call["arguments"], sort_keys=True)]
 
     def ask(question):
         asked.append(question)
-        return {name: answers[name] for name in question["wants"]}
+        return {name: RARE_ANSWERS[name] for name in question["wants"]}
 
-    # Through the same door the worker uses: a bare list becomes {"result": [...]}.
     runner = SkillRunner(load_graph("rare-disease-diagnosis"),
                          execute=normalised_executor(dispatch), ask=ask)
-    state = runner.state(_run_to_end(runner, {"symptoms": ["coarse facies"]}, limit=60))
+    state = runner.state(_run_to_end(runner, RARE_CASE, limit=60))
     state["asked"] = asked
     return state, calls
 
 
+def _recorded_response(tool, **arguments):
+    return RECORDED_RARE[tool][json.dumps(arguments, sort_keys=True)]
+
+
 def test_every_decisive_candidate_is_looked_up_in_orphanet_by_name():
-    state, calls = _rare_disease_run(HITS)
-    by_name = [a["query"] for t, a in calls if t == "Orphanet_search_diseases"]
-    assert sorted(by_name) == sorted(["lysosomal storage disorder", "Hunter syndrome",
-                                      "GM1 gangliosidosis", "Sialuria"])
-    assert all(a["limit"] == 1 for t, a in calls
-               if t == "Orphanet_search_diseases" and a["query"] != "lysosomal storage disorder")
-    assert state["facts"]["decisive_candidates"] == ["Hunter syndrome", "GM1 gangliosidosis", "Sialuria"]
-    # Rows, not aligned lists: Sialuria had no hit and is simply absent.
+    state, calls = _rare_disease_run()
+    decisive = _recorded_response("get_joint_associated_diseases_by_HPO_ID_list",
+                                  HPO_ID_list=["HP:0001433", "HP:0000280"], limit=30)["data"]["diseases"]
+    by_name = [a["query"] for t, a in calls if t == "Orphanet_search_diseases" and a["limit"] == 1]
+    assert state["facts"]["decisive_candidates"] == decisive and len(decisive) == 20
+    assert by_name == decisive
+    # One row per hit, as Orphanet spells it: code and preferred term together.
+    assert state["facts"]["orphanet_matches"][0] == {
+        "ORPHAcode": 580, "Preferred term": "Mucopolysaccharidosis type 2", "Date": "2026-07-02 10:13:59"}
     assert state["facts"]["orphanet_matches"] == [
-        {"ORPHAcode": 580, "Preferred term": "Mucopolysaccharidosis type 2"},
-        {"ORPHAcode": 354, "Preferred term": "GM1 gangliosidosis"}]
+        _recorded_response("Orphanet_search_diseases", query=name, limit=1)["data"]["results"][0]
+        for name in decisive]
+    assert state["facts"]["orphanet_codes"][:3] == [580, 363294, 79430]
     assert "resolve_candidates" in state["done"]
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "resolve_candidates keeps Orphanet's top hit whatever its name: 'mucopolysaccharidosis-plus "
+    "syndrome' becomes Peters plus syndrome, 'DEGCAGS syndrome' becomes Genetic syndromic Pierre "
+    "Robin syndrome, and their phenotypes and genes enter the differential"))
+def test_a_candidate_whose_orphanet_top_hit_is_another_disease_gets_no_match_row():
+    state, _ = _rare_disease_run()
+    matched = {row["Preferred term"] for row in state["facts"]["orphanet_matches"]}
+    assert not matched & {"Peters plus syndrome", "Genetic syndromic Pierre Robin syndrome",
+                          "X-linked reticulate pigmentary disorder"}
 
 
 def test_collect_can_flatten_one_list_per_call_into_one_list():
@@ -1422,12 +1357,14 @@ def test_collect_can_keep_only_the_first_occurrence_of_a_value():
 def test_genes_come_from_orphanet_per_resolved_candidate_never_from_the_model():
     """A gene list is a claim the Run Record must vouch for, so it is an extraction,
     one lookup per resolved candidate, and never asked of the model."""
-    state, calls = _rare_disease_run(HITS)
-    assert sorted(int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_genes") == [354, 580]
-    assert state["facts"]["genes"] == ["IDS", "GLB1"]
+    state, calls = _rare_disease_run()
+    assert [int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_genes"] == state["facts"]["orphanet_codes"]
+    genes = state["facts"]["genes"]
+    assert genes[:4] == ["IDS", "BLOC1S3", "DTNBP1", "BLOC1S6"] and len(genes) == len(set(genes)) == 28
+    assert "HEXB" in genes and genes.count("NEU1") == 1, "a gene two candidates share is kept once"
     assert "genes" not in {n for q in state["asked"] for n in q["wants"] if q["kind"] == "judge"}
     assert [q["step"] for q in state["asked"] if q["kind"] == "judge"] == [
-        "hypothesis", "discriminating", "keyword_search"]   # one symptom in the stub: the cut ties
+        "hypothesis", "keyword_search"]   # the discriminating pair is computed, not asked
 
 
 def test_a_step_that_cannot_be_built_is_the_one_recorded_as_blocked():
@@ -1448,27 +1385,29 @@ def test_a_step_that_cannot_be_built_is_the_one_recorded_as_blocked():
 def test_open_targets_scored_targets_are_fetched_per_candidate_and_kept_as_returned():
     """The second gene source: name -> MONDO id -> scored targets. Scores are kept as
     Open Targets returns them; the reader sees the drop-off, no cut."""
-    state, calls = _rare_disease_run(HITS)
-    names = sorted(a["name"] for t, a in calls if t == "OpenTargets_get_disease_ids_by_name")
-    assert names == ["GM1 gangliosidosis", "Hunter syndrome", "Sialuria"]
-    ids = sorted(a["efoId"] for t, a in calls
-                 if t == "OpenTargets_get_associated_targets_by_disease_efoId")
-    assert ids == ["MONDO_0010674", "MONDO_0018149"]           # Sialuria had no id: no call
+    state, calls = _rare_disease_run()
+    names = [a["name"] for t, a in calls if t == "OpenTargets_get_disease_ids_by_name"]
+    assert names == state["facts"]["decisive_candidates"]
+    ids = [a["efoId"] for t, a in calls if t == "OpenTargets_get_associated_targets_by_disease_efoId"]
+    assert ids == state["facts"]["mondo_ids"] and ids[0] == "MONDO_0010674"
     rows = state["facts"]["opentargets_rows"]
-    assert [r["name"] for r in rows] == ["Hurler syndrome", "Hurler syndrome"]  # the stub's one answer
-    assert rows[0]["associatedTargets"]["rows"][0] == {"target": {"approvedSymbol": "IDUA"}, "score": 0.85}
+    assert rows[0]["name"] == "mucopolysaccharidosis type 2"
+    assert rows[0]["associatedTargets"]["rows"][0] == {
+        "target": {"id": "ENSG00000010404", "approvedSymbol": "IDS"}, "score": 0.8878808299647436}
+    assert rows[0] == _recorded_response("OpenTargets_get_associated_targets_by_disease_efoId",
+                                         efoId="MONDO_0010674")["data"]["disease"]
 
 
 def test_optimuskg_is_asked_once_as_a_delegated_call_on_the_top_candidate():
     """The third source is the agent's own tool, so the run pauses and hands the agent
     the exact calls: search the disease, then evidence on its CURIE restricted to genes."""
-    state, calls = _rare_disease_run(HITS)
+    state, calls = _rare_disease_run()
     delegated = [q for q in state["asked"]
                  if q["kind"] == "delegate" and q["step"] == "gene_evidence_optimuskg"]
     assert len(delegated) == 1
     assert [c["tool"] for c in delegated[0]["calls"]] == ["OptimusKG_Search", "OptimusKG_Search"]
     search, evidence = delegated[0]["calls"]
-    assert search["arguments"] == {"action": "search", "query": "Hunter syndrome",
+    assert search["arguments"] == {"action": "search", "query": "Mucopolysaccharidosis type 2",
                                    "node_types": ["disease"]}
     assert evidence["arguments"]["action"] == "evidence"
     assert evidence["arguments"]["node_types"] == ["gene"]
@@ -1594,22 +1533,30 @@ def test_collect_can_project_each_call_to_named_fields():
 
 
 def test_each_resolved_candidate_gets_its_phenotype_set_and_inheritance_as_rows():
-    state, calls = _rare_disease_run(HITS)
-    assert sorted(int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_phenotypes") == [354, 580]
-    assert sorted(int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_natural_history") == [354, 580]
+    state, calls = _rare_disease_run()
+    codes = state["facts"]["orphanet_codes"]
+    assert [int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_phenotypes"] == codes
+    assert [int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_natural_history"] == codes
     rows = {r["orpha_code"]: r for r in state["facts"]["disease_phenotypes"]}
-    assert rows["580"]["hpo_ids"] == ["HP:0000280"] and "phenotypes" not in rows["580"]
+    served = _recorded_response("Orphanet_get_phenotypes", orphacode=580)["data"]["phenotypes"]
+    assert rows["580"]["hpo_ids"] == [p["hpo_id"] for p in served] and "phenotypes" not in rows["580"]
+    assert len(rows["580"]["hpo_ids"]) == 74 and "HP:0000280" in rows["580"]["hpo_ids"]
     inh = {r["orpha_code"]: r for r in state["facts"]["disease_inheritance"]}
-    assert inh["580"]["type_of_inheritance"] == ["X-linked recessive"]
+    assert (inh["580"]["type_of_inheritance"], inh["580"]["average_age_of_onset"]) == (
+        ["X-linked recessive"], ["Childhood"])
+    assert inh["93473"]["average_age_of_onset"] == ["Infancy", "Neonatal"]
 
 
 def test_overlap_and_grade_are_computed_by_the_server_without_a_question():
-    state, calls = _rare_disease_run(HITS)
+    state, calls = _rare_disease_run()
     assert "compute_overlap" not in {q["step"] for q in state["asked"]}
     rows = {r["orpha_code"]: r for r in state["facts"]["overlap_rows"]}
-    assert rows["580"]["n"] == 1 and rows["580"]["N"] == 1 and rows["580"]["overlap_pct"] == 100
-    assert rows["580"]["grade"] == "T1" and rows["354"]["grade"] == "T1"   # both have Orphanet genes
-    assert rows["580"]["matched_hpo_ids"] == ["HP:0000280"]
+    assert (rows["580"]["n"], rows["580"]["N"], rows["580"]["overlap_pct"], rows["580"]["grade"]) == (3, 3, 100, "T1")
+    assert rows["580"]["matched_hpo_ids"] == ["HP:0000280", "HP:0001433", "HP:0001263"]
+    assert (rows["79255"]["n"], rows["79255"]["grade"]) == (2, "T2")
+    assert (rows["79430"]["n"], rows["79430"]["grade"]) == (0, "T4")
+    # a candidate whose phenotype lookup returned no annotation has no overlap row
+    assert "363294" not in rows and "85453" not in rows
 
 
 def test_a_question_stubs_facts_larger_than_a_payload_cap():
@@ -1622,9 +1569,10 @@ def test_a_question_stubs_facts_larger_than_a_payload_cap():
 
 def test_the_gene_panel_collects_a_row_per_gene_for_the_writer():
     """With loop results bounded, the writer reads Ensembl and Entrez ids from rows."""
-    state, _ = _rare_disease_run(HITS)
+    state, _ = _rare_disease_run()
     rows = state["facts"]["gene_rows"]
-    assert rows and rows[0] == {"symbol": "IDS", "name": "iduronate 2-sulfatase",
+    assert len(rows) == len(state["facts"]["genes"])
+    assert rows[0] == {"symbol": "IDS", "name": "iduronate 2-sulfatase",
                                 "entrezgene": "3423", "ensembl": "ENSG00000010404"}
 
 
@@ -1698,15 +1646,22 @@ def test_ranking_needs_the_overlap_rows_and_is_unresolved_without_them():
 
 
 def test_the_shipped_process_ranks_the_differential_on_the_server_from_its_rows():
-    state, calls = _rare_disease_run(HITS)
-    assert sorted(int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_epidemiology") == [354, 580]
+    state, calls = _rare_disease_run()
+    assert [int(a["orphacode"]) for t, a in calls if t == "Orphanet_get_epidemiology"] == state["facts"]["orphanet_codes"]
     assert "rank_differential" not in {q["step"] for q in state["asked"]}     # no question asked
-    ranked = state["facts"]["ranked_rows"]                 # both stubbed candidates, on the server
-    assert [r["rank"] for r in ranked] == [1, 2]
-    assert [r["orpha_code"] for r in ranked] == ["580", "354"]            # known prevalence beats unknown
-    assert ranked[0]["prevalence_tier"] == "1-9 / 100 000" and ranked[1]["prevalence_tier"] == "unknown"
-    assert ranked[0]["onset_fit"] == "not assessed (no patient age)"   # the stub binds no age_years
-    assert ranked[0]["grade"] == "T1" and ranked[0]["overlap_pct"] == 100   # overlap travels with the row
+    ranked = state["facts"]["ranked_rows"]
+    assert [r["rank"] for r in ranked] == list(range(1, 16))
+    assert [r["orpha_code"] for r in ranked] == [
+        "93473", "580", "576", "93400", "309282", "309155", "3166",   # fit, carry both
+        "821", "351", "796", "79255",                                 # fit, carry one of two
+        "709", "79430",                                               # fit, carry neither
+        "93399", "101110"]                                            # onset later than 4 years
+    first = ranked[0]
+    assert (first["onset_fit"], first["carries_discriminating"], first["prevalence_tier"]) == (
+        "fits", "both", "1-9 / 1 000 000")
+    assert (first["grade"], first["overlap_pct"]) == ("T1", 100)   # overlap travels with the row
+    assert ranked[-2]["preferred_term"] == "Juvenile sialidosis type 2"
+    assert ranked[-2]["onset_fit"] == "later than patient" and ranked[-2]["overlap_pct"] == 100
 
 
 def test_prevalence_tier_is_the_class_most_studies_agree_on_not_one_outlier():
@@ -1811,15 +1766,17 @@ def test_a_tie_at_the_cut_is_left_unresolved_for_the_model_to_break():
     assert "discriminating_hpo_ids" in out["unresolved"]
 
 
-def test_the_shipped_process_computes_the_discriminating_pair_and_asks_only_on_a_tie():
-    """One symptom in the stub → one HP id → fewer than two rows → the compute cannot
-    cut, the name stays unresolved, and the judge on `discriminating` fills it."""
-    state, calls = _rare_disease_run(HITS)
-    assert [a["term_id"] for t, a in calls if t == "HPO_get_diseases_by_phenotype"] == ["HP:0000280"]
+def test_the_shipped_process_computes_the_discriminating_pair_from_the_recorded_counts():
+    """The two phenotypes annotated to the fewest diseases: 190 for hepatosplenomegaly,
+    340 for coarse facies, 500 (the ceiling) for developmental delay. No question."""
+    state, calls = _rare_disease_run()
+    assert [a["term_id"] for t, a in calls if t == "HPO_get_diseases_by_phenotype"] == [
+        "HP:0000280", "HP:0001433", "HP:0001263"]
+    assert [(r["hpo_id"], len(r["diseases"])) for r in state["facts"]["term_counts"]] == [
+        ("HP:0000280", 340), ("HP:0001433", 190), ("HP:0001263", 500)]
     asked = [(q["step"], q["kind"]) for q in state["asked"]]
-    assert ("phenotypes", "judge") not in asked
-    assert ("discriminating", "judge") in asked                  # the tie/short-list fallback
-    assert state["facts"]["discriminating_hpo_ids"] == ["HP:0000280"]
+    assert ("phenotypes", "judge") not in asked and ("discriminating", "judge") not in asked
+    assert state["facts"]["discriminating_hpo_ids"] == ["HP:0001433", "HP:0000280"]
 
 
 def test_a_judged_name_a_compute_already_resolved_is_not_asked():
@@ -1944,15 +1901,23 @@ def test_overlap_and_the_gate_use_the_ontological_match_when_a_hierarchy_is_give
 
 
 def test_the_shipped_process_fetches_the_hierarchy_and_matches_ontologically():
-    """Hurler's row lists Hepatomegaly and Splenomegaly; the case's Hepatosplenomegaly
-    must count as carried, and the discriminating pair must gate the ranking."""
-    state, calls = _rare_disease_run(HITS)
-    hierarchy_calls = [a for t, a in calls if t == "HPO_get_term_hierarchy"]
-    assert sorted(a["term_id"] for a in hierarchy_calls) == ["HP:0000280", "HP:0000280"]
-    assert {a["direction"] for a in hierarchy_calls} == {"parents", "children"}
-    assert state["facts"]["hpo_hierarchy"] == [
-        {"hpo_id": "HP:0000280", "parents": ["HP:0000271"], "children": ["HP:0000339"]}]
-    assert all("carries_discriminating" in r for r in state["facts"]["ranked_rows"])
+    """Each case term's parents and children arrive as one row, and the discriminating
+    pair gates the ranking."""
+    state, calls = _rare_disease_run()
+    hierarchy_calls = [(a["term_id"], a["direction"]) for t, a in calls if t == "HPO_get_term_hierarchy"]
+    assert sorted(hierarchy_calls) == sorted((h, d) for h in state["facts"]["hpo_ids"]
+                                             for d in ("parents", "children"))
+    assert state["facts"]["hpo_hierarchy"][:2] == [
+        {"hpo_id": "HP:0000280", "parents": ["HP:0001999"], "children": ["HP:0000339"]},
+        {"hpo_id": "HP:0001433", "parents": ["HP:0002240", "HP:0001744"], "children": []}]
+    # MPS II lists hepatomegaly and splenomegaly, never hepatosplenomegaly itself: the
+    # parents together carry the case's term.
+    mps2 = next(r for r in state["facts"]["disease_phenotypes"] if r["orpha_code"] == "580")
+    assert "HP:0001433" not in mps2["hpo_ids"] and {"HP:0002240", "HP:0001744"} <= set(mps2["hpo_ids"])
+    overlap = next(r for r in state["facts"]["overlap_rows"] if r["orpha_code"] == "580")
+    assert "HP:0001433" in overlap["matched_hpo_ids"]
+    ranked = next(r for r in state["facts"]["ranked_rows"] if r["orpha_code"] == "580")
+    assert ranked["carries_discriminating"] == "both"
 
 
 # check: the server cannot make the agent use a tool, but it can refuse an answer that
@@ -2211,13 +2176,14 @@ MAPPED = {
          "produces": ["requested_meddra"]},
     ],
 }
-FAERS_TERMS = {"result": [{"term": t} for t in ("DEAFNESS", "TINNITUS", "FALL", "NAUSEA")]}
+FAERS_TERMS = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "openfda"
+                         / "faers_count_reactions_2026-09-24.json").read_text())["cisplatin"]
 ANSWER = {"requested_meddra": [
-    {"of": "ototoxicity", "term": "DEAFNESS", "reason": "hearing loss is the ototoxic injury",
-     "concept": ["ear", "hearing", "vestibular"]},
-    {"of": "ototoxicity", "term": "FALL", "reason": "may follow from dizziness",
-     "concept": ["ear", "hearing", "vestibular"]}]}
-MAPPED_INPUTS = {"drug_name": "x", "requested_aes": ["ototoxicity"]}
+    {"of": "nephrotoxicity", "term": "ACUTE KIDNEY INJURY", "reason": "the renal injury itself",
+     "concept": ["kidney", "renal"]},
+    {"of": "nephrotoxicity", "term": "FALL", "reason": "may follow from renal hypotension",
+     "concept": ["kidney", "renal"]}]}
+MAPPED_INPUTS = {"drug_name": "cisplatin", "requested_aes": ["nephrotoxicity"]}
 
 
 def _recorded_lookup(term):
@@ -2234,20 +2200,20 @@ def _mapped_handover(execute=lambda tool, a: FAERS_TERMS, ask=lambda q: ANSWER):
 def test_a_judged_mapping_becomes_a_table_with_the_reason_and_the_placing_of_each_term():
     facts = _mapped_handover()["facts"]
     assert [(r["of"], r["term"], r["placing"]) for r in facts["requested_meddra"]] == [
-        ("ototoxicity", "DEAFNESS", "placed"), ("ototoxicity", "FALL", "not placed")]
-    assert facts["requested_meddra"][0]["reason"] == "hearing loss is the ototoxic injury"
-    assert re.search(r"ear|hearing", facts["requested_meddra"][0]["under"], re.I)
-    assert facts["requested_meddra_terms"] == ["DEAFNESS", "FALL"]
+        ("nephrotoxicity", "ACUTE KIDNEY INJURY", "placed"), ("nephrotoxicity", "FALL", "not placed")]
+    assert facts["requested_meddra"][0]["reason"] == "the renal injury itself"
+    assert re.search(r"kidney|renal", facts["requested_meddra"][0]["under"], re.I)
+    assert facts["requested_meddra_terms"] == ["ACUTE KIDNEY INJURY", "FALL"]
 
 
 def test_a_mapped_term_that_is_not_in_the_sources_list_is_refused_and_asked_again():
     """"KIDNEY DAMAGE" is not a FAERS term: an invented term never reaches a query."""
     asked = []
-    answers = iter([{"requested_meddra": [{"of": "ototoxicity", "term": "HEARING DAMAGE",
+    answers = iter([{"requested_meddra": [{"of": "nephrotoxicity", "term": "KIDNEY DAMAGE",
                                            "reason": "r", "concept": ["ear"]}]}, ANSWER])
     handed = _mapped_handover(ask=lambda q: asked.append(q) or next(answers))
-    assert "HEARING DAMAGE" in asked[1]["problem"]
-    assert [r["term"] for r in handed["facts"]["requested_meddra"]] == ["DEAFNESS", "FALL"]
+    assert "KIDNEY DAMAGE" in asked[1]["problem"]
+    assert [r["term"] for r in handed["facts"]["requested_meddra"]] == ["ACUTE KIDNEY INJURY", "FALL"]
 
 
 def test_the_mapping_question_carries_the_sources_whole_term_list_past_the_payload_cap():
@@ -2255,7 +2221,7 @@ def test_the_mapping_question_carries_the_sources_whole_term_list_past_the_paylo
     terms = [f"REACTION TERM {n}" for n in range(1000)]
     wide = {"result": [{"term": t, "count": 1000 - n} for n, t in enumerate(terms)]}
     asked = []
-    reply = {"requested_meddra": [{"of": "ototoxicity", "term": "REACTION TERM 500",
+    reply = {"requested_meddra": [{"of": "nephrotoxicity", "term": "REACTION TERM 500",
                                    "reason": "r", "concept": ["ear"]}]}
     handed = _mapped_handover(execute=lambda tool, a: wide,
                               ask=lambda q: asked.append(q) or reply)

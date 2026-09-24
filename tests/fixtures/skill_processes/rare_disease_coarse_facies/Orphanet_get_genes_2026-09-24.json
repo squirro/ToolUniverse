@@ -1,0 +1,760 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. Every response is whole.",
+ "{\"orphacode\": 580}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "580",
+   "disease_name": "Mucopolysaccharidosis type 2",
+   "genes": [
+    {
+     "Symbol": "IDS",
+     "Name": "iduronate 2-sulfatase",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "Xq28",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": null
+    }
+   ],
+   "subtype_sources": [
+    {
+     "orpha_code": "217093",
+     "name": "Mucopolysaccharidosis type 2, attenuated form"
+    },
+    {
+     "orpha_code": "217085",
+     "name": "Mucopolysaccharidosis type 2, severe form"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "580"
+  }
+ },
+ "{\"orphacode\": 363294}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "363294",
+   "disease_name": "Genetic syndromic Pierre Robin syndrome",
+   "genes": []
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "363294"
+  }
+ },
+ "{\"orphacode\": 79430}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "79430",
+   "disease_name": "Hermansky-Pudlak syndrome",
+   "genes": [
+    {
+     "Symbol": "BLOC1S3",
+     "Name": "biogenesis of lysosomal organelles complex 1 subunit 3",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "19q13.32",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "16420244[PMID]_27514596[PMID]_20301464[PMID]"
+    },
+    {
+     "Symbol": "DTNBP1",
+     "Name": "dystrobrevin binding protein 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "6p22.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "12923531[PMID]"
+    },
+    {
+     "Symbol": "BLOC1S6",
+     "Name": "biogenesis of lysosomal organelles complex 1 subunit 6",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "15q21.1",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "16420244[PMID]_27514596[PMID]_20301464[PMID]"
+    },
+    {
+     "Symbol": "BLOC1S5",
+     "Name": "biogenesis of lysosomal organelles complex 1 subunit 5",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "6p24.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "16420244[PMID]_27514596[PMID]_20301464[PMID]"
+    },
+    {
+     "Symbol": "HPS3",
+     "Name": "HPS3 biogenesis of lysosomal organelles complex 2 subunit 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "3q24",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": null
+    },
+    {
+     "Symbol": "HPS5",
+     "Name": "HPS5 biogenesis of lysosomal organelles complex 2 subunit 2",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "11p15.1",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": null
+    },
+    {
+     "Symbol": "HPS6",
+     "Name": "HPS6 biogenesis of lysosomal organelles complex 2 subunit 3",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "10q24.32",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": null
+    },
+    {
+     "Symbol": "HPS1",
+     "Name": "HPS1 biogenesis of lysosomal organelles complex 3 subunit 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "10q24.2",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": null
+    },
+    {
+     "Symbol": "HPS4",
+     "Name": "HPS4 biogenesis of lysosomal organelles complex 3 subunit 2",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "22q12.1",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": null
+    },
+    {
+     "Symbol": "AP3D1",
+     "Name": "adaptor related protein complex 3 subunit delta 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "19p13.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "36445457[PMID]"
+    },
+    {
+     "Symbol": "AP3B1",
+     "Name": "adaptor related protein complex 3 subunit beta 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "5q14.1",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) (loss of function) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "10024875[PMID]"
+    }
+   ],
+   "subtype_sources": [
+    {
+     "orpha_code": "231531",
+     "name": "Hermansky-Pudlak syndrome due to BLOC-1 deficiency"
+    },
+    {
+     "orpha_code": "231512",
+     "name": "Hermansky-Pudlak syndrome due to BLOC-2 deficiency"
+    },
+    {
+     "orpha_code": "231500",
+     "name": "Hermansky-Pudlak syndrome due to BLOC-3 deficiency"
+    },
+    {
+     "orpha_code": "664511",
+     "name": "Early-onset severe Hermansky-Pudlak syndrome with hearing loss, due to AP3D1 deficiency"
+    },
+    {
+     "orpha_code": "664500",
+     "name": "Hermansky-Pudlak syndrome due to AP3B1 deficiency"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "79430"
+  }
+ },
+ "{\"orphacode\": 351}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "351",
+   "disease_name": "Galactosialidosis",
+   "genes": [
+    {
+     "Symbol": "CTSA",
+     "Name": "cathepsin A",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "20q13.12",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": null
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "351"
+  }
+ },
+ "{\"orphacode\": 300496}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "300496",
+   "disease_name": "Multiple congenital anomalies-hypotonia-seizures syndrome type 2",
+   "genes": [
+    {
+     "Symbol": "PIGA",
+     "Name": "phosphatidylinositol glycan anchor biosynthesis class A",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "Xp22.2",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": null
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "300496"
+  }
+ },
+ "{\"orphacode\": 79255}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "79255",
+   "disease_name": "GM1 gangliosidosis type 1",
+   "genes": [
+    {
+     "Symbol": "GLB1",
+     "Name": "galactosidase beta 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "3p22.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "24156116[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "79255"
+  }
+ },
+ "{\"orphacode\": 709}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "709",
+   "disease_name": "Peters plus syndrome",
+   "genes": [
+    {
+     "Symbol": "B3GLCT",
+     "Name": "beta 3-glucosyltransferase",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "13q12.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "20301637[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "709"
+  }
+ },
+ "{\"orphacode\": 93400}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93400",
+   "disease_name": "Congenital sialidosis type 2",
+   "genes": [
+    {
+     "Symbol": "NEU1",
+     "Name": "neuraminidase 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "6p21.33",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "14695530[PMID]_19568825[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "93400"
+  }
+ },
+ "{\"orphacode\": 576}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "576",
+   "disease_name": "Mucolipidosis type II",
+   "genes": [
+    {
+     "Symbol": "GNPTAB",
+     "Name": "N-acetylglucosamine-1-phosphate transferase subunits alpha and beta",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "12q23.2",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) (loss of function) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "18425436[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "576"
+  }
+ },
+ "{\"orphacode\": 309282}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309282",
+   "disease_name": "Alpha-mannosidosis, infantile form",
+   "genes": [
+    {
+     "Symbol": "MAN2B1",
+     "Name": "mannosidase alpha class 2B member 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "19p13.13",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "19958498[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "309282"
+  }
+ },
+ "{\"orphacode\": 137639}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "137639",
+   "disease_name": "Hypomyelinating leukodystrophy-ataxia-hypodontia-hypomyelination syndrome",
+   "genes": [
+    {
+     "Symbol": "POLR3A",
+     "Name": "RNA polymerase III subunit A",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "10q22.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "27506977[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "137639"
+  }
+ },
+ "{\"orphacode\": 85453}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "85453",
+   "disease_name": "X-linked reticulate pigmentary disorder",
+   "genes": [
+    {
+     "Symbol": "POLA1",
+     "Name": "DNA polymerase alpha 1, catalytic subunit",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "Xp22.11-p21.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) (loss of function) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "27019227[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "85453"
+  }
+ },
+ "{\"orphacode\": 821}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "821",
+   "disease_name": "Sotos syndrome",
+   "genes": [
+    {
+     "Symbol": "NSD1",
+     "Name": "nuclear receptor binding SET domain protein 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "5q35.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) (loss of function) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "20301652[PMID]"
+    },
+    {
+     "Symbol": "APC2",
+     "Name": "APC regulator of Wnt signaling pathway 2",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "19p13.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) (loss of function) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "25753423[PMID]_31585108[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "821"
+  }
+ },
+ "{\"orphacode\": 796}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "796",
+   "disease_name": "Sandhoff disease",
+   "genes": [
+    {
+     "Symbol": "HEXB",
+     "Name": "hexosaminidase subunit beta",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "5q13.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) (loss of function) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "20798201[PMID]"
+    }
+   ],
+   "subtype_sources": [
+    {
+     "orpha_code": "309155",
+     "name": "Sandhoff disease, infantile form"
+    },
+    {
+     "orpha_code": "309169",
+     "name": "Sandhoff disease, adult form"
+    },
+    {
+     "orpha_code": "309162",
+     "name": "Sandhoff disease, juvenile form"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "796"
+  }
+ },
+ "{\"orphacode\": 93473}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93473",
+   "disease_name": "Hurler syndrome",
+   "genes": [
+    {
+     "Symbol": "IDUA",
+     "Name": "alpha-L-iduronidase",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "4p16.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "8680403[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "93473"
+  }
+ },
+ "{\"orphacode\": 309155}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309155",
+   "disease_name": "Sandhoff disease, infantile form",
+   "genes": [
+    {
+     "Symbol": "HEXB",
+     "Name": "hexosaminidase subunit beta",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "5q13.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) (loss of function) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "20798201[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "309155"
+  }
+ },
+ "{\"orphacode\": 101110}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "101110",
+   "disease_name": "Spinocerebellar ataxia type 20",
+   "genes": [
+    {
+     "Symbol": "SCA20",
+     "Name": "spinocerebellar ataxia 20",
+     "GeneType": "Disorder-associated locus",
+     "Locus": [
+      {
+       "GeneLocus": "11q12",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": null
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "101110"
+  }
+ },
+ "{\"orphacode\": 93399}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93399",
+   "disease_name": "Juvenile sialidosis type 2",
+   "genes": [
+    {
+     "Symbol": "NEU1",
+     "Name": "neuraminidase 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "6p21.33",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "19568825[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "93399"
+  }
+ },
+ "{\"orphacode\": 309144}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309144",
+   "disease_name": "Gangliosidosis",
+   "genes": [
+    {
+     "Symbol": "GM2A",
+     "Name": "ganglioside GM2 activator",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "5q33.1",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "8900233[PMID]"
+    },
+    {
+     "Symbol": "GLB1",
+     "Name": "galactosidase beta 1",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "3p22.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "24156116[PMID]"
+    }
+   ],
+   "subtype_sources": [
+    {
+     "orpha_code": "309246",
+     "name": "GM2 gangliosidosis, AB variant"
+    },
+    {
+     "orpha_code": "79257",
+     "name": "GM1 gangliosidosis type 3"
+    },
+    {
+     "orpha_code": "79256",
+     "name": "GM1 gangliosidosis type 2"
+    },
+    {
+     "orpha_code": "79255",
+     "name": "GM1 gangliosidosis type 1"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "309144"
+  }
+ },
+ "{\"orphacode\": 3166}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "3166",
+   "disease_name": "Sialuria",
+   "genes": [
+    {
+     "Symbol": "GNE",
+     "Name": "glucosamine (UDP-N-acetyl)-2-epimerase/N-acetylmannosamine kinase",
+     "GeneType": "gene with protein product",
+     "Locus": [
+      {
+       "GeneLocus": "9p13.3",
+       "LocusKey": 1
+      }
+     ],
+     "AssociationType": "Disease-causing germline mutation(s) in",
+     "AssociationStatus": "Assessed",
+     "SourceOfValidation": "20301343[PMID]"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "3166"
+  }
+ }
+}

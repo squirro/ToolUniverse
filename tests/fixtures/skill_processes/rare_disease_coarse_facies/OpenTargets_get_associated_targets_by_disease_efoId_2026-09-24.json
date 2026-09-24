@@ -1,0 +1,983 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. `data.disease.associatedTargets.rows` is cut to its first 5 records, which the process does not read whole; counts and totals are the source's.",
+ "{\"efoId\": \"MONDO_0010674\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0010674",
+    "name": "mucopolysaccharidosis type 2",
+    "associatedTargets": {
+     "count": 782,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000010404",
+        "approvedSymbol": "IDS"
+       },
+       "score": 0.8878808299647436
+      },
+      {
+       "target": {
+        "id": "ENSG00000072274",
+        "approvedSymbol": "TFRC"
+       },
+       "score": 0.4903200483488936
+      },
+      {
+       "target": {
+        "id": "ENSG00000106327",
+        "approvedSymbol": "TFR2"
+       },
+       "score": 0.4855041072336354
+      },
+      {
+       "target": {
+        "id": "ENSG00000112964",
+        "approvedSymbol": "GHR"
+       },
+       "score": 0.1847899273423509
+      },
+      {
+       "target": {
+        "id": "ENSG00000127415",
+        "approvedSymbol": "IDUA"
+       },
+       "score": 0.13420074890071168
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0859181\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0859181",
+    "name": "DEGCAGS syndrome",
+    "associatedTargets": {
+     "count": 333,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000196110",
+        "approvedSymbol": "ZNF699"
+       },
+       "score": 0.7059292097002857
+      },
+      {
+       "target": {
+        "id": "ENSG00000066468",
+        "approvedSymbol": "FGFR2"
+       },
+       "score": 0.057044547909512966
+      },
+      {
+       "target": {
+        "id": "ENSG00000106571",
+        "approvedSymbol": "GLI3"
+       },
+       "score": 0.05590234083639576
+      },
+      {
+       "target": {
+        "id": "ENSG00000054598",
+        "approvedSymbol": "FOXC1"
+       },
+       "score": 0.05284067972354524
+      },
+      {
+       "target": {
+        "id": "ENSG00000011143",
+        "approvedSymbol": "MKS1"
+       },
+       "score": 0.0516506325914605
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0011997\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0011997",
+    "name": "Hermansky-Pudlak syndrome 2",
+    "associatedTargets": {
+     "count": 315,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000132842",
+        "approvedSymbol": "AP3B1"
+       },
+       "score": 0.8367607758920282
+      },
+      {
+       "target": {
+        "id": "ENSG00000065000",
+        "approvedSymbol": "AP3D1"
+       },
+       "score": 0.4545938980135407
+      },
+      {
+       "target": {
+        "id": "ENSG00000163755",
+        "approvedSymbol": "HPS3"
+       },
+       "score": 0.26738732906583484
+      },
+      {
+       "target": {
+        "id": "ENSG00000049768",
+        "approvedSymbol": "FOXP3"
+       },
+       "score": 0.05457430285267883
+      },
+      {
+       "target": {
+        "id": "ENSG00000066468",
+        "approvedSymbol": "FGFR2"
+       },
+       "score": 0.05265470919388932
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0009737\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0009737",
+    "name": "galactosialidosis",
+    "associatedTargets": {
+     "count": 765,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000064601",
+        "approvedSymbol": "CTSA"
+       },
+       "score": 0.8422882169569891
+      },
+      {
+       "target": {
+        "id": "ENSG00000100979",
+        "approvedSymbol": "PLTP"
+       },
+       "score": 0.5439377133711586
+      },
+      {
+       "target": {
+        "id": "ENSG00000186790",
+        "approvedSymbol": "FOXE3"
+       },
+       "score": 0.08567449107726602
+      },
+      {
+       "target": {
+        "id": "ENSG00000007372",
+        "approvedSymbol": "PAX6"
+       },
+       "score": 0.07985475733870437
+      },
+      {
+       "target": {
+        "id": "ENSG00000054598",
+        "approvedSymbol": "FOXC1"
+       },
+       "score": 0.073714963043142
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0010466\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0010466",
+    "name": "multiple congenital anomalies-hypotonia-seizures syndrome 2",
+    "associatedTargets": {
+     "count": 344,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000165195",
+        "approvedSymbol": "PIGA"
+       },
+       "score": 0.8142871622337704
+      },
+      {
+       "target": {
+        "id": "ENSG00000011143",
+        "approvedSymbol": "MKS1"
+       },
+       "score": 0.052927325667254665
+      },
+      {
+       "target": {
+        "id": "ENSG00000054598",
+        "approvedSymbol": "FOXC1"
+       },
+       "score": 0.05280556963735018
+      },
+      {
+       "target": {
+        "id": "ENSG00000106571",
+        "approvedSymbol": "GLI3"
+       },
+       "score": 0.05183603848522732
+      },
+      {
+       "target": {
+        "id": "ENSG00000066468",
+        "approvedSymbol": "FGFR2"
+       },
+       "score": 0.05150033678388872
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0009260\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0009260",
+    "name": "GM1 gangliosidosis type 1",
+    "associatedTargets": {
+     "count": 634,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000170266",
+        "approvedSymbol": "GLB1"
+       },
+       "score": 0.847012236520877
+      },
+      {
+       "target": {
+        "id": "ENSG00000188167",
+        "approvedSymbol": "TMPPE"
+       },
+       "score": 0.5202471307624259
+      },
+      {
+       "target": {
+        "id": "ENSG00000134853",
+        "approvedSymbol": "PDGFRA"
+       },
+       "score": 0.06310015053974825
+      },
+      {
+       "target": {
+        "id": "ENSG00000106571",
+        "approvedSymbol": "GLI3"
+       },
+       "score": 0.06213289238288082
+      },
+      {
+       "target": {
+        "id": "ENSG00000054598",
+        "approvedSymbol": "FOXC1"
+       },
+       "score": 0.061733848968501995
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0015012\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0015012",
+    "name": "mucopolysaccharidosis-plus syndrome",
+    "associatedTargets": {
+     "count": 608,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000139719",
+        "approvedSymbol": "VPS33A"
+       },
+       "score": 0.751647609003623
+      },
+      {
+       "target": {
+        "id": "ENSG00000066468",
+        "approvedSymbol": "FGFR2"
+       },
+       "score": 0.0618603042518859
+      },
+      {
+       "target": {
+        "id": "ENSG00000054598",
+        "approvedSymbol": "FOXC1"
+       },
+       "score": 0.060376310299495556
+      },
+      {
+       "target": {
+        "id": "ENSG00000106571",
+        "approvedSymbol": "GLI3"
+       },
+       "score": 0.0597551451183985
+      },
+      {
+       "target": {
+        "id": "ENSG00000011143",
+        "approvedSymbol": "MKS1"
+       },
+       "score": 0.05720124155501363
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0019682\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0019682",
+    "name": "congenital sialidosis type 2",
+    "associatedTargets": {
+     "count": 697,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000204386",
+        "approvedSymbol": "NEU1"
+       },
+       "score": 0.37864934431866437
+      },
+      {
+       "target": {
+        "id": "ENSG00000186790",
+        "approvedSymbol": "FOXE3"
+       },
+       "score": 0.05963807453976288
+      },
+      {
+       "target": {
+        "id": "ENSG00000054598",
+        "approvedSymbol": "FOXC1"
+       },
+       "score": 0.05895182018659158
+      },
+      {
+       "target": {
+        "id": "ENSG00000106571",
+        "approvedSymbol": "GLI3"
+       },
+       "score": 0.05664463170842292
+      },
+      {
+       "target": {
+        "id": "ENSG00000151617",
+        "approvedSymbol": "EDNRA"
+       },
+       "score": 0.05652421027243814
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0009650\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0009650",
+    "name": "mucolipidosis type II",
+    "associatedTargets": {
+     "count": 614,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000111670",
+        "approvedSymbol": "GNPTAB"
+       },
+       "score": 0.8330332048375677
+      },
+      {
+       "target": {
+        "id": "ENSG00000167325",
+        "approvedSymbol": "RRM1"
+       },
+       "score": 0.09239496367117545
+      },
+      {
+       "target": {
+        "id": "ENSG00000048392",
+        "approvedSymbol": "RRM2B"
+       },
+       "score": 0.09239496367117545
+      },
+      {
+       "target": {
+        "id": "ENSG00000171848",
+        "approvedSymbol": "RRM2"
+       },
+       "score": 0.09239496367117545
+      },
+      {
+       "target": {
+        "id": "ENSG00000198056",
+        "approvedSymbol": "PRIM1"
+       },
+       "score": 0.07391597093694036
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0017732\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0017732",
+    "name": "alpha-mannosidosis, infantile form",
+    "associatedTargets": {
+     "count": 456,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000104774",
+        "approvedSymbol": "MAN2B1"
+       },
+       "score": 0.37825943757197195
+      },
+      {
+       "target": {
+        "id": "ENSG00000066468",
+        "approvedSymbol": "FGFR2"
+       },
+       "score": 0.057414125911176984
+      },
+      {
+       "target": {
+        "id": "ENSG00000106571",
+        "approvedSymbol": "GLI3"
+       },
+       "score": 0.05642031726884344
+      },
+      {
+       "target": {
+        "id": "ENSG00000068078",
+        "approvedSymbol": "FGFR3"
+       },
+       "score": 0.055879018950815894
+      },
+      {
+       "target": {
+        "id": "ENSG00000151617",
+        "approvedSymbol": "EDNRA"
+       },
+       "score": 0.055543232410927124
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0014732\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0014732",
+    "name": "leukodystrophy, hypomyelinating, 12",
+    "associatedTargets": {
+     "count": 411,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000160695",
+        "approvedSymbol": "VPS11"
+       },
+       "score": 0.7234628126519271
+      },
+      {
+       "target": {
+        "id": "ENSG00000171587",
+        "approvedSymbol": "DSCAM"
+       },
+       "score": 0.06085317097310957
+      },
+      {
+       "target": {
+        "id": "ENSG00000157087",
+        "approvedSymbol": "ATP2B2"
+       },
+       "score": 0.0597247998781922
+      },
+      {
+       "target": {
+        "id": "ENSG00000069667",
+        "approvedSymbol": "RORA"
+       },
+       "score": 0.05950066880734771
+      },
+      {
+       "target": {
+        "id": "ENSG00000182168",
+        "approvedSymbol": "UNC5C"
+       },
+       "score": 0.05880231076282172
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0859080\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0859080",
+    "name": "intellectual developmental disorder, X-linked, syndromic, with pigmentary mosaicism and coarse facies",
+    "associatedTargets": {
+     "count": 348,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000068323",
+        "approvedSymbol": "TFE3"
+       },
+       "score": 0.7976269597466835
+      },
+      {
+       "target": {
+        "id": "ENSG00000106571",
+        "approvedSymbol": "GLI3"
+       },
+       "score": 0.05472466436333586
+      },
+      {
+       "target": {
+        "id": "ENSG00000151617",
+        "approvedSymbol": "EDNRA"
+       },
+       "score": 0.053885564101595486
+      },
+      {
+       "target": {
+        "id": "ENSG00000068078",
+        "approvedSymbol": "FGFR3"
+       },
+       "score": 0.05300208530268073
+      },
+      {
+       "target": {
+        "id": "ENSG00000066468",
+        "approvedSymbol": "FGFR2"
+       },
+       "score": 0.05229319644614382
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0019349\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0019349",
+    "name": "Sotos syndrome",
+    "associatedTargets": {
+     "count": 600,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000165671",
+        "approvedSymbol": "NSD1"
+       },
+       "score": 0.8465319710215455
+      },
+      {
+       "target": {
+        "id": "ENSG00000115266",
+        "approvedSymbol": "APC2"
+       },
+       "score": 0.5988392746738344
+      },
+      {
+       "target": {
+        "id": "ENSG00000119559",
+        "approvedSymbol": "C19orf25"
+       },
+       "score": 0.474283867373112
+      },
+      {
+       "target": {
+        "id": "ENSG00000007314",
+        "approvedSymbol": "SCN4A"
+       },
+       "score": 0.3400134663099256
+      },
+      {
+       "target": {
+        "id": "ENSG00000068438",
+        "approvedSymbol": "FTSJ1"
+       },
+       "score": 0.11826555349910459
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0010006\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0010006",
+    "name": "Sandhoff disease",
+    "associatedTargets": {
+     "count": 1117,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000049860",
+        "approvedSymbol": "HEXB"
+       },
+       "score": 0.854503525871318
+      },
+      {
+       "target": {
+        "id": "ENSG00000148154",
+        "approvedSymbol": "UGCG"
+       },
+       "score": 0.3459169880404741
+      },
+      {
+       "target": {
+        "id": "ENSG00000164347",
+        "approvedSymbol": "GFM2"
+       },
+       "score": 0.1657339793905247
+      },
+      {
+       "target": {
+        "id": "ENSG00000171848",
+        "approvedSymbol": "RRM2"
+       },
+       "score": 0.09239496367117545
+      },
+      {
+       "target": {
+        "id": "ENSG00000048392",
+        "approvedSymbol": "RRM2B"
+       },
+       "score": 0.09239496367117545
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0011758\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0011758",
+    "name": "Hurler syndrome",
+    "associatedTargets": {
+     "count": 765,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000127415",
+        "approvedSymbol": "IDUA"
+       },
+       "score": 0.8495251756142663
+      },
+      {
+       "target": {
+        "id": "ENSG00000145217",
+        "approvedSymbol": "SLC26A1"
+       },
+       "score": 0.5640742475215539
+      },
+      {
+       "target": {
+        "id": "ENSG00000069011",
+        "approvedSymbol": "PITX1"
+       },
+       "score": 0.2782904480843873
+      },
+      {
+       "target": {
+        "id": "ENSG00000066468",
+        "approvedSymbol": "FGFR2"
+       },
+       "score": 0.06404345834486941
+      },
+      {
+       "target": {
+        "id": "ENSG00000068078",
+        "approvedSymbol": "FGFR3"
+       },
+       "score": 0.061297507848239695
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0017721\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0017721",
+    "name": "Sandhoff disease, infantile form",
+    "associatedTargets": {
+     "count": 362,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000049860",
+        "approvedSymbol": "HEXB"
+       },
+       "score": 0.5695960613957793
+      },
+      {
+       "target": {
+        "id": "ENSG00000131238",
+        "approvedSymbol": "PPT1"
+       },
+       "score": 0.05715285533914975
+      },
+      {
+       "target": {
+        "id": "ENSG00000197535",
+        "approvedSymbol": "MYO5A"
+       },
+       "score": 0.05647323289114864
+      },
+      {
+       "target": {
+        "id": "ENSG00000109099",
+        "approvedSymbol": "PMP22"
+       },
+       "score": 0.05621877468895203
+      },
+      {
+       "target": {
+        "id": "ENSG00000145888",
+        "approvedSymbol": "GLRA1"
+       },
+       "score": 0.055964758767409174
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0014601\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0014601",
+    "name": "autosomal recessive spinocerebellar ataxia 20",
+    "associatedTargets": {
+     "count": 658,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000135317",
+        "approvedSymbol": "SNX14"
+       },
+       "score": 0.7990688568949469
+      },
+      {
+       "target": {
+        "id": "ENSG00000135318",
+        "approvedSymbol": "NT5E"
+       },
+       "score": 0.5563319968093706
+      },
+      {
+       "target": {
+        "id": "ENSG00000198727",
+        "approvedSymbol": "MT-CYB"
+       },
+       "score": 0.11087395640541053
+      },
+      {
+       "target": {
+        "id": "ENSG00000106571",
+        "approvedSymbol": "GLI3"
+       },
+       "score": 0.06332842794341753
+      },
+      {
+       "target": {
+        "id": "ENSG00000054598",
+        "approvedSymbol": "FOXC1"
+       },
+       "score": 0.06044668446349177
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0019681\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0019681",
+    "name": "juvenile sialidosis type 2",
+    "associatedTargets": {
+     "count": 644,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000204386",
+        "approvedSymbol": "NEU1"
+       },
+       "score": 0.3788304384474599
+      },
+      {
+       "target": {
+        "id": "ENSG00000186790",
+        "approvedSymbol": "FOXE3"
+       },
+       "score": 0.06000847568301355
+      },
+      {
+       "target": {
+        "id": "ENSG00000151617",
+        "approvedSymbol": "EDNRA"
+       },
+       "score": 0.058343826420871193
+      },
+      {
+       "target": {
+        "id": "ENSG00000054598",
+        "approvedSymbol": "FOXC1"
+       },
+       "score": 0.05683410092736984
+      },
+      {
+       "target": {
+        "id": "ENSG00000125378",
+        "approvedSymbol": "BMP4"
+       },
+       "score": 0.056122548833145394
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0018149\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0018149",
+    "name": "GM1 gangliosidosis",
+    "associatedTargets": {
+     "count": 1065,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000170266",
+        "approvedSymbol": "GLB1"
+       },
+       "score": 0.8943614710225651
+      },
+      {
+       "target": {
+        "id": "ENSG00000188167",
+        "approvedSymbol": "TMPPE"
+       },
+       "score": 0.5560847143603519
+      },
+      {
+       "target": {
+        "id": "ENSG00000213614",
+        "approvedSymbol": "HEXA"
+       },
+       "score": 0.3708599355758305
+      },
+      {
+       "target": {
+        "id": "ENSG00000148154",
+        "approvedSymbol": "UGCG"
+       },
+       "score": 0.12972252899433032
+      },
+      {
+       "target": {
+        "id": "ENSG00000048392",
+        "approvedSymbol": "RRM2B"
+       },
+       "score": 0.09239496367117545
+      }
+     ]
+    }
+   }
+  }
+ },
+ "{\"efoId\": \"MONDO_0010028\"}": {
+  "status": "success",
+  "data": {
+   "disease": {
+    "id": "MONDO_0010028",
+    "name": "sialuria",
+    "associatedTargets": {
+     "count": 332,
+     "rows": [
+      {
+       "target": {
+        "id": "ENSG00000159921",
+        "approvedSymbol": "GNE"
+       },
+       "score": 0.8193138753472063
+      },
+      {
+       "target": {
+        "id": "ENSG00000122705",
+        "approvedSymbol": "CLTA"
+       },
+       "score": 0.575003806175477
+      },
+      {
+       "target": {
+        "id": "ENSG00000106571",
+        "approvedSymbol": "GLI3"
+       },
+       "score": 0.059396299505270964
+      },
+      {
+       "target": {
+        "id": "ENSG00000068078",
+        "approvedSymbol": "FGFR3"
+       },
+       "score": 0.0569134516368811
+      },
+      {
+       "target": {
+        "id": "ENSG00000148516",
+        "approvedSymbol": "ZEB1"
+       },
+       "score": 0.05686016862645362
+      }
+     ]
+    }
+   }
+  }
+ }
+}

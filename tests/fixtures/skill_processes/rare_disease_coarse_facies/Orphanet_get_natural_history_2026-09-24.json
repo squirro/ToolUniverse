@@ -1,0 +1,387 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. Every response is whole.",
+ "{\"orphacode\": 580}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "580",
+   "preferred_term": "Mucopolysaccharidosis type 2",
+   "average_age_of_onset": [
+    "Childhood"
+   ],
+   "type_of_inheritance": [
+    "X-linked recessive"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Disease"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "580"
+  }
+ },
+ "{\"orphacode\": 363294}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "363294",
+   "preferred_term": "",
+   "average_age_of_onset": [],
+   "type_of_inheritance": [],
+   "disorder_group": "",
+   "typology": ""
+  },
+  "metadata": {
+   "note": "No natural history data found"
+  }
+ },
+ "{\"orphacode\": 79430}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "79430",
+   "preferred_term": "Hermansky-Pudlak syndrome",
+   "average_age_of_onset": [
+    "Infancy",
+    "Neonatal"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Disease"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "79430"
+  }
+ },
+ "{\"orphacode\": 351}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "351",
+   "preferred_term": "Galactosialidosis",
+   "average_age_of_onset": [
+    "All ages"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Disease"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "351"
+  }
+ },
+ "{\"orphacode\": 300496}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "300496",
+   "preferred_term": "Multiple congenital anomalies-hypotonia-seizures syndrome type 2",
+   "average_age_of_onset": [
+    "Antenatal",
+    "Infancy",
+    "Neonatal"
+   ],
+   "type_of_inheritance": [
+    "X-linked recessive"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Malformation syndrome"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "300496"
+  }
+ },
+ "{\"orphacode\": 79255}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "79255",
+   "preferred_term": "GM1 gangliosidosis type 1",
+   "average_age_of_onset": [
+    "Infancy",
+    "Neonatal"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Subtype of disorder",
+   "typology": "Clinical subtype"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "79255"
+  }
+ },
+ "{\"orphacode\": 709}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "709",
+   "preferred_term": "Peters plus syndrome",
+   "average_age_of_onset": [
+    "Antenatal",
+    "Neonatal"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Malformation syndrome"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "709"
+  }
+ },
+ "{\"orphacode\": 93400}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93400",
+   "preferred_term": "Congenital sialidosis type 2",
+   "average_age_of_onset": [
+    "Infancy",
+    "Neonatal"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Subtype of disorder",
+   "typology": "Clinical subtype"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "93400"
+  }
+ },
+ "{\"orphacode\": 576}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "576",
+   "preferred_term": "Mucolipidosis type II",
+   "average_age_of_onset": [
+    "Antenatal",
+    "Neonatal"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Disease"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "576"
+  }
+ },
+ "{\"orphacode\": 309282}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309282",
+   "preferred_term": "Alpha-mannosidosis, infantile form",
+   "average_age_of_onset": [
+    "Infancy"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Subtype of disorder",
+   "typology": "Clinical subtype"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "309282"
+  }
+ },
+ "{\"orphacode\": 137639}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "137639",
+   "preferred_term": "Hypomyelinating leukodystrophy-ataxia-hypodontia-hypomyelination syndrome",
+   "average_age_of_onset": [
+    "Infancy",
+    "Neonatal"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Subtype of disorder",
+   "typology": "Clinical subtype"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "137639"
+  }
+ },
+ "{\"orphacode\": 85453}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "85453",
+   "preferred_term": "X-linked reticulate pigmentary disorder",
+   "average_age_of_onset": [
+    "Childhood"
+   ],
+   "type_of_inheritance": [
+    "X-linked dominant"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Disease"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "85453"
+  }
+ },
+ "{\"orphacode\": 821}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "821",
+   "preferred_term": "Sotos syndrome",
+   "average_age_of_onset": [
+    "Antenatal",
+    "Neonatal"
+   ],
+   "type_of_inheritance": [
+    "Autosomal dominant",
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Disease"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "821"
+  }
+ },
+ "{\"orphacode\": 796}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "796",
+   "preferred_term": "Sandhoff disease",
+   "average_age_of_onset": [
+    "Adolescent",
+    "Adult",
+    "Childhood",
+    "Infancy"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Disease"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "796"
+  }
+ },
+ "{\"orphacode\": 93473}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93473",
+   "preferred_term": "Hurler syndrome",
+   "average_age_of_onset": [
+    "Infancy",
+    "Neonatal"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Subtype of disorder",
+   "typology": "Clinical subtype"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "93473"
+  }
+ },
+ "{\"orphacode\": 309155}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309155",
+   "preferred_term": "Sandhoff disease, infantile form",
+   "average_age_of_onset": [
+    "Infancy"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Subtype of disorder",
+   "typology": "Clinical subtype"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "309155"
+  }
+ },
+ "{\"orphacode\": 101110}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "101110",
+   "preferred_term": "Spinocerebellar ataxia type 20",
+   "average_age_of_onset": [
+    "Adult"
+   ],
+   "type_of_inheritance": [
+    "Autosomal dominant"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Disease"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "101110"
+  }
+ },
+ "{\"orphacode\": 93399}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93399",
+   "preferred_term": "Juvenile sialidosis type 2",
+   "average_age_of_onset": [
+    "Adolescent"
+   ],
+   "type_of_inheritance": [
+    "Autosomal recessive"
+   ],
+   "disorder_group": "Subtype of disorder",
+   "typology": "Clinical subtype"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "93399"
+  }
+ },
+ "{\"orphacode\": 309144}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309144",
+   "preferred_term": "",
+   "average_age_of_onset": [],
+   "type_of_inheritance": [],
+   "disorder_group": "",
+   "typology": ""
+  },
+  "metadata": {
+   "note": "No natural history data found"
+  }
+ },
+ "{\"orphacode\": 3166}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "3166",
+   "preferred_term": "Sialuria",
+   "average_age_of_onset": [
+    "Infancy"
+   ],
+   "type_of_inheritance": [
+    "Autosomal dominant"
+   ],
+   "disorder_group": "Disorder",
+   "typology": "Disease"
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "3166"
+  }
+ }
+}

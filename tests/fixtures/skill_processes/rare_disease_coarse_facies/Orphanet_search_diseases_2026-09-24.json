@@ -1,0 +1,519 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. Every response is whole.",
+ "{\"limit\": 1, \"query\": \"mucopolysaccharidosis type 2\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 580,
+     "Preferred term": "Mucopolysaccharidosis type 2",
+     "Date": "2026-07-02 10:13:59"
+    }
+   ],
+   "count": 1,
+   "total_count": 1474,
+   "query": "mucopolysaccharidosis type 2",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "mucopolysaccharidosis type 2",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"DEGCAGS syndrome\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 363294,
+     "Preferred term": "Genetic syndromic Pierre Robin syndrome",
+     "Date": "2026-07-02 10:13:59"
+    }
+   ],
+   "count": 1,
+   "total_count": 3527,
+   "query": "DEGCAGS syndrome",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "DEGCAGS syndrome",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"Hermansky-Pudlak syndrome 2\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 79430,
+     "Preferred term": "Hermansky-Pudlak syndrome",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 3895,
+   "query": "Hermansky-Pudlak syndrome 2",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "Hermansky-Pudlak syndrome 2",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"galactosialidosis\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 351,
+     "Preferred term": "Galactosialidosis",
+     "Date": "2026-07-02 10:13:59"
+    }
+   ],
+   "count": 1,
+   "total_count": 1,
+   "query": "galactosialidosis",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "galactosialidosis",
+   "truncated": false
+  }
+ },
+ "{\"limit\": 1, \"query\": \"multiple congenital anomalies-hypotonia-seizures syndrome 2\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 300496,
+     "Preferred term": "Multiple congenital anomalies-hypotonia-seizures syndrome type 2",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 4449,
+   "query": "multiple congenital anomalies-hypotonia-seizures syndrome 2",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "multiple congenital anomalies-hypotonia-seizures syndrome 2",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"GM1 gangliosidosis type 1\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 79255,
+     "Preferred term": "GM1 gangliosidosis type 1",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 1660,
+   "query": "GM1 gangliosidosis type 1",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "GM1 gangliosidosis type 1",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"mucopolysaccharidosis-plus syndrome\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 709,
+     "Preferred term": "Peters plus syndrome",
+     "Date": "2026-07-02 10:13:59"
+    }
+   ],
+   "count": 1,
+   "total_count": 3545,
+   "query": "mucopolysaccharidosis-plus syndrome",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "mucopolysaccharidosis-plus syndrome",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"congenital sialidosis type 2\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 93400,
+     "Preferred term": "Congenital sialidosis type 2",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 2028,
+   "query": "congenital sialidosis type 2",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "congenital sialidosis type 2",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"mucolipidosis type II\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 576,
+     "Preferred term": "Mucolipidosis type II",
+     "Date": "2026-07-02 10:13:59"
+    }
+   ],
+   "count": 1,
+   "total_count": 1110,
+   "query": "mucolipidosis type II",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "mucolipidosis type II",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"alpha-mannosidosis, infantile form\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 309282,
+     "Preferred term": "Alpha-mannosidosis, infantile form",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 611,
+   "query": "alpha-mannosidosis, infantile form",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "alpha-mannosidosis, infantile form",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"leukodystrophy, hypomyelinating, 12\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 137639,
+     "Preferred term": "Hypomyelinating leukodystrophy-ataxia-hypodontia-hypomyelination syndrome",
+     "Date": "2026-07-02 10:13:59"
+    }
+   ],
+   "count": 1,
+   "total_count": 78,
+   "query": "leukodystrophy, hypomyelinating, 12",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "leukodystrophy, hypomyelinating, 12",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"intellectual developmental disorder, X-linked, syndromic, with pigmentary mosaicism and coarse facies\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 85453,
+     "Preferred term": "X-linked reticulate pigmentary disorder",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 3396,
+   "query": "intellectual developmental disorder, X-linked, syndromic, with pigmentary mosaicism and coarse facies",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "intellectual developmental disorder, X-linked, syndromic, with pigmentary mosaicism and coarse facies",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"Sotos syndrome\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 821,
+     "Preferred term": "Sotos syndrome",
+     "Date": "2026-07-02 10:13:59"
+    }
+   ],
+   "count": 1,
+   "total_count": 3527,
+   "query": "Sotos syndrome",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "Sotos syndrome",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"Sandhoff disease\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 796,
+     "Preferred term": "Sandhoff disease",
+     "Date": "2026-07-02 10:13:59"
+    }
+   ],
+   "count": 1,
+   "total_count": 891,
+   "query": "Sandhoff disease",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "Sandhoff disease",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"Hurler syndrome\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 93473,
+     "Preferred term": "Hurler syndrome",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 3528,
+   "query": "Hurler syndrome",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "Hurler syndrome",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"Sandhoff disease, infantile form\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 309155,
+     "Preferred term": "Sandhoff disease, infantile form",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 1397,
+   "query": "Sandhoff disease, infantile form",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "Sandhoff disease, infantile form",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"autosomal recessive spinocerebellar ataxia 20\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 101110,
+     "Preferred term": "Spinocerebellar ataxia type 20",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 617,
+   "query": "autosomal recessive spinocerebellar ataxia 20",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "autosomal recessive spinocerebellar ataxia 20",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"juvenile sialidosis type 2\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 93399,
+     "Preferred term": "Juvenile sialidosis type 2",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 1541,
+   "query": "juvenile sialidosis type 2",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "juvenile sialidosis type 2",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"GM1 gangliosidosis\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 309144,
+     "Preferred term": "Gangliosidosis",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 1,
+   "total_count": 8,
+   "query": "GM1 gangliosidosis",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "GM1 gangliosidosis",
+   "truncated": true
+  }
+ },
+ "{\"limit\": 1, \"query\": \"sialuria\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 3166,
+     "Preferred term": "Sialuria",
+     "Date": "2026-07-02 10:13:59"
+    }
+   ],
+   "count": 1,
+   "total_count": 1,
+   "query": "sialuria",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "sialuria",
+   "truncated": false
+  }
+ },
+ "{\"limit\": 20, \"query\": \"mucopolysaccharidosis\"}": {
+  "status": "success",
+  "data": {
+   "results": [
+    {
+     "ORPHAcode": 79213,
+     "Preferred term": "Mucopolysaccharidosis",
+     "Date": "2026-07-02 10:14:00"
+    },
+    {
+     "ORPHAcode": 583,
+     "Preferred term": "Mucopolysaccharidosis type 6",
+     "Date": "2026-07-02 10:13:59"
+    },
+    {
+     "ORPHAcode": 584,
+     "Preferred term": "Mucopolysaccharidosis type 7",
+     "Date": "2026-07-02 10:13:59"
+    },
+    {
+     "ORPHAcode": 580,
+     "Preferred term": "Mucopolysaccharidosis type 2",
+     "Date": "2026-07-02 10:13:59"
+    },
+    {
+     "ORPHAcode": 579,
+     "Preferred term": "Mucopolysaccharidosis type 1",
+     "Date": "2026-07-02 10:13:59"
+    },
+    {
+     "ORPHAcode": 581,
+     "Preferred term": "Mucopolysaccharidosis type 3",
+     "Date": "2026-07-02 10:13:59"
+    },
+    {
+     "ORPHAcode": 582,
+     "Preferred term": "Mucopolysaccharidosis type 4",
+     "Date": "2026-07-02 10:13:59"
+    },
+    {
+     "ORPHAcode": 309297,
+     "Preferred term": "Mucopolysaccharidosis type 4A",
+     "Date": "2026-07-02 10:14:00"
+    },
+    {
+     "ORPHAcode": 309310,
+     "Preferred term": "Mucopolysaccharidosis type 4B",
+     "Date": "2026-07-02 10:14:00"
+    },
+    {
+     "ORPHAcode": 662216,
+     "Preferred term": "Mucopolysaccharidosis type 10",
+     "Date": "2026-07-02 10:14:00"
+    },
+    {
+     "ORPHAcode": 79388,
+     "Preferred term": "Mucopolysaccharidosis with skin involvement",
+     "Date": "2026-07-02 10:14:00"
+    },
+    {
+     "ORPHAcode": 276223,
+     "Preferred term": "Mucopolysaccharidosis type 6, slowly progressing",
+     "Date": "2026-07-02 10:13:59"
+    },
+    {
+     "ORPHAcode": 276212,
+     "Preferred term": "Mucopolysaccharidosis type 6, rapidly progressing",
+     "Date": "2026-07-02 10:13:59"
+    },
+    {
+     "ORPHAcode": 217093,
+     "Preferred term": "Mucopolysaccharidosis type 2, attenuated form",
+     "Date": "2026-07-02 10:13:59"
+    },
+    {
+     "ORPHAcode": 217085,
+     "Preferred term": "Mucopolysaccharidosis type 2, severe form",
+     "Date": "2026-07-02 10:13:59"
+    },
+    {
+     "ORPHAcode": 505248,
+     "Preferred term": "Mucopolysaccharidosis-like syndrome with congenital heart defects and hematopoietic disorders",
+     "Date": "2026-07-02 10:14:00"
+    }
+   ],
+   "count": 16,
+   "total_count": 16,
+   "query": "mucopolysaccharidosis",
+   "language": "EN"
+  },
+  "metadata": {
+   "source": "Orphanet RDcode API",
+   "query": "mucopolysaccharidosis",
+   "truncated": false
+  }
+ }
+}

@@ -1,0 +1,69 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. Every response is whole.",
+ "{\"HPO_ID_list\": [\"HP:0000280\", \"HP:0001433\", \"HP:0001263\"], \"limit\": 20}": {
+  "status": "success",
+  "data": {
+   "diseases": [
+    "DEGCAGS syndrome",
+    "Hermansky-Pudlak syndrome 2",
+    "multiple congenital anomalies-hypotonia-seizures syndrome 2",
+    "autosomal recessive spinocerebellar ataxia 20"
+   ],
+   "total": 4,
+   "phenotypes": [
+    "HP:0000280",
+    "HP:0001433",
+    "HP:0001263"
+   ],
+   "per_phenotype_counts": {
+    "HP:0000280": 338,
+    "HP:0001433": 196,
+    "HP:0001263": 500
+   },
+   "truncated_phenotypes": [
+    {
+     "phenotype": "HP:0001263",
+     "read": 500,
+     "source_total": 3076
+    }
+   ],
+   "truncation_warning": "Monarch cut at least one phenotype's disease list, so the intersection is a lower bound: a disease past the cut left it without being counted. The phenotypes and their totals are under `truncated_phenotypes`."
+  }
+ },
+ "{\"HPO_ID_list\": [\"HP:0001433\", \"HP:0000280\"], \"limit\": 30}": {
+  "status": "success",
+  "data": {
+   "diseases": [
+    "mucopolysaccharidosis type 2",
+    "DEGCAGS syndrome",
+    "Hermansky-Pudlak syndrome 2",
+    "galactosialidosis",
+    "multiple congenital anomalies-hypotonia-seizures syndrome 2",
+    "GM1 gangliosidosis type 1",
+    "mucopolysaccharidosis-plus syndrome",
+    "congenital sialidosis type 2",
+    "mucolipidosis type II",
+    "alpha-mannosidosis, infantile form",
+    "leukodystrophy, hypomyelinating, 12",
+    "intellectual developmental disorder, X-linked, syndromic, with pigmentary mosaicism and coarse facies",
+    "Sotos syndrome",
+    "Sandhoff disease",
+    "Hurler syndrome",
+    "Sandhoff disease, infantile form",
+    "autosomal recessive spinocerebellar ataxia 20",
+    "juvenile sialidosis type 2",
+    "GM1 gangliosidosis",
+    "sialuria"
+   ],
+   "total": 20,
+   "phenotypes": [
+    "HP:0001433",
+    "HP:0000280"
+   ],
+   "per_phenotype_counts": {
+    "HP:0001433": 196,
+    "HP:0000280": 338
+   }
+  }
+ }
+}

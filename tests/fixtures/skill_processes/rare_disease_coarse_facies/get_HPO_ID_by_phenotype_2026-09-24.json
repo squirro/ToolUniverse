@@ -1,0 +1,529 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. Every response is whole.",
+ "{\"limit\": 5, \"query\": \"coarse facies\"}": {
+  "status": "success",
+  "data": {
+   "limit": 20,
+   "offset": 0,
+   "total": 2,
+   "items": [
+    {
+     "id": "HP:0000280",
+     "category": "biolink:PhenotypicFeature",
+     "name": "Coarse facial features",
+     "description": "Absence of fine and sharp appearance of brows, nose, lips, mouth, and chin, usually because of rounded and heavy features or thickened skin with or without thickening of subcutaneous and bony tissues.",
+     "xref": [
+      "UMLS:C1845847",
+      "UMLS:C4072825"
+     ],
+     "synonym": [
+      "Coarse face",
+      "Coarse facial appearance",
+      "Coarse facial features",
+      "Coarse facies",
+      "Rounded and heavy facial features",
+      "Thickened facial skin with coarse facial features"
+     ],
+     "exact_synonym": [
+      "Coarse face",
+      "Coarse facial appearance",
+      "Coarse facial features",
+      "Coarse facies"
+     ],
+     "narrow_synonym": [
+      "Rounded and heavy facial features",
+      "Thickened facial skin with coarse facial features"
+     ],
+     "subsets": [
+      "hposlim_core"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "HP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:0000280",
+      "HP:0000339"
+     ],
+     "has_descendant_label": [
+      "Coarse facial features",
+      "Pugilistic facies"
+     ],
+     "has_descendant_count": 2,
+     "highlighting": {
+      "name": [
+       "<em>Coarse</em> facial features"
+      ],
+      "synonym": [
+       "<em>Coarse</em> <em>facies</em>"
+      ]
+     }
+    },
+    {
+     "id": "HP:0000339",
+     "category": "biolink:PhenotypicFeature",
+     "name": "Pugilistic facies",
+     "description": "Coarse facial features reminiscent of those of a boxer.",
+     "xref": [
+      "UMLS:C1846011"
+     ],
+     "synonym": [
+      "Boxer-like facial appearance",
+      "Pugilistic facial appearance"
+     ],
+     "exact_synonym": [
+      "Boxer-like facial appearance",
+      "Pugilistic facial appearance"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "HP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:0000339"
+     ],
+     "has_descendant_label": [
+      "Pugilistic facies"
+     ],
+     "has_descendant_count": 1,
+     "highlighting": {
+      "name": [
+       "Pugilistic <em>facies</em>"
+      ],
+      "description": [
+       "<em>Coarse</em> facial features reminiscent of those of a boxer."
+      ]
+     }
+    }
+   ]
+  }
+ },
+ "{\"limit\": 5, \"query\": \"hepatosplenomegaly\"}": {
+  "status": "success",
+  "data": {
+   "limit": 20,
+   "offset": 0,
+   "total": 5,
+   "items": [
+    {
+     "id": "UPHENO:7000263",
+     "category": "biolink:PhenotypicFeature",
+     "name": "hepatosplenomegaly",
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "UPHENO",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:0001433",
+      "MP:0031058",
+      "UPHENO:7000263"
+     ],
+     "has_descendant_label": [
+      "hepatosplenomegaly",
+      "Hepatosplenomegaly",
+      "hepatosplenomegaly"
+     ],
+     "has_descendant_count": 3,
+     "highlighting": {
+      "name": [
+       "<em>hepatosplenomegaly</em>"
+      ]
+     }
+    },
+    {
+     "id": "MP:0031058",
+     "category": "biolink:PhenotypicFeature",
+     "name": "hepatosplenomegaly",
+     "description": "simultaneous enlargement of the liver and spleen",
+     "synonym": [
+      "enlarged liver and spleen",
+      "enlarged liver and spleen size",
+      "increased liver and spleen size"
+     ],
+     "exact_synonym": [
+      "enlarged liver and spleen",
+      "enlarged liver and spleen size",
+      "increased liver and spleen size"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "MP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "MP:0031058"
+     ],
+     "has_descendant_label": [
+      "hepatosplenomegaly"
+     ],
+     "has_descendant_count": 1,
+     "highlighting": {
+      "name": [
+       "<em>hepatosplenomegaly</em>"
+      ]
+     }
+    },
+    {
+     "id": "HP:0001433",
+     "category": "biolink:PhenotypicFeature",
+     "name": "Hepatosplenomegaly",
+     "description": "Simultaneous enlargement of the liver and spleen.",
+     "xref": [
+      "SNOMEDCT_US:36760000",
+      "UMLS:C0019214"
+     ],
+     "synonym": [
+      "Enlarged liver and spleen"
+     ],
+     "exact_synonym": [
+      "Enlarged liver and spleen"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "HP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:0001433"
+     ],
+     "has_descendant_label": [
+      "Hepatosplenomegaly"
+     ],
+     "has_descendant_count": 1,
+     "highlighting": {
+      "name": [
+       "<em>Hepatosplenomegaly</em>"
+      ]
+     }
+    },
+    {
+     "id": "HP:5210171",
+     "category": "biolink:PhenotypicFeature",
+     "name": "Hepatic schistosomiasis",
+     "description": "Infection of the liver caused by Schistosoma species, occurring in the context of unusual susceptibility to infection, typically presenting with periportal fibrosis or hepatosplenomegaly.",
+     "synonym": [
+      "Hepatosplenic schistosomiasis",
+      "Schistosomal liver disease"
+     ],
+     "exact_synonym": [
+      "Hepatosplenic schistosomiasis",
+      "Schistosomal liver disease"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "HP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:5210171"
+     ],
+     "has_descendant_label": [
+      "Hepatic schistosomiasis"
+     ],
+     "has_descendant_count": 1,
+     "highlighting": {
+      "description": [
+       " susceptibility to infection, typically presenting with periportal fibrosis or <em>hepatosplenomegaly</em>."
+      ]
+     }
+    },
+    {
+     "id": "HP:0033624",
+     "category": "biolink:PhenotypicFeature",
+     "name": "History of congenital CMV infection",
+     "description": "A congenital cytomegalovirus (CMV) infection of the newborn can follow either a primary or recurrent maternal infection. Jaundice, petechiae, and hepatosplenomegaly are the most frequently noted clinical triad in symptomatic infants. Affected infants may develop permanent disabilities such as hearing loss, vision loss, motor and cognitive deficits.",
+     "synonym": [
+      "History of congenital cytomegalovirus infection"
+     ],
+     "exact_synonym": [
+      "History of congenital cytomegalovirus infection"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "HP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:0033624"
+     ],
+     "has_descendant_label": [
+      "History of congenital CMV infection"
+     ],
+     "has_descendant_count": 1,
+     "highlighting": {
+      "description": [
+       " recurrent maternal infection. Jaundice, petechiae, and <em>hepatosplenomegaly</em> are the most frequently noted"
+      ]
+     }
+    }
+   ]
+  }
+ },
+ "{\"limit\": 5, \"query\": \"global developmental delay\"}": {
+  "status": "success",
+  "data": {
+   "limit": 20,
+   "offset": 0,
+   "total": 5,
+   "items": [
+    {
+     "id": "HP:0001263",
+     "category": "biolink:PhenotypicFeature",
+     "name": "Global developmental delay",
+     "description": "A delay in the achievement of motor or mental milestones in the domains of development of a child, including motor skills, speech and language, cognitive skills, and social and emotional skills. This term should only be used to describe children younger than five years of age.",
+     "xref": [
+      "SNOMEDCT_US:224958001",
+      "UMLS:C0557874",
+      "UMLS:C1864897",
+      "UMLS:C4020875"
+     ],
+     "synonym": [
+      "Cognitive delay",
+      "Delayed cognitive development",
+      "Delayed development",
+      "Delayed developmental milestones",
+      "Delayed intellectual development",
+      "Delayed milestones",
+      "Delayed psychomotor development",
+      "Developmental delay",
+      "Developmental delay in early childhood",
+      "Developmental delay, global",
+      "Developmental retardation",
+      "GDD",
+      "Lack of psychomotor development",
+      "Mental and motor retardation",
+      "Motor and developmental delay",
+      "Motormental retardation",
+      "Psychomotor delay",
+      "Psychomotor development deficiency",
+      "Psychomotor development failure",
+      "Psychomotor developmental delay",
+      "Retarded development",
+      "Retarded mental development",
+      "Retarded psychomotor development"
+     ],
+     "exact_synonym": [
+      "Delayed cognitive development",
+      "Delayed development",
+      "Delayed developmental milestones",
+      "Delayed intellectual development",
+      "Delayed milestones",
+      "Delayed psychomotor development",
+      "Developmental delay",
+      "Developmental delay in early childhood",
+      "Developmental delay, global",
+      "Developmental retardation",
+      "GDD",
+      "Lack of psychomotor development",
+      "Motor and developmental delay",
+      "Motormental retardation",
+      "Psychomotor delay",
+      "Psychomotor development deficiency",
+      "Psychomotor development failure",
+      "Psychomotor developmental delay",
+      "Retarded development",
+      "Retarded mental development",
+      "Retarded psychomotor development"
+     ],
+     "related_synonym": [
+      "Cognitive delay",
+      "Mental and motor retardation"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "HP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:0001263",
+      "HP:0012736",
+      "HP:0011342",
+      "HP:0011343",
+      "HP:0011344"
+     ],
+     "has_descendant_label": [
+      "Profound global developmental delay",
+      "Global developmental delay",
+      "Mild global developmental delay",
+      "Moderate global developmental delay",
+      "Severe global developmental delay"
+     ],
+     "has_descendant_count": 5,
+     "highlighting": {
+      "name": [
+       "<em>Global</em> <em>developmental</em> <em>delay</em>"
+      ],
+      "description": [
+       "A <em>delay</em> in the achievement of motor or mental milestones in the domains of development of a child"
+      ],
+      "synonym": [
+       "<em>Developmental</em> <em>delay</em>, <em>global</em>"
+      ]
+     }
+    },
+    {
+     "id": "HP:0011342",
+     "category": "biolink:PhenotypicFeature",
+     "name": "Mild global developmental delay",
+     "description": "A mild delay in the achievement of motor or mental milestones in the domains of development of a child.",
+     "xref": [
+      "UMLS:C2229182",
+      "UMLS:C4012968"
+     ],
+     "synonym": [
+      "Global developmental delay, mild",
+      "Psychomotor retardation, mild"
+     ],
+     "exact_synonym": [
+      "Global developmental delay, mild"
+     ],
+     "related_synonym": [
+      "Psychomotor retardation, mild"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "HP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:0011342"
+     ],
+     "has_descendant_label": [
+      "Mild global developmental delay"
+     ],
+     "has_descendant_count": 1,
+     "highlighting": {
+      "name": [
+       "Mild <em>global</em> <em>developmental</em> <em>delay</em>"
+      ],
+      "description": [
+       "A mild <em>delay</em> in the achievement of motor or mental milestones in the domains of development of a"
+      ],
+      "synonym": [
+       "<em>Global</em> <em>developmental</em> <em>delay</em>, mild"
+      ]
+     }
+    },
+    {
+     "id": "HP:0011343",
+     "category": "biolink:PhenotypicFeature",
+     "name": "Moderate global developmental delay",
+     "description": "A moderate delay in the achievement of motor or mental milestones in the domains of development of a child.",
+     "xref": [
+      "UMLS:C2237142"
+     ],
+     "synonym": [
+      "Global developmental delay, moderate",
+      "Psychomotor retardation, moderate"
+     ],
+     "exact_synonym": [
+      "Global developmental delay, moderate"
+     ],
+     "related_synonym": [
+      "Psychomotor retardation, moderate"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "HP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:0011343"
+     ],
+     "has_descendant_label": [
+      "Moderate global developmental delay"
+     ],
+     "has_descendant_count": 1,
+     "highlighting": {
+      "name": [
+       "Moderate <em>global</em> <em>developmental</em> <em>delay</em>"
+      ],
+      "description": [
+       "A moderate <em>delay</em> in the achievement of motor or mental milestones in the domains of development of"
+      ],
+      "synonym": [
+       "<em>Global</em> <em>developmental</em> <em>delay</em>, moderate"
+      ]
+     }
+    },
+    {
+     "id": "HP:0011344",
+     "category": "biolink:PhenotypicFeature",
+     "name": "Severe global developmental delay",
+     "description": "A severe delay in the achievement of motor or mental milestones in the domains of development of a child.",
+     "xref": [
+      "UMLS:C1837397",
+      "UMLS:C1854919"
+     ],
+     "synonym": [
+      "Global developmental delay, severe",
+      "Severe psychomotor retardation"
+     ],
+     "exact_synonym": [
+      "Global developmental delay, severe"
+     ],
+     "related_synonym": [
+      "Severe psychomotor retardation"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "HP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:0011344"
+     ],
+     "has_descendant_label": [
+      "Severe global developmental delay"
+     ],
+     "has_descendant_count": 1,
+     "highlighting": {
+      "name": [
+       "Severe <em>global</em> <em>developmental</em> <em>delay</em>"
+      ],
+      "description": [
+       "A severe <em>delay</em> in the achievement of motor or mental milestones in the domains of development of a"
+      ],
+      "synonym": [
+       "<em>Global</em> <em>developmental</em> <em>delay</em>, severe"
+      ]
+     }
+    },
+    {
+     "id": "HP:0012736",
+     "category": "biolink:PhenotypicFeature",
+     "name": "Profound global developmental delay",
+     "description": "A profound delay in the achievement of motor or mental milestones in the domains of development of a child.",
+     "xref": [
+      "UMLS:C1855773",
+      "UMLS:C3553450"
+     ],
+     "synonym": [
+      "Global developmental delay, profound",
+      "Psychomotor retardation, profound"
+     ],
+     "exact_synonym": [
+      "Global developmental delay, profound"
+     ],
+     "related_synonym": [
+      "Psychomotor retardation, profound"
+     ],
+     "file_source": "phenio_nodes",
+     "provided_by": "phenio_nodes",
+     "namespace": "HP",
+     "has_phenotype_count": 0,
+     "has_descendant": [
+      "HP:0012736"
+     ],
+     "has_descendant_label": [
+      "Profound global developmental delay"
+     ],
+     "has_descendant_count": 1,
+     "highlighting": {
+      "name": [
+       "Profound <em>global</em> <em>developmental</em> <em>delay</em>"
+      ],
+      "description": [
+       "A profound <em>delay</em> in the achievement of motor or mental milestones in the domains of development of"
+      ],
+      "synonym": [
+       "<em>Global</em> <em>developmental</em> <em>delay</em>, profound"
+      ]
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,59 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner), called with `arguments`, the shape the process sends. `response.data.studies` is cut to its first 3 trials; total_count is the source's.",
+ "arguments": {
+  "query_term": "cisplatin",
+  "pageSize": 1000
+ },
+ "response": {
+  "status": "success",
+  "data": {
+   "studies": [
+    {
+     "NCT ID": "NCT00064077",
+     "brief_title": "Comparison of Four Combination Chemotherapy Regimens Using Cisplatin in Treating Patients With Stage IVB, Recurrent, or Persistent Cancer of the Cervix",
+     "brief_summary": "This randomized phase III trial is studying four combination chemotherapy regimens using cisplatin to compare how well they work in treating women with stage IVB, recurrent, or persistent cancer of the cervix. Drugs used in chemotherapy such as cisplatin, paclitaxel, vinorelbine, gemcitabine, and topotecan, use different ways to stop tumor cells from dividing so they stop growing or die. It is not yet known which combination chemotherapy regimen containing cisplatin is most effective in treating cervical cancer.",
+     "overall_status": "COMPLETED",
+     "condition": [
+      "Cervical Adenocarcinoma",
+      "Cervical Adenosquamous Carcinoma",
+      "Cervical Squamous Cell Carcinoma",
+      "Recurrent Cervical Carcinoma",
+      "Stage IVB Cervical Cancer"
+     ],
+     "phase": [
+      "PHASE3"
+     ]
+    },
+    {
+     "NCT ID": "NCT00388154",
+     "brief_title": "Gemcitabine and Cisplatin for Advanced or Recurrent Endometrial Cancer",
+     "brief_summary": "Primary Objective:\n\n* To estimate the antitumor activity of the combination of gemcitabine and cisplatin in patients with advanced (stage III or IV) or recurrent endometrial cancer.\n\nSecondary Objective:\n\n* To determine the nature and degree of toxicity of the combination of gemcitabine and cisplatin in this cohort of patients.",
+     "overall_status": "COMPLETED",
+     "condition": [
+      "Endometrial Cancer"
+     ],
+     "phase": [
+      "PHASE2"
+     ]
+    },
+    {
+     "NCT ID": "NCT04203160",
+     "brief_title": "Gemcitabine and Cisplatin With or Without CPI-613 as First Line Therapy for Patients With Advanced Unresectable Biliary Tract Cancer (BilT-04)",
+     "brief_summary": "The purpose of this research study is to determine the safety and efficacy of CPI-613 (devimistat) in the treatment of advanced biliary tract cancer when used in combination with standard of care chemotherapy (gemcitabine plus cisplatin) compared to gemcitabine plus cisplatin alone.\n\nThis research study has two parts:\n\nIn the phase 1 portion of this study, patients will receive a combination of CPI-613 and standard of care chemotherapy. Dose levels of CPI-613 will be adjusted to find the best dose, which will be the recommended phase 2 dose level.\n\nIn the phase 2 portion of this study, patients will be randomized into two arms. Patients in Arm A will receive the combination of the recommended dose level of CPI-613 and standard of care chemotherapy. Patients in Arm B will receive standard of care chemotherapy.\n\nAt the end of the study, researchers will compare the health outcomes of the patients that received CPI-613 + standard care to the outcomes of patients that received only standard care.",
+     "overall_status": "TERMINATED",
+     "condition": [
+      "Biliary Tract Cancer"
+     ],
+     "phase": [
+      "PHASE1",
+      "PHASE2"
+     ]
+    }
+   ],
+   "total_count": 867
+  },
+  "metadata": {
+   "source": "ClinicalTrials.gov API v2"
+  }
+ }
+}

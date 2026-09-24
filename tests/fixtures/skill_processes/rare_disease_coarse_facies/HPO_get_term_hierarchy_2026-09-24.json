@@ -1,0 +1,104 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. Every response is whole.",
+ "{\"direction\": \"parents\", \"term_id\": \"HP:0000280\"}": {
+  "status": "success",
+  "data": [
+   {
+    "id": "HP:0001999",
+    "name": "Abnormal facial shape"
+   }
+  ],
+  "metadata": {
+   "source": "HPO (JAX Ontology)",
+   "term_id": "HP:0000280",
+   "direction": "parents",
+   "total_results": 1
+  }
+ },
+ "{\"direction\": \"children\", \"term_id\": \"HP:0000280\"}": {
+  "status": "success",
+  "data": [
+   {
+    "id": "HP:0000339",
+    "name": "Pugilistic facies"
+   }
+  ],
+  "metadata": {
+   "source": "HPO (JAX Ontology)",
+   "term_id": "HP:0000280",
+   "direction": "children",
+   "total_results": 1
+  }
+ },
+ "{\"direction\": \"parents\", \"term_id\": \"HP:0001433\"}": {
+  "status": "success",
+  "data": [
+   {
+    "id": "HP:0002240",
+    "name": "Hepatomegaly"
+   },
+   {
+    "id": "HP:0001744",
+    "name": "Splenomegaly"
+   }
+  ],
+  "metadata": {
+   "source": "HPO (JAX Ontology)",
+   "term_id": "HP:0001433",
+   "direction": "parents",
+   "total_results": 2
+  }
+ },
+ "{\"direction\": \"children\", \"term_id\": \"HP:0001433\"}": {
+  "status": "success",
+  "data": [],
+  "metadata": {
+   "source": "HPO (JAX Ontology)",
+   "term_id": "HP:0001433",
+   "direction": "children",
+   "total_results": 0
+  }
+ },
+ "{\"direction\": \"parents\", \"term_id\": \"HP:0001263\"}": {
+  "status": "success",
+  "data": [
+   {
+    "id": "HP:0012758",
+    "name": "Neurodevelopmental delay"
+   }
+  ],
+  "metadata": {
+   "source": "HPO (JAX Ontology)",
+   "term_id": "HP:0001263",
+   "direction": "parents",
+   "total_results": 1
+  }
+ },
+ "{\"direction\": \"children\", \"term_id\": \"HP:0001263\"}": {
+  "status": "success",
+  "data": [
+   {
+    "id": "HP:0011342",
+    "name": "Mild global developmental delay"
+   },
+   {
+    "id": "HP:0011343",
+    "name": "Moderate global developmental delay"
+   },
+   {
+    "id": "HP:0012736",
+    "name": "Profound global developmental delay"
+   },
+   {
+    "id": "HP:0011344",
+    "name": "Severe global developmental delay"
+   }
+  ],
+  "metadata": {
+   "source": "HPO (JAX Ontology)",
+   "term_id": "HP:0001263",
+   "direction": "children",
+   "total_results": 4
+  }
+ }
+}

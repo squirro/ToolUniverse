@@ -82,9 +82,15 @@ MAPPED = {
 }
 
 
+RECORDED_COUNTS = (Path(__file__).resolve().parents[1] / "fixtures" / "openfda"
+                   / "faers_count_reactions_2026-09-24.json")
+
+
 class FaersStub(StubToolUniverse):
+    """Answers the recorded cisplatin counts, as the tool's own JSON text."""
+
     def run_one_function(self, function_call):
-        return json.dumps({"result": [{"term": "DEAFNESS"}, {"term": "NAUSEA"}]})
+        return json.dumps(json.loads(RECORDED_COUNTS.read_text())["cisplatin"])
 
 
 @pytest.mark.asyncio
@@ -102,8 +108,8 @@ async def test_the_worker_places_a_judged_mapping_with_the_ontology_lookup(tmp_p
             state = await handle.query(SkillWorkflow.status)
             if state["waiting_for"]:
                 await handle.signal(SkillWorkflow.answer, {"requested_meddra": [
-                    {"of": "ototoxicity", "term": "DEAFNESS", "reason": "the ototoxic injury",
-                     "concept": ["ear", "hearing"]}]})
+                    {"of": "nephrotoxicity", "term": "ACUTE KIDNEY INJURY", "reason": "the renal injury itself",
+                     "concept": ["kidney", "renal"]}]})
                 return
             await asyncio.sleep(0.05)
         raise AssertionError("the run never asked")
@@ -114,13 +120,13 @@ async def test_the_worker_places_a_judged_mapping_with_the_ontology_lookup(tmp_p
             handle = await env.client.start_workflow(
                 SkillWorkflow.run,
                 SkillRunInput(skill="mapped", process=MAPPED,
-                              inputs={"drug_name": "x", "requested_aes": ["ototoxicity"]}),
+                              inputs={"drug_name": "cisplatin", "requested_aes": ["nephrotoxicity"]}),
                 id="run-placed", task_queue="skills-test")
             await answer_when_asked(handle)
             handed = await handle.result()
 
     (row,) = handed["facts"]["requested_meddra"]
-    assert (row["term"], row["placing"], row["ontology"]) == ("DEAFNESS", "placed", "hp")
+    assert (row["term"], row["placing"], row["ontology"]) == ("ACUTE KIDNEY INJURY", "placed", "hp")
     assert handed["mappings"] == ["requested_meddra"]
 
 

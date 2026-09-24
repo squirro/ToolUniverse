@@ -1,0 +1,5192 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. Every response is whole.",
+ "{\"limit\": 500, \"term_id\": \"HP:0000280\"}": {
+  "status": "success",
+  "data": {
+   "diseases": [
+    {
+     "id": "OMIM:277950",
+     "name": "Winchester syndrome",
+     "mondo_id": "MONDO:0010201"
+    },
+    {
+     "id": "OMIM:619345",
+     "name": "Dysostosis multiplex, Ain-Naz type",
+     "mondo_id": "MONDO:0859156"
+    },
+    {
+     "id": "OMIM:115150",
+     "name": "Cardiofaciocutaneous syndrome 1",
+     "mondo_id": "MONDO:0007265"
+    },
+    {
+     "id": "ORPHA:2026",
+     "name": "Gingival fibromatosis-hypertrichosis syndrome",
+     "mondo_id": "MONDO:0007610"
+    },
+    {
+     "id": "ORPHA:3309",
+     "name": "Tetrasomy 5p syndrome",
+     "mondo_id": "MONDO:0018028"
+    },
+    {
+     "id": "ORPHA:1777",
+     "name": "Temtamy syndrome",
+     "mondo_id": "MONDO:0009033"
+    },
+    {
+     "id": "ORPHA:495875",
+     "name": "Cerebello-oculo-facio-genital syndrome",
+     "mondo_id": "MONDO:0044643"
+    },
+    {
+     "id": "OMIM:615979",
+     "name": "Intellectual developmental disorder, autosomal recessive 45",
+     "mondo_id": "MONDO:0014430"
+    },
+    {
+     "id": "ORPHA:2898",
+     "name": "X-linked intellectual disability-plagiocephaly syndrome",
+     "mondo_id": "MONDO:0010237"
+    },
+    {
+     "id": "ORPHA:93476",
+     "name": "Hurler-Scheie syndrome",
+     "mondo_id": "MONDO:0011759"
+    },
+    {
+     "id": "ORPHA:95713",
+     "name": "Athyreosis",
+     "mondo_id": "MONDO:0019855"
+    },
+    {
+     "id": "OMIM:617711",
+     "name": "Developmental and epileptic encephalopathy 91",
+     "mondo_id": "MONDO:0020630"
+    },
+    {
+     "id": "OMIM:252930",
+     "name": "Mucopolysaccharidosis type IIIC",
+     "mondo_id": "MONDO:0009657"
+    },
+    {
+     "id": "OMIM:259100",
+     "name": "Hypertrophic osteoarthropathy, primary, autosomal recessive 1",
+     "mondo_id": "MONDO:0024546"
+    },
+    {
+     "id": "ORPHA:79500",
+     "name": "DOORS syndrome",
+     "mondo_id": "MONDO:0009079"
+    },
+    {
+     "id": "ORPHA:289522",
+     "name": "Microtriplication 11q24.1 syndrome",
+     "mondo_id": "MONDO:0017335"
+    },
+    {
+     "id": "OMIM:616455",
+     "name": "Zimmermann-Laband syndrome 2",
+     "mondo_id": "MONDO:0014646"
+    },
+    {
+     "id": "OMIM:249420",
+     "name": "Frank-ter Haar syndrome",
+     "mondo_id": "MONDO:0009579"
+    },
+    {
+     "id": "ORPHA:363700",
+     "name": "Neurofibromatosis type 1 due to NF1 mutation or intragenic deletion",
+     "mondo_id": "MONDO:0018208"
+    },
+    {
+     "id": "OMIM:620244",
+     "name": "Lymphatic malformation 13",
+     "mondo_id": "MONDO:0859379"
+    },
+    {
+     "id": "ORPHA:94068",
+     "name": "Spondyloepiphyseal dysplasia congenita",
+     "mondo_id": "MONDO:0008471"
+    },
+    {
+     "id": "OMIM:618143",
+     "name": "Glycosylphosphatidylinositol biosynthesis defect 18",
+     "mondo_id": "MONDO:0029140"
+    },
+    {
+     "id": "ORPHA:377",
+     "name": "Gorlin syndrome",
+     "mondo_id": "MONDO:0007187"
+    },
+    {
+     "id": "OMIM:300868",
+     "name": "Multiple congenital anomalies-hypotonia-seizures syndrome 2",
+     "mondo_id": "MONDO:0010466"
+    },
+    {
+     "id": "OMIM:304340",
+     "name": "Pettigrew syndrome",
+     "mondo_id": "MONDO:0010574"
+    },
+    {
+     "id": "ORPHA:324",
+     "name": "Fabry disease",
+     "mondo_id": "MONDO:0010526"
+    },
+    {
+     "id": "OMIM:609942",
+     "name": "Noonan syndrome 3",
+     "mondo_id": "MONDO:0012371"
+    },
+    {
+     "id": "OMIM:229850",
+     "name": "Fryns syndrome",
+     "mondo_id": "MONDO:0009253"
+    },
+    {
+     "id": "ORPHA:816",
+     "name": "Sjögren-Larsson syndrome",
+     "mondo_id": "MONDO:0010031"
+    },
+    {
+     "id": "OMIM:616682",
+     "name": "Seizures, scoliosis, and macrocephaly/microcephaly syndrome",
+     "mondo_id": "MONDO:0014731"
+    },
+    {
+     "id": "OMIM:230650",
+     "name": "GM1-gangliosidosis, type III",
+     "mondo_id": "MONDO:0009262"
+    },
+    {
+     "id": "ORPHA:276432",
+     "name": "Ogden syndrome",
+     "mondo_id": "MONDO:0010457"
+    },
+    {
+     "id": "ORPHA:1596",
+     "name": "Distal deletion 15q syndrome",
+     "mondo_id": "MONDO:0012964"
+    },
+    {
+     "id": "OMIM:151210",
+     "name": "Platyspondylic lethal skeletal dysplasia, Torrance type",
+     "mondo_id": "MONDO:0007895"
+    },
+    {
+     "id": "ORPHA:397709",
+     "name": "Intellectual disability-coarse face-macrocephaly-cerebellar hypotrophy syndrome",
+     "mondo_id": "MONDO:0014601"
+    },
+    {
+     "id": "OMIM:268650",
+     "name": "Rudiger syndrome",
+     "mondo_id": "MONDO:0010004"
+    },
+    {
+     "id": "ORPHA:1292",
+     "name": "Brachymorphism-onychodysplasia-dysphalangism syndrome",
+     "mondo_id": "MONDO:0007230"
+    },
+    {
+     "id": "ORPHA:3137",
+     "name": "Alpha-N-acetylgalactosaminidase deficiency",
+     "mondo_id": "MONDO:0017779"
+    },
+    {
+     "id": "OMIM:615162",
+     "name": "Intellectual developmental disorder, autosomal recessive 35",
+     "mondo_id": "MONDO:0014067"
+    },
+    {
+     "id": "ORPHA:280763",
+     "name": "Severe intellectual disability and progressive spastic paraplegia",
+     "mondo_id": "MONDO:0100176"
+    },
+    {
+     "id": "OMIM:230500",
+     "name": "GM1-gangliosidosis, type I",
+     "mondo_id": "MONDO:0009260"
+    },
+    {
+     "id": "OMIM:610185",
+     "name": "Cerebellar ataxia, impaired intellectual development, and dysquilibrium syndrome 2",
+     "mondo_id": "MONDO:0012430"
+    },
+    {
+     "id": "OMIM:300982",
+     "name": "Intellectual developmental disorder, X-linked 103",
+     "mondo_id": "MONDO:0010508"
+    },
+    {
+     "id": "OMIM:614080",
+     "name": "Multiple congenital anomalies-hypotonia-seizures syndrome 1",
+     "mondo_id": "MONDO:0013563"
+    },
+    {
+     "id": "ORPHA:423461",
+     "name": "Mucolipidosis type III alpha/beta",
+     "mondo_id": "MONDO:0018931"
+    },
+    {
+     "id": "OMIM:620771",
+     "name": "Jeffries-Lakhani neurodevelopmental syndrome",
+     "mondo_id": "MONDO:0958329"
+    },
+    {
+     "id": "OMIM:135500",
+     "name": "Zimmermann-Laband syndrome 1",
+     "mondo_id": "MONDO:0024526"
+    },
+    {
+     "id": "OMIM:256540",
+     "name": "Galactosialidosis",
+     "mondo_id": "MONDO:0009737"
+    },
+    {
+     "id": "ORPHA:90023",
+     "name": "Primary immunodeficiency syndrome due to P14/LAMTOR2 deficiency",
+     "mondo_id": "MONDO:0012559"
+    },
+    {
+     "id": "OMIM:252600",
+     "name": "Mucolipidosis III alpha/beta",
+     "mondo_id": "MONDO:0018931"
+    },
+    {
+     "id": "ORPHA:439822",
+     "name": "PDE4D haploinsufficiency syndrome",
+     "mondo_id": "MONDO:0014298"
+    },
+    {
+     "id": "ORPHA:3166",
+     "name": "Sialuria",
+     "mondo_id": "MONDO:0010028"
+    },
+    {
+     "id": "OMIM:621079",
+     "name": "Heterotaxy, visceral, 13, autosomal",
+     "mondo_id": "MONDO:0976134"
+    },
+    {
+     "id": "ORPHA:1513",
+     "name": "Craniodiaphyseal dysplasia",
+     "mondo_id": "MONDO:0009031"
+    },
+    {
+     "id": "ORPHA:578",
+     "name": "Mucolipidosis type IV",
+     "mondo_id": "MONDO:0009653"
+    },
+    {
+     "id": "ORPHA:93400",
+     "name": "Congenital sialidosis type 2",
+     "mondo_id": "MONDO:0019682"
+    },
+    {
+     "id": "ORPHA:99725",
+     "name": "Pituitary gigantism",
+     "mondo_id": "MONDO:0020479"
+    },
+    {
+     "id": "ORPHA:904",
+     "name": "Williams syndrome",
+     "mondo_id": "MONDO:0008678"
+    },
+    {
+     "id": "ORPHA:137834",
+     "name": "Frank-Ter Haar syndrome",
+     "mondo_id": "MONDO:0009579"
+    },
+    {
+     "id": "OMIM:619488",
+     "name": "DEGCAGS syndrome",
+     "mondo_id": "MONDO:0859181"
+    },
+    {
+     "id": "OMIM:619451",
+     "name": "Cutis laxa, autosomal recessive, type IIE",
+     "mondo_id": "MONDO:0030337"
+    },
+    {
+     "id": "ORPHA:314769",
+     "name": "Somatomammotropinoma",
+     "mondo_id": "MONDO:0017823"
+    },
+    {
+     "id": "ORPHA:93346",
+     "name": "Spondyloepimetaphyseal dysplasia congenita, Strudwick type",
+     "mondo_id": "MONDO:0008476"
+    },
+    {
+     "id": "OMIM:617865",
+     "name": "Neurodevelopmental disorder with movement abnormalities, abnormal gait, and autistic features",
+     "mondo_id": "MONDO:0060642"
+    },
+    {
+     "id": "OMIM:610442",
+     "name": "Spondyloepimetaphyseal dysplasia, Camera-Genevieve type",
+     "mondo_id": "MONDO:0012495"
+    },
+    {
+     "id": "OMIM:305620",
+     "name": "Frontometaphyseal dysplasia",
+     "mondo_id": "MONDO:0024550"
+    },
+    {
+     "id": "ORPHA:261494",
+     "name": "Kleefstra syndrome",
+     "mondo_id": "MONDO:0012455"
+    },
+    {
+     "id": "OMIM:246200",
+     "name": "Donohue syndrome",
+     "mondo_id": "MONDO:0009517"
+    },
+    {
+     "id": "OMIM:615777",
+     "name": "Desbuquois dysplasia 2",
+     "mondo_id": "MONDO:0014343"
+    },
+    {
+     "id": "OMIM:619260",
+     "name": "Spondyloepiphyseal dysplasia, sensorineural hearing loss, intellectual developmental disorder, and Leber congenital amaurosis",
+     "mondo_id": "MONDO:0031007"
+    },
+    {
+     "id": "ORPHA:250999",
+     "name": "1q41q42 microdeletion syndrome",
+     "mondo_id": "MONDO:0012927"
+    },
+    {
+     "id": "OMIM:617808",
+     "name": "Coffin-Siris syndrome 6",
+     "mondo_id": "MONDO:0033492"
+    },
+    {
+     "id": "OMIM:301029",
+     "name": "Shukla-Vernon syndrome",
+     "mondo_id": "MONDO:0026727"
+    },
+    {
+     "id": "OMIM:614066",
+     "name": "Spastic paraplegia 47, autosomal recessive",
+     "mondo_id": "MONDO:0013551"
+    },
+    {
+     "id": "OMIM:616354",
+     "name": "Spinocerebellar ataxia, autosomal recessive 20",
+     "mondo_id": "MONDO:0014601"
+    },
+    {
+     "id": "OMIM:609242",
+     "name": "Kanzaki disease",
+     "mondo_id": "MONDO:0012222"
+    },
+    {
+     "id": "OMIM:618548",
+     "name": "Epileptic encephalopathy, early infantile, 77",
+     "mondo_id": "MONDO:0032808"
+    },
+    {
+     "id": "ORPHA:2463",
+     "name": "Marfanoid habitus-autosomal recessive intellectual disability syndrome",
+     "mondo_id": "MONDO:0009566"
+    },
+    {
+     "id": "ORPHA:309282",
+     "name": "Alpha-mannosidosis, infantile form",
+     "mondo_id": "MONDO:0017732"
+    },
+    {
+     "id": "OMIM:300337",
+     "name": "Hypomelanosis of Ito",
+     "mondo_id": "MONDO:0010302"
+    },
+    {
+     "id": "ORPHA:3319",
+     "name": "Congenital amegakaryocytic thrombocytopenia",
+     "mondo_id": "MONDO:0800452"
+    },
+    {
+     "id": "OMIM:617303",
+     "name": "Mucopolysaccharidosis-Plus syndrome",
+     "mondo_id": "MONDO:0015012"
+    },
+    {
+     "id": "OMIM:618493",
+     "name": "Hypotonia, hypoventilation, impaired intellectual development, dysautonomia, epilepsy, and eye abnormalities",
+     "mondo_id": "MONDO:0032780"
+    },
+    {
+     "id": "ORPHA:99330",
+     "name": "49,XYYYY syndrome",
+     "mondo_id": "MONDO:0020470"
+    },
+    {
+     "id": "ORPHA:2176",
+     "name": "Infantile systemic hyalinosis",
+     "mondo_id": "MONDO:0016331"
+    },
+    {
+     "id": "ORPHA:324410",
+     "name": "X-linked intellectual disability-cardiomegaly-congestive heart failure syndrome",
+     "mondo_id": "MONDO:0010473"
+    },
+    {
+     "id": "ORPHA:3219",
+     "name": "Fountain syndrome",
+     "mondo_id": "MONDO:0009241"
+    },
+    {
+     "id": "OMIM:617260",
+     "name": "Global developmental delay, absent or hypoplastic corpus callosum, and dysmorphic facies",
+     "mondo_id": "MONDO:0014994"
+    },
+    {
+     "id": "ORPHA:85286",
+     "name": "X-linked intellectual disability, Shashi type",
+     "mondo_id": "MONDO:0010277"
+    },
+    {
+     "id": "ORPHA:2182",
+     "name": "Hydrocephalus with stenosis of the aqueduct of Sylvius",
+     "mondo_id": "MONDO:0010611"
+    },
+    {
+     "id": "OMIM:610954",
+     "name": "Pitt-Hopkins syndrome",
+     "mondo_id": "MONDO:0012589"
+    },
+    {
+     "id": "OMIM:228600",
+     "name": "Hyaline fibromatosis syndrome",
+     "mondo_id": "MONDO:0009229"
+    },
+    {
+     "id": "OMIM:620703",
+     "name": "Yuksel-Vogel-Bauser syndrome",
+     "mondo_id": "MONDO:0958205"
+    },
+    {
+     "id": "OMIM:260600",
+     "name": "Leukodystrophy, hypomyelinating, 3",
+     "mondo_id": "MONDO:0009843"
+    },
+    {
+     "id": "ORPHA:884",
+     "name": "Pallister-Killian syndrome",
+     "mondo_id": "MONDO:0011146"
+    },
+    {
+     "id": "OMIM:617281",
+     "name": "Epileptic encephalopathy, early infantile, 49",
+     "mondo_id": "MONDO:0015002"
+    },
+    {
+     "id": "ORPHA:3134",
+     "name": "SCARF syndrome",
+     "mondo_id": "MONDO:0010728"
+    },
+    {
+     "id": "OMIM:618428",
+     "name": "Popov-Chang syndrome",
+     "mondo_id": "MONDO:0979865"
+    },
+    {
+     "id": "ORPHA:618891",
+     "name": "Chronic neurovisceral acid sphingomyelinase deficiency",
+     "mondo_id": "MONDO:0850058"
+    },
+    {
+     "id": "OMIM:610798",
+     "name": "Immunodeficiency due to defect in mapbp-interacting protein",
+     "mondo_id": "MONDO:0012559"
+    },
+    {
+     "id": "OMIM:280000",
+     "name": "CHIME syndrome",
+     "mondo_id": "MONDO:0010221"
+    },
+    {
+     "id": "ORPHA:508542",
+     "name": "Congenital progressive bone marrow failure-B-cell immunodeficiency-skeletal dysplasia syndrome",
+     "mondo_id": "MONDO:0033683"
+    },
+    {
+     "id": "OMIM:620987",
+     "name": "Neurodegeneration, infantile-onset, with optic atrophy and brain abnormalities",
+     "mondo_id": "MONDO:0975837"
+    },
+    {
+     "id": "ORPHA:2349",
+     "name": "Muscular pseudohypertrophy-hypothyroidism syndrome",
+     "mondo_id": "MONDO:0016521"
+    },
+    {
+     "id": "ORPHA:50810",
+     "name": "Microlissencephaly-micromelia syndrome",
+     "mondo_id": "MONDO:0018860"
+    },
+    {
+     "id": "OMIM:619950",
+     "name": "Tessadori-van Haaften neurodevelopmental syndrome 3",
+     "mondo_id": "MONDO:0030993"
+    },
+    {
+     "id": "OMIM:262190",
+     "name": "Pineal hyperplasia, insulin-resistant diabetes mellitus, and somatic abnormalities",
+     "mondo_id": "MONDO:0009874"
+    },
+    {
+     "id": "ORPHA:3071",
+     "name": "Costello syndrome",
+     "mondo_id": "MONDO:0009026"
+    },
+    {
+     "id": "ORPHA:557003",
+     "name": "Oculoskeletodental syndrome",
+     "mondo_id": "MONDO:0034145"
+    },
+    {
+     "id": "ORPHA:2059",
+     "name": "Fryns syndrome",
+     "mondo_id": "MONDO:0009253"
+    },
+    {
+     "id": "OMIM:300855",
+     "name": "Ogden syndrome",
+     "mondo_id": "MONDO:0010457"
+    },
+    {
+     "id": "OMIM:252900",
+     "name": "Mucopolysaccharidosis type IIIA",
+     "mondo_id": "MONDO:0009655"
+    },
+    {
+     "id": "OMIM:259600",
+     "name": "Multicentric osteolysis, nodulosis, and arthropathy",
+     "mondo_id": "MONDO:0009809"
+    },
+    {
+     "id": "OMIM:269150",
+     "name": "Schinzel-Giedion midface-retraction syndrome",
+     "mondo_id": "MONDO:0010010"
+    },
+    {
+     "id": "OMIM:615668",
+     "name": "Chromosome 5q12 deletion syndrome",
+     "mondo_id": "MONDO:0014298"
+    },
+    {
+     "id": "OMIM:161700",
+     "name": "Necrotizing encephalomyelopathy, subacute, of leigh, adult",
+     "mondo_id": "MONDO:0008069"
+    },
+    {
+     "id": "ORPHA:93399",
+     "name": "Juvenile sialidosis type 2",
+     "mondo_id": "MONDO:0019681"
+    },
+    {
+     "id": "ORPHA:798",
+     "name": "Schinzel-Giedion syndrome",
+     "mondo_id": "MONDO:0010010"
+    },
+    {
+     "id": "OMIM:620704",
+     "name": "Encephalopathy, porphyria-related",
+     "mondo_id": "MONDO:0958224"
+    },
+    {
+     "id": "ORPHA:309155",
+     "name": "Sandhoff disease, infantile form",
+     "mondo_id": "MONDO:0017721"
+    },
+    {
+     "id": "ORPHA:95719",
+     "name": "Thyroid hemiagenesis",
+     "mondo_id": "MONDO:0019860"
+    },
+    {
+     "id": "OMIM:303600",
+     "name": "Coffin-Lowry syndrome",
+     "mondo_id": "MONDO:0010561"
+    },
+    {
+     "id": "ORPHA:505248",
+     "name": "Mucopolysaccharidosis-like syndrome with congenital heart defects and hematopoietic disorders",
+     "mondo_id": "MONDO:0015012"
+    },
+    {
+     "id": "OMIM:266265",
+     "name": "Congenital disorder of glycosylation, type IIc",
+     "mondo_id": "MONDO:0009953"
+    },
+    {
+     "id": "ORPHA:466934",
+     "name": "VPS11-related autosomal recessive hypomyelinating leukodystrophy",
+     "mondo_id": "MONDO:0014732"
+    },
+    {
+     "id": "OMIM:614608",
+     "name": "Coffin-Siris syndrome 3",
+     "mondo_id": "MONDO:0013820"
+    },
+    {
+     "id": "OMIM:617051",
+     "name": "Neurodevelopmental disorder with microcephaly and gray sclerae",
+     "mondo_id": "MONDO:0014886"
+    },
+    {
+     "id": "ORPHA:453504",
+     "name": "Neurodevelopmental disorder-craniofacial dysmorphism-cardiac defect-skeletal anomalies syndrome due to a point mutation",
+     "mondo_id": "MONDO:0014700"
+    },
+    {
+     "id": "OMIM:616368",
+     "name": "CHOPS syndrome",
+     "mondo_id": "MONDO:0014609"
+    },
+    {
+     "id": "ORPHA:261323",
+     "name": "21q22.11q22.12 microdeletion syndrome",
+     "mondo_id": "MONDO:0016845"
+    },
+    {
+     "id": "ORPHA:93474",
+     "name": "Scheie syndrome",
+     "mondo_id": "MONDO:0011760"
+    },
+    {
+     "id": "OMIM:253010",
+     "name": "Mucopolysaccharidosis type IVB (Morquio)",
+     "mondo_id": "MONDO:0009660"
+    },
+    {
+     "id": "OMIM:614067",
+     "name": "Spastic paraplegia 52, autosomal recessive",
+     "mondo_id": "MONDO:0013552"
+    },
+    {
+     "id": "OMIM:616276",
+     "name": "Coenzyme Q10 deficiency, primary, 7",
+     "mondo_id": "MONDO:0014562"
+    },
+    {
+     "id": "OMIM:619556",
+     "name": "Intellectual developmental disorder with hypotonia, impaired speech, and dysmorphic facies",
+     "mondo_id": "MONDO:0859197"
+    },
+    {
+     "id": "OMIM:300895",
+     "name": "Ohdo syndrome, X-linked",
+     "mondo_id": "MONDO:0010477"
+    },
+    {
+     "id": "ORPHA:2508",
+     "name": "Corpus callosum agenesis-abnormal genitalia syndrome",
+     "mondo_id": "MONDO:0010224"
+    },
+    {
+     "id": "OMIM:617159",
+     "name": "Sifrim-Hitz-Weiss syndrome",
+     "mondo_id": "MONDO:0014946"
+    },
+    {
+     "id": "OMIM:619087",
+     "name": "Noonan syndrome 13",
+     "mondo_id": "MONDO:0033669"
+    },
+    {
+     "id": "ORPHA:1318",
+     "name": "Campomelia, Cumming type",
+     "mondo_id": "MONDO:0008896"
+    },
+    {
+     "id": "OMIM:269920",
+     "name": "Infantile sialic acid storage disease",
+     "mondo_id": "MONDO:0010027"
+    },
+    {
+     "id": "OMIM:613675",
+     "name": "Chromosome 17q11.2 deletion syndrome, 1.4-mb",
+     "mondo_id": "MONDO:0013357"
+    },
+    {
+     "id": "OMIM:619071",
+     "name": "Leukodystrophy, hypomyelinating, 20",
+     "mondo_id": "MONDO:0033657"
+    },
+    {
+     "id": "OMIM:301056",
+     "name": "Multiple congenital anomalies-neurodevelopmental syndrome, X-linked",
+     "mondo_id": "MONDO:0025351"
+    },
+    {
+     "id": "OMIM:615547",
+     "name": "Schaaf-Yang syndrome",
+     "mondo_id": "MONDO:0014243"
+    },
+    {
+     "id": "OMIM:252940",
+     "name": "Mucopolysaccharidosis, type IIID",
+     "mondo_id": "MONDO:0009658"
+    },
+    {
+     "id": "ORPHA:61",
+     "name": "Alpha-mannosidosis",
+     "mondo_id": "MONDO:0009561"
+    },
+    {
+     "id": "OMIM:109400",
+     "name": "Basal cell nevus syndrome",
+     "mondo_id": "MONDO:0958174"
+    },
+    {
+     "id": "OMIM:618505",
+     "name": "Stolerman neurodevelopmental syndrome",
+     "mondo_id": "MONDO:0032790"
+    },
+    {
+     "id": "OMIM:253000",
+     "name": "Mucopolysaccharidosis IVA",
+     "mondo_id": "MONDO:0009659"
+    },
+    {
+     "id": "ORPHA:369950",
+     "name": "Intellectual disability-seizures-macrocephaly-obesity syndrome",
+     "mondo_id": "MONDO:0018248"
+    },
+    {
+     "id": "ORPHA:217335",
+     "name": "RIN2 syndrome",
+     "mondo_id": "MONDO:0013115"
+    },
+    {
+     "id": "OMIM:621344",
+     "name": "Dursun-Ozgul neurodevelopmental syndrome",
+     "mondo_id": "MONDO:0979898"
+    },
+    {
+     "id": "OMIM:621570",
+     "name": "Cornelia de Lange syndrome 7",
+     "mondo_id": ""
+    },
+    {
+     "id": "OMIM:253220",
+     "name": "Mucopolysaccharidosis VII",
+     "mondo_id": "MONDO:0009662"
+    },
+    {
+     "id": "ORPHA:261337",
+     "name": "Distal 22q11.2 microduplication syndrome",
+     "mondo_id": "MONDO:0016846"
+    },
+    {
+     "id": "ORPHA:453499",
+     "name": "Neurodevelopmental disorder-craniofacial dysmorphism-cardiac defect-skeletal anomalies syndrome",
+     "mondo_id": "MONDO:0018681"
+    },
+    {
+     "id": "ORPHA:251014",
+     "name": "2q31.1 microdeletion syndrome",
+     "mondo_id": "MONDO:0016652"
+    },
+    {
+     "id": "OMIM:230000",
+     "name": "Fucosidosis",
+     "mondo_id": "MONDO:0009254"
+    },
+    {
+     "id": "OMIM:309580",
+     "name": "Intellectual disability-hypotonic facies syndrome, X-linked",
+     "mondo_id": "MONDO:0010663"
+    },
+    {
+     "id": "ORPHA:580",
+     "name": "Mucopolysaccharidosis type 2",
+     "mondo_id": "MONDO:0010674"
+    },
+    {
+     "id": "OMIM:612938",
+     "name": "Growth retardation, developmental delay, coarse facies, and earlydeath",
+     "mondo_id": "MONDO:0013050"
+    },
+    {
+     "id": "OMIM:621354",
+     "name": "Neurodevelopmental disorder with growth impairment, quadriparesis, and poor or absent speech",
+     "mondo_id": "MONDO:0980699"
+    },
+    {
+     "id": "OMIM:269921",
+     "name": "Sialuria",
+     "mondo_id": "MONDO:0010028"
+    },
+    {
+     "id": "OMIM:220500",
+     "name": "Doors syndrome",
+     "mondo_id": "MONDO:0009079"
+    },
+    {
+     "id": "OMIM:619698",
+     "name": "Mucopolysaccharidosis, type X",
+     "mondo_id": "MONDO:0030524"
+    },
+    {
+     "id": "OMIM:256550",
+     "name": "Neuraminidase deficiency",
+     "mondo_id": "MONDO:0009738"
+    },
+    {
+     "id": "ORPHA:192",
+     "name": "Coffin-Lowry syndrome",
+     "mondo_id": "MONDO:0010561"
+    },
+    {
+     "id": "OMIM:616154",
+     "name": "Peroxisomal fatty acyl-CoA reductase 1 disorder",
+     "mondo_id": "MONDO:0014510"
+    },
+    {
+     "id": "OMIM:616025",
+     "name": "Glycosylphosphatidylinositol biosynthesis defect 11",
+     "mondo_id": "MONDO:0014457"
+    },
+    {
+     "id": "ORPHA:363659",
+     "name": "20q11.2 microduplication syndrome",
+     "mondo_id": "MONDO:0018204"
+    },
+    {
+     "id": "ORPHA:93473",
+     "name": "Hurler syndrome",
+     "mondo_id": "MONDO:0011758"
+    },
+    {
+     "id": "ORPHA:95712",
+     "name": "Thyroid ectopia",
+     "mondo_id": "MONDO:0019854"
+    },
+    {
+     "id": "OMIM:618268",
+     "name": "Trichohepatoneurodevelopmental syndrome",
+     "mondo_id": "MONDO:0032645"
+    },
+    {
+     "id": "ORPHA:577",
+     "name": "Mucolipidosis type III",
+     "mondo_id": "MONDO:0018931"
+    },
+    {
+     "id": "OMIM:218400",
+     "name": "Craniometaphyseal dysplasia, autosomal recessive",
+     "mondo_id": "MONDO:0009035"
+    },
+    {
+     "id": "ORPHA:576",
+     "name": "Mucolipidosis type II",
+     "mondo_id": "MONDO:0009650"
+    },
+    {
+     "id": "OMIM:612530",
+     "name": "Chromosome 1q41-q42 deletion syndrome",
+     "mondo_id": "MONDO:0012927"
+    },
+    {
+     "id": "ORPHA:352665",
+     "name": "Neurodevelopmental disorder-craniofacial dysmorphism-cardiac defect-skeletal anomalies syndrome due to 9q21.3 microdeletion",
+     "mondo_id": "MONDO:0018131"
+    },
+    {
+     "id": "ORPHA:85201",
+     "name": "Genitopatellar syndrome",
+     "mondo_id": "MONDO:0011640"
+    },
+    {
+     "id": "ORPHA:963",
+     "name": "Acromegaly",
+     "mondo_id": "MONDO:0019933"
+    },
+    {
+     "id": "ORPHA:404443",
+     "name": "Tatton-Brown-Rahman syndrome",
+     "mondo_id": "MONDO:0014382"
+    },
+    {
+     "id": "OMIM:135900",
+     "name": "Coffin-Siris syndrome 1",
+     "mondo_id": "MONDO:0007617"
+    },
+    {
+     "id": "OMIM:300896",
+     "name": "Congenital disorder of glycosylation, type IIm",
+     "mondo_id": "MONDO:0010478"
+    },
+    {
+     "id": "ORPHA:583",
+     "name": "Mucopolysaccharidosis type 6",
+     "mondo_id": "MONDO:0009661"
+    },
+    {
+     "id": "ORPHA:1826",
+     "name": "Frontometaphyseal dysplasia",
+     "mondo_id": "MONDO:0015942"
+    },
+    {
+     "id": "ORPHA:87876",
+     "name": "Sialidosis type 2",
+     "mondo_id": "MONDO:0009738"
+    },
+    {
+     "id": "OMIM:617883",
+     "name": "Fanconi anemia, complementation group S",
+     "mondo_id": "MONDO:0054748"
+    },
+    {
+     "id": "OMIM:610042",
+     "name": "Pitt-Hopkins like syndrome 1",
+     "mondo_id": "MONDO:0012400"
+    },
+    {
+     "id": "ORPHA:513456",
+     "name": "Intellectual disability-seizures-abnormal gait-facial dysmorphism syndrome",
+     "mondo_id": "MONDO:0054636"
+    },
+    {
+     "id": "ORPHA:85319",
+     "name": "X-linked intellectual disability-epilepsy-progressive joint contractures-dysmorphism syndrome",
+     "mondo_id": "MONDO:0019418"
+    },
+    {
+     "id": "OMIM:309900",
+     "name": "Mucopolysaccharidosis, type II",
+     "mondo_id": "MONDO:0010674"
+    },
+    {
+     "id": "ORPHA:228402",
+     "name": "2q23.1 microdeletion syndrome",
+     "mondo_id": "MONDO:0016459"
+    },
+    {
+     "id": "OMIM:301072",
+     "name": "Neurodevelopmental disorder with epilepsy and hemochromatosis",
+     "mondo_id": "MONDO:0018346"
+    },
+    {
+     "id": "OMIM:619745",
+     "name": "Noonan syndrome 14",
+     "mondo_id": "MONDO:0030679"
+    },
+    {
+     "id": "OMIM:620785",
+     "name": "Neurodevelopmental disorder with progressive movement abnormalities",
+     "mondo_id": "MONDO:0968976"
+    },
+    {
+     "id": "ORPHA:488632",
+     "name": "TBCK-related encephalopathy-severe hypotonia-craniofacial dysmorphism syndrome",
+     "mondo_id": "MONDO:0014823"
+    },
+    {
+     "id": "OMIM:613744",
+     "name": "Spastic paraplegia 51, autosomal recessive",
+     "mondo_id": "MONDO:0013401"
+    },
+    {
+     "id": "OMIM:615829",
+     "name": "Xia-Gibbs syndrome",
+     "mondo_id": "MONDO:0014358"
+    },
+    {
+     "id": "OMIM:252920",
+     "name": "Mucopolysaccharidosis type IIIB",
+     "mondo_id": "MONDO:0009656"
+    },
+    {
+     "id": "ORPHA:3085",
+     "name": "Retinitis pigmentosa-intellectual disability-deafness-hypogonadism syndrome",
+     "mondo_id": "MONDO:0009983"
+    },
+    {
+     "id": "ORPHA:96201",
+     "name": "X small rings syndrome",
+     "mondo_id": "MONDO:0019926"
+    },
+    {
+     "id": "ORPHA:955",
+     "name": "Hajdu-Cheney syndrome",
+     "mondo_id": "MONDO:0007057"
+    },
+    {
+     "id": "OMIM:618027",
+     "name": "Coffin-Siris syndrome 7",
+     "mondo_id": "MONDO:0054831"
+    },
+    {
+     "id": "ORPHA:812",
+     "name": "Sialidosis type 1",
+     "mondo_id": "MONDO:0019346"
+    },
+    {
+     "id": "ORPHA:1465",
+     "name": "Coffin-Siris syndrome",
+     "mondo_id": "MONDO:0015452"
+    },
+    {
+     "id": "OMIM:621523",
+     "name": "Spondylocostal dysostosis 7, autosomal recessive",
+     "mondo_id": "MONDO:0981023"
+    },
+    {
+     "id": "OMIM:619356",
+     "name": "Onychodystrophy, osteodystrophy, impaired intellectual development, and seizures syndrome",
+     "mondo_id": "MONDO:0859161"
+    },
+    {
+     "id": "OMIM:617425",
+     "name": "Immunoskeletal dysplasia with neurodevelopmental abnormalities",
+     "mondo_id": "MONDO:0044312"
+    },
+    {
+     "id": "ORPHA:1517",
+     "name": "Cantú syndrome",
+     "mondo_id": "MONDO:0009406"
+    },
+    {
+     "id": "OMIM:252605",
+     "name": "Mucolipidosis III gamma",
+     "mondo_id": "MONDO:0009652"
+    },
+    {
+     "id": "OMIM:618089",
+     "name": "Intellectual developmental disorder with dysmorphic facies and behavioral abnormalities",
+     "mondo_id": "MONDO:0060760"
+    },
+    {
+     "id": "OMIM:621302",
+     "name": "Neurodevelopmental disorder with seizures and joint laxity",
+     "mondo_id": "MONDO:1060179"
+    },
+    {
+     "id": "ORPHA:2796",
+     "name": "Pachydermoperiostosis",
+     "mondo_id": "MONDO:0016620"
+    },
+    {
+     "id": "OMIM:147060",
+     "name": "Hyper-IgE recurrent infection syndrome",
+     "mondo_id": "MONDO:0007818"
+    },
+    {
+     "id": "OMIM:102200",
+     "name": "Pituitary adenoma, growth hormone-secreting, 1",
+     "mondo_id": "MONDO:0007052"
+    },
+    {
+     "id": "OMIM:615873",
+     "name": "Helsmoortel-van der Aa syndrome",
+     "mondo_id": "MONDO:0014379"
+    },
+    {
+     "id": "ORPHA:95720",
+     "name": "Thyroid hypoplasia",
+     "mondo_id": "MONDO:0019861"
+    },
+    {
+     "id": "ORPHA:97261",
+     "name": "GRFoma",
+     "mondo_id": "MONDO:0019955"
+    },
+    {
+     "id": "OMIM:620428",
+     "name": "Neurodevelopmental disorder with motor and language delay, ocular defects, and brain abnormalities",
+     "mondo_id": "MONDO:0957386"
+    },
+    {
+     "id": "OMIM:253200",
+     "name": "Mucopolysaccharidosis, type VI",
+     "mondo_id": "MONDO:0009661"
+    },
+    {
+     "id": "ORPHA:584",
+     "name": "Mucopolysaccharidosis type 7",
+     "mondo_id": "MONDO:0009662"
+    },
+    {
+     "id": "OMIM:618569",
+     "name": "Neurodevelopmental disorder with ataxia, hypotonia, and microcephaly",
+     "mondo_id": "MONDO:0032816"
+    },
+    {
+     "id": "OMIM:607014",
+     "name": "Hurler syndrome",
+     "mondo_id": "MONDO:0011758"
+    },
+    {
+     "id": "OMIM:268800",
+     "name": "Sandhoff disease",
+     "mondo_id": "MONDO:0010006"
+    },
+    {
+     "id": "OMIM:300114",
+     "name": "Raynaud-Claes syndrome",
+     "mondo_id": "MONDO:0010250"
+    },
+    {
+     "id": "OMIM:300624",
+     "name": "Fragile X syndrome",
+     "mondo_id": "MONDO:0010383"
+    },
+    {
+     "id": "ORPHA:436141",
+     "name": "HIDEA syndrome",
+     "mondo_id": "MONDO:0018572"
+    },
+    {
+     "id": "OMIM:300232",
+     "name": "Spondyloepimetaphyseal dysplasia, X-linked, with mental deterioration",
+     "mondo_id": "MONDO:0010275"
+    },
+    {
+     "id": "OMIM:619031",
+     "name": "Intellectual developmental disorder with epilepsy, behavioral abnormalities, and coarse facies",
+     "mondo_id": "MONDO:0033572"
+    },
+    {
+     "id": "ORPHA:2995",
+     "name": "Baraitser-Winter cerebrofrontofacial syndrome",
+     "mondo_id": "MONDO:0017579"
+    },
+    {
+     "id": "ORPHA:508533",
+     "name": "Skeletal dysplasia-T-cell immunodeficiency-developmental delay syndrome",
+     "mondo_id": "MONDO:0033682"
+    },
+    {
+     "id": "ORPHA:127",
+     "name": "Borjeson-Forssman-Lehmann syndrome",
+     "mondo_id": "MONDO:0010537"
+    },
+    {
+     "id": "ORPHA:363705",
+     "name": "Craniofaciofrontodigital syndrome",
+     "mondo_id": "MONDO:0007259"
+    },
+    {
+     "id": "OMIM:619833",
+     "name": "Neurodevelopmental disorder with neuromuscular and skeletal abnormalities",
+     "mondo_id": "MONDO:0859236"
+    },
+    {
+     "id": "ORPHA:1340",
+     "name": "Cardiofaciocutaneous syndrome",
+     "mondo_id": "MONDO:0015280"
+    },
+    {
+     "id": "ORPHA:1193",
+     "name": "Atkin-Flaitz syndrome",
+     "mondo_id": "MONDO:0010323"
+    },
+    {
+     "id": "OMIM:600430",
+     "name": "Chromosome 2q37 deletion syndrome",
+     "mondo_id": "MONDO:0010886"
+    },
+    {
+     "id": "OMIM:223800",
+     "name": "Dyggve-Melchior-Clausen disease",
+     "mondo_id": "MONDO:0009130"
+    },
+    {
+     "id": "OMIM:618580",
+     "name": "Epileptic encephalopathy, early infantile, 80",
+     "mondo_id": "MONDO:0032822"
+    },
+    {
+     "id": "ORPHA:349",
+     "name": "Fucosidosis",
+     "mondo_id": "MONDO:0009254"
+    },
+    {
+     "id": "ORPHA:293707",
+     "name": "Blepharophimosis-intellectual disability syndrome, MKB type",
+     "mondo_id": "MONDO:0010477"
+    },
+    {
+     "id": "OMIM:614607",
+     "name": "Coffin-Siris syndrome 2",
+     "mondo_id": "MONDO:0013819"
+    },
+    {
+     "id": "OMIM:272200",
+     "name": "Multiple sulfatase deficiency",
+     "mondo_id": "MONDO:0010088"
+    },
+    {
+     "id": "ORPHA:1970",
+     "name": "Facial dysmorphism-macrocephaly-myopia-Dandy-Walker malformation syndrome",
+     "mondo_id": "MONDO:0009074"
+    },
+    {
+     "id": "ORPHA:247262",
+     "name": "Hyperphosphatasia-intellectual disability syndrome",
+     "mondo_id": "MONDO:0016596"
+    },
+    {
+     "id": "OMIM:312870",
+     "name": "Simpson-Golabi-Behmel syndrome, type 1",
+     "mondo_id": "MONDO:0020602"
+    },
+    {
+     "id": "OMIM:612936",
+     "name": "Spastic paraplegia 50, autosomal recessive",
+     "mondo_id": "MONDO:0013048"
+    },
+    {
+     "id": "OMIM:229120",
+     "name": "Fountain syndrome",
+     "mondo_id": "MONDO:0009241"
+    },
+    {
+     "id": "OMIM:606170",
+     "name": "Genitopatellar syndrome",
+     "mondo_id": "MONDO:0011640"
+    },
+    {
+     "id": "OMIM:617616",
+     "name": "Skraban-Deardorff syndrome",
+     "mondo_id": "MONDO:0054636"
+    },
+    {
+     "id": "ORPHA:239",
+     "name": "Dyggve-Melchior-Clausen disease",
+     "mondo_id": "MONDO:0009130"
+    },
+    {
+     "id": "OMIM:616938",
+     "name": "Coffin-Siris syndrome 5",
+     "mondo_id": "MONDO:0014838"
+    },
+    {
+     "id": "OMIM:102500",
+     "name": "Hajdu-Cheney syndrome",
+     "mondo_id": "MONDO:0007057"
+    },
+    {
+     "id": "ORPHA:300373",
+     "name": "X-linked acrogigantism",
+     "mondo_id": "MONDO:0010491"
+    },
+    {
+     "id": "OMIM:613075",
+     "name": "Macrocephaly, alopecia, cutis laxa, and scoliosis",
+     "mondo_id": "MONDO:0013115"
+    },
+    {
+     "id": "OMIM:610253",
+     "name": "Kleefstra syndrome 1",
+     "mondo_id": "MONDO:0027407"
+    },
+    {
+     "id": "ORPHA:280633",
+     "name": "Multiple congenital anomalies-hypotonia-seizures syndrome",
+     "mondo_id": "MONDO:0013563"
+    },
+    {
+     "id": "ORPHA:579",
+     "name": "Mucopolysaccharidosis type 1",
+     "mondo_id": "MONDO:0001586"
+    },
+    {
+     "id": "ORPHA:1692",
+     "name": "Mosaic trisomy 1 syndrome",
+     "mondo_id": "MONDO:0015706"
+    },
+    {
+     "id": "OMIM:301900",
+     "name": "Borjeson-Forssman-Lehmann syndrome",
+     "mondo_id": "MONDO:0010537"
+    },
+    {
+     "id": "ORPHA:261290",
+     "name": "Trisomy 17p syndrome",
+     "mondo_id": "MONDO:0016840"
+    },
+    {
+     "id": "OMIM:300238",
+     "name": "Intellectual developmental disorder, X-linked syndromic, Shashi type",
+     "mondo_id": "MONDO:0010277"
+    },
+    {
+     "id": "OMIM:616708",
+     "name": "Desanto-Shinawi syndrome",
+     "mondo_id": "MONDO:0014741"
+    },
+    {
+     "id": "OMIM:301118",
+     "name": "Intellectual developmental disorder, X-linked syndromic 37",
+     "mondo_id": "MONDO:0958322"
+    },
+    {
+     "id": "ORPHA:314585",
+     "name": "15q overgrowth syndrome",
+     "mondo_id": "MONDO:0017806"
+    },
+    {
+     "id": "ORPHA:821",
+     "name": "Sotos syndrome",
+     "mondo_id": "MONDO:0019349"
+    },
+    {
+     "id": "OMIM:618658",
+     "name": "Zimmermann-Laband syndrome 3",
+     "mondo_id": "MONDO:0032854"
+    },
+    {
+     "id": "OMIM:619762",
+     "name": "Kury-Isidor syndrome",
+     "mondo_id": "MONDO:0859230"
+    },
+    {
+     "id": "OMIM:621295",
+     "name": "Cerebral arteriopathy, autosomal recessive, with subcortical infarcts and leukoencephalopathy 1",
+     "mondo_id": "MONDO:0979867"
+    },
+    {
+     "id": "OMIM:617988",
+     "name": "Jaberi-Elahi syndrome",
+     "mondo_id": "MONDO:0060711"
+    },
+    {
+     "id": "OMIM:248500",
+     "name": "Alpha-mannosidosis",
+     "mondo_id": "MONDO:0009561"
+    },
+    {
+     "id": "ORPHA:819",
+     "name": "Smith-Magenis syndrome",
+     "mondo_id": "MONDO:0008434"
+    },
+    {
+     "id": "OMIM:248000",
+     "name": "Macrocephaly/megalencephaly syndrome, autosomal recessive",
+     "mondo_id": "MONDO:0009544"
+    },
+    {
+     "id": "OMIM:621533",
+     "name": "Neurodevelopmental disorder with seizures and impaired intellectual and language development",
+     "mondo_id": "MONDO:0981032"
+    },
+    {
+     "id": "OMIM:130650",
+     "name": "Beckwith-Wiedemann syndrome",
+     "mondo_id": "MONDO:0007534"
+    },
+    {
+     "id": "OMIM:616900",
+     "name": "Hypotonia, infantile, with psychomotor retardation and characteristic facies 3",
+     "mondo_id": "MONDO:0014823"
+    },
+    {
+     "id": "ORPHA:79280",
+     "name": "Alpha-N-acetylgalactosaminidase deficiency type 2",
+     "mondo_id": "MONDO:0012222"
+    },
+    {
+     "id": "OMIM:615278",
+     "name": "Cardiofaciocutaneous syndrome 2",
+     "mondo_id": "MONDO:0014112"
+    },
+    {
+     "id": "OMIM:252500",
+     "name": "Mucolipidosis II alpha/beta",
+     "mondo_id": "MONDO:0009650"
+    },
+    {
+     "id": "ORPHA:52",
+     "name": "Alagille syndrome",
+     "mondo_id": "MONDO:0007318"
+    },
+    {
+     "id": "OMIM:300004",
+     "name": "Corpus callosum, agenesis of, with abnormal genitalia",
+     "mondo_id": "MONDO:0010224"
+    },
+    {
+     "id": "OMIM:208400",
+     "name": "Aspartylglucosaminuria",
+     "mondo_id": "MONDO:0008830"
+    },
+    {
+     "id": "ORPHA:33364",
+     "name": "Trichothiodystrophy",
+     "mondo_id": "MONDO:0018053"
+    },
+    {
+     "id": "OMIM:230600",
+     "name": "GM1-gangliosidosis, type II",
+     "mondo_id": "MONDO:0009261"
+    },
+    {
+     "id": "OMIM:615222",
+     "name": "Smith-Mccort dysplasia 2",
+     "mondo_id": "MONDO:0014087"
+    },
+    {
+     "id": "OMIM:617664",
+     "name": "Combined oxidative phosphorylation deficiency 32",
+     "mondo_id": "MONDO:0054654"
+    },
+    {
+     "id": "ORPHA:96149",
+     "name": "Distal deletion 12q syndrome",
+     "mondo_id": "MONDO:0019897"
+    },
+    {
+     "id": "OMIM:621220",
+     "name": "Guillouet-Gordon syndrome",
+     "mondo_id": "MONDO:0979227"
+    },
+    {
+     "id": "OMIM:619312",
+     "name": "Radio-Tartaglia syndrome",
+     "mondo_id": "MONDO:0859143"
+    },
+    {
+     "id": "ORPHA:581",
+     "name": "Mucopolysaccharidosis type 3",
+     "mondo_id": "MONDO:0018937"
+    },
+    {
+     "id": "ORPHA:585",
+     "name": "Multiple sulfatase deficiency",
+     "mondo_id": "MONDO:0010088"
+    },
+    {
+     "id": "ORPHA:485405",
+     "name": "16p12.1p12.3 triplication syndrome",
+     "mondo_id": "MONDO:0044621"
+    },
+    {
+     "id": "OMIM:300884",
+     "name": "Epileptic encephalopathy, early infantile, 36",
+     "mondo_id": "MONDO:0010472"
+    },
+    {
+     "id": "OMIM:614609",
+     "name": "Coffin-Siris syndrome 4",
+     "mondo_id": "MONDO:0013821"
+    },
+    {
+     "id": "OMIM:619323",
+     "name": "Neurodevelopmental disorder with seizures and gingival overgrowth",
+     "mondo_id": "MONDO:0859148"
+    },
+    {
+     "id": "ORPHA:488627",
+     "name": "Severe growth deficiency-strabismus-extensive dermal melanocytosis-intellectual disability syndrome",
+     "mondo_id": "MONDO:0014886"
+    },
+    {
+     "id": "ORPHA:93",
+     "name": "Aspartylglucosaminuria",
+     "mondo_id": "MONDO:0008830"
+    },
+    {
+     "id": "ORPHA:420561",
+     "name": "Temple-Baraitser syndrome",
+     "mondo_id": "MONDO:0012735"
+    },
+    {
+     "id": "OMIM:617762",
+     "name": "Leukodystrophy, progressive, early childhood-onset",
+     "mondo_id": "MONDO:0044718"
+    },
+    {
+     "id": "OMIM:615502",
+     "name": "Intellectual developmental disorder, autosomal dominant 21",
+     "mondo_id": "MONDO:0014213"
+    },
+    {
+     "id": "ORPHA:99843",
+     "name": "Leukocyte adhesion deficiency type II",
+     "mondo_id": "MONDO:0009953"
+    },
+    {
+     "id": "OMIM:608233",
+     "name": "Hermansky-Pudlak syndrome 2",
+     "mondo_id": "MONDO:0011997"
+    },
+    {
+     "id": "ORPHA:354",
+     "name": "GM1 gangliosidosis",
+     "mondo_id": "MONDO:0018149"
+    },
+    {
+     "id": "OMIM:620888",
+     "name": "Neurodevelopmental disorder with characteristic facial and ectodermal features and tetraparesis 1",
+     "mondo_id": "MONDO:0975745"
+    },
+    {
+     "id": "ORPHA:351",
+     "name": "Galactosialidosis",
+     "mondo_id": "MONDO:0009737"
+    },
+    {
+     "id": "OMIM:621381",
+     "name": "Congenital disorder of glycosylation, type IICC",
+     "mondo_id": "MONDO:0980705"
+    },
+    {
+     "id": "OMIM:313420",
+     "name": "Spondylometaphyseal dysplasia, X-linked",
+     "mondo_id": "MONDO:0010738"
+    },
+    {
+     "id": "ORPHA:95715",
+     "name": "Congenital hypothyroidism due to transplacental passage of TSH-binding inhibitory antibodies",
+     "mondo_id": "MONDO:0019857"
+    },
+    {
+     "id": "ORPHA:2896",
+     "name": "Pitt-Hopkins syndrome",
+     "mondo_id": "MONDO:0012589"
+    },
+    {
+     "id": "OMIM:619194",
+     "name": "Neurofacioskeletal syndrome with or without renal agenesis",
+     "mondo_id": "MONDO:0030966"
+    },
+    {
+     "id": "ORPHA:85335",
+     "name": "Fried syndrome",
+     "mondo_id": "MONDO:0019428"
+    },
+    {
+     "id": "OMIM:300942",
+     "name": "Chromosome Xq26.3 duplication syndrome",
+     "mondo_id": "MONDO:0010491"
+    },
+    {
+     "id": "OMIM:617527",
+     "name": "Neurodevelopmental disorder with progressive microcephaly, spasticity, and brain anomalies",
+     "mondo_id": "MONDO:0060502"
+    },
+    {
+     "id": "ORPHA:96169",
+     "name": "Koolen-De Vries syndrome",
+     "mondo_id": "MONDO:0012496"
+    },
+    {
+     "id": "ORPHA:769",
+     "name": "Rabson-Mendenhall syndrome",
+     "mondo_id": "MONDO:0009874"
+    },
+    {
+     "id": "ORPHA:38874",
+     "name": "Dihydropyrimidinuria",
+     "mondo_id": "MONDO:0009111"
+    },
+    {
+     "id": "OMIM:218040",
+     "name": "Costello syndrome",
+     "mondo_id": "MONDO:0009026"
+    },
+    {
+     "id": "ORPHA:2968",
+     "name": "Leukocyte adhesion deficiency",
+     "mondo_id": "MONDO:0017570"
+    },
+    {
+     "id": "OMIM:301066",
+     "name": "Intellectual developmental disorder, X-linked, syndromic, with pigmentary mosaicism and coarse facies",
+     "mondo_id": "MONDO:0859080"
+    },
+    {
+     "id": "ORPHA:116",
+     "name": "Beckwith-Wiedemann syndrome",
+     "mondo_id": "MONDO:0007534"
+    },
+    {
+     "id": "OMIM:615656",
+     "name": "Chromosome 15q11.2 deletion syndrome",
+     "mondo_id": "MONDO:0014294"
+    },
+    {
+     "id": "OMIM:616300",
+     "name": "Short-Rib thoracic dysplasia 13 with or without polydactyly",
+     "mondo_id": "MONDO:0014577"
+    },
+    {
+     "id": "OMIM:620075",
+     "name": "Neurodevelopmental disorder with facial dysmorphism, absent language, and pseudo-Pelger-Huet anomaly",
+     "mondo_id": "MONDO:0859298"
+    },
+    {
+     "id": "ORPHA:373",
+     "name": "Simpson-Golabi-Behmel syndrome",
+     "mondo_id": "MONDO:0010731"
+    },
+    {
+     "id": "OMIM:619727",
+     "name": "Craniotubular dysplasia, Ikegawa type",
+     "mondo_id": "MONDO:0859226"
+    },
+    {
+     "id": "ORPHA:2429",
+     "name": "Macrocephaly-spastic paraplegia-dysmorphism syndrome",
+     "mondo_id": "MONDO:0010858"
+    },
+    {
+     "id": "ORPHA:363400",
+     "name": "Progressive encephalopathy-severe neurodegeneration-lipodystrophy syndrome",
+     "mondo_id": "MONDO:0014402"
+    },
+    {
+     "id": "OMIM:618440",
+     "name": "Oculoskeletodental syndrome",
+     "mondo_id": "MONDO:0034145"
+    },
+    {
+     "id": "OMIM:300354",
+     "name": "Intellectual developmental disorder, X-linked syndromic, Cabezas type",
+     "mondo_id": "MONDO:0010306"
+    },
+    {
+     "id": "OMIM:601803",
+     "name": "Pallister-Killian syndrome",
+     "mondo_id": "MONDO:0011146"
+    },
+    {
+     "id": "OMIM:239850",
+     "name": "Hypertrichotic osteochondrodysplasia",
+     "mondo_id": "MONDO:0009406"
+    },
+    {
+     "id": "ORPHA:1948",
+     "name": "Epilepsy-microcephaly-skeletal dysplasia syndrome",
+     "mondo_id": "MONDO:0011048"
+    },
+    {
+     "id": "OMIM:619383",
+     "name": "Neurodevelopmental disorder with hypotonia, facial dysmorphism, and brain abnormalities",
+     "mondo_id": "MONDO:0859165"
+    },
+    {
+     "id": "OMIM:619475",
+     "name": "Developmental delay, impaired speech, and behavioral abnormalities",
+     "mondo_id": "MONDO:0859178"
+    },
+    {
+     "id": "OMIM:618067",
+     "name": "Epileptic encephalopathy, early infantile, 66",
+     "mondo_id": "MONDO:0054845"
+    },
+    {
+     "id": "OMIM:611717",
+     "name": "Spondyloepiphyseal dysplasia-brachydactyly and distinctive speech",
+     "mondo_id": "MONDO:0012716"
+    },
+    {
+     "id": "ORPHA:582",
+     "name": "Mucopolysaccharidosis type 4",
+     "mondo_id": "MONDO:0018938"
+    },
+    {
+     "id": "OMIM:271700",
+     "name": "Spondyloperipheral dysplasia",
+     "mondo_id": "MONDO:0010078"
+    },
+    {
+     "id": "OMIM:300280",
+     "name": "Uruguay faciocardiomusculoskeletal syndrome",
+     "mondo_id": "MONDO:0010292"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "HPO (JAX Ontology) network annotation",
+   "term_id": "HP:0000280",
+   "total": 340,
+   "returned": 340
+  }
+ },
+ "{\"limit\": 500, \"term_id\": \"HP:0001433\"}": {
+  "status": "success",
+  "data": {
+   "diseases": [
+    {
+     "id": "ORPHA:309252",
+     "name": "Atypical Gaucher disease due to saposin C deficiency",
+     "mondo_id": "MONDO:0012517"
+    },
+    {
+     "id": "ORPHA:210110",
+     "name": "Intermediate osteopetrosis",
+     "mondo_id": "MONDO:0012679"
+    },
+    {
+     "id": "OMIM:607624",
+     "name": "Griscelli syndrome, type 2",
+     "mondo_id": "MONDO:0011872"
+    },
+    {
+     "id": "OMIM:219700",
+     "name": "Cystic fibrosis",
+     "mondo_id": "MONDO:0009061"
+    },
+    {
+     "id": "OMIM:259730",
+     "name": "Osteopetrosis, autosomal recessive 3",
+     "mondo_id": "MONDO:0009818"
+    },
+    {
+     "id": "ORPHA:101028",
+     "name": "Transaldolase deficiency",
+     "mondo_id": "MONDO:0011624"
+    },
+    {
+     "id": "ORPHA:96334",
+     "name": "Kagami-Ogata syndrome due to paternal uniparental disomy of chromosome 14",
+     "mondo_id": "MONDO:0011975"
+    },
+    {
+     "id": "OMIM:268800",
+     "name": "Sandhoff disease",
+     "mondo_id": "MONDO:0010006"
+    },
+    {
+     "id": "ORPHA:99931",
+     "name": "Idiopathic pulmonary hemosiderosis",
+     "mondo_id": "MONDO:0008346"
+    },
+    {
+     "id": "OMIM:616860",
+     "name": "Anemia, sideroblastic, 3, pyridoxine-refractory",
+     "mondo_id": "MONDO:0014804"
+    },
+    {
+     "id": "OMIM:619487",
+     "name": "Aicardi-Goutieres syndrome 9",
+     "mondo_id": "MONDO:0030362"
+    },
+    {
+     "id": "OMIM:619902",
+     "name": "Hepatorenocardiac degenerative fibrosis",
+     "mondo_id": "MONDO:0859254"
+    },
+    {
+     "id": "ORPHA:309288",
+     "name": "Alpha-mannosidosis, adult form",
+     "mondo_id": "MONDO:0017733"
+    },
+    {
+     "id": "OMIM:606003",
+     "name": "Transaldolase deficiency",
+     "mondo_id": "MONDO:0011624"
+    },
+    {
+     "id": "ORPHA:391487",
+     "name": "STAT1-related autoimmune enteropathy and endocrinopathy-susceptibility to chronic infections syndrome",
+     "mondo_id": "MONDO:0013599"
+    },
+    {
+     "id": "ORPHA:499009",
+     "name": "Congenital syphilis",
+     "mondo_id": "MONDO:0005714"
+    },
+    {
+     "id": "ORPHA:93352",
+     "name": "Spondyloepimetaphyseal dysplasia, Shohat type",
+     "mondo_id": "MONDO:0011252"
+    },
+    {
+     "id": "OMIM:274000",
+     "name": "Thrombocytopenia-absent radius syndrome",
+     "mondo_id": "MONDO:0010121"
+    },
+    {
+     "id": "ORPHA:171",
+     "name": "Primary sclerosing cholangitis",
+     "mondo_id": "MONDO:0013433"
+    },
+    {
+     "id": "OMIM:607014",
+     "name": "Hurler syndrome",
+     "mondo_id": "MONDO:0011758"
+    },
+    {
+     "id": "ORPHA:85408",
+     "name": "Rheumatoid factor-negative polyarticular juvenile idiopathic arthritis",
+     "mondo_id": "MONDO:0019432"
+    },
+    {
+     "id": "ORPHA:231214",
+     "name": "Beta-thalassemia major",
+     "mondo_id": "MONDO:0016486"
+    },
+    {
+     "id": "ORPHA:71275",
+     "name": "Rh deficiency syndrome",
+     "mondo_id": "MONDO:0019107"
+    },
+    {
+     "id": "ORPHA:168577",
+     "name": "Hereditary cryohydrocytosis with reduced stomatin",
+     "mondo_id": "MONDO:0012143"
+    },
+    {
+     "id": "ORPHA:247598",
+     "name": "Neonatal intrahepatic cholestasis due to citrin deficiency",
+     "mondo_id": "MONDO:0011601"
+    },
+    {
+     "id": "OMIM:242520",
+     "name": "Ichthyosis, hepatosplenomegaly, and cerebellar degeneration",
+     "mondo_id": "MONDO:0009445"
+    },
+    {
+     "id": "OMIM:619802",
+     "name": "Immunodeficiency 97 with autoinflammation",
+     "mondo_id": "MONDO:0030717"
+    },
+    {
+     "id": "ORPHA:86884",
+     "name": "Subcutaneous panniculitis-like T-cell lymphoma",
+     "mondo_id": "MONDO:0019475"
+    },
+    {
+     "id": "OMIM:615559",
+     "name": "Autoimmune lymphoproliferative syndrome, type III",
+     "mondo_id": "MONDO:8000024"
+    },
+    {
+     "id": "OMIM:621337",
+     "name": "Cranioectodermal dysplasia 6",
+     "mondo_id": "MONDO:0979883"
+    },
+    {
+     "id": "OMIM:259710",
+     "name": "Osteopetrosis, autosomal recessive 2",
+     "mondo_id": "MONDO:0009816"
+    },
+    {
+     "id": "OMIM:238600",
+     "name": "Type I hyperlipoproteinemia",
+     "mondo_id": "MONDO:0009387"
+    },
+    {
+     "id": "OMIM:608898",
+     "name": "Hemophagocytic lymphohistiocytosis, familial, 3",
+     "mondo_id": "MONDO:0012146"
+    },
+    {
+     "id": "ORPHA:96123",
+     "name": "Monosomy 22 syndrome",
+     "mondo_id": "MONDO:0019891"
+    },
+    {
+     "id": "OMIM:619126",
+     "name": "Immunodeficiency 75",
+     "mondo_id": "MONDO:0030858"
+    },
+    {
+     "id": "ORPHA:1655",
+     "name": "Müllerian derivatives-lymphangiectasia-polydactyly syndrome",
+     "mondo_id": "MONDO:0009333"
+    },
+    {
+     "id": "OMIM:301081",
+     "name": "Autoinflammatory disease, systemic, X-linked",
+     "mondo_id": "MONDO:0800129"
+    },
+    {
+     "id": "OMIM:603553",
+     "name": "Hemophagocytic lymphohistiocytosis, familial, 2",
+     "mondo_id": "MONDO:0011337"
+    },
+    {
+     "id": "OMIM:301068",
+     "name": "Hardikar syndrome",
+     "mondo_id": "MONDO:0012997"
+    },
+    {
+     "id": "ORPHA:911",
+     "name": "Combined immunodeficiency due to ZAP70 deficiency",
+     "mondo_id": "MONDO:0010023"
+    },
+    {
+     "id": "ORPHA:466794",
+     "name": "Acute infantile liver failure-cerebellar ataxia-peripheral sensory motor neuropathy syndrome",
+     "mondo_id": "MONDO:0014744"
+    },
+    {
+     "id": "OMIM:267010",
+     "name": "Meckel syndrome, type 7",
+     "mondo_id": "MONDO:0009966"
+    },
+    {
+     "id": "OMIM:620887",
+     "name": "Multiple mitochondrial dysfunctions syndrome 9B",
+     "mondo_id": "MONDO:0971174"
+    },
+    {
+     "id": "ORPHA:169154",
+     "name": "T-B+NK+ severe combined immunodeficiency due to IL-7Ralpha deficiency",
+     "mondo_id": "MONDO:0015701"
+    },
+    {
+     "id": "ORPHA:646",
+     "name": "Niemann-Pick disease type C",
+     "mondo_id": "MONDO:0018982"
+    },
+    {
+     "id": "OMIM:606367",
+     "name": "Immunodeficiency 41 with lymphoproliferation and autoimmunity",
+     "mondo_id": "MONDO:0011664"
+    },
+    {
+     "id": "OMIM:615688",
+     "name": "Vasculitis, autoinflammation, immunodeficiency, and hematologic defects syndrome",
+     "mondo_id": "MONDO:0014306"
+    },
+    {
+     "id": "OMIM:612526",
+     "name": "Lipodystrophy, congenital generalized, type 3",
+     "mondo_id": "MONDO:0012923"
+    },
+    {
+     "id": "ORPHA:263501",
+     "name": "COG4-CDG",
+     "mondo_id": "MONDO:0013281"
+    },
+    {
+     "id": "OMIM:609889",
+     "name": "Alpha/beta T-cell lymphopenia with gamma/delta T-cell expansion, severe cytomegalovirus infection, and autoimmunity",
+     "mondo_id": "MONDO:0012359"
+    },
+    {
+     "id": "ORPHA:845",
+     "name": "Tay-Sachs disease",
+     "mondo_id": "MONDO:0010100"
+    },
+    {
+     "id": "ORPHA:470",
+     "name": "Lysinuric protein intolerance",
+     "mondo_id": "MONDO:0009109"
+    },
+    {
+     "id": "ORPHA:618891",
+     "name": "Chronic neurovisceral acid sphingomyelinase deficiency",
+     "mondo_id": "MONDO:0850058"
+    },
+    {
+     "id": "ORPHA:541423",
+     "name": "Growth delay-intellectual disability-hepatopathy syndrome",
+     "mondo_id": "MONDO:0014911"
+    },
+    {
+     "id": "OMIM:618999",
+     "name": "Autoinflammation, immune dysregulation, and eosinophilia",
+     "mondo_id": "MONDO:0033558"
+    },
+    {
+     "id": "ORPHA:221054",
+     "name": "Acrocephalopolydactyly",
+     "mondo_id": "MONDO:0008709"
+    },
+    {
+     "id": "OMIM:621060",
+     "name": "Neurodevelopmental disorder with microcephaly, absent speech, and hypotonia",
+     "mondo_id": "MONDO:0976126"
+    },
+    {
+     "id": "OMIM:260920",
+     "name": "Hyper-Igd syndrome",
+     "mondo_id": "MONDO:0009849"
+    },
+    {
+     "id": "OMIM:300868",
+     "name": "Multiple congenital anomalies-hypotonia-seizures syndrome 2",
+     "mondo_id": "MONDO:0010466"
+    },
+    {
+     "id": "OMIM:618963",
+     "name": "Immunodeficiency 69, mycobacteriosis",
+     "mondo_id": "MONDO:0033541"
+    },
+    {
+     "id": "ORPHA:231222",
+     "name": "Beta-thalassemia intermedia",
+     "mondo_id": "MONDO:0016487"
+    },
+    {
+     "id": "ORPHA:367",
+     "name": "Glycogen storage disease due to glycogen branching enzyme deficiency",
+     "mondo_id": "MONDO:0009292"
+    },
+    {
+     "id": "ORPHA:763",
+     "name": "Pycnodysostosis",
+     "mondo_id": "MONDO:0009940"
+    },
+    {
+     "id": "ORPHA:50839",
+     "name": "Cat-scratch disease",
+     "mondo_id": "MONDO:0005692"
+    },
+    {
+     "id": "OMIM:618278",
+     "name": "Fibrosis, neurodegeneration, and cerebral angiomatosis",
+     "mondo_id": "MONDO:0032651"
+    },
+    {
+     "id": "OMIM:604416",
+     "name": "Pyogenic sterile arthritis, pyoderma gangrenosum, and acne",
+     "mondo_id": "MONDO:0011462"
+    },
+    {
+     "id": "OMIM:301066",
+     "name": "Intellectual developmental disorder, X-linked, syndromic, with pigmentary mosaicism and coarse facies",
+     "mondo_id": "MONDO:0859080"
+    },
+    {
+     "id": "OMIM:619644",
+     "name": "Immunodeficiency 91 and hyperinflammation",
+     "mondo_id": "MONDO:0030491"
+    },
+    {
+     "id": "ORPHA:93399",
+     "name": "Juvenile sialidosis type 2",
+     "mondo_id": "MONDO:0019681"
+    },
+    {
+     "id": "OMIM:610329",
+     "name": "Aicardi-Goutieres syndrome 3",
+     "mondo_id": "MONDO:0012471"
+    },
+    {
+     "id": "OMIM:620969",
+     "name": "Anemia, congenital dyserythropoietic, type IVb",
+     "mondo_id": "MONDO:0975829"
+    },
+    {
+     "id": "OMIM:117550",
+     "name": "Sotos syndrome",
+     "mondo_id": "MONDO:0019349"
+    },
+    {
+     "id": "OMIM:621097",
+     "name": "Immunodeficiency 131",
+     "mondo_id": "MONDO:0976229"
+    },
+    {
+     "id": "ORPHA:300298",
+     "name": "Severe congenital hypochromic anemia with ringed sideroblasts",
+     "mondo_id": "MONDO:0014094"
+    },
+    {
+     "id": "ORPHA:3385",
+     "name": "African trypanosomiasis",
+     "mondo_id": ""
+    },
+    {
+     "id": "OMIM:620931",
+     "name": "Immunodeficiency 126",
+     "mondo_id": "MONDO:0975761"
+    },
+    {
+     "id": "OMIM:615122",
+     "name": "Lymphoproliferative syndrome 2",
+     "mondo_id": "MONDO:0014054"
+    },
+    {
+     "id": "ORPHA:77292",
+     "name": "Infantile neurovisceral acid sphingomyelinase deficiency",
+     "mondo_id": "MONDO:0009756"
+    },
+    {
+     "id": "OMIM:215140",
+     "name": "Greenberg skeletal dysplasia",
+     "mondo_id": "MONDO:0008974"
+    },
+    {
+     "id": "OMIM:621250",
+     "name": "Developmental and epileptic encephalopathy 118",
+     "mondo_id": "MONDO:0979238"
+    },
+    {
+     "id": "ORPHA:64",
+     "name": "Alström syndrome",
+     "mondo_id": "MONDO:0008763"
+    },
+    {
+     "id": "OMIM:619750",
+     "name": "Immunodeficiency 94 with autoinflammation and dysmorphic facies",
+     "mondo_id": "MONDO:0030681"
+    },
+    {
+     "id": "OMIM:607115",
+     "name": "Cinca syndrome",
+     "mondo_id": "MONDO:0011776"
+    },
+    {
+     "id": "ORPHA:263508",
+     "name": "COG1-CDG",
+     "mondo_id": "MONDO:0012637"
+    },
+    {
+     "id": "OMIM:610333",
+     "name": "Aicardi-Goutieres syndrome 4",
+     "mondo_id": "MONDO:0012472"
+    },
+    {
+     "id": "ORPHA:576",
+     "name": "Mucolipidosis type II",
+     "mondo_id": "MONDO:0009650"
+    },
+    {
+     "id": "ORPHA:846",
+     "name": "Alpha-thalassemia",
+     "mondo_id": "MONDO:0011399"
+    },
+    {
+     "id": "OMIM:602782",
+     "name": "Histiocytosis-lymphadenopathy plus syndrome",
+     "mondo_id": "MONDO:0011273"
+    },
+    {
+     "id": "ORPHA:39812",
+     "name": "Graft versus host disease",
+     "mondo_id": "MONDO:0013730"
+    },
+    {
+     "id": "OMIM:612840",
+     "name": "Leukocyte adhesion deficiency, type III",
+     "mondo_id": "MONDO:0013016"
+    },
+    {
+     "id": "OMIM:618982",
+     "name": "Immunodeficiency 72 with autoinflammation",
+     "mondo_id": "MONDO:0033551"
+    },
+    {
+     "id": "OMIM:609628",
+     "name": "Majeed syndrome",
+     "mondo_id": "MONDO:0012316"
+    },
+    {
+     "id": "OMIM:616828",
+     "name": "Congenital disorder of glycosylation, type IIO",
+     "mondo_id": "MONDO:0014789"
+    },
+    {
+     "id": "ORPHA:85450",
+     "name": "Hereditary amyloidosis with primary renal involvement",
+     "mondo_id": "MONDO:0007099"
+    },
+    {
+     "id": "OMIM:611291",
+     "name": "Immunodeficiency 124, severe combined",
+     "mondo_id": "MONDO:0012650"
+    },
+    {
+     "id": "ORPHA:2072",
+     "name": "Gaucher disease-ophthalmoplegia-cardiovascular calcification syndrome",
+     "mondo_id": "MONDO:0009268"
+    },
+    {
+     "id": "OMIM:608013",
+     "name": "Gaucher disease, perinatal lethal",
+     "mondo_id": "MONDO:0011945"
+    },
+    {
+     "id": "ORPHA:353298",
+     "name": "Roifman syndrome",
+     "mondo_id": "MONDO:0014722"
+    },
+    {
+     "id": "ORPHA:457077",
+     "name": "TAFRO syndrome",
+     "mondo_id": "MONDO:0018702"
+    },
+    {
+     "id": "OMIM:614866",
+     "name": "Peroxisome biogenesis disorder 5A (Zellweger)",
+     "mondo_id": "MONDO:0013932"
+    },
+    {
+     "id": "OMIM:232500",
+     "name": "Glycogen storage disease IV",
+     "mondo_id": "MONDO:0009292"
+    },
+    {
+     "id": "OMIM:619013",
+     "name": "Rajab interstitial lung disease with brain calcifications 2",
+     "mondo_id": "MONDO:0100220"
+    },
+    {
+     "id": "OMIM:307800",
+     "name": "Hypophosphatemic rickets, X-linked dominant",
+     "mondo_id": "MONDO:0010619"
+    },
+    {
+     "id": "ORPHA:51",
+     "name": "Aicardi-Goutières syndrome",
+     "mondo_id": "MONDO:0018866"
+    },
+    {
+     "id": "ORPHA:93400",
+     "name": "Congenital sialidosis type 2",
+     "mondo_id": "MONDO:0019682"
+    },
+    {
+     "id": "OMIM:259720",
+     "name": "Osteopetrosis, autosomal recessive 5",
+     "mondo_id": "MONDO:0009817"
+    },
+    {
+     "id": "OMIM:614592",
+     "name": "Bent bone dysplasia syndrome",
+     "mondo_id": "MONDO:0013815"
+    },
+    {
+     "id": "ORPHA:79330",
+     "name": "MOGS-CDG",
+     "mondo_id": "MONDO:0011629"
+    },
+    {
+     "id": "ORPHA:3166",
+     "name": "Sialuria",
+     "mondo_id": "MONDO:0010028"
+    },
+    {
+     "id": "OMIM:618261",
+     "name": "Lymphoproliferative syndrome 3",
+     "mondo_id": "MONDO:0034054"
+    },
+    {
+     "id": "OMIM:612541",
+     "name": "Neutropenia, severe congenital, 4, autosomal recessive",
+     "mondo_id": "MONDO:0012930"
+    },
+    {
+     "id": "ORPHA:354",
+     "name": "GM1 gangliosidosis",
+     "mondo_id": "MONDO:0018149"
+    },
+    {
+     "id": "ORPHA:464329",
+     "name": "Kaposiform lymphangiomatosis",
+     "mondo_id": "MONDO:0018736"
+    },
+    {
+     "id": "ORPHA:331206",
+     "name": "T-B-NK+  severe combined immunodeficiency due to complete RAG1/2 deficiency",
+     "mondo_id": "MONDO:0011086"
+    },
+    {
+     "id": "OMIM:209950",
+     "name": "Immunodeficiency 27A, mycobacteriosis, AR",
+     "mondo_id": "MONDO:0008856"
+    },
+    {
+     "id": "ORPHA:167",
+     "name": "Chédiak-Higashi syndrome",
+     "mondo_id": "MONDO:0008963"
+    },
+    {
+     "id": "ORPHA:3260",
+     "name": "Idiopathic hypereosinophilic syndrome",
+     "mondo_id": "MONDO:0011895"
+    },
+    {
+     "id": "OMIM:621439",
+     "name": "Neutropenia, severe congenital, 12, autosomal recessive",
+     "mondo_id": "MONDO:0980936"
+    },
+    {
+     "id": "ORPHA:210136",
+     "name": "Pulmonary fibrosis-hepatic hyperplasia-bone marrow hypoplasia syndrome",
+     "mondo_id": "MONDO:0016214"
+    },
+    {
+     "id": "ORPHA:31150",
+     "name": "Tangier disease",
+     "mondo_id": "MONDO:0008783"
+    },
+    {
+     "id": "ORPHA:313855",
+     "name": "FGFR2-related bent bone dysplasia",
+     "mondo_id": "MONDO:0013815"
+    },
+    {
+     "id": "OMIM:613101",
+     "name": "Hemophagocytic lymphohistiocytosis, familial, 5",
+     "mondo_id": "MONDO:0013135"
+    },
+    {
+     "id": "ORPHA:84081",
+     "name": "Senior-Boichis syndrome",
+     "mondo_id": "MONDO:0019394"
+    },
+    {
+     "id": "OMIM:618955",
+     "name": "Retinitis pigmentosa 89",
+     "mondo_id": "MONDO:0030071"
+    },
+    {
+     "id": "ORPHA:444490",
+     "name": "Familial chylomicronemia syndrome",
+     "mondo_id": "MONDO:0018637"
+    },
+    {
+     "id": "OMIM:312500",
+     "name": "Reticuloendotheliosis, X-linked",
+     "mondo_id": "MONDO:0010721"
+    },
+    {
+     "id": "OMIM:278000",
+     "name": "Lysosomal acid lipase deficiency",
+     "mondo_id": "MONDO:0019149"
+    },
+    {
+     "id": "OMIM:611590",
+     "name": "Renal tubular acidosis, distal, with hemolytic anemia",
+     "mondo_id": "MONDO:0012700"
+    },
+    {
+     "id": "OMIM:273680",
+     "name": "Thanatophoric dysplasia, glasgow variant",
+     "mondo_id": "MONDO:0010114"
+    },
+    {
+     "id": "ORPHA:397612",
+     "name": "Macrocephaly-developmental delay syndrome",
+     "mondo_id": "MONDO:0014289"
+    },
+    {
+     "id": "OMIM:603554",
+     "name": "Omenn syndrome",
+     "mondo_id": "MONDO:0011338"
+    },
+    {
+     "id": "ORPHA:158057",
+     "name": "Acquired hemophagocytic lymphohistiocytosis associated with malignant disease",
+     "mondo_id": "MONDO:0015544"
+    },
+    {
+     "id": "OMIM:609136",
+     "name": "Peripheral demyelinating neuropathy, central dysmyelination, Waardenburg syndrome, and Hirschsprung disease",
+     "mondo_id": "MONDO:0012198"
+    },
+    {
+     "id": "OMIM:620376",
+     "name": "Autoinflammatory disease, systemic, with vasculitis",
+     "mondo_id": "MONDO:0957271"
+    },
+    {
+     "id": "ORPHA:79322",
+     "name": "DPM1-CDG",
+     "mondo_id": "MONDO:0012123"
+    },
+    {
+     "id": "OMIM:619503",
+     "name": "Neurodevelopmental disorder with hypotonia and dysmorphic facies",
+     "mondo_id": "MONDO:0859185"
+    },
+    {
+     "id": "OMIM:309900",
+     "name": "Mucopolysaccharidosis, type II",
+     "mondo_id": "MONDO:0010674"
+    },
+    {
+     "id": "ORPHA:309282",
+     "name": "Alpha-mannosidosis, infantile form",
+     "mondo_id": "MONDO:0017732"
+    },
+    {
+     "id": "OMIM:618935",
+     "name": "Chronic granulomatous disease 5, autosomal recessive",
+     "mondo_id": "MONDO:0030066"
+    },
+    {
+     "id": "OMIM:601277",
+     "name": "Ichthyosis, congenital, autosomal recessive 4A",
+     "mondo_id": "MONDO:0011026"
+    },
+    {
+     "id": "OMIM:610377",
+     "name": "Mevalonic aciduria",
+     "mondo_id": "MONDO:0012481"
+    },
+    {
+     "id": "ORPHA:205",
+     "name": "Crigler-Najjar syndrome",
+     "mondo_id": "MONDO:0009044"
+    },
+    {
+     "id": "OMIM:242700",
+     "name": "Immune defect due to absence of thymus",
+     "mondo_id": "MONDO:0009451"
+    },
+    {
+     "id": "OMIM:621254",
+     "name": "Immunodeficiency 133 with ectodermal dysplasia with or without peripheral neuropathy",
+     "mondo_id": "MONDO:0979570"
+    },
+    {
+     "id": "ORPHA:466934",
+     "name": "VPS11-related autosomal recessive hypomyelinating leukodystrophy",
+     "mondo_id": "MONDO:0014732"
+    },
+    {
+     "id": "OMIM:618986",
+     "name": "Immunodeficiency 73B with defective neutrophil chemotaxis and lymphopenia",
+     "mondo_id": "MONDO:0033554"
+    },
+    {
+     "id": "OMIM:256540",
+     "name": "Galactosialidosis",
+     "mondo_id": "MONDO:0009737"
+    },
+    {
+     "id": "OMIM:613563",
+     "name": "Noonan syndrome-like disorder with or without juvenile myelomonocytic leukemia",
+     "mondo_id": "MONDO:0013308"
+    },
+    {
+     "id": "OMIM:619488",
+     "name": "DEGCAGS syndrome",
+     "mondo_id": "MONDO:0859181"
+    },
+    {
+     "id": "OMIM:246400",
+     "name": "Letterer-Siwe disease",
+     "mondo_id": "MONDO:0009519"
+    },
+    {
+     "id": "ORPHA:79237",
+     "name": "Galactokinase deficiency",
+     "mondo_id": "MONDO:0009255"
+    },
+    {
+     "id": "ORPHA:275761",
+     "name": "Lysosomal acid lipase deficiency",
+     "mondo_id": "MONDO:0800449"
+    },
+    {
+     "id": "ORPHA:263487",
+     "name": "COG5-CDG",
+     "mondo_id": "MONDO:0013325"
+    },
+    {
+     "id": "ORPHA:309155",
+     "name": "Sandhoff disease, infantile form",
+     "mondo_id": "MONDO:0017721"
+    },
+    {
+     "id": "ORPHA:731",
+     "name": "Autosomal recessive polycystic kidney disease",
+     "mondo_id": "MONDO:0009889"
+    },
+    {
+     "id": "ORPHA:79255",
+     "name": "GM1 gangliosidosis type 1",
+     "mondo_id": "MONDO:0009260"
+    },
+    {
+     "id": "ORPHA:824",
+     "name": "Primary myelofibrosis",
+     "mondo_id": "MONDO:0009692"
+    },
+    {
+     "id": "ORPHA:505248",
+     "name": "Mucopolysaccharidosis-like syndrome with congenital heart defects and hematopoietic disorders",
+     "mondo_id": "MONDO:0015012"
+    },
+    {
+     "id": "ORPHA:333",
+     "name": "Farber disease",
+     "mondo_id": "MONDO:0009218"
+    },
+    {
+     "id": "OMIM:266920",
+     "name": "Short-rib thoracic dysplasia 9 with or without polydactyly",
+     "mondo_id": "MONDO:0009964"
+    },
+    {
+     "id": "OMIM:614885",
+     "name": "Peroxisome biogenesis disorder 11B",
+     "mondo_id": "MONDO:0013950"
+    },
+    {
+     "id": "OMIM:621405",
+     "name": "Immunodeficiency 134 (Epstein-Barr virus-specific)",
+     "mondo_id": "MONDO:0980729"
+    },
+    {
+     "id": "ORPHA:77259",
+     "name": "Gaucher disease type 1",
+     "mondo_id": "MONDO:0009265"
+    },
+    {
+     "id": "ORPHA:168569",
+     "name": "H syndrome",
+     "mondo_id": "MONDO:0011273"
+    },
+    {
+     "id": "ORPHA:35078",
+     "name": "T-B+NK- severe combined immunodeficiency due to JAK3 deficiency",
+     "mondo_id": "MONDO:0010938"
+    },
+    {
+     "id": "ORPHA:1333",
+     "name": "Familial pancreatic carcinoma",
+     "mondo_id": "MONDO:0015278"
+    },
+    {
+     "id": "OMIM:618534",
+     "name": "Immunodeficiency 64",
+     "mondo_id": "MONDO:0032803"
+    },
+    {
+     "id": "OMIM:619858",
+     "name": "Autoinflammatory-pancytopenia syndrome",
+     "mondo_id": "MONDO:0800132"
+    },
+    {
+     "id": "OMIM:619924",
+     "name": "Immunodeficiency 105, severe combined",
+     "mondo_id": "MONDO:0800104"
+    },
+    {
+     "id": "ORPHA:98850",
+     "name": "Aggressive systemic mastocytosis",
+     "mondo_id": "MONDO:0020333"
+    },
+    {
+     "id": "OMIM:608233",
+     "name": "Hermansky-Pudlak syndrome 2",
+     "mondo_id": "MONDO:0011997"
+    },
+    {
+     "id": "ORPHA:135",
+     "name": "CACH syndrome",
+     "mondo_id": "MONDO:0800448"
+    },
+    {
+     "id": "ORPHA:79124",
+     "name": "Hepatic veno-occlusive disease-immunodeficiency syndrome",
+     "mondo_id": "MONDO:0009338"
+    },
+    {
+     "id": "OMIM:617610",
+     "name": "Polycystic kidney disease 5",
+     "mondo_id": "MONDO:0033281"
+    },
+    {
+     "id": "OMIM:231095",
+     "name": "Ghosal hematodiaphyseal syndrome",
+     "mondo_id": "MONDO:0009274"
+    },
+    {
+     "id": "ORPHA:2590",
+     "name": "Spinal muscular atrophy-progressive myoclonic epilepsy syndrome",
+     "mondo_id": "MONDO:0008045"
+    },
+    {
+     "id": "ORPHA:79302",
+     "name": "Congenital bile acid synthesis defect type 3",
+     "mondo_id": "MONDO:0013439"
+    },
+    {
+     "id": "ORPHA:169160",
+     "name": "T-B+NK+ severe combined immunodeficiency due to CD3delta/CD3epsilon/CD3zeta deficiency",
+     "mondo_id": "MONDO:0015703"
+    },
+    {
+     "id": "OMIM:620962",
+     "name": "Cholestasis, progressive familial intrahepatic, 13",
+     "mondo_id": "MONDO:0975807"
+    },
+    {
+     "id": "ORPHA:228426",
+     "name": "Syndromic multisystem autoimmune disease due to Itch deficiency",
+     "mondo_id": "MONDO:0013245"
+    },
+    {
+     "id": "ORPHA:33574",
+     "name": "Glutamate-cysteine ligase deficiency",
+     "mondo_id": "MONDO:0009259"
+    },
+    {
+     "id": "OMIM:615952",
+     "name": "Autoimmune disease, multisystem, infantile-onset, 1",
+     "mondo_id": "MONDO:0014414"
+    },
+    {
+     "id": "ORPHA:79333",
+     "name": "COG7-CDG",
+     "mondo_id": "MONDO:0012118"
+    },
+    {
+     "id": "ORPHA:397709",
+     "name": "Intellectual disability-coarse face-macrocephaly-cerebellar hypotrophy syndrome",
+     "mondo_id": "MONDO:0014601"
+    },
+    {
+     "id": "ORPHA:85212",
+     "name": "Fetal Gaucher disease",
+     "mondo_id": "MONDO:0011945"
+    },
+    {
+     "id": "OMIM:613673",
+     "name": "Anemia, dyserythropoietic congenital, type IV",
+     "mondo_id": "MONDO:0013355"
+    },
+    {
+     "id": "OMIM:616738",
+     "name": "Radioulnar synostosis with amegakaryocytic thrombocytopenia 2",
+     "mondo_id": "MONDO:0014758"
+    },
+    {
+     "id": "ORPHA:781",
+     "name": "Q fever",
+     "mondo_id": "MONDO:0019186"
+    },
+    {
+     "id": "ORPHA:231226",
+     "name": "Unstable beta globin chain variant disease",
+     "mondo_id": "MONDO:0011381"
+    },
+    {
+     "id": "OMIM:301000",
+     "name": "Wiskott-Aldrich syndrome",
+     "mondo_id": "MONDO:0010518"
+    }
+   ]
+  },
+  "metadata": {
+   "source": "HPO (JAX Ontology) network annotation",
+   "term_id": "HP:0001433",
+   "total": 190,
+   "returned": 190
+  }
+ },
+ "{\"limit\": 500, \"term_id\": \"HP:0001263\"}": {
+  "status": "success",
+  "data": {
+   "diseases": [
+    {
+     "id": "OMIM:614946",
+     "name": "Combined oxidative phosphorylation deficiency 14",
+     "mondo_id": "MONDO:0013986"
+    },
+    {
+     "id": "OMIM:613776",
+     "name": "Chromosome 17p13.1 deletion syndrome",
+     "mondo_id": "MONDO:0013415"
+    },
+    {
+     "id": "OMIM:620166",
+     "name": "Muscular dystrophy, congenital, with or without seizures",
+     "mondo_id": "MONDO:0859336"
+    },
+    {
+     "id": "OMIM:615833",
+     "name": "Epileptic encephalopathy, early infantile, 21",
+     "mondo_id": "MONDO:0014360"
+    },
+    {
+     "id": "OMIM:615817",
+     "name": "Intellectual developmental disorder, autosomal recessive 43",
+     "mondo_id": "MONDO:0014354"
+    },
+    {
+     "id": "ORPHA:89844",
+     "name": "Lissencephaly syndrome, Norman-Roberts type",
+     "mondo_id": "MONDO:0009760"
+    },
+    {
+     "id": "OMIM:618451",
+     "name": "Neurodegeneration, early-onset, with choreoathetoid movements and microcytic anemia",
+     "mondo_id": "MONDO:0032758"
+    },
+    {
+     "id": "ORPHA:847",
+     "name": "X-linked alpha-thalassemia-intellectual disability syndrome",
+     "mondo_id": "MONDO:0010519"
+    },
+    {
+     "id": "OMIM:617668",
+     "name": "Encephalopathy, neonatal severe, with lactic acidosis and brain abnormalities",
+     "mondo_id": "MONDO:0060562"
+    },
+    {
+     "id": "OMIM:614457",
+     "name": "Ichthyosis, spastic quadriplegia, and impaired intellectual development",
+     "mondo_id": "MONDO:0013760"
+    },
+    {
+     "id": "OMIM:619080",
+     "name": "Kilquist syndrome",
+     "mondo_id": "MONDO:0033664"
+    },
+    {
+     "id": "ORPHA:468699",
+     "name": "SLC39A8-CDG",
+     "mondo_id": "MONDO:0014746"
+    },
+    {
+     "id": "OMIM:621250",
+     "name": "Developmental and epileptic encephalopathy 118",
+     "mondo_id": "MONDO:0979238"
+    },
+    {
+     "id": "OMIM:615476",
+     "name": "Developmental and epileptic encephalopathy 18",
+     "mondo_id": "MONDO:0014201"
+    },
+    {
+     "id": "OMIM:616025",
+     "name": "Glycosylphosphatidylinositol biosynthesis defect 11",
+     "mondo_id": "MONDO:0014457"
+    },
+    {
+     "id": "OMIM:619877",
+     "name": "Dentici-Novelli neurodevelopmental syndrome",
+     "mondo_id": "MONDO:0859251"
+    },
+    {
+     "id": "OMIM:617507",
+     "name": "Peho-Like syndrome",
+     "mondo_id": "MONDO:0020495"
+    },
+    {
+     "id": "OMIM:621414",
+     "name": "Brain small vessel disease 2B, autosomal recessive",
+     "mondo_id": "MONDO:0980747"
+    },
+    {
+     "id": "OMIM:615760",
+     "name": "Microcephaly, progressive, with seizures and cerebral and cerebellar atrophy",
+     "mondo_id": "MONDO:0014335"
+    },
+    {
+     "id": "OMIM:616801",
+     "name": "Hypotonia, infantile, with psychomotor retardation and characteristic facies 2",
+     "mondo_id": "MONDO:0014777"
+    },
+    {
+     "id": "ORPHA:912",
+     "name": "Zellweger syndrome",
+     "mondo_id": "MONDO:0019609"
+    },
+    {
+     "id": "OMIM:621506",
+     "name": "Neurodevelopmental disorder with parkinsonism or other movement abnormalities",
+     "mondo_id": "MONDO:0980990"
+    },
+    {
+     "id": "OMIM:614959",
+     "name": "Developmental and epileptic encephalopathy 14",
+     "mondo_id": "MONDO:0013989"
+    },
+    {
+     "id": "ORPHA:798",
+     "name": "Schinzel-Giedion syndrome",
+     "mondo_id": "MONDO:0010010"
+    },
+    {
+     "id": "OMIM:620149",
+     "name": "Developmental and epileptic encephalopathy 110",
+     "mondo_id": "MONDO:0859327"
+    },
+    {
+     "id": "OMIM:608779",
+     "name": "Congenital disorder of glycosylation, type IIe",
+     "mondo_id": "MONDO:0012118"
+    },
+    {
+     "id": "ORPHA:208447",
+     "name": "Bilateral generalized polymicrogyria",
+     "mondo_id": "MONDO:0013907"
+    },
+    {
+     "id": "OMIM:619758",
+     "name": "Tessadori-van Haaften neurodevelopmental syndrome 1",
+     "mondo_id": "MONDO:0030729"
+    },
+    {
+     "id": "OMIM:617281",
+     "name": "Epileptic encephalopathy, early infantile, 49",
+     "mondo_id": "MONDO:0015002"
+    },
+    {
+     "id": "OMIM:618890",
+     "name": "Neurodevelopmental disorder and structural brain anomalies with or without seizures and spasticity",
+     "mondo_id": "MONDO:0030046"
+    },
+    {
+     "id": "OMIM:614388",
+     "name": "Encephalopathy, lethal, due to defective mitochondrial peroxisomal fission 1",
+     "mondo_id": "MONDO:0013726"
+    },
+    {
+     "id": "OMIM:618346",
+     "name": "Microcephaly, growth deficiency, seizures, and brain malformations",
+     "mondo_id": "MONDO:0032690"
+    },
+    {
+     "id": "OMIM:301058",
+     "name": "Developmental and epileptic encephalopathy 90",
+     "mondo_id": "MONDO:0025353"
+    },
+    {
+     "id": "OMIM:615574",
+     "name": "Asparagine synthetase deficiency",
+     "mondo_id": "MONDO:0014258"
+    },
+    {
+     "id": "OMIM:300243",
+     "name": "Intellectual developmental disorder, X-linked syndromic, Christianson type",
+     "mondo_id": "MONDO:0010278"
+    },
+    {
+     "id": "OMIM:621421",
+     "name": "Ramond-Elliott neurodevelopmental syndrome",
+     "mondo_id": "MONDO:0980751"
+    },
+    {
+     "id": "ORPHA:423479",
+     "name": "X-linked intellectual disability-limb spasticity-retinal dystrophy-arginine vasopressin deficiency",
+     "mondo_id": "MONDO:0018495"
+    },
+    {
+     "id": "ORPHA:485421",
+     "name": "MFF-related encephalopathy due to mitochondrial and peroxisomal fission defect",
+     "mondo_id": "MONDO:0014905"
+    },
+    {
+     "id": "OMIM:600348",
+     "name": "Band heterotopia",
+     "mondo_id": "MONDO:0010873"
+    },
+    {
+     "id": "ORPHA:941",
+     "name": "D-glyceric aciduria",
+     "mondo_id": "MONDO:0009070"
+    },
+    {
+     "id": "OMIM:617481",
+     "name": "Neurodevelopmental disorder with microcephaly, hypotonia, and variable brain anomalies",
+     "mondo_id": "MONDO:0060490"
+    },
+    {
+     "id": "OMIM:621436",
+     "name": "Microcephaly, progressive, with simplified gyral pattern and cerebellar hypoplasia",
+     "mondo_id": "MONDO:0980935"
+    },
+    {
+     "id": "OMIM:618156",
+     "name": "Squalene synthase deficiency",
+     "mondo_id": "MONDO:0032566"
+    },
+    {
+     "id": "OMIM:620888",
+     "name": "Neurodevelopmental disorder with characteristic facial and ectodermal features and tetraparesis 1",
+     "mondo_id": "MONDO:0975745"
+    },
+    {
+     "id": "OMIM:614653",
+     "name": "Neuropathy, hereditary sensory and autonomic, type VI",
+     "mondo_id": "MONDO:0013839"
+    },
+    {
+     "id": "OMIM:620806",
+     "name": "Developmental and epileptic encephalopathy 116",
+     "mondo_id": "MONDO:0970945"
+    },
+    {
+     "id": "OMIM:617771",
+     "name": "Developmental and epileptic encephalopathy 57",
+     "mondo_id": "MONDO:0033366"
+    },
+    {
+     "id": "OMIM:616900",
+     "name": "Hypotonia, infantile, with psychomotor retardation and characteristic facies 3",
+     "mondo_id": "MONDO:0014823"
+    },
+    {
+     "id": "OMIM:620469",
+     "name": "Cranial dysinnervation disorder, congenital, with absent corneal reflex and developmental delay",
+     "mondo_id": "MONDO:0957563"
+    },
+    {
+     "id": "OMIM:618006",
+     "name": "Leukodystrophy, hypomyelinating, 17",
+     "mondo_id": "MONDO:0054817"
+    },
+    {
+     "id": "OMIM:617988",
+     "name": "Jaberi-Elahi syndrome",
+     "mondo_id": "MONDO:0060711"
+    },
+    {
+     "id": "OMIM:617065",
+     "name": "Epileptic encephalopathy, early infantile, 40",
+     "mondo_id": "MONDO:0014895"
+    },
+    {
+     "id": "OMIM:619814",
+     "name": "Developmental and epileptic encephalopathy 101",
+     "mondo_id": "MONDO:0030727"
+    },
+    {
+     "id": "OMIM:618437",
+     "name": "Epileptic encephalopathy, early infantile, 75",
+     "mondo_id": "MONDO:0032752"
+    },
+    {
+     "id": "OMIM:605013",
+     "name": "Microhydranencephaly",
+     "mondo_id": "MONDO:0011504"
+    },
+    {
+     "id": "OMIM:618501",
+     "name": "Cerebellar atrophy with seizures and variable developmental delay",
+     "mondo_id": "MONDO:0032788"
+    },
+    {
+     "id": "OMIM:601186",
+     "name": "Microphthalmia, syndromic 9",
+     "mondo_id": "MONDO:0011010"
+    },
+    {
+     "id": "OMIM:621533",
+     "name": "Neurodevelopmental disorder with seizures and impaired intellectual and language development",
+     "mondo_id": "MONDO:0981032"
+    },
+    {
+     "id": "OMIM:615789",
+     "name": "Short stature with microcephaly and distinctive facies",
+     "mondo_id": "MONDO:0014347"
+    },
+    {
+     "id": "OMIM:300215",
+     "name": "Lissencephaly, X-linked, 2",
+     "mondo_id": "MONDO:0010268"
+    },
+    {
+     "id": "ORPHA:289266",
+     "name": "Early-onset epileptic encephalopathy and intellectual disability due to GRIN2A mutation",
+     "mondo_id": "MONDO:0017325"
+    },
+    {
+     "id": "OMIM:616370",
+     "name": "Multiple mitochondrial dysfunctions syndrome 4",
+     "mondo_id": "MONDO:0014611"
+    },
+    {
+     "id": "OMIM:618590",
+     "name": "Neurodevelopmental disorder with brain anomalies, seizures, and scoliosis",
+     "mondo_id": "MONDO:0032824"
+    },
+    {
+     "id": "OMIM:621060",
+     "name": "Neurodevelopmental disorder with microcephaly, absent speech, and hypotonia",
+     "mondo_id": "MONDO:0976126"
+    },
+    {
+     "id": "OMIM:614300",
+     "name": "Hypermethioninemia due to adenosine kinase deficiency",
+     "mondo_id": "MONDO:0100255"
+    },
+    {
+     "id": "OMIM:616896",
+     "name": "Mitochondrial DNA depletion syndrome 14 (encephalocardiomyopathic type)",
+     "mondo_id": "MONDO:0014820"
+    },
+    {
+     "id": "OMIM:300868",
+     "name": "Multiple congenital anomalies-hypotonia-seizures syndrome 2",
+     "mondo_id": "MONDO:0010466"
+    },
+    {
+     "id": "ORPHA:439218",
+     "name": "KCNQ2-related developmental and epileptic encephalopathy",
+     "mondo_id": "MONDO:0013387"
+    },
+    {
+     "id": "OMIM:611523",
+     "name": "Pontocerebellar hypoplasia, type 6",
+     "mondo_id": "MONDO:0012683"
+    },
+    {
+     "id": "ORPHA:284417",
+     "name": "Phosphoserine aminotransferase deficiency, infantile/juvenile form",
+     "mondo_id": "MONDO:0012596"
+    },
+    {
+     "id": "OMIM:617020",
+     "name": "Epileptic encephalopathy, early infantile, 38",
+     "mondo_id": "MONDO:0014868"
+    },
+    {
+     "id": "OMIM:616763",
+     "name": "Leukodystrophy and acquired microcephaly with or without dystonia",
+     "mondo_id": "MONDO:0014766"
+    },
+    {
+     "id": "OMIM:613720",
+     "name": "Epileptic encephalopathy, early infantile, 7",
+     "mondo_id": "MONDO:0013387"
+    },
+    {
+     "id": "ORPHA:324525",
+     "name": "Hypertrophic cardiomyopathy with kidney anomalies due to mitochondrial DNA mutation",
+     "mondo_id": "MONDO:0017933"
+    },
+    {
+     "id": "OMIM:617026",
+     "name": "Pontocerebellar hypoplasia, type 2F",
+     "mondo_id": "MONDO:0014874"
+    },
+    {
+     "id": "OMIM:615236",
+     "name": "Woods syndrome",
+     "mondo_id": "MONDO:0014096"
+    },
+    {
+     "id": "OMIM:608624",
+     "name": "Midface hypoplasia, obesity, developmental delay, and neonatal hypotonia",
+     "mondo_id": "MONDO:0012076"
+    },
+    {
+     "id": "ORPHA:88643",
+     "name": "Obesity-colitis-hypothyroidism-cardiac hypertrophy-developmental delay syndrome",
+     "mondo_id": "MONDO:0019506"
+    },
+    {
+     "id": "OMIM:601678",
+     "name": "Bartter syndrome, type 1, antenatal",
+     "mondo_id": "MONDO:0100344"
+    },
+    {
+     "id": "OMIM:619951",
+     "name": "Tessadori-van Haaften neurodevelopmental syndrome 4",
+     "mondo_id": "MONDO:0031000"
+    },
+    {
+     "id": "OMIM:617557",
+     "name": "Gabriele-De vries syndrome",
+     "mondo_id": "MONDO:0044738"
+    },
+    {
+     "id": "ORPHA:1920",
+     "name": "Toluene embryopathy",
+     "mondo_id": "MONDO:0016016"
+    },
+    {
+     "id": "OMIM:620968",
+     "name": "Microphthalmia/coloboma 13",
+     "mondo_id": "MONDO:0975809"
+    },
+    {
+     "id": "OMIM:611816",
+     "name": "Temple-Baraitser syndrome",
+     "mondo_id": "MONDO:0012735"
+    },
+    {
+     "id": "ORPHA:1699",
+     "name": "Trisomy 12p syndrome",
+     "mondo_id": "MONDO:0015723"
+    },
+    {
+     "id": "OMIM:618325",
+     "name": "Lissencephaly 9 with complex brainstem malformation",
+     "mondo_id": "MONDO:0032677"
+    },
+    {
+     "id": "ORPHA:2101",
+     "name": "Grubben-de Cock-Borghgraef syndrome",
+     "mondo_id": "MONDO:0009313"
+    },
+    {
+     "id": "OMIM:612337",
+     "name": "Intellectual developmental disorder, autosomal dominant 22",
+     "mondo_id": "MONDO:0012869"
+    },
+    {
+     "id": "ORPHA:1716",
+     "name": "Distal duplication 18q syndrome",
+     "mondo_id": "MONDO:0015741"
+    },
+    {
+     "id": "OMIM:606854",
+     "name": "Polymicrogyria, bilateral frontoparietal",
+     "mondo_id": "MONDO:0011738"
+    },
+    {
+     "id": "ORPHA:2077",
+     "name": "German syndrome",
+     "mondo_id": "MONDO:0009272"
+    },
+    {
+     "id": "ORPHA:488618",
+     "name": "Transketolase deficiency",
+     "mondo_id": "MONDO:0014881"
+    },
+    {
+     "id": "OMIM:621373",
+     "name": "Molybdenum cofactor deficiency, type B2",
+     "mondo_id": "MONDO:0980701"
+    },
+    {
+     "id": "OMIM:619557",
+     "name": "SIMHA syndrome",
+     "mondo_id": "MONDO:0859198"
+    },
+    {
+     "id": "OMIM:619185",
+     "name": "Joubert syndrome 37",
+     "mondo_id": "MONDO:0030933"
+    },
+    {
+     "id": "OMIM:608643",
+     "name": "Aromatic L-amino acid decarboxylase deficiency",
+     "mondo_id": "MONDO:0012084"
+    },
+    {
+     "id": "OMIM:300712",
+     "name": "Craniofacioskeletal syndrome",
+     "mondo_id": "MONDO:0010412"
+    },
+    {
+     "id": "ORPHA:488627",
+     "name": "Severe growth deficiency-strabismus-extensive dermal melanocytosis-intellectual disability syndrome",
+     "mondo_id": "MONDO:0014886"
+    },
+    {
+     "id": "OMIM:613155",
+     "name": "Muscular dystrophy-dystroglycanopathy (congenital with impaired intellectual development), type B, 1",
+     "mondo_id": "MONDO:0013159"
+    },
+    {
+     "id": "ORPHA:33",
+     "name": "Isovaleric acidemia",
+     "mondo_id": "MONDO:0009475"
+    },
+    {
+     "id": "OMIM:610188",
+     "name": "Joubert syndrome 5",
+     "mondo_id": "MONDO:0012432"
+    },
+    {
+     "id": "OMIM:602501",
+     "name": "Megalencephaly-capillary malformation-polymicrogyria syndrome, somatic",
+     "mondo_id": "MONDO:0011240"
+    },
+    {
+     "id": "ORPHA:1713",
+     "name": "17p11.2 microduplication syndrome",
+     "mondo_id": "MONDO:0012574"
+    },
+    {
+     "id": "OMIM:613563",
+     "name": "Noonan syndrome-like disorder with or without juvenile myelomonocytic leukemia",
+     "mondo_id": "MONDO:0013308"
+    },
+    {
+     "id": "OMIM:620224",
+     "name": "Neurodevelopmental disorder with hypotonia, dysmorphic facies, and skeletal anomalies, with or without seizures",
+     "mondo_id": "MONDO:0859365"
+    },
+    {
+     "id": "OMIM:612736",
+     "name": "Cerebral creatine deficiency syndrome 2",
+     "mondo_id": "MONDO:0012999"
+    },
+    {
+     "id": "OMIM:618482",
+     "name": "Generalized epilepsy with febrile seizures plus, type 10",
+     "mondo_id": "MONDO:0032777"
+    },
+    {
+     "id": "OMIM:616789",
+     "name": "Impaired intellectual development and distinctive facial features with or without cardiac defects",
+     "mondo_id": "MONDO:0014773"
+    },
+    {
+     "id": "ORPHA:1933",
+     "name": "Mitochondrial DNA depletion syndrome, encephalomyopathic form with methylmalonic aciduria",
+     "mondo_id": "MONDO:0012791"
+    },
+    {
+     "id": "OMIM:614558",
+     "name": "Epileptic encephalopathy, early infantile, 13",
+     "mondo_id": "MONDO:0013801"
+    },
+    {
+     "id": "ORPHA:293948",
+     "name": "1p21.3 microdeletion syndrome",
+     "mondo_id": "MONDO:0017405"
+    },
+    {
+     "id": "OMIM:619797",
+     "name": "Neurodevelopmental disorder with central hypotonia and dysmorphic facies",
+     "mondo_id": "MONDO:0859232"
+    },
+    {
+     "id": "ORPHA:2318",
+     "name": "Joubert syndrome with oculorenal defect",
+     "mondo_id": "MONDO:0009480"
+    },
+    {
+     "id": "ORPHA:1675",
+     "name": "Dihydropyrimidine dehydrogenase deficiency",
+     "mondo_id": "MONDO:0010130"
+    },
+    {
+     "id": "ORPHA:3055",
+     "name": "X-linked intellectual disability-hypogonadism-ichthyosis-obesity-short stature syndrome",
+     "mondo_id": "MONDO:0017614"
+    },
+    {
+     "id": "OMIM:618658",
+     "name": "Zimmermann-Laband syndrome 3",
+     "mondo_id": "MONDO:0032854"
+    },
+    {
+     "id": "ORPHA:2203",
+     "name": "Hyperlysinemia",
+     "mondo_id": "MONDO:0009388"
+    },
+    {
+     "id": "OMIM:615502",
+     "name": "Intellectual developmental disorder, autosomal dominant 21",
+     "mondo_id": "MONDO:0014213"
+    },
+    {
+     "id": "OMIM:300260",
+     "name": "Intellectual developmental disorder, X-linked syndromic, Lubs type",
+     "mondo_id": "MONDO:0010283"
+    },
+    {
+     "id": "OMIM:607454",
+     "name": "Spinocerebellar ataxia 21",
+     "mondo_id": "MONDO:0011833"
+    },
+    {
+     "id": "OMIM:618238",
+     "name": "Mitochondrial complex I deficiency, nuclear type 16",
+     "mondo_id": "MONDO:0032621"
+    },
+    {
+     "id": "OMIM:618197",
+     "name": "Myasthenic syndrome, congenital, 23, presynaptic",
+     "mondo_id": "MONDO:0032596"
+    },
+    {
+     "id": "OMIM:618876",
+     "name": "Epilepsy, progressive myoclonic, 11",
+     "mondo_id": "MONDO:0030034"
+    },
+    {
+     "id": "OMIM:617929",
+     "name": "Epileptic encephalopathy, early infantile, 60",
+     "mondo_id": "MONDO:0033369"
+    },
+    {
+     "id": "ORPHA:404454",
+     "name": "Alacrimia-choreoathetosis-liver dysfunction syndrome",
+     "mondo_id": "MONDO:0800044"
+    },
+    {
+     "id": "OMIM:621328",
+     "name": "Neurodevelopmental disorder with achalasia, polyneuropathy, and alacrima",
+     "mondo_id": "MONDO:0979875"
+    },
+    {
+     "id": "OMIM:606851",
+     "name": "Cree impaired intellectual development syndrome",
+     "mondo_id": "MONDO:0011736"
+    },
+    {
+     "id": "OMIM:610738",
+     "name": "Neutropenia, severe congenital 3, autosomal recessive",
+     "mondo_id": "MONDO:0012548"
+    },
+    {
+     "id": "ORPHA:93945",
+     "name": "X-linked intellectual disability, Porteous type",
+     "mondo_id": "MONDO:0019766"
+    },
+    {
+     "id": "OMIM:620156",
+     "name": "Cortical dysplasia, complex, with other brain malformations 11",
+     "mondo_id": "MONDO:0859332"
+    },
+    {
+     "id": "OMIM:609049",
+     "name": "Pierson syndrome",
+     "mondo_id": "MONDO:0012184"
+    },
+    {
+     "id": "ORPHA:716",
+     "name": "Phenylketonuria",
+     "mondo_id": "MONDO:0009861"
+    },
+    {
+     "id": "OMIM:618090",
+     "name": "Neurodevelopmental disorder with epilepsy and hypoplasia of the corpus callosum",
+     "mondo_id": "MONDO:0060761"
+    },
+    {
+     "id": "OMIM:604317",
+     "name": "Microcephaly 2, primary, autosomal recessive, with or without cortical malformations",
+     "mondo_id": "MONDO:0011435"
+    },
+    {
+     "id": "OMIM:301220",
+     "name": "Pigmentary disorder, reticulate, with systemic manifestations, X-linked",
+     "mondo_id": "MONDO:0010523"
+    },
+    {
+     "id": "OMIM:617173",
+     "name": "Intellectual developmental disorder with cardiac arrhythmia",
+     "mondo_id": "MONDO:0014953"
+    },
+    {
+     "id": "OMIM:617235",
+     "name": "Myoclonus, intractable, neonatal",
+     "mondo_id": "MONDO:0014979"
+    },
+    {
+     "id": "OMIM:621280",
+     "name": "Retinitis pigmentosa 100",
+     "mondo_id": "MONDO:0979574"
+    },
+    {
+     "id": "OMIM:614104",
+     "name": "Intellectual developmental disorder, autosomal dominant 7",
+     "mondo_id": "MONDO:0013578"
+    },
+    {
+     "id": "OMIM:301094",
+     "name": "Neurodevelopmental disorder with gait disturbance, dysmorphic facies and behavioral abnormalities, X-linked",
+     "mondo_id": "MONDO:0859085"
+    },
+    {
+     "id": "OMIM:615401",
+     "name": "Immunodeficiency 8",
+     "mondo_id": "MONDO:0014168"
+    },
+    {
+     "id": "ORPHA:223",
+     "name": "Arginine vasopressin resistance",
+     "mondo_id": "MONDO:0016383"
+    },
+    {
+     "id": "OMIM:620445",
+     "name": "Neurodevelopmental disorder with microcephaly and movement abnormalities",
+     "mondo_id": "MONDO:0957531"
+    },
+    {
+     "id": "ORPHA:51",
+     "name": "Aicardi-Goutières syndrome",
+     "mondo_id": "MONDO:0018866"
+    },
+    {
+     "id": "ORPHA:99802",
+     "name": "Hemimegalencephaly",
+     "mondo_id": "MONDO:0020492"
+    },
+    {
+     "id": "OMIM:274000",
+     "name": "Thrombocytopenia-absent radius syndrome",
+     "mondo_id": "MONDO:0010121"
+    },
+    {
+     "id": "OMIM:616831",
+     "name": "Luscan-Lumish syndrome",
+     "mondo_id": "MONDO:0014791"
+    },
+    {
+     "id": "OMIM:615280",
+     "name": "Cardiofaciocutaneous syndrome 4",
+     "mondo_id": "MONDO:0014114"
+    },
+    {
+     "id": "OMIM:615994",
+     "name": "Bardet-Biedl syndrome 17",
+     "mondo_id": "MONDO:0014445"
+    },
+    {
+     "id": "OMIM:607721",
+     "name": "Noonan syndrome-like with loose anagen hair 1",
+     "mondo_id": "MONDO:0054637"
+    },
+    {
+     "id": "OMIM:618362",
+     "name": "Coffin-Siris syndrome 8",
+     "mondo_id": "MONDO:0032702"
+    },
+    {
+     "id": "OMIM:613174",
+     "name": "Chromosome 5p13 duplication syndrome",
+     "mondo_id": "MONDO:0013169"
+    },
+    {
+     "id": "OMIM:620065",
+     "name": "Developmental delay, behavioral abnormalities, and neuropsychiatric disorders",
+     "mondo_id": "MONDO:0859292"
+    },
+    {
+     "id": "ORPHA:90",
+     "name": "Argininemia",
+     "mondo_id": "MONDO:0008814"
+    },
+    {
+     "id": "OMIM:619482",
+     "name": "Central hypoventilation syndrome, congenital, 2, and autonomic dysfunction",
+     "mondo_id": "MONDO:0030537"
+    },
+    {
+     "id": "OMIM:617613",
+     "name": "Multiple mitochondrial dysfunctions syndrome 5",
+     "mondo_id": "MONDO:0033282"
+    },
+    {
+     "id": "ORPHA:94147",
+     "name": "Spinocerebellar ataxia type 7",
+     "mondo_id": "MONDO:0016163"
+    },
+    {
+     "id": "OMIM:301132",
+     "name": "Orofaciodigital syndrome XXI",
+     "mondo_id": "MONDO:0975827"
+    },
+    {
+     "id": "ORPHA:93259",
+     "name": "Pfeiffer syndrome type 2",
+     "mondo_id": "MONDO:0019660"
+    },
+    {
+     "id": "ORPHA:821",
+     "name": "Sotos syndrome",
+     "mondo_id": "MONDO:0019349"
+    },
+    {
+     "id": "OMIM:615102",
+     "name": "Tyshchenko syndrome",
+     "mondo_id": "MONDO:0014044"
+    },
+    {
+     "id": "OMIM:619575",
+     "name": "Developmental delay with or without intellectual impairment or behavioral abnormalities",
+     "mondo_id": "MONDO:0859199"
+    },
+    {
+     "id": "OMIM:256710",
+     "name": "Elejalde disease",
+     "mondo_id": "MONDO:0009742"
+    },
+    {
+     "id": "ORPHA:2169",
+     "name": "Methylcobalamin deficiency type cblE",
+     "mondo_id": "MONDO:0009354"
+    },
+    {
+     "id": "OMIM:615828",
+     "name": "Vulto-van Silfout-de Vries syndrome",
+     "mondo_id": "MONDO:0014357"
+    },
+    {
+     "id": "OMIM:203700",
+     "name": "Mitochondrial DNA depletion syndrome 4A (Alpers type)",
+     "mondo_id": "MONDO:0008758"
+    },
+    {
+     "id": "ORPHA:411543",
+     "name": "Severe phosphoribosylpyrophosphate synthetase superactivity",
+     "mondo_id": "MONDO:0018464"
+    },
+    {
+     "id": "OMIM:234500",
+     "name": "Hartnup disorder",
+     "mondo_id": "MONDO:0009324"
+    },
+    {
+     "id": "OMIM:613544",
+     "name": "Chromosome 6q11-q14 deletion syndrome",
+     "mondo_id": "MONDO:0013299"
+    },
+    {
+     "id": "OMIM:301029",
+     "name": "Shukla-Vernon syndrome",
+     "mondo_id": "MONDO:0026727"
+    },
+    {
+     "id": "ORPHA:96169",
+     "name": "Koolen-De Vries syndrome",
+     "mondo_id": "MONDO:0012496"
+    },
+    {
+     "id": "OMIM:609056",
+     "name": "Salt and pepper developmental regression syndrome",
+     "mondo_id": "MONDO:0018274"
+    },
+    {
+     "id": "OMIM:614228",
+     "name": "Charcot-marie-tooth disease, axonal, type 2O",
+     "mondo_id": "MONDO:0013644"
+    },
+    {
+     "id": "OMIM:245349",
+     "name": "Pyruvate dehydrogenase e3-binding protein deficiency",
+     "mondo_id": "MONDO:0009503"
+    },
+    {
+     "id": "ORPHA:329284",
+     "name": "Beta-propeller protein-associated neurodegeneration",
+     "mondo_id": "MONDO:0010476"
+    },
+    {
+     "id": "OMIM:616540",
+     "name": "Epilepsy, progressive myoclonic, 9",
+     "mondo_id": "MONDO:0014685"
+    },
+    {
+     "id": "ORPHA:494344",
+     "name": "RERE-related neurodevelopmental syndrome",
+     "mondo_id": "MONDO:0014857"
+    },
+    {
+     "id": "ORPHA:927",
+     "name": "Hyperammonemia due to N-acetylglutamate synthase deficiency",
+     "mondo_id": "MONDO:0009377"
+    },
+    {
+     "id": "ORPHA:391408",
+     "name": "Primary microcephaly-mild intellectual disability-young-onset diabetes syndrome",
+     "mondo_id": "MONDO:0018320"
+    },
+    {
+     "id": "ORPHA:444051",
+     "name": "20q11.2 microdeletion syndrome",
+     "mondo_id": "MONDO:0018633"
+    },
+    {
+     "id": "ORPHA:79312",
+     "name": "Vitamin B12-unresponsive methylmalonic acidemia type mut-",
+     "mondo_id": "MONDO:0019267"
+    },
+    {
+     "id": "OMIM:619876",
+     "name": "Neurodevelopmental disorder with microcephaly, hypotonia, nystagmus, and seizures",
+     "mondo_id": "MONDO:0859250"
+    },
+    {
+     "id": "OMIM:617799",
+     "name": "Intellectual developmental disorder, autosomal dominant 54",
+     "mondo_id": "MONDO:0030920"
+    },
+    {
+     "id": "ORPHA:357175",
+     "name": "Short ulna-dysmorphism-hypotonia-intellectual disability syndrome",
+     "mondo_id": "MONDO:0014067"
+    },
+    {
+     "id": "OMIM:607208",
+     "name": "Epileptic encephalopathy, early infantile, 6 (Dravet syndrome)",
+     "mondo_id": "MONDO:0100079"
+    },
+    {
+     "id": "ORPHA:300305",
+     "name": "11p15.4 microduplication syndrome",
+     "mondo_id": "MONDO:0017580"
+    },
+    {
+     "id": "OMIM:239300",
+     "name": "Hyperphosphatasia with impaired intellectual development syndrome 1",
+     "mondo_id": "MONDO:0009398"
+    },
+    {
+     "id": "OMIM:614615",
+     "name": "Joubert syndrome 17",
+     "mondo_id": "MONDO:0013824"
+    },
+    {
+     "id": "ORPHA:2510",
+     "name": "Micro syndrome",
+     "mondo_id": "MONDO:0016649"
+    },
+    {
+     "id": "OMIM:619229",
+     "name": "Kohlschutter-Tonz syndrome-like",
+     "mondo_id": "MONDO:0030990"
+    },
+    {
+     "id": "OMIM:613385",
+     "name": "Autoimmune disease, multisystem, with facial dysmorphism",
+     "mondo_id": "MONDO:0013245"
+    },
+    {
+     "id": "ORPHA:1441",
+     "name": "Ring chromosome 17 syndrome",
+     "mondo_id": "MONDO:0015433"
+    },
+    {
+     "id": "ORPHA:363429",
+     "name": "Autosomal recessive cerebellar ataxia-pyramidal signs-nystagmus-oculomotor apraxia syndrome",
+     "mondo_id": "MONDO:0018189"
+    },
+    {
+     "id": "OMIM:614037",
+     "name": "Leukotriene C4 synthase deficiency",
+     "mondo_id": "MONDO:0013539"
+    },
+    {
+     "id": "OMIM:618357",
+     "name": "Epilepsy, idiopathic generalized, susceptibility to, 15",
+     "mondo_id": "MONDO:0032699"
+    },
+    {
+     "id": "OMIM:617519",
+     "name": "Neurodevelopmental disorder with hypotonia, neuropathy, and deafness",
+     "mondo_id": "MONDO:0060496"
+    },
+    {
+     "id": "OMIM:233910",
+     "name": "Hyperphenylalaninemia, BH4-deficient, B",
+     "mondo_id": "MONDO:0100186"
+    },
+    {
+     "id": "ORPHA:1667",
+     "name": "Wolcott-Rallison syndrome",
+     "mondo_id": "MONDO:0009192"
+    },
+    {
+     "id": "OMIM:117360",
+     "name": "Spinocerebellar ataxia 29, congenital nonprogressive",
+     "mondo_id": "MONDO:0007298"
+    },
+    {
+     "id": "ORPHA:99776",
+     "name": "Mosaic trisomy 9 syndrome",
+     "mondo_id": "MONDO:0020490"
+    },
+    {
+     "id": "OMIM:621150",
+     "name": "Neurodevelopmental disorder with thin corpus callosum, hypotonia, and absent language",
+     "mondo_id": "MONDO:0976263"
+    },
+    {
+     "id": "ORPHA:275761",
+     "name": "Lysosomal acid lipase deficiency",
+     "mondo_id": "MONDO:0800449"
+    },
+    {
+     "id": "OMIM:249900",
+     "name": "Metachromatic leukodystrophy due to saposin B deficiency",
+     "mondo_id": "MONDO:0009590"
+    },
+    {
+     "id": "OMIM:300000",
+     "name": "Opitz GBBB syndrome",
+     "mondo_id": "MONDO:0010222"
+    },
+    {
+     "id": "OMIM:300804",
+     "name": "Joubert syndrome 10",
+     "mondo_id": "MONDO:0010431"
+    },
+    {
+     "id": "OMIM:308205",
+     "name": "IFAP syndrome with or without BRESHECK syndrome",
+     "mondo_id": "MONDO:0100213"
+    },
+    {
+     "id": "OMIM:616007",
+     "name": "Cataracts, growth hormone deficiency, sensory neuropathy, sensorineural hearing loss, and skeletal dysplasia",
+     "mondo_id": "MONDO:0014455"
+    },
+    {
+     "id": "ORPHA:171829",
+     "name": "6q16 microdeletion syndrome",
+     "mondo_id": "MONDO:0015749"
+    },
+    {
+     "id": "OMIM:617977",
+     "name": "Neurodevelopmental disorder with spastic quadriplegia and brain abnormalities with or without seizures",
+     "mondo_id": "MONDO:0060704"
+    },
+    {
+     "id": "OMIM:616084",
+     "name": "Sideroblastic anemia with B-cell immunodeficiency, periodic fevers, and developmental delay",
+     "mondo_id": "MONDO:0014487"
+    },
+    {
+     "id": "ORPHA:369950",
+     "name": "Intellectual disability-seizures-macrocephaly-obesity syndrome",
+     "mondo_id": "MONDO:0018248"
+    },
+    {
+     "id": "OMIM:619576",
+     "name": "Cerebellar ataxia, brain abnormalities, and cardiac conduction defects",
+     "mondo_id": "MONDO:0859200"
+    },
+    {
+     "id": "ORPHA:477817",
+     "name": "PMP22-RAI1 contiguous gene duplication syndrome",
+     "mondo_id": "MONDO:0014723"
+    },
+    {
+     "id": "OMIM:617303",
+     "name": "Mucopolysaccharidosis-Plus syndrome",
+     "mondo_id": "MONDO:0015012"
+    },
+    {
+     "id": "ORPHA:352596",
+     "name": "Progressive myoclonic epilepsy with dystonia",
+     "mondo_id": "MONDO:0018126"
+    },
+    {
+     "id": "OMIM:620098",
+     "name": "Developmental delay with variable intellectual disability and dysmorphic facies",
+     "mondo_id": "MONDO:0859306"
+    },
+    {
+     "id": "OMIM:617255",
+     "name": "Lissencephaly 8",
+     "mondo_id": "MONDO:0014992"
+    },
+    {
+     "id": "ORPHA:580",
+     "name": "Mucopolysaccharidosis type 2",
+     "mondo_id": "MONDO:0010674"
+    },
+    {
+     "id": "ORPHA:370022",
+     "name": "Ataxia-intellectual disability-oculomotor apraxia-cerebellar cysts syndrome",
+     "mondo_id": "MONDO:0014419"
+    },
+    {
+     "id": "ORPHA:52503",
+     "name": "X-linked creatine transporter deficiency",
+     "mondo_id": "MONDO:0010305"
+    },
+    {
+     "id": "OMIM:302950",
+     "name": "Chondrodysplasia punctata 1, X-linked recessive",
+     "mondo_id": "MONDO:0010555"
+    },
+    {
+     "id": "OMIM:616521",
+     "name": "Intellectual developmental disorder, autosomal dominant 39",
+     "mondo_id": "MONDO:0014678"
+    },
+    {
+     "id": "ORPHA:3121",
+     "name": "Ruvalcaba syndrome",
+     "mondo_id": "MONDO:0008395"
+    },
+    {
+     "id": "OMIM:230350",
+     "name": "Galactose epimerase deficiency",
+     "mondo_id": "MONDO:0009257"
+    },
+    {
+     "id": "OMIM:209900",
+     "name": "Bardet-Biedl syndrome 1",
+     "mondo_id": "MONDO:0008854"
+    },
+    {
+     "id": "ORPHA:370079",
+     "name": "Proximal 16p11.2 microduplication syndrome",
+     "mondo_id": "MONDO:0013847"
+    },
+    {
+     "id": "OMIM:617350",
+     "name": "Epileptic encephalopathy, early infantile, 52",
+     "mondo_id": "MONDO:0033361"
+    },
+    {
+     "id": "ORPHA:71277",
+     "name": "Classic glucose transporter type 1 deficiency syndrome",
+     "mondo_id": "MONDO:0011724"
+    },
+    {
+     "id": "OMIM:618426",
+     "name": "Encephalopathy, acute, infection-induced, susceptibility to, 9",
+     "mondo_id": "MONDO:0032742"
+    },
+    {
+     "id": "OMIM:617132",
+     "name": "Developmental and epileptic encephalopathy 44",
+     "mondo_id": "MONDO:0014933"
+    },
+    {
+     "id": "OMIM:608363",
+     "name": "Chromosome 22q11.2 duplication syndrome",
+     "mondo_id": "MONDO:0012020"
+    },
+    {
+     "id": "ORPHA:3379",
+     "name": "Distal duplication 17q syndrome",
+     "mondo_id": "MONDO:0018069"
+    },
+    {
+     "id": "OMIM:621386",
+     "name": "Valence-Farazi cerebellar ataxia syndrome",
+     "mondo_id": "MONDO:0980707"
+    },
+    {
+     "id": "OMIM:618497",
+     "name": "Neurodevelopmental disorder with seizures and nonepileptic hyperkinetic movements",
+     "mondo_id": "MONDO:0032784"
+    },
+    {
+     "id": "ORPHA:391457",
+     "name": "HSD10 disease, neonatal type",
+     "mondo_id": "MONDO:0018323"
+    },
+    {
+     "id": "OMIM:615560",
+     "name": "Otofaciocervical syndrome 2",
+     "mondo_id": "MONDO:0014254"
+    },
+    {
+     "id": "ORPHA:2489",
+     "name": "Upper limb defect-eye and ear abnormalities syndrome",
+     "mondo_id": "MONDO:0010125"
+    },
+    {
+     "id": "OMIM:267000",
+     "name": "Perlman syndrome",
+     "mondo_id": "MONDO:0009965"
+    },
+    {
+     "id": "ORPHA:2636",
+     "name": "Microcephalic osteodysplastic primordial dwarfism types I and III",
+     "mondo_id": "MONDO:0016994"
+    },
+    {
+     "id": "OMIM:619761",
+     "name": "Cerebellar dysfunction, impaired intellectual development, and hypogonadotropic hypogonadism",
+     "mondo_id": "MONDO:0859229"
+    },
+    {
+     "id": "ORPHA:251056",
+     "name": "6q25.2q25.3 microdeletion syndrome",
+     "mondo_id": "MONDO:0013025"
+    },
+    {
+     "id": "OMIM:620070",
+     "name": "Neurodevelopmental disorder with short stature, prominent forehead, and feeding difficulties",
+     "mondo_id": "MONDO:0859295"
+    },
+    {
+     "id": "ORPHA:500095",
+     "name": "Tall stature-intellectual disability-renal anomalies syndrome",
+     "mondo_id": "MONDO:0014918"
+    },
+    {
+     "id": "OMIM:613406",
+     "name": "Witteveen-Kolk syndrome",
+     "mondo_id": "MONDO:0013256"
+    },
+    {
+     "id": "OMIM:219800",
+     "name": "Cystinosis, nephropathic",
+     "mondo_id": "MONDO:0100151"
+    },
+    {
+     "id": "OMIM:613675",
+     "name": "Chromosome 17q11.2 deletion syndrome, 1.4-mb",
+     "mondo_id": "MONDO:0013357"
+    },
+    {
+     "id": "OMIM:218340",
+     "name": "Temtamy syndrome",
+     "mondo_id": "MONDO:0009033"
+    },
+    {
+     "id": "OMIM:613970",
+     "name": "Intellectual developmental disorder, autosomal dominant 6, with or without seizures",
+     "mondo_id": "MONDO:0013509"
+    },
+    {
+     "id": "OMIM:309500",
+     "name": "Renpenning syndrome",
+     "mondo_id": "MONDO:0010653"
+    },
+    {
+     "id": "ORPHA:280679",
+     "name": "Moyamoya angiopathy-short stature-facial dysmorphism-hypergonadotropic hypogonadism syndrome",
+     "mondo_id": "MONDO:0010448"
+    },
+    {
+     "id": "ORPHA:97244",
+     "name": "Rigid spine syndrome",
+     "mondo_id": "MONDO:0019951"
+    },
+    {
+     "id": "ORPHA:97685",
+     "name": "17q11 microdeletion syndrome",
+     "mondo_id": "MONDO:0013357"
+    },
+    {
+     "id": "OMIM:620327",
+     "name": "Neurodegeneration with developmental delay, early respiratory failure, myoclonic seizures, and brain abnormalities",
+     "mondo_id": "MONDO:0957225"
+    },
+    {
+     "id": "OMIM:614582",
+     "name": "Combined oxidative phosphorylation deficiency 9",
+     "mondo_id": "MONDO:0013811"
+    },
+    {
+     "id": "OMIM:618572",
+     "name": "Neurodevelopmental disorder with cerebellar hypoplasia and spasticity",
+     "mondo_id": "MONDO:0032818"
+    },
+    {
+     "id": "ORPHA:1484",
+     "name": "Contractures-ectodermal dysplasia-cleft lip/palate syndrome",
+     "mondo_id": "MONDO:0010531"
+    },
+    {
+     "id": "OMIM:618065",
+     "name": "Pontocerebellar hypoplasia, type 1D",
+     "mondo_id": "MONDO:0054844"
+    },
+    {
+     "id": "OMIM:620359",
+     "name": "Mitochondrial complex V (ATP synthase) deficiency, nuclear type 7",
+     "mondo_id": "MONDO:0957255"
+    },
+    {
+     "id": "ORPHA:261349",
+     "name": "2p15p16.1 microdeletion syndrome",
+     "mondo_id": "MONDO:0012916"
+    },
+    {
+     "id": "OMIM:145420",
+     "name": "Teebi hypertelorism syndrome 1",
+     "mondo_id": "MONDO:0800025"
+    },
+    {
+     "id": "ORPHA:1496",
+     "name": "Corpus callosum agenesis-neuronopathy syndrome",
+     "mondo_id": "MONDO:0000902"
+    },
+    {
+     "id": "OMIM:616140",
+     "name": "Leukodystrophy, hypomyelinating, 9",
+     "mondo_id": "MONDO:0014506"
+    },
+    {
+     "id": "OMIM:611929",
+     "name": "Camptodactyly syndrome, Guadalajara, type III",
+     "mondo_id": "MONDO:0012759"
+    },
+    {
+     "id": "ORPHA:500150",
+     "name": "ZTTK syndrome",
+     "mondo_id": "MONDO:0014936"
+    },
+    {
+     "id": "OMIM:619847",
+     "name": "Neurodegeneration, childhood-onset, with progressive microcephaly",
+     "mondo_id": "MONDO:0859241"
+    },
+    {
+     "id": "OMIM:611093",
+     "name": "Intellectual developmental disorder, autosomal recessive 7",
+     "mondo_id": "MONDO:0012615"
+    },
+    {
+     "id": "ORPHA:434179",
+     "name": "Orofaciodigital syndrome type 14",
+     "mondo_id": "MONDO:0014413"
+    },
+    {
+     "id": "OMIM:617301",
+     "name": "Glycine encephalopathy with normal serum glycine",
+     "mondo_id": "MONDO:0015010"
+    },
+    {
+     "id": "OMIM:618559",
+     "name": "Epileptic encephalopathy, early infantile, 79",
+     "mondo_id": "MONDO:0032813"
+    },
+    {
+     "id": "ORPHA:85334",
+     "name": "X-linked neurodegenerative syndrome, Bertini type",
+     "mondo_id": "MONDO:0019427"
+    },
+    {
+     "id": "OMIM:621285",
+     "name": "Intellectual developmental disorder, autosomal dominant 76",
+     "mondo_id": "MONDO:0979575"
+    },
+    {
+     "id": "OMIM:220210",
+     "name": "Ritscher-Schinzel syndrome 1",
+     "mondo_id": "MONDO:0009073"
+    },
+    {
+     "id": "OMIM:618557",
+     "name": "Epileptic encephalopathy, early infantile, 78",
+     "mondo_id": "MONDO:0032812"
+    },
+    {
+     "id": "OMIM:619099",
+     "name": "Intellectual developmental disorder with speech delay and axonal peripheral neuropathy",
+     "mondo_id": "MONDO:0030849"
+    },
+    {
+     "id": "OMIM:619264",
+     "name": "Neurodevelopmental disorder with dysmorphic facies and variable seizures",
+     "mondo_id": "MONDO:0031011"
+    },
+    {
+     "id": "OMIM:620785",
+     "name": "Neurodevelopmental disorder with progressive movement abnormalities",
+     "mondo_id": "MONDO:0968976"
+    },
+    {
+     "id": "OMIM:617120",
+     "name": "Joubert syndrome 27",
+     "mondo_id": "MONDO:0014927"
+    },
+    {
+     "id": "OMIM:303110",
+     "name": "Xq21 deletion syndrome",
+     "mondo_id": "MONDO:0010558"
+    },
+    {
+     "id": "ORPHA:485350",
+     "name": "CLCN4-related X-linked intellectual disability syndrome",
+     "mondo_id": "MONDO:0010250"
+    },
+    {
+     "id": "OMIM:221995",
+     "name": "Nephrogenic diabetes insipidus - intracranial calcification",
+     "mondo_id": "MONDO:0009099"
+    },
+    {
+     "id": "OMIM:618314",
+     "name": "Hypomagnesemia, seizures, and impaired intellectual development 2",
+     "mondo_id": "MONDO:0020788"
+    },
+    {
+     "id": "OMIM:610185",
+     "name": "Cerebellar ataxia, impaired intellectual development, and dysquilibrium syndrome 2",
+     "mondo_id": "MONDO:0012430"
+    },
+    {
+     "id": "OMIM:617836",
+     "name": "Developmental delay and seizures with or without movement abnormalities",
+     "mondo_id": "MONDO:0044326"
+    },
+    {
+     "id": "OMIM:620887",
+     "name": "Multiple mitochondrial dysfunctions syndrome 9B",
+     "mondo_id": "MONDO:0971174"
+    },
+    {
+     "id": "ORPHA:324410",
+     "name": "X-linked intellectual disability-cardiomegaly-congestive heart failure syndrome",
+     "mondo_id": "MONDO:0010473"
+    },
+    {
+     "id": "ORPHA:467166",
+     "name": "Tubulinopathy-associated dysgyria",
+     "mondo_id": "MONDO:0018763"
+    },
+    {
+     "id": "OMIM:616154",
+     "name": "Peroxisomal fatty acyl-CoA reductase 1 disorder",
+     "mondo_id": "MONDO:0014510"
+    },
+    {
+     "id": "ORPHA:459056",
+     "name": "Autosomal recessive spastic paraplegia type 75",
+     "mondo_id": "MONDO:0014729"
+    },
+    {
+     "id": "OMIM:208085",
+     "name": "Arthrogryposis, renal dysfunction, and cholestasis 1",
+     "mondo_id": "MONDO:0008822"
+    },
+    {
+     "id": "ORPHA:1617",
+     "name": "Developmental delay-language impairment-dopa responsive dystonia-parkinsonism syndrome due to 2q24 microdeletion",
+     "mondo_id": "MONDO:0015566"
+    },
+    {
+     "id": "OMIM:619475",
+     "name": "Developmental delay, impaired speech, and behavioral abnormalities",
+     "mondo_id": "MONDO:0859178"
+    },
+    {
+     "id": "ORPHA:2886",
+     "name": "TARP syndrome",
+     "mondo_id": "MONDO:0010711"
+    },
+    {
+     "id": "OMIM:616739",
+     "name": "Intellectual developmental disorder, autosomal recessive 51",
+     "mondo_id": "MONDO:0014759"
+    },
+    {
+     "id": "OMIM:613752",
+     "name": "Hypermethioninemia with deficiency of S-adenosylhomocysteine hydrolase",
+     "mondo_id": "MONDO:0013404"
+    },
+    {
+     "id": "OMIM:617339",
+     "name": "Epileptic encephalopathy, early infantile, 51",
+     "mondo_id": "MONDO:0015025"
+    },
+    {
+     "id": "OMIM:617802",
+     "name": "Neurodevelopmental disorder with microcephaly, seizures, and cortical atrophy",
+     "mondo_id": "MONDO:0060621"
+    },
+    {
+     "id": "ORPHA:13",
+     "name": "6-pyruvoyl-tetrahydropterin synthase deficiency",
+     "mondo_id": "MONDO:0009863"
+    },
+    {
+     "id": "OMIM:612394",
+     "name": "Bone fragility with contractures, arterial rupture, and deafness",
+     "mondo_id": "MONDO:0012892"
+    },
+    {
+     "id": "OMIM:300475",
+     "name": "Deafness, dystonia, and cerebral hypomyelination",
+     "mondo_id": "MONDO:0010334"
+    },
+    {
+     "id": "OMIM:600987",
+     "name": "Cleft palate, cardiac defects, and impaired intellectual development",
+     "mondo_id": "MONDO:0010970"
+    },
+    {
+     "id": "OMIM:620083",
+     "name": "Neurodevelopmental disorder with craniofacial dysmorphism and skeletal defects",
+     "mondo_id": "MONDO:0859301"
+    },
+    {
+     "id": "ORPHA:3454",
+     "name": "Wieacker-Wolff syndrome",
+     "mondo_id": "MONDO:0010758"
+    },
+    {
+     "id": "OMIM:300894",
+     "name": "Neurodegeneration with brain iron accumulation 5",
+     "mondo_id": "MONDO:0010476"
+    },
+    {
+     "id": "OMIM:621122",
+     "name": "Paul-Chao neurodevelopmental syndrome",
+     "mondo_id": "MONDO:1040014"
+    },
+    {
+     "id": "OMIM:212140",
+     "name": "Carnitine deficiency, systemic primary",
+     "mondo_id": "MONDO:0008919"
+    },
+    {
+     "id": "OMIM:613610",
+     "name": "Cranioectodermal dysplasia 2",
+     "mondo_id": "MONDO:0013323"
+    },
+    {
+     "id": "ORPHA:314679",
+     "name": "Cerebrofacioarticular syndrome",
+     "mondo_id": "MONDO:0017813"
+    },
+    {
+     "id": "OMIM:615516",
+     "name": "Intellectual developmental disorder, autosomal recessive 38",
+     "mondo_id": "MONDO:0014224"
+    },
+    {
+     "id": "OMIM:300577",
+     "name": "Intellectual developmental disorder, X-linked 91",
+     "mondo_id": "MONDO:0010363"
+    },
+    {
+     "id": "ORPHA:221008",
+     "name": "Rothmund-Thomson syndrome type 1",
+     "mondo_id": "MONDO:0016368"
+    },
+    {
+     "id": "OMIM:300578",
+     "name": "Chromosome xp11.3 deletion syndrome",
+     "mondo_id": "MONDO:0010364"
+    },
+    {
+     "id": "OMIM:618951",
+     "name": "Combined oxidative phosphorylation deficiency 45",
+     "mondo_id": "MONDO:0033533"
+    },
+    {
+     "id": "OMIM:619383",
+     "name": "Neurodevelopmental disorder with hypotonia, facial dysmorphism, and brain abnormalities",
+     "mondo_id": "MONDO:0859165"
+    },
+    {
+     "id": "OMIM:614831",
+     "name": "Spinocerebellar ataxia, autosomal recessive 13",
+     "mondo_id": "MONDO:0013905"
+    },
+    {
+     "id": "ORPHA:2896",
+     "name": "Pitt-Hopkins syndrome",
+     "mondo_id": "MONDO:0012589"
+    },
+    {
+     "id": "OMIM:610978",
+     "name": "Choreoathetosis, hypothyroidism, and neonatal respiratory distress",
+     "mondo_id": "MONDO:0012593"
+    },
+    {
+     "id": "ORPHA:352530",
+     "name": "Intellectual disability-obesity-brain malformations-facial dysmorphism syndrome",
+     "mondo_id": "MONDO:0018123"
+    },
+    {
+     "id": "OMIM:619950",
+     "name": "Tessadori-van Haaften neurodevelopmental syndrome 3",
+     "mondo_id": "MONDO:0030993"
+    },
+    {
+     "id": "ORPHA:500055",
+     "name": "Hao-Fountain syndrome due to 16p13.2 microdeletion",
+     "mondo_id": "MONDO:0100528"
+    },
+    {
+     "id": "OMIM:620317",
+     "name": "Neurodevelopmental disorder with microcephaly and speech delay, with or without brain abnormalities",
+     "mondo_id": "MONDO:0957218"
+    },
+    {
+     "id": "OMIM:618295",
+     "name": "Intellectual developmental disorder, autosomal recessive 67",
+     "mondo_id": "MONDO:0032662"
+    },
+    {
+     "id": "OMIM:615668",
+     "name": "Chromosome 5q12 deletion syndrome",
+     "mondo_id": "MONDO:0014298"
+    },
+    {
+     "id": "OMIM:615546",
+     "name": "Van maldergem syndrome 2",
+     "mondo_id": "MONDO:0014242"
+    },
+    {
+     "id": "OMIM:251290",
+     "name": "Band-Like calcification with simplified gyration and polymicrogyria",
+     "mondo_id": "MONDO:0020789"
+    },
+    {
+     "id": "OMIM:207800",
+     "name": "Argininemia",
+     "mondo_id": "MONDO:0008814"
+    },
+    {
+     "id": "ORPHA:2116",
+     "name": "Hartnup disease",
+     "mondo_id": "MONDO:0009324"
+    },
+    {
+     "id": "ORPHA:163649",
+     "name": "Spondyloepiphyseal dysplasia-craniosynostosis-cleft palate-cataracts-intellectual disability syndrome",
+     "mondo_id": "MONDO:0011261"
+    },
+    {
+     "id": "OMIM:609425",
+     "name": "Chromosome 3q29 deletion syndrome",
+     "mondo_id": "MONDO:0012269"
+    },
+    {
+     "id": "OMIM:613662",
+     "name": "Mitochondrial DNA depletion syndrome 4B (mngie type)",
+     "mondo_id": "MONDO:0013350"
+    },
+    {
+     "id": "OMIM:619844",
+     "name": "Intellectual developmental disorder with or without peripheral neuropathy",
+     "mondo_id": "MONDO:0859240"
+    },
+    {
+     "id": "OMIM:616339",
+     "name": "Epileptic encephalopathy, early infantile, 29",
+     "mondo_id": "MONDO:0014593"
+    },
+    {
+     "id": "OMIM:601005",
+     "name": "Timothy syndrome",
+     "mondo_id": "MONDO:0010979"
+    },
+    {
+     "id": "OMIM:124000",
+     "name": "Mitochondrial complex III deficiency, nuclear type 1",
+     "mondo_id": "MONDO:0007415"
+    },
+    {
+     "id": "OMIM:154230",
+     "name": "46,xy sex reversal 4",
+     "mondo_id": "MONDO:0007938"
+    },
+    {
+     "id": "OMIM:615474",
+     "name": "Primary aldosteronism, seizures, and neurologic abnormalities",
+     "mondo_id": "MONDO:0014200"
+    },
+    {
+     "id": "OMIM:619470",
+     "name": "Neurodevelopmental disorder with motor and speech delay and behavioral abnormalities",
+     "mondo_id": "MONDO:0859176"
+    },
+    {
+     "id": "OMIM:619727",
+     "name": "Craniotubular dysplasia, Ikegawa type",
+     "mondo_id": "MONDO:0859226"
+    },
+    {
+     "id": "ORPHA:208444",
+     "name": "Bilateral frontal polymicrogyria",
+     "mondo_id": "MONDO:0016162"
+    },
+    {
+     "id": "OMIM:621381",
+     "name": "Congenital disorder of glycosylation, type IICC",
+     "mondo_id": "MONDO:0980705"
+    },
+    {
+     "id": "OMIM:617930",
+     "name": "Chromosome 1p35 deletion syndrome",
+     "mondo_id": "MONDO:0060677"
+    },
+    {
+     "id": "ORPHA:447760",
+     "name": "Autosomal recessive spastic paraplegia type 9B",
+     "mondo_id": "MONDO:0014702"
+    },
+    {
+     "id": "OMIM:616158",
+     "name": "Neurodevelopmental disorder with neonatal respiratory insufficiency, hypotonia, and feeding difficulties",
+     "mondo_id": "MONDO:0014512"
+    },
+    {
+     "id": "ORPHA:198",
+     "name": "Occipital horn syndrome",
+     "mondo_id": "MONDO:0010572"
+    },
+    {
+     "id": "OMIM:619851",
+     "name": "Leukodystrophy, hypomyelinating, 24",
+     "mondo_id": "MONDO:0859242"
+    },
+    {
+     "id": "OMIM:614052",
+     "name": "Mitochondrial complex V (ATP synthase) deficiency, nuclear type 2",
+     "mondo_id": "MONDO:0013546"
+    },
+    {
+     "id": "OMIM:619745",
+     "name": "Noonan syndrome 14",
+     "mondo_id": "MONDO:0030679"
+    },
+    {
+     "id": "OMIM:620817",
+     "name": "MHC class II deficiency 4",
+     "mondo_id": "MONDO:0971015"
+    },
+    {
+     "id": "ORPHA:2789",
+     "name": "Lateral meningocele syndrome",
+     "mondo_id": "MONDO:0007537"
+    },
+    {
+     "id": "OMIM:612513",
+     "name": "Chromosome 2p16.1-p15 deletion syndrome",
+     "mondo_id": "MONDO:0012916"
+    },
+    {
+     "id": "OMIM:618855",
+     "name": "Combined oxidative phosphorylation deficiency 44",
+     "mondo_id": "MONDO:0030020"
+    },
+    {
+     "id": "OMIM:620270",
+     "name": "Neurodevelopmental disorder with absent speech and movement and behavioral abnormalities",
+     "mondo_id": "MONDO:0859519"
+    },
+    {
+     "id": "OMIM:620669",
+     "name": "Neurodegeneration with brain iron accumulation 9",
+     "mondo_id": "MONDO:0958012"
+    },
+    {
+     "id": "OMIM:615938",
+     "name": "Megalencephaly-Polymicrogyria-Polydactyly-Hydrocephalus syndrome 3",
+     "mondo_id": "MONDO:0014408"
+    },
+    {
+     "id": "ORPHA:2714",
+     "name": "Oculo-palato-cerebral syndrome",
+     "mondo_id": "MONDO:0009769"
+    },
+    {
+     "id": "OMIM:616647",
+     "name": "Epileptic encephalopathy, early infantile, 35",
+     "mondo_id": "MONDO:0014719"
+    },
+    {
+     "id": "OMIM:102500",
+     "name": "Hajdu-Cheney syndrome",
+     "mondo_id": "MONDO:0007057"
+    },
+    {
+     "id": "ORPHA:1598",
+     "name": "Monosomy 18p syndrome",
+     "mondo_id": "MONDO:0007800"
+    },
+    {
+     "id": "OMIM:617767",
+     "name": "Joubert syndrome 33",
+     "mondo_id": "MONDO:0033311"
+    },
+    {
+     "id": "ORPHA:79325",
+     "name": "ALG8-CDG",
+     "mondo_id": "MONDO:0011969"
+    },
+    {
+     "id": "OMIM:618004",
+     "name": "Epileptic encephalopathy, early infantile, 64",
+     "mondo_id": "MONDO:0033373"
+    },
+    {
+     "id": "ORPHA:2804",
+     "name": "W syndrome",
+     "mondo_id": "MONDO:0010708"
+    },
+    {
+     "id": "ORPHA:506358",
+     "name": "Gabriele-de Vries syndrome",
+     "mondo_id": "MONDO:0044738"
+    },
+    {
+     "id": "OMIM:619125",
+     "name": "Kaya-Barakat-Masson syndrome",
+     "mondo_id": "MONDO:0030878"
+    },
+    {
+     "id": "OMIM:238970",
+     "name": "Hyperornithinemia-hyperammonemia-homocitrullinemia syndrome",
+     "mondo_id": "MONDO:0009393"
+    },
+    {
+     "id": "OMIM:231050",
+     "name": "Geleophysic dysplasia 1",
+     "mondo_id": "MONDO:0009269"
+    },
+    {
+     "id": "ORPHA:1442",
+     "name": "Ring chromosome 18 syndrome",
+     "mondo_id": "MONDO:0015434"
+    },
+    {
+     "id": "OMIM:617011",
+     "name": "Macrocephaly, dysmorphic facies, and psychomotor retardation",
+     "mondo_id": "MONDO:0014863"
+    },
+    {
+     "id": "OMIM:615191",
+     "name": "Lissencephaly 5",
+     "mondo_id": "MONDO:0014077"
+    },
+    {
+     "id": "OMIM:609583",
+     "name": "Joubert syndrome 4",
+     "mondo_id": "MONDO:0012308"
+    },
+    {
+     "id": "OMIM:618499",
+     "name": "Noonan syndrome 11",
+     "mondo_id": "MONDO:0032786"
+    },
+    {
+     "id": "ORPHA:90348",
+     "name": "Autosomal dominant cutis laxa",
+     "mondo_id": "MONDO:0019571"
+    },
+    {
+     "id": "OMIM:300831",
+     "name": "CK syndrome",
+     "mondo_id": "MONDO:0010441"
+    },
+    {
+     "id": "OMIM:210200",
+     "name": "3-Methylcrotonyl-CoA carboxylase 1 deficiency",
+     "mondo_id": "MONDO:0008861"
+    },
+    {
+     "id": "ORPHA:261190",
+     "name": "Cleft palate-congenital heart defect-intellectual disability syndrome due to 15q14 microdeletion",
+     "mondo_id": "MONDO:0014822"
+    },
+    {
+     "id": "OMIM:620938",
+     "name": "Spastic paraplegia 93, autosomal recessive",
+     "mondo_id": "MONDO:0975796"
+    },
+    {
+     "id": "OMIM:613818",
+     "name": "Muscular dystrophy-dystroglycanopathy (limb-girdle), type C, 9",
+     "mondo_id": "MONDO:0013440"
+    },
+    {
+     "id": "OMIM:618243",
+     "name": "Mitochondrial complex I deficiency, nuclear type 22",
+     "mondo_id": "MONDO:0032626"
+    },
+    {
+     "id": "ORPHA:85322",
+     "name": "X-linked intellectual disability, Pai type",
+     "mondo_id": "MONDO:0019420"
+    },
+    {
+     "id": "ORPHA:447980",
+     "name": "19p13.3 microduplication syndrome",
+     "mondo_id": "MONDO:0018658"
+    },
+    {
+     "id": "ORPHA:31",
+     "name": "Oxoglutaric aciduria",
+     "mondo_id": "MONDO:0008759"
+    },
+    {
+     "id": "OMIM:619487",
+     "name": "Aicardi-Goutieres syndrome 9",
+     "mondo_id": "MONDO:0030362"
+    },
+    {
+     "id": "ORPHA:622",
+     "name": "Homocystinuria without methylmalonic aciduria",
+     "mondo_id": "MONDO:0018964"
+    },
+    {
+     "id": "OMIM:618889",
+     "name": "Liberfarb syndrome",
+     "mondo_id": "MONDO:0030045"
+    },
+    {
+     "id": "OMIM:614576",
+     "name": "Congenital disorder of glycosylation, type IIl",
+     "mondo_id": "MONDO:0013810"
+    },
+    {
+     "id": "ORPHA:2268",
+     "name": "ICF syndrome",
+     "mondo_id": "MONDO:0000133"
+    },
+    {
+     "id": "ORPHA:488437",
+     "name": "SIX2-related frontonasal dysplasia",
+     "mondo_id": "MONDO:0044628"
+    },
+    {
+     "id": "OMIM:300114",
+     "name": "Raynaud-Claes syndrome",
+     "mondo_id": "MONDO:0010250"
+    },
+    {
+     "id": "ORPHA:369929",
+     "name": "Primary hyperaldosteronism-seizures-neurological abnormalities syndrome",
+     "mondo_id": "MONDO:0014200"
+    },
+    {
+     "id": "OMIM:609029",
+     "name": "Emanuel syndrome",
+     "mondo_id": "MONDO:0012176"
+    },
+    {
+     "id": "OMIM:614098",
+     "name": "Keppen-Lubinsky syndrome",
+     "mondo_id": "MONDO:0013572"
+    },
+    {
+     "id": "OMIM:305400",
+     "name": "Aarskog-Scott syndrome",
+     "mondo_id": "MONDO:0010589"
+    },
+    {
+     "id": "ORPHA:2048",
+     "name": "Foix-Chavany-Marie syndrome",
+     "mondo_id": "MONDO:0023171"
+    },
+    {
+     "id": "OMIM:603116",
+     "name": "CDAGS syndrome",
+     "mondo_id": "MONDO:0011287"
+    },
+    {
+     "id": "OMIM:615282",
+     "name": "Cortical dysplasia, complex, with other brain malformations 2",
+     "mondo_id": "MONDO:0014116"
+    },
+    {
+     "id": "OMIM:157170",
+     "name": "Holoprosencephaly 2",
+     "mondo_id": "MONDO:0007999"
+    },
+    {
+     "id": "OMIM:619971",
+     "name": "Neurodevelopmental disorder with epilepsy and brain atrophy",
+     "mondo_id": "MONDO:0859265"
+    },
+    {
+     "id": "OMIM:618950",
+     "name": "Suleiman-El-Hattab syndrome",
+     "mondo_id": "MONDO:0033532"
+    },
+    {
+     "id": "OMIM:615942",
+     "name": "Intellectual developmental disorder, autosomal recessive 44",
+     "mondo_id": "MONDO:0014409"
+    },
+    {
+     "id": "OMIM:251000",
+     "name": "Methylmalonic aciduria, mut type",
+     "mondo_id": "MONDO:0009612"
+    },
+    {
+     "id": "OMIM:612292",
+     "name": "Birk-Barel syndrome",
+     "mondo_id": "MONDO:0012856"
+    },
+    {
+     "id": "OMIM:609446",
+     "name": "Paroxysmal nonkinesigenic dyskinesia, 3, with or without generalized epilepsy",
+     "mondo_id": "MONDO:0012276"
+    },
+    {
+     "id": "ORPHA:1600",
+     "name": "Monosomy 18q syndrome",
+     "mondo_id": "MONDO:0011147"
+    },
+    {
+     "id": "ORPHA:1698",
+     "name": "Mosaic trisomy 12 syndrome",
+     "mondo_id": "MONDO:0015718"
+    },
+    {
+     "id": "ORPHA:280763",
+     "name": "Severe intellectual disability and progressive spastic paraplegia",
+     "mondo_id": "MONDO:0100176"
+    },
+    {
+     "id": "OMIM:619909",
+     "name": "Pontocerebellar hypoplasia, type 17",
+     "mondo_id": "MONDO:0030890"
+    },
+    {
+     "id": "OMIM:182212",
+     "name": "Shprintzen-Goldberg craniosynostosis syndrome",
+     "mondo_id": "MONDO:0008426"
+    },
+    {
+     "id": "OMIM:616204",
+     "name": "Spinocerebellar ataxia, autosomal recessive 18",
+     "mondo_id": "MONDO:0014530"
+    },
+    {
+     "id": "OMIM:617695",
+     "name": "Pontocerebellar hypoplasia, type 11",
+     "mondo_id": "MONDO:0054669"
+    },
+    {
+     "id": "OMIM:614688",
+     "name": "Pontine tegmental cap dysplasia",
+     "mondo_id": "MONDO:0013858"
+    },
+    {
+     "id": "OMIM:616000",
+     "name": "Analbuminemia",
+     "mondo_id": "MONDO:0014449"
+    },
+    {
+     "id": "OMIM:243500",
+     "name": "Isovaleric acidemia",
+     "mondo_id": "MONDO:0009475"
+    },
+    {
+     "id": "OMIM:619534",
+     "name": "Biliary, renal, neurologic, and skeletal syndrome",
+     "mondo_id": "MONDO:0859191"
+    },
+    {
+     "id": "OMIM:621585",
+     "name": "Mendez-Johnson immunoneurologic syndrome",
+     "mondo_id": ""
+    },
+    {
+     "id": "OMIM:266100",
+     "name": "Epilepsy, pyridoxine-dependent",
+     "mondo_id": "MONDO:0020741"
+    },
+    {
+     "id": "OMIM:248360",
+     "name": "Malonyl-CoA decarboxylase deficiency",
+     "mondo_id": "MONDO:0009556"
+    },
+    {
+     "id": "OMIM:619028",
+     "name": "Coenzyme Q10 deficiency, primary, 9",
+     "mondo_id": "MONDO:0033615"
+    },
+    {
+     "id": "ORPHA:329224",
+     "name": "Schuurs-Hoeijmakers syndrome",
+     "mondo_id": "MONDO:0014006"
+    },
+    {
+     "id": "OMIM:234050",
+     "name": "Trichothiodystrophy 4, nonphotosensitive",
+     "mondo_id": "MONDO:0021013"
+    },
+    {
+     "id": "OMIM:618088",
+     "name": "Neurodevelopmental disorder with regression, abnormal movements, loss of speech, and seizures",
+     "mondo_id": "MONDO:0060759"
+    },
+    {
+     "id": "ORPHA:251014",
+     "name": "2q31.1 microdeletion syndrome",
+     "mondo_id": "MONDO:0016652"
+    },
+    {
+     "id": "OMIM:300434",
+     "name": "Intellectual developmental disorder, X-linked, syndromic, Stocco dos Santos type",
+     "mondo_id": "MONDO:0010325"
+    },
+    {
+     "id": "OMIM:614249",
+     "name": "Intellectual developmental disorder, autosomal recessive 18, with or without epilepsy",
+     "mondo_id": "MONDO:0013651"
+    },
+    {
+     "id": "OMIM:618724",
+     "name": "Heyn-Sproul-Jackson syndrome",
+     "mondo_id": "MONDO:0032882"
+    },
+    {
+     "id": "OMIM:614231",
+     "name": "Microcephaly, epilepsy, and diabetes syndrome",
+     "mondo_id": "MONDO:0031481"
+    },
+    {
+     "id": "ORPHA:391417",
+     "name": "HSD10 disease",
+     "mondo_id": "MONDO:0010327"
+    },
+    {
+     "id": "OMIM:612718",
+     "name": "Cerebral creatine deficiency syndrome 3",
+     "mondo_id": "MONDO:0012996"
+    },
+    {
+     "id": "OMIM:251100",
+     "name": "Methylmalonic aciduria, vitamin B12-responsive, cblA type",
+     "mondo_id": "MONDO:0009613"
+    },
+    {
+     "id": "ORPHA:79107",
+     "name": "Developmental malformations-deafness-dystonia syndrome",
+     "mondo_id": "MONDO:0011823"
+    },
+    {
+     "id": "OMIM:611174",
+     "name": "Hamamy syndrome",
+     "mondo_id": "MONDO:0012634"
+    },
+    {
+     "id": "OMIM:616632",
+     "name": "Seizures, cortical blindness, and microcephaly syndrome",
+     "mondo_id": "MONDO:0014714"
+    },
+    {
+     "id": "OMIM:619910",
+     "name": "Intellectual developmental disorder, autosomal dominant 66",
+     "mondo_id": "MONDO:0030891"
+    },
+    {
+     "id": "OMIM:618235",
+     "name": "Mitochondrial complex I deficiency, nuclear type 13",
+     "mondo_id": "MONDO:0032618"
+    },
+    {
+     "id": "OMIM:309585",
+     "name": "Wilson-Turner syndrome",
+     "mondo_id": "MONDO:0010665"
+    },
+    {
+     "id": "OMIM:300849",
+     "name": "Intellectual developmental disorder, X-linked 41",
+     "mondo_id": "MONDO:0010451"
+    },
+    {
+     "id": "ORPHA:1435",
+     "name": "Xq21 microdeletion syndrome",
+     "mondo_id": "MONDO:0010558"
+    },
+    {
+     "id": "ORPHA:477993",
+     "name": "Palatal anomalies-widely spaced teeth-facial dysmorphism-developmental delay syndrome",
+     "mondo_id": "MONDO:0014751"
+    },
+    {
+     "id": "ORPHA:66631",
+     "name": "CEDNIK syndrome",
+     "mondo_id": "MONDO:0012290"
+    },
+    {
+     "id": "OMIM:614171",
+     "name": "Hermansky-Pudlak syndrome 9",
+     "mondo_id": "MONDO:0013606"
+    },
+    {
+     "id": "ORPHA:3156",
+     "name": "Senior-Loken syndrome",
+     "mondo_id": "MONDO:0017842"
+    },
+    {
+     "id": "OMIM:266150",
+     "name": "Pyruvate carboxylase deficiency",
+     "mondo_id": "MONDO:0009949"
+    },
+    {
+     "id": "OMIM:620746",
+     "name": "Neurodevelopmental disorder with hypotonia and characteristic brain abnormalities",
+     "mondo_id": "MONDO:0958278"
+    },
+    {
+     "id": "OMIM:169100",
+     "name": "Char syndrome",
+     "mondo_id": "MONDO:0008209"
+    },
+    {
+     "id": "OMIM:618351",
+     "name": "Microcephaly 25, primary, autosomal recessive",
+     "mondo_id": "MONDO:0032694"
+    },
+    {
+     "id": "ORPHA:369891",
+     "name": "Developmental delay-facial dysmorphism syndrome due to MED13L deficiency",
+     "mondo_id": "MONDO:0014773"
+    },
+    {
+     "id": "OMIM:616809",
+     "name": "Hyperphosphatasia with impaired intellectual development syndrome 6",
+     "mondo_id": "MONDO:0014780"
+    },
+    {
+     "id": "OMIM:615074",
+     "name": "GAND syndrome",
+     "mondo_id": "MONDO:0014034"
+    },
+    {
+     "id": "OMIM:267300",
+     "name": "Distal renal tubular acidosis 2 with progressive sensorineural hearing loss",
+     "mondo_id": "MONDO:0009968"
+    },
+    {
+     "id": "OMIM:615986",
+     "name": "Bardet-Biedl syndrome 9",
+     "mondo_id": "MONDO:0014437"
+    },
+    {
+     "id": "OMIM:615157",
+     "name": "Mitochondrial complex III deficiency, nuclear type 2",
+     "mondo_id": "MONDO:0014063"
+    },
+    {
+     "id": "ORPHA:320411",
+     "name": "Autosomal recessive spastic paraplegia type 56",
+     "mondo_id": "MONDO:0014015"
+    },
+    {
+     "id": "OMIM:251280",
+     "name": "Microcephaly, seizures, spasticity, and brain calcifications",
+     "mondo_id": "MONDO:0009625"
+    },
+    {
+     "id": "ORPHA:363417",
+     "name": "Temtamy preaxial brachydactyly syndrome",
+     "mondo_id": "MONDO:0011533"
+    },
+    {
+     "id": "OMIM:618547",
+     "name": "Neurodevelopmental disorder with visual defects and brain anomalies",
+     "mondo_id": "MONDO:0032807"
+    },
+    {
+     "id": "OMIM:608545",
+     "name": "Larsen-Like syndrome",
+     "mondo_id": "MONDO:0012055"
+    },
+    {
+     "id": "OMIM:618577",
+     "name": "Neurodevelopmental disorder with structural brain anomalies and dysmorphic facies",
+     "mondo_id": "MONDO:0032820"
+    },
+    {
+     "id": "OMIM:616580",
+     "name": "Au-Kline syndrome",
+     "mondo_id": "MONDO:0014700"
+    },
+    {
+     "id": "ORPHA:320380",
+     "name": "Autosomal recessive spastic paraplegia type 54",
+     "mondo_id": "MONDO:0014018"
+    },
+    {
+     "id": "OMIM:617364",
+     "name": "Congenital heart defects and ectodermal dysplasia",
+     "mondo_id": "MONDO:0044303"
+    },
+    {
+     "id": "OMIM:613509",
+     "name": "Chromosome 4q21 deletion syndrome",
+     "mondo_id": "MONDO:0013292"
+    },
+    {
+     "id": "OMIM:618830",
+     "name": "Autism, susceptibility to, 20",
+     "mondo_id": "MONDO:0030004"
+    },
+    {
+     "id": "OMIM:615771",
+     "name": "Cortical dysplasia, complex, with other brain malformations 6",
+     "mondo_id": "MONDO:0014341"
+    },
+    {
+     "id": "ORPHA:261236",
+     "name": "16p13.11 microdeletion syndrome",
+     "mondo_id": "MONDO:0016836"
+    },
+    {
+     "id": "OMIM:617672",
+     "name": "Neurodegeneration, childhood-onset, with brain atrophy",
+     "mondo_id": "MONDO:0044701"
+    },
+    {
+     "id": "OMIM:611961",
+     "name": "Stevenson-Carey syndrome",
+     "mondo_id": "MONDO:0012772"
+    },
+    {
+     "id": "OMIM:614381",
+     "name": "Leukodystrophy, hypomyelinating, 8, with or without oligodontia and/or hypogonadotropic hypogonadism",
+     "mondo_id": "MONDO:0013722"
+    },
+    {
+     "id": "OMIM:617452",
+     "name": "Intellectual developmental disorder with dysmorphic facies, seizures, and distal limb anomalies",
+     "mondo_id": "MONDO:0044319"
+    },
+    {
+     "id": "ORPHA:178303",
+     "name": "8q22.1 microdeletion syndrome",
+     "mondo_id": "MONDO:0011977"
+    },
+    {
+     "id": "OMIM:616586",
+     "name": "Spastic paraplegia 9B, autosomal recessive",
+     "mondo_id": "MONDO:0014702"
+    },
+    {
+     "id": "ORPHA:2213",
+     "name": "Hypertelorism-microtia-facial clefting syndrome",
+     "mondo_id": "MONDO:0009404"
+    },
+    {
+     "id": "OMIM:256000",
+     "name": "Leigh syndrome",
+     "mondo_id": "MONDO:0009723"
+    },
+    {
+     "id": "OMIM:613003",
+     "name": "Attention deficit-hyperactivity disorder, susceptibility to, 7",
+     "mondo_id": "MONDO:0013076"
+    },
+    {
+     "id": "ORPHA:496790",
+     "name": "Ocular anomalies-axonal neuropathy-developmental delay syndrome",
+     "mondo_id": "MONDO:0014958"
+    },
+    {
+     "id": "OMIM:619959",
+     "name": "ACCES syndrome",
+     "mondo_id": "MONDO:0859262"
+    },
+    {
+     "id": "OMIM:619562",
+     "name": "Joubert syndrome 39",
+     "mondo_id": "MONDO:0030454"
+    },
+    {
+     "id": "OMIM:609460",
+     "name": "Goldberg-Shprintzen syndrome",
+     "mondo_id": "MONDO:0012280"
+    },
+    {
+     "id": "ORPHA:453521",
+     "name": "Autosomal recessive cerebellar ataxia due to CWF19L1 deficiency",
+     "mondo_id": "MONDO:0014503"
+    },
+    {
+     "id": "OMIM:620790",
+     "name": "Neurodevelopmental disorder with hypotonia and seizures",
+     "mondo_id": "MONDO:0968979"
+    },
+    {
+     "id": "ORPHA:352490",
+     "name": "Autism spectrum disorder due to AUTS2 deficiency",
+     "mondo_id": "MONDO:0014361"
+    },
+    {
+     "id": "OMIM:210050",
+     "name": "Berry aneurysm, cirrhosis, pulmonary emphysema, and cerebral calcification",
+     "mondo_id": "MONDO:0008859"
+    },
+    {
+     "id": "ORPHA:261494",
+     "name": "Kleefstra syndrome",
+     "mondo_id": "MONDO:0012455"
+    },
+    {
+     "id": "OMIM:614866",
+     "name": "Peroxisome biogenesis disorder 5A (Zellweger)",
+     "mondo_id": "MONDO:0013932"
+    },
+    {
+     "id": "OMIM:619605",
+     "name": "Developmental and epileptic encephalopathy 98",
+     "mondo_id": "MONDO:0030472"
+    },
+    {
+     "id": "OMIM:620029",
+     "name": "Neurodevelopmental disorder with hypotonia, language delay, and skeletal defects with or without seizures",
+     "mondo_id": "MONDO:0859286"
+    },
+    {
+     "id": "OMIM:301025",
+     "name": "Paganini-Miozzo syndrome",
+     "mondo_id": "MONDO:0026724"
+    },
+    {
+     "id": "ORPHA:209905",
+     "name": "Brain-lung-thyroid syndrome",
+     "mondo_id": "MONDO:0012593"
+    },
+    {
+     "id": "ORPHA:397941",
+     "name": "MAN1B1-CDG",
+     "mondo_id": "MONDO:0018349"
+    },
+    {
+     "id": "OMIM:616366",
+     "name": "Epileptic encephalopathy, early infantile, 32",
+     "mondo_id": "MONDO:0014607"
+    },
+    {
+     "id": "ORPHA:50811",
+     "name": "Lipodystrophy-intellectual disability-deafness syndrome",
+     "mondo_id": "MONDO:0011976"
+    },
+    {
+     "id": "ORPHA:354",
+     "name": "GM1 gangliosidosis",
+     "mondo_id": "MONDO:0018149"
+    },
+    {
+     "id": "OMIM:500017",
+     "name": "Mitochondrial Leigh syndrome",
+     "mondo_id": "MONDO:0970944"
+    },
+    {
+     "id": "OMIM:236670",
+     "name": "Muscular dystrophy-dystroglycanopathy (congenital with brain and eye anomalies), type A, 1",
+     "mondo_id": "MONDO:0009364"
+    },
+    {
+     "id": "OMIM:615849",
+     "name": "Culler-Jones syndrome",
+     "mondo_id": "MONDO:0014369"
+    },
+    {
+     "id": "ORPHA:3255",
+     "name": "Filippi syndrome",
+     "mondo_id": "MONDO:0010092"
+    },
+    {
+     "id": "OMIM:618363",
+     "name": "Short stature, amelogenesis imperfecta, and skeletal dysplasia with scoliosis",
+     "mondo_id": "MONDO:0032703"
+    },
+    {
+     "id": "ORPHA:505237",
+     "name": "Early-onset seizures-distal limb anomalies-facial dysmorphism-global developmental delay syndrome",
+     "mondo_id": "MONDO:0044319"
+    },
+    {
+     "id": "OMIM:621469",
+     "name": "Moyamoya disease 8",
+     "mondo_id": "MONDO:0980949"
+    },
+    {
+     "id": "OMIM:220110",
+     "name": "Mitochondrial complex IV deficiency, nuclear type 1",
+     "mondo_id": "MONDO:0700250"
+    },
+    {
+     "id": "ORPHA:357225",
+     "name": "Primary non-essential cutis verticis gyrata",
+     "mondo_id": "MONDO:0018168"
+    },
+    {
+     "id": "ORPHA:3309",
+     "name": "Tetrasomy 5p syndrome",
+     "mondo_id": "MONDO:0018028"
+    },
+    {
+     "id": "OMIM:621567",
+     "name": "Congenital disorder of glycosylation, type 1bb ",
+     "mondo_id": ""
+    }
+   ]
+  },
+  "metadata": {
+   "source": "HPO (JAX Ontology) network annotation",
+   "term_id": "HP:0001263",
+   "total": 2879,
+   "returned": 500
+  }
+ }
+}

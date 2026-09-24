@@ -1,0 +1,1215 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool FAERS_count_reactions_by_drug_event through ToolUniverse (run_one_function, normalised as the worker hands results to the runner), one call per key with {medicinalproduct: <key>}. Recorded without an openFDA key, so each list is the source's keyless page of 100 terms. Every response is whole.",
+ "cisplatin": {
+  "result": [
+   {
+    "term": "OFF LABEL USE",
+    "count": 6097
+   },
+   {
+    "term": "NAUSEA",
+    "count": 5658
+   },
+   {
+    "term": "NEUTROPENIA",
+    "count": 5083
+   },
+   {
+    "term": "FEBRILE NEUTROPENIA",
+    "count": 4840
+   },
+   {
+    "term": "VOMITING",
+    "count": 4752
+   },
+   {
+    "term": "DISEASE PROGRESSION",
+    "count": 4751
+   },
+   {
+    "term": "ANAEMIA",
+    "count": 4165
+   },
+   {
+    "term": "THROMBOCYTOPENIA",
+    "count": 3942
+   },
+   {
+    "term": "DIARRHOEA",
+    "count": 3920
+   },
+   {
+    "term": "PYREXIA",
+    "count": 3534
+   },
+   {
+    "term": "MALIGNANT NEOPLASM PROGRESSION",
+    "count": 3381
+   },
+   {
+    "term": "DRUG INEFFECTIVE",
+    "count": 3336
+   },
+   {
+    "term": "DEATH",
+    "count": 2785
+   },
+   {
+    "term": "MYELOSUPPRESSION",
+    "count": 2665
+   },
+   {
+    "term": "FATIGUE",
+    "count": 2592
+   },
+   {
+    "term": "DEHYDRATION",
+    "count": 2547
+   },
+   {
+    "term": "PNEUMONIA",
+    "count": 2431
+   },
+   {
+    "term": "SEPSIS",
+    "count": 2143
+   },
+   {
+    "term": "ASTHENIA",
+    "count": 2139
+   },
+   {
+    "term": "DYSPNOEA",
+    "count": 2024
+   },
+   {
+    "term": "PANCYTOPENIA",
+    "count": 2019
+   },
+   {
+    "term": "MUCOSAL INFLAMMATION",
+    "count": 2001
+   },
+   {
+    "term": "ACUTE KIDNEY INJURY",
+    "count": 1994
+   },
+   {
+    "term": "DECREASED APPETITE",
+    "count": 1960
+   },
+   {
+    "term": "PLATELET COUNT DECREASED",
+    "count": 1797
+   },
+   {
+    "term": "WHITE BLOOD CELL COUNT DECREASED",
+    "count": 1766
+   },
+   {
+    "term": "LEUKOPENIA",
+    "count": 1751
+   },
+   {
+    "term": "PULMONARY EMBOLISM",
+    "count": 1641
+   },
+   {
+    "term": "PRODUCT USE IN UNAPPROVED INDICATION",
+    "count": 1607
+   },
+   {
+    "term": "NEUTROPHIL COUNT DECREASED",
+    "count": 1593
+   },
+   {
+    "term": "HYPOTENSION",
+    "count": 1422
+   },
+   {
+    "term": "ABDOMINAL PAIN",
+    "count": 1386
+   },
+   {
+    "term": "RENAL FAILURE",
+    "count": 1362
+   },
+   {
+    "term": "RENAL IMPAIRMENT",
+    "count": 1338
+   },
+   {
+    "term": "HYPONATRAEMIA",
+    "count": 1337
+   },
+   {
+    "term": "NEUROPATHY PERIPHERAL",
+    "count": 1267
+   },
+   {
+    "term": "GENERAL PHYSICAL HEALTH DETERIORATION",
+    "count": 1218
+   },
+   {
+    "term": "HYPOKALAEMIA",
+    "count": 1213
+   },
+   {
+    "term": "HAEMOGLOBIN DECREASED",
+    "count": 1204
+   },
+   {
+    "term": "DYSPHAGIA",
+    "count": 1202
+   },
+   {
+    "term": "RASH",
+    "count": 1197
+   },
+   {
+    "term": "WEIGHT DECREASED",
+    "count": 1185
+   },
+   {
+    "term": "STOMATITIS",
+    "count": 1181
+   },
+   {
+    "term": "INFECTION",
+    "count": 1146
+   },
+   {
+    "term": "CONSTIPATION",
+    "count": 1111
+   },
+   {
+    "term": "SEPTIC SHOCK",
+    "count": 1111
+   },
+   {
+    "term": "RESPIRATORY FAILURE",
+    "count": 1098
+   },
+   {
+    "term": "PAIN",
+    "count": 1062
+   },
+   {
+    "term": "TOXICITY TO VARIOUS AGENTS",
+    "count": 1050
+   },
+   {
+    "term": "BONE MARROW FAILURE",
+    "count": 1040
+   },
+   {
+    "term": "BLOOD CREATININE INCREASED",
+    "count": 1016
+   },
+   {
+    "term": "DEEP VEIN THROMBOSIS",
+    "count": 986
+   },
+   {
+    "term": "NEOPLASM PROGRESSION",
+    "count": 972
+   },
+   {
+    "term": "DIZZINESS",
+    "count": 927
+   },
+   {
+    "term": "HAEMATOTOXICITY",
+    "count": 905
+   },
+   {
+    "term": "MALAISE",
+    "count": 901
+   },
+   {
+    "term": "RENAL FAILURE ACUTE",
+    "count": 870
+   },
+   {
+    "term": "PLEURAL EFFUSION",
+    "count": 861
+   },
+   {
+    "term": "HYPERTENSION",
+    "count": 842
+   },
+   {
+    "term": "THERAPY PARTIAL RESPONDER",
+    "count": 839
+   },
+   {
+    "term": "HEADACHE",
+    "count": 834
+   },
+   {
+    "term": "COUGH",
+    "count": 809
+   },
+   {
+    "term": "ACUTE MYELOID LEUKAEMIA",
+    "count": 744
+   },
+   {
+    "term": "INTERSTITIAL LUNG DISEASE",
+    "count": 732
+   },
+   {
+    "term": "HYPOMAGNESAEMIA",
+    "count": 726
+   },
+   {
+    "term": "NEPHROPATHY TOXIC",
+    "count": 719
+   },
+   {
+    "term": "CONDITION AGGRAVATED",
+    "count": 692
+   },
+   {
+    "term": "CHEST PAIN",
+    "count": 676
+   },
+   {
+    "term": "NEUTROPENIC SEPSIS",
+    "count": 665
+   },
+   {
+    "term": "PNEUMONITIS",
+    "count": 660
+   },
+   {
+    "term": "ATRIAL FIBRILLATION",
+    "count": 644
+   },
+   {
+    "term": "URINARY TRACT INFECTION",
+    "count": 639
+   },
+   {
+    "term": "MYELODYSPLASTIC SYNDROME",
+    "count": 634
+   },
+   {
+    "term": "TACHYCARDIA",
+    "count": 627
+   },
+   {
+    "term": "DISEASE RECURRENCE",
+    "count": 624
+   },
+   {
+    "term": "SYNCOPE",
+    "count": 619
+   },
+   {
+    "term": "CONFUSIONAL STATE",
+    "count": 608
+   },
+   {
+    "term": "CHILLS",
+    "count": 593
+   },
+   {
+    "term": "CARDIAC FAILURE",
+    "count": 577
+   },
+   {
+    "term": "ALOPECIA",
+    "count": 567
+   },
+   {
+    "term": "BACK PAIN",
+    "count": 553
+   },
+   {
+    "term": "DRUG INTERACTION",
+    "count": 549
+   },
+   {
+    "term": "PRODUCT USE ISSUE",
+    "count": 542
+   },
+   {
+    "term": "PRURITUS",
+    "count": 540
+   },
+   {
+    "term": "ALANINE AMINOTRANSFERASE INCREASED",
+    "count": 536
+   },
+   {
+    "term": "ASPARTATE AMINOTRANSFERASE INCREASED",
+    "count": 519
+   },
+   {
+    "term": "DRUG RESISTANCE",
+    "count": 518
+   },
+   {
+    "term": "COLITIS",
+    "count": 512
+   },
+   {
+    "term": "OESOPHAGITIS",
+    "count": 511
+   },
+   {
+    "term": "HEPATIC FUNCTION ABNORMAL",
+    "count": 509
+   },
+   {
+    "term": "ERYTHEMA",
+    "count": 507
+   },
+   {
+    "term": "PLASMA CELL MYELOMA",
+    "count": 504
+   },
+   {
+    "term": "COVID-19",
+    "count": 496
+   },
+   {
+    "term": "OEDEMA PERIPHERAL",
+    "count": 490
+   },
+   {
+    "term": "HYPOCALCAEMIA",
+    "count": 480
+   },
+   {
+    "term": "GASTROINTESTINAL DISORDER",
+    "count": 460
+   },
+   {
+    "term": "METASTASES TO LIVER",
+    "count": 460
+   },
+   {
+    "term": "FALL",
+    "count": 451
+   },
+   {
+    "term": "ASCITES",
+    "count": 448
+   },
+   {
+    "term": "CARDIAC ARREST",
+    "count": 447
+   }
+  ]
+ },
+ "LUTATHERA": {
+  "result": [
+   {
+    "term": "ILL-DEFINED DISORDER",
+    "count": 1541
+   },
+   {
+    "term": "GENERAL PHYSICAL HEALTH DETERIORATION",
+    "count": 1200
+   },
+   {
+    "term": "DEATH",
+    "count": 439
+   },
+   {
+    "term": "MALIGNANT NEOPLASM PROGRESSION",
+    "count": 349
+   },
+   {
+    "term": "NAUSEA",
+    "count": 235
+   },
+   {
+    "term": "PLATELET COUNT DECREASED",
+    "count": 229
+   },
+   {
+    "term": "COVID-19",
+    "count": 198
+   },
+   {
+    "term": "FATIGUE",
+    "count": 194
+   },
+   {
+    "term": "DIARRHOEA",
+    "count": 185
+   },
+   {
+    "term": "DISEASE PROGRESSION",
+    "count": 173
+   },
+   {
+    "term": "LABORATORY TEST ABNORMAL",
+    "count": 172
+   },
+   {
+    "term": "ILLNESS",
+    "count": 166
+   },
+   {
+    "term": "MALAISE",
+    "count": 141
+   },
+   {
+    "term": "ABDOMINAL PAIN",
+    "count": 137
+   },
+   {
+    "term": "VOMITING",
+    "count": 130
+   },
+   {
+    "term": "OFF LABEL USE",
+    "count": 128
+   },
+   {
+    "term": "THROMBOCYTOPENIA",
+    "count": 128
+   },
+   {
+    "term": "DECREASED APPETITE",
+    "count": 116
+   },
+   {
+    "term": "METASTASES TO LIVER",
+    "count": 101
+   },
+   {
+    "term": "NEUROENDOCRINE TUMOUR",
+    "count": 100
+   },
+   {
+    "term": "ANAEMIA",
+    "count": 97
+   },
+   {
+    "term": "WEIGHT DECREASED",
+    "count": 85
+   },
+   {
+    "term": "PAIN",
+    "count": 77
+   },
+   {
+    "term": "PANCREATIC NEUROENDOCRINE TUMOUR",
+    "count": 76
+   },
+   {
+    "term": "ASTHENIA",
+    "count": 71
+   },
+   {
+    "term": "DYSPNOEA",
+    "count": 71
+   },
+   {
+    "term": "PYREXIA",
+    "count": 70
+   },
+   {
+    "term": "SARS-COV-2 TEST POSITIVE",
+    "count": 64
+   },
+   {
+    "term": "WHITE BLOOD CELL COUNT DECREASED",
+    "count": 62
+   },
+   {
+    "term": "INAPPROPRIATE SCHEDULE OF PRODUCT ADMINISTRATION",
+    "count": 60
+   },
+   {
+    "term": "PRODUCT USE IN UNAPPROVED INDICATION",
+    "count": 60
+   },
+   {
+    "term": "FLUSHING",
+    "count": 58
+   },
+   {
+    "term": "ASCITES",
+    "count": 56
+   },
+   {
+    "term": "HAEMOGLOBIN DECREASED",
+    "count": 56
+   },
+   {
+    "term": "DRUG INEFFECTIVE",
+    "count": 55
+   },
+   {
+    "term": "PANCYTOPENIA",
+    "count": 54
+   },
+   {
+    "term": "RENAL IMPAIRMENT",
+    "count": 52
+   },
+   {
+    "term": "METASTASES TO BONE",
+    "count": 48
+   },
+   {
+    "term": "NEUTROPENIA",
+    "count": 48
+   },
+   {
+    "term": "HYPOGLYCAEMIA",
+    "count": 47
+   },
+   {
+    "term": "ALOPECIA",
+    "count": 46
+   },
+   {
+    "term": "LYMPHOCYTE COUNT DECREASED",
+    "count": 46
+   },
+   {
+    "term": "SEPSIS",
+    "count": 43
+   },
+   {
+    "term": "CONSTIPATION",
+    "count": 42
+   },
+   {
+    "term": "DIZZINESS",
+    "count": 42
+   },
+   {
+    "term": "INTESTINAL OBSTRUCTION",
+    "count": 40
+   },
+   {
+    "term": "ABDOMINAL PAIN UPPER",
+    "count": 39
+   },
+   {
+    "term": "BACK PAIN",
+    "count": 39
+   },
+   {
+    "term": "ACUTE KIDNEY INJURY",
+    "count": 38
+   },
+   {
+    "term": "CONDITION AGGRAVATED",
+    "count": 37
+   },
+   {
+    "term": "HEADACHE",
+    "count": 37
+   },
+   {
+    "term": "BLOOD CREATININE INCREASED",
+    "count": 36
+   },
+   {
+    "term": "RASH",
+    "count": 36
+   },
+   {
+    "term": "HYPOTENSION",
+    "count": 35
+   },
+   {
+    "term": "FALL",
+    "count": 32
+   },
+   {
+    "term": "NEUTROPHIL COUNT DECREASED",
+    "count": 32
+   },
+   {
+    "term": "PNEUMONIA",
+    "count": 32
+   },
+   {
+    "term": "BLOOD GLUCOSE INCREASED",
+    "count": 30
+   },
+   {
+    "term": "HYPERTENSION",
+    "count": 30
+   },
+   {
+    "term": "INTENTIONAL PRODUCT USE ISSUE",
+    "count": 30
+   },
+   {
+    "term": "CARCINOID CRISIS",
+    "count": 29
+   },
+   {
+    "term": "LETHARGY",
+    "count": 29
+   },
+   {
+    "term": "MYELODYSPLASTIC SYNDROME",
+    "count": 29
+   },
+   {
+    "term": "NEOPLASM PROGRESSION",
+    "count": 29
+   },
+   {
+    "term": "FULL BLOOD COUNT DECREASED",
+    "count": 28
+   },
+   {
+    "term": "RED BLOOD CELL COUNT DECREASED",
+    "count": 28
+   },
+   {
+    "term": "GASTROENTEROPANCREATIC NEUROENDOCRINE TUMOUR DISEASE",
+    "count": 27
+   },
+   {
+    "term": "HEPATIC FAILURE",
+    "count": 27
+   },
+   {
+    "term": "LEUKOPENIA",
+    "count": 27
+   },
+   {
+    "term": "LIVER DISORDER",
+    "count": 27
+   },
+   {
+    "term": "MYELOSUPPRESSION",
+    "count": 27
+   },
+   {
+    "term": "OEDEMA PERIPHERAL",
+    "count": 27
+   },
+   {
+    "term": "RENAL FAILURE",
+    "count": 27
+   },
+   {
+    "term": "ARTHRALGIA",
+    "count": 26
+   },
+   {
+    "term": "GASTROINTESTINAL HAEMORRHAGE",
+    "count": 26
+   },
+   {
+    "term": "SECOND PRIMARY MALIGNANCY",
+    "count": 26
+   },
+   {
+    "term": "ABDOMINAL DISCOMFORT",
+    "count": 25
+   },
+   {
+    "term": "ACUTE MYELOID LEUKAEMIA",
+    "count": 25
+   },
+   {
+    "term": "DEHYDRATION",
+    "count": 25
+   },
+   {
+    "term": "ASPARTATE AMINOTRANSFERASE INCREASED",
+    "count": 24
+   },
+   {
+    "term": "LYMPHOPENIA",
+    "count": 24
+   },
+   {
+    "term": "SYNCOPE",
+    "count": 24
+   },
+   {
+    "term": "CARCINOID SYNDROME",
+    "count": 23
+   },
+   {
+    "term": "URINARY TRACT INFECTION",
+    "count": 23
+   },
+   {
+    "term": "ABDOMINAL DISTENSION",
+    "count": 22
+   },
+   {
+    "term": "BLOOD PRESSURE SYSTOLIC INCREASED",
+    "count": 22
+   },
+   {
+    "term": "BLOOD UREA INCREASED",
+    "count": 22
+   },
+   {
+    "term": "CHRONIC KIDNEY DISEASE",
+    "count": 22
+   },
+   {
+    "term": "COUGH",
+    "count": 22
+   },
+   {
+    "term": "HEPATIC LESION",
+    "count": 22
+   },
+   {
+    "term": "TACHYCARDIA",
+    "count": 22
+   },
+   {
+    "term": "LOSS OF CONSCIOUSNESS",
+    "count": 21
+   },
+   {
+    "term": "PAIN IN EXTREMITY",
+    "count": 21
+   },
+   {
+    "term": "PANCREATIC NEUROENDOCRINE TUMOUR METASTATIC",
+    "count": 21
+   },
+   {
+    "term": "PERIPHERAL SWELLING",
+    "count": 21
+   },
+   {
+    "term": "HEPATIC FUNCTION ABNORMAL",
+    "count": 20
+   },
+   {
+    "term": "INFECTION",
+    "count": 20
+   },
+   {
+    "term": "BLOOD ALKALINE PHOSPHATASE INCREASED",
+    "count": 19
+   },
+   {
+    "term": "CONFUSIONAL STATE",
+    "count": 19
+   },
+   {
+    "term": "DEPRESSION",
+    "count": 19
+   }
+  ]
+ },
+ "metformin": {
+  "result": [
+   {
+    "term": "NAUSEA",
+    "count": 30197
+   },
+   {
+    "term": "DIARRHOEA",
+    "count": 28015
+   },
+   {
+    "term": "BLOOD GLUCOSE INCREASED",
+    "count": 27175
+   },
+   {
+    "term": "DRUG INEFFECTIVE",
+    "count": 22503
+   },
+   {
+    "term": "FATIGUE",
+    "count": 21324
+   },
+   {
+    "term": "LACTIC ACIDOSIS",
+    "count": 20130
+   },
+   {
+    "term": "VOMITING",
+    "count": 19625
+   },
+   {
+    "term": "ACUTE KIDNEY INJURY",
+    "count": 18364
+   },
+   {
+    "term": "WEIGHT DECREASED",
+    "count": 17304
+   },
+   {
+    "term": "DYSPNOEA",
+    "count": 16777
+   },
+   {
+    "term": "DIZZINESS",
+    "count": 15724
+   },
+   {
+    "term": "OFF LABEL USE",
+    "count": 15400
+   },
+   {
+    "term": "HEADACHE",
+    "count": 15124
+   },
+   {
+    "term": "PAIN",
+    "count": 14146
+   },
+   {
+    "term": "ASTHENIA",
+    "count": 13383
+   },
+   {
+    "term": "MALAISE",
+    "count": 12787
+   },
+   {
+    "term": "DECREASED APPETITE",
+    "count": 11976
+   },
+   {
+    "term": "FALL",
+    "count": 11532
+   },
+   {
+    "term": "ARTHRALGIA",
+    "count": 10640
+   },
+   {
+    "term": "DEATH",
+    "count": 9236
+   },
+   {
+    "term": "PAIN IN EXTREMITY",
+    "count": 9196
+   },
+   {
+    "term": "HYPOGLYCAEMIA",
+    "count": 9152
+   },
+   {
+    "term": "PNEUMONIA",
+    "count": 9021
+   },
+   {
+    "term": "PRURITUS",
+    "count": 8720
+   },
+   {
+    "term": "ABDOMINAL PAIN",
+    "count": 8711
+   },
+   {
+    "term": "COUGH",
+    "count": 8510
+   },
+   {
+    "term": "RASH",
+    "count": 8494
+   },
+   {
+    "term": "HYPOTENSION",
+    "count": 8490
+   },
+   {
+    "term": "TOXICITY TO VARIOUS AGENTS",
+    "count": 8148
+   },
+   {
+    "term": "CONSTIPATION",
+    "count": 7829
+   },
+   {
+    "term": "INJECTION SITE PAIN",
+    "count": 7686
+   },
+   {
+    "term": "DRUG INTERACTION",
+    "count": 7593
+   },
+   {
+    "term": "WEIGHT INCREASED",
+    "count": 7589
+   },
+   {
+    "term": "HYPERTENSION",
+    "count": 7540
+   },
+   {
+    "term": "ABDOMINAL PAIN UPPER",
+    "count": 7518
+   },
+   {
+    "term": "PYREXIA",
+    "count": 7445
+   },
+   {
+    "term": "RENAL FAILURE",
+    "count": 7367
+   },
+   {
+    "term": "CONDITION AGGRAVATED",
+    "count": 7256
+   },
+   {
+    "term": "METABOLIC ACIDOSIS",
+    "count": 7095
+   },
+   {
+    "term": "DEHYDRATION",
+    "count": 7071
+   },
+   {
+    "term": "BACK PAIN",
+    "count": 6957
+   },
+   {
+    "term": "BLOOD GLUCOSE DECREASED",
+    "count": 6946
+   },
+   {
+    "term": "ANXIETY",
+    "count": 6681
+   },
+   {
+    "term": "INSOMNIA",
+    "count": 6609
+   },
+   {
+    "term": "CONFUSIONAL STATE",
+    "count": 6375
+   },
+   {
+    "term": "URINARY TRACT INFECTION",
+    "count": 6271
+   },
+   {
+    "term": "DIABETES MELLITUS",
+    "count": 6247
+   },
+   {
+    "term": "ANAEMIA",
+    "count": 6234
+   },
+   {
+    "term": "FEELING ABNORMAL",
+    "count": 6227
+   },
+   {
+    "term": "ABDOMINAL DISCOMFORT",
+    "count": 6189
+   },
+   {
+    "term": "BLOOD PRESSURE INCREASED",
+    "count": 6006
+   },
+   {
+    "term": "CHEST PAIN",
+    "count": 5997
+   },
+   {
+    "term": "DEPRESSION",
+    "count": 5977
+   },
+   {
+    "term": "GAIT DISTURBANCE",
+    "count": 5742
+   },
+   {
+    "term": "SOMNOLENCE",
+    "count": 5730
+   },
+   {
+    "term": "MYOCARDIAL INFARCTION",
+    "count": 5496
+   },
+   {
+    "term": "INCORRECT DOSE ADMINISTERED",
+    "count": 5470
+   },
+   {
+    "term": "GLYCOSYLATED HAEMOGLOBIN INCREASED",
+    "count": 5463
+   },
+   {
+    "term": "MUSCLE SPASMS",
+    "count": 5324
+   },
+   {
+    "term": "PERIPHERAL SWELLING",
+    "count": 5281
+   },
+   {
+    "term": "NASOPHARYNGITIS",
+    "count": 5045
+   },
+   {
+    "term": "PRODUCT DOSE OMISSION ISSUE",
+    "count": 4965
+   },
+   {
+    "term": "CEREBROVASCULAR ACCIDENT",
+    "count": 4941
+   },
+   {
+    "term": "MYALGIA",
+    "count": 4913
+   },
+   {
+    "term": "TREMOR",
+    "count": 4810
+   },
+   {
+    "term": "HYPERKALAEMIA",
+    "count": 4757
+   },
+   {
+    "term": "ALOPECIA",
+    "count": 4684
+   },
+   {
+    "term": "CHRONIC KIDNEY DISEASE",
+    "count": 4583
+   },
+   {
+    "term": "HYPERHIDROSIS",
+    "count": 4576
+   },
+   {
+    "term": "OEDEMA PERIPHERAL",
+    "count": 4525
+   },
+   {
+    "term": "DIABETIC KETOACIDOSIS",
+    "count": 4459
+   },
+   {
+    "term": "HYPERGLYCAEMIA",
+    "count": 4345
+   },
+   {
+    "term": "DYSPEPSIA",
+    "count": 4288
+   },
+   {
+    "term": "OVERDOSE",
+    "count": 4283
+   },
+   {
+    "term": "DRUG DOSE OMISSION",
+    "count": 4281
+   },
+   {
+    "term": "COVID-19",
+    "count": 4214
+   },
+   {
+    "term": "RENAL FAILURE ACUTE",
+    "count": 4139
+   },
+   {
+    "term": "COMPLETED SUICIDE",
+    "count": 4136
+   },
+   {
+    "term": "MUSCULAR WEAKNESS",
+    "count": 4069
+   },
+   {
+    "term": "INAPPROPRIATE SCHEDULE OF PRODUCT ADMINISTRATION",
+    "count": 4047
+   },
+   {
+    "term": "HYPOAESTHESIA",
+    "count": 4035
+   },
+   {
+    "term": "PARAESTHESIA",
+    "count": 4030
+   },
+   {
+    "term": "ATRIAL FIBRILLATION",
+    "count": 4002
+   },
+   {
+    "term": "ABDOMINAL DISTENSION",
+    "count": 3980
+   },
+   {
+    "term": "MEMORY IMPAIRMENT",
+    "count": 3954
+   },
+   {
+    "term": "VISION BLURRED",
+    "count": 3892
+   },
+   {
+    "term": "DRUG HYPERSENSITIVITY",
+    "count": 3889
+   },
+   {
+    "term": "PRODUCT USE IN UNAPPROVED INDICATION",
+    "count": 3854
+   },
+   {
+    "term": "LOSS OF CONSCIOUSNESS",
+    "count": 3815
+   },
+   {
+    "term": "RENAL IMPAIRMENT",
+    "count": 3809
+   },
+   {
+    "term": "ERYTHEMA",
+    "count": 3787
+   },
+   {
+    "term": "PANCREATITIS",
+    "count": 3748
+   },
+   {
+    "term": "GENERAL PHYSICAL HEALTH DETERIORATION",
+    "count": 3716
+   },
+   {
+    "term": "DIABETES MELLITUS INADEQUATE CONTROL",
+    "count": 3672
+   },
+   {
+    "term": "SYNCOPE",
+    "count": 3634
+   },
+   {
+    "term": "VISUAL IMPAIRMENT",
+    "count": 3634
+   },
+   {
+    "term": "PRODUCT USE ISSUE",
+    "count": 3497
+   },
+   {
+    "term": "HYPERSENSITIVITY",
+    "count": 3486
+   },
+   {
+    "term": "URTICARIA",
+    "count": 3486
+   },
+   {
+    "term": "SEPSIS",
+    "count": 3457
+   }
+  ]
+ }
+}

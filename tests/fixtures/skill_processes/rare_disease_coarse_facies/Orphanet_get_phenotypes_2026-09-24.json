@@ -1,0 +1,4757 @@
+{
+ "_note": "Recorded 2026-09-24 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner) while rare-disease-diagnosis ran on symptoms [coarse facies, hepatosplenomegaly, global developmental delay], age_years 4. Each key is one call's arguments as JSON with sorted keys. Every response is whole.",
+ "{\"orphacode\": 580}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "580",
+   "preferred_term": "Mucopolysaccharidosis type 2",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000256",
+     "hpo_term": "Macrocephaly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000280",
+     "hpo_term": "Coarse facial features",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001376",
+     "hpo_term": "Limitation of joint mobility",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001627",
+     "hpo_term": "Abnormal heart morphology",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004322",
+     "hpo_term": "Short stature",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000023",
+     "hpo_term": "Inguinal hernia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000158",
+     "hpo_term": "Macroglossia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000212",
+     "hpo_term": "Gingival overgrowth",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000293",
+     "hpo_term": "Full cheeks",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000405",
+     "hpo_term": "Conductive hearing impairment",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000407",
+     "hpo_term": "Sensorineural hearing impairment",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000488",
+     "hpo_term": "Retinopathy",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000546",
+     "hpo_term": "Retinal degeneration",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000708",
+     "hpo_term": "Atypical behavior",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000762",
+     "hpo_term": "Decreased nerve conduction velocity",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000943",
+     "hpo_term": "Dysostosis multiplex",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001268",
+     "hpo_term": "Mental deterioration",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001510",
+     "hpo_term": "Growth delay",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001537",
+     "hpo_term": "Umbilical hernia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001609",
+     "hpo_term": "Hoarse voice",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001654",
+     "hpo_term": "Abnormal heart valve morphology",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001744",
+     "hpo_term": "Splenomegaly",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002028",
+     "hpo_term": "Chronic diarrhea",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002159",
+     "hpo_term": "Heparan sulfate excretion in urine",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002240",
+     "hpo_term": "Hepatomegaly",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002344",
+     "hpo_term": "Progressive neurologic deterioration",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002360",
+     "hpo_term": "Sleep abnormality",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002376",
+     "hpo_term": "Developmental regression",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002788",
+     "hpo_term": "Recurrent upper respiratory tract infections",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004582",
+     "hpo_term": "Irregularity of vertebral bodies",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005781",
+     "hpo_term": "Contractures of the large joints",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006979",
+     "hpo_term": "Sleep-wake cycle disturbance",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007994",
+     "hpo_term": "Peripheral visual field loss",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008301",
+     "hpo_term": "Dermatan sulfate excretion in urine",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010535",
+     "hpo_term": "Sleep apnea",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011369",
+     "hpo_term": "Mongolian blue spot",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012471",
+     "hpo_term": "Thick vermilion border",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030044",
+     "hpo_term": "Flexion contracture of digit",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030812",
+     "hpo_term": "Enlarged tonsils",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100543",
+     "hpo_term": "Cognitive impairment",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0410018",
+     "hpo_term": "Recurrent ear infections",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000336",
+     "hpo_term": "Prominent supraorbital ridges",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000362",
+     "hpo_term": "Otosclerosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000431",
+     "hpo_term": "Wide nasal bridge",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000445",
+     "hpo_term": "Wide nose",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000648",
+     "hpo_term": "Optic atrophy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000752",
+     "hpo_term": "Hyperactivity",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001085",
+     "hpo_term": "Papilledema",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001263",
+     "hpo_term": "Global developmental delay",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001334",
+     "hpo_term": "Communicating hydrocephalus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001385",
+     "hpo_term": "Hip dysplasia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001633",
+     "hpo_term": "Abnormal mitral valve morphology",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001638",
+     "hpo_term": "Cardiomyopathy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001641",
+     "hpo_term": "Abnormal pulmonary valve morphology",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001679",
+     "hpo_term": "Abnormal aortic morphology",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001702",
+     "hpo_term": "Abnormal tricuspid valve morphology",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002176",
+     "hpo_term": "Spinal cord compression",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002781",
+     "hpo_term": "Upper airway obstruction",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003552",
+     "hpo_term": "Muscle stiffness",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007703",
+     "hpo_term": "Abnormality of retinal pigmentation",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007957",
+     "hpo_term": "Corneal opacity",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008843",
+     "hpo_term": "Hip osteoarthritis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010656",
+     "hpo_term": "Abnormal epiphyseal ossification",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012185",
+     "hpo_term": "Constrictive median neuropathy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012478",
+     "hpo_term": "Temporomandibular joint ankylosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030466",
+     "hpo_term": "Abnormal full-field electroretinogram",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0031416",
+     "hpo_term": "Abnormal nasal mucus secretion",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000718",
+     "hpo_term": "Aggressive behavior",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000822",
+     "hpo_term": "Hypertension",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001129",
+     "hpo_term": "Large central visual field defect",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001250",
+     "hpo_term": "Seizure",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011675",
+     "hpo_term": "Arrhythmia",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0025160",
+     "hpo_term": "Abnormal temper tantrums",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100710",
+     "hpo_term": "Impulsivity",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 74
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "580"
+  }
+ },
+ "{\"orphacode\": 363294}": {
+  "status": "error",
+  "error": "Disease ORPHA:363294 not found. Use Orphanet_search_diseases to find a valid ORPHA code."
+ },
+ "{\"orphacode\": 79430}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "79430",
+   "preferred_term": "Hermansky-Pudlak syndrome",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000639",
+     "hpo_term": "Nystagmus",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001010",
+     "hpo_term": "Hypopigmentation of the skin",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001875",
+     "hpo_term": "Decreased total neutrophil count",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001892",
+     "hpo_term": "Abnormal bleeding",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002721",
+     "hpo_term": "Immunodeficiency",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007443",
+     "hpo_term": "Partial albinism",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007730",
+     "hpo_term": "Iris hypopigmentation",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000083",
+     "hpo_term": "Renal insufficiency",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000421",
+     "hpo_term": "Epistaxis",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000483",
+     "hpo_term": "Astigmatism",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000486",
+     "hpo_term": "Strabismus",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000518",
+     "hpo_term": "Cataract",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000545",
+     "hpo_term": "Myopia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000587",
+     "hpo_term": "Abnormal optic nerve morphology",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000613",
+     "hpo_term": "Photophobia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000646",
+     "hpo_term": "Amblyopia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000649",
+     "hpo_term": "Abnormality of visual evoked potentials",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000978",
+     "hpo_term": "Bruising susceptibility",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001107",
+     "hpo_term": "Ocular albinism",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002206",
+     "hpo_term": "Pulmonary fibrosis",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005599",
+     "hpo_term": "Hypopigmentation of hair",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0400008",
+     "hpo_term": "Menometrorrhagia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000505",
+     "hpo_term": "Visual impairment",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000527",
+     "hpo_term": "Long eyelashes",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000682",
+     "hpo_term": "Abnormality of dental enamel",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000962",
+     "hpo_term": "Hyperkeratosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000995",
+     "hpo_term": "Melanocytic nevus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001072",
+     "hpo_term": "Thickened skin",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001638",
+     "hpo_term": "Cardiomyopathy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001824",
+     "hpo_term": "Weight loss",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001872",
+     "hpo_term": "Abnormality of thrombocytes",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002024",
+     "hpo_term": "Malabsorption",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002027",
+     "hpo_term": "Abdominal pain",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002039",
+     "hpo_term": "Anorexia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002094",
+     "hpo_term": "Dyspnea",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002239",
+     "hpo_term": "Gastrointestinal hemorrhage",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002671",
+     "hpo_term": "Basal cell carcinoma",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006739",
+     "hpo_term": "Squamous cell carcinoma of the skin",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012378",
+     "hpo_term": "Fatigue",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 39
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "79430"
+  }
+ },
+ "{\"orphacode\": 351}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "351",
+   "preferred_term": "Galactosialidosis",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000280",
+     "hpo_term": "Coarse facial features",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000365",
+     "hpo_term": "Hearing impairment",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000925",
+     "hpo_term": "Abnormality of the vertebral column",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001249",
+     "hpo_term": "Intellectual disability",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001250",
+     "hpo_term": "Seizure",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002652",
+     "hpo_term": "Skeletal dysplasia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003468",
+     "hpo_term": "Abnormal vertebral morphology",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007957",
+     "hpo_term": "Corneal opacity",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010729",
+     "hpo_term": "Cherry red spot of the macula",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 9
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "351"
+  }
+ },
+ "{\"orphacode\": 300496}": {
+  "status": "error",
+  "error": "Disease ORPHA:300496 not found. Use Orphanet_search_diseases to find a valid ORPHA code."
+ },
+ "{\"orphacode\": 79255}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "79255",
+   "preferred_term": "GM1 gangliosidosis type 1",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000455",
+     "hpo_term": "Broad nasal tip",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000768",
+     "hpo_term": "Pectus carinatum",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000926",
+     "hpo_term": "Platyspondyly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001007",
+     "hpo_term": "Hirsutism",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001072",
+     "hpo_term": "Thickened skin",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001230",
+     "hpo_term": "Broad metacarpals",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001250",
+     "hpo_term": "Seizure",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001789",
+     "hpo_term": "Hydrops fetalis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002007",
+     "hpo_term": "Frontal bossing",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002684",
+     "hpo_term": "Thickened calvaria",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002690",
+     "hpo_term": "Large sella turcica",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002869",
+     "hpo_term": "Flared iliac wings",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003026",
+     "hpo_term": "Short long bone",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004562",
+     "hpo_term": "Beaking of vertebral bodies T12-L3",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005280",
+     "hpo_term": "Depressed nasal bridge",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006371",
+     "hpo_term": "Broad long bone diaphyses",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008479",
+     "hpo_term": "Hypoplastic vertebral bodies",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008807",
+     "hpo_term": "Acetabular dysplasia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008812",
+     "hpo_term": "Flattened femoral head",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011369",
+     "hpo_term": "Mongolian blue spot",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011968",
+     "hpo_term": "Feeding difficulties",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012307",
+     "hpo_term": "Spatulate ribs",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0025013",
+     "hpo_term": "Decerebrate rigidity",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100767",
+     "hpo_term": "Abnormality of the placenta",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:3000050",
+     "hpo_term": "Abnormality of odontoid tissue",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001511",
+     "hpo_term": "Intrauterine growth retardation",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008166",
+     "hpo_term": "Decreased beta-galactosidase activity",
+     "frequency": "Obligate (100%)",
+     "diagnostic_criteria": "Diagnostic criterion"
+    },
+    {
+     "hpo_id": "HP:0000365",
+     "hpo_term": "Hearing impairment",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000618",
+     "hpo_term": "Blindness",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000707",
+     "hpo_term": "Abnormality of the nervous system",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000924",
+     "hpo_term": "Abnormality of the skeletal system",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001249",
+     "hpo_term": "Intellectual disability",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001263",
+     "hpo_term": "Global developmental delay",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001433",
+     "hpo_term": "Hepatosplenomegaly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001999",
+     "hpo_term": "Abnormal facial shape",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002376",
+     "hpo_term": "Developmental regression",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003541",
+     "hpo_term": "Urinary glycosaminoglycan excretion",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008947",
+     "hpo_term": "Floppy infant",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0410346",
+     "hpo_term": "Increased urinary galactosylated oligosaccharide",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000943",
+     "hpo_term": "Dysostosis multiplex",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001257",
+     "hpo_term": "Spasticity",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001638",
+     "hpo_term": "Cardiomyopathy",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002267",
+     "hpo_term": "Exaggerated startle response",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002506",
+     "hpo_term": "Diffuse cerebral atrophy",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002652",
+     "hpo_term": "Skeletal dysplasia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007204",
+     "hpo_term": "Diffuse white matter abnormalities",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010729",
+     "hpo_term": "Cherry red spot of the macula",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011951",
+     "hpo_term": "Aspiration pneumonia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012753",
+     "hpo_term": "T2 hypointense basal ganglia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000158",
+     "hpo_term": "Macroglossia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000212",
+     "hpo_term": "Gingival overgrowth",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000343",
+     "hpo_term": "Long philtrum",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000369",
+     "hpo_term": "Low-set ears",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000400",
+     "hpo_term": "Macrotia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 54
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "79255"
+  }
+ },
+ "{\"orphacode\": 709}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "709",
+   "preferred_term": "Peters plus syndrome",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000075",
+     "hpo_term": "Renal duplication",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000126",
+     "hpo_term": "Hydronephrosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000154",
+     "hpo_term": "Wide mouth",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000252",
+     "hpo_term": "Microcephaly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000405",
+     "hpo_term": "Conductive hearing impairment",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000463",
+     "hpo_term": "Anteverted nares",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000505",
+     "hpo_term": "Visual impairment",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000648",
+     "hpo_term": "Optic atrophy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000830",
+     "hpo_term": "Anterior hypopituitarism",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000851",
+     "hpo_term": "Congenital hypothyroidism",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000960",
+     "hpo_term": "Sacral dimple",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001537",
+     "hpo_term": "Umbilical hernia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001249",
+     "hpo_term": "Intellectual disability",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001263",
+     "hpo_term": "Global developmental delay",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001511",
+     "hpo_term": "Intrauterine growth retardation",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001773",
+     "hpo_term": "Short foot",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001831",
+     "hpo_term": "Short toe",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002000",
+     "hpo_term": "Short columella",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002263",
+     "hpo_term": "Exaggerated cupid's bow",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002983",
+     "hpo_term": "Micromelia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004209",
+     "hpo_term": "Clinodactyly of the 5th finger",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007833",
+     "hpo_term": "Anterior chamber synechiae",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007957",
+     "hpo_term": "Corneal opacity",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008873",
+     "hpo_term": "Disproportionate short-limb short stature",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000028",
+     "hpo_term": "Cryptorchidism",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000047",
+     "hpo_term": "Hypospadias",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000175",
+     "hpo_term": "Cleft palate",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000204",
+     "hpo_term": "Cleft upper lip",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000238",
+     "hpo_term": "Hydrocephalus",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000316",
+     "hpo_term": "Hypertelorism",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000384",
+     "hpo_term": "Preauricular skin tag",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000465",
+     "hpo_term": "Webbed neck",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000482",
+     "hpo_term": "Microcornea",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000504",
+     "hpo_term": "Abnormality of vision",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000518",
+     "hpo_term": "Cataract",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000582",
+     "hpo_term": "Upslanted palpebral fissure",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000639",
+     "hpo_term": "Nystagmus",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000687",
+     "hpo_term": "Widely spaced teeth",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001558",
+     "hpo_term": "Decreased fetal movement",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001642",
+     "hpo_term": "Pulmonic stenosis",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001671",
+     "hpo_term": "Abnormal cardiac septum morphology",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001770",
+     "hpo_term": "Toe syndactyly",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002007",
+     "hpo_term": "Frontal bossing",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004322",
+     "hpo_term": "Short stature",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004414",
+     "hpo_term": "Abnormality of the pulmonary artery",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004467",
+     "hpo_term": "Preauricular pit",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008569",
+     "hpo_term": "Microtia, second degree",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008872",
+     "hpo_term": "Feeding difficulties in infancy",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008897",
+     "hpo_term": "Postnatal growth retardation",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011220",
+     "hpo_term": "Prominent forehead",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012745",
+     "hpo_term": "Short palpebral fissure",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000003",
+     "hpo_term": "Multicystic kidney dysplasia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000013",
+     "hpo_term": "Hypoplasia of the uterus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000023",
+     "hpo_term": "Inguinal hernia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000060",
+     "hpo_term": "Clitoral hypoplasia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000073",
+     "hpo_term": "Ureteral duplication",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001561",
+     "hpo_term": "Polyhydramnios",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001643",
+     "hpo_term": "Patent ductus arteriosus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002023",
+     "hpo_term": "Anal atresia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002119",
+     "hpo_term": "Ventriculomegaly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002120",
+     "hpo_term": "Cerebral cortical atrophy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003196",
+     "hpo_term": "Short nose",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003298",
+     "hpo_term": "Spina bifida occulta",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005280",
+     "hpo_term": "Depressed nasal bridge",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006610",
+     "hpo_term": "Wide intermamillary distance",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007370",
+     "hpo_term": "Aplasia/Hypoplasia of the corpus callosum",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008678",
+     "hpo_term": "Renal hypoplasia/aplasia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008905",
+     "hpo_term": "Rhizomelia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100819",
+     "hpo_term": "Intestinal fistula",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004383",
+     "hpo_term": "Hypoplastic left heart",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005182",
+     "hpo_term": "Bicuspid pulmonary valve",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030968",
+     "hpo_term": "Abnormal pulmonary vein morphology",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000358",
+     "hpo_term": "Posteriorly rotated ears",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000219",
+     "hpo_term": "Thin upper lip vermilion",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000248",
+     "hpo_term": "Brachycephaly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000276",
+     "hpo_term": "Long face",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000311",
+     "hpo_term": "Round face",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000343",
+     "hpo_term": "Long philtrum",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000347",
+     "hpo_term": "Micrognathia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000470",
+     "hpo_term": "Short neck",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000501",
+     "hpo_term": "Glaucoma",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000659",
+     "hpo_term": "Peters anomaly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": "Diagnostic criterion"
+    },
+    {
+     "hpo_id": "HP:0001156",
+     "hpo_term": "Brachydactyly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 83
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "709"
+  }
+ },
+ "{\"orphacode\": 93400}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93400",
+   "preferred_term": "Congenital sialidosis type 2",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000280",
+     "hpo_term": "Coarse facial features",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000365",
+     "hpo_term": "Hearing impairment",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000369",
+     "hpo_term": "Low-set ears",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000518",
+     "hpo_term": "Cataract",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000943",
+     "hpo_term": "Dysostosis multiplex",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000969",
+     "hpo_term": "Edema",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001252",
+     "hpo_term": "Hypotonia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001263",
+     "hpo_term": "Global developmental delay",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001433",
+     "hpo_term": "Hepatosplenomegaly",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001541",
+     "hpo_term": "Ascites",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010729",
+     "hpo_term": "Cherry red spot of the macula",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000023",
+     "hpo_term": "Inguinal hernia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000077",
+     "hpo_term": "Abnormality of the kidney",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000238",
+     "hpo_term": "Hydrocephalus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000486",
+     "hpo_term": "Strabismus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000519",
+     "hpo_term": "Developmental cataract",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000572",
+     "hpo_term": "Visual loss",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000639",
+     "hpo_term": "Nystagmus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000648",
+     "hpo_term": "Optic atrophy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000967",
+     "hpo_term": "Petechiae",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001009",
+     "hpo_term": "Telangiectasia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001250",
+     "hpo_term": "Seizure",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001251",
+     "hpo_term": "Ataxia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001257",
+     "hpo_term": "Spasticity",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001310",
+     "hpo_term": "Dysmetria",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001336",
+     "hpo_term": "Myoclonus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001537",
+     "hpo_term": "Umbilical hernia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001627",
+     "hpo_term": "Abnormal heart morphology",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002376",
+     "hpo_term": "Developmental regression",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007750",
+     "hpo_term": "Hypoplasia of the fovea",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007957",
+     "hpo_term": "Corneal opacity",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0009891",
+     "hpo_term": "Underdeveloped supraorbital ridges",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011947",
+     "hpo_term": "Respiratory tract infection",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030506",
+     "hpo_term": "Yellow/white lesions of the retina",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000212",
+     "hpo_term": "Gingival overgrowth",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000256",
+     "hpo_term": "Macrocephaly",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000348",
+     "hpo_term": "High forehead",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002240",
+     "hpo_term": "Hepatomegaly",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003115",
+     "hpo_term": "Abnormal EKG",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004554",
+     "hpo_term": "Generalized hypertrichosis",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010442",
+     "hpo_term": "Polydactyly",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010808",
+     "hpo_term": "Protruding tongue",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 42
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "93400"
+  }
+ },
+ "{\"orphacode\": 576}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "576",
+   "preferred_term": "Mucolipidosis type II",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000212",
+     "hpo_term": "Gingival overgrowth",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000280",
+     "hpo_term": "Coarse facial features",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001072",
+     "hpo_term": "Thickened skin",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001270",
+     "hpo_term": "Motor delay",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001537",
+     "hpo_term": "Umbilical hernia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001538",
+     "hpo_term": "Protuberant abdomen",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001609",
+     "hpo_term": "Hoarse voice",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002474",
+     "hpo_term": "Expressive language delay",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004322",
+     "hpo_term": "Short stature",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006596",
+     "hpo_term": "Restricted chest movement",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008897",
+     "hpo_term": "Postnatal growth retardation",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030680",
+     "hpo_term": "Abnormal cardiovascular system morphology",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0031650",
+     "hpo_term": "Abnormal atrioventricular valve physiology",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000388",
+     "hpo_term": "Otitis media",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000405",
+     "hpo_term": "Conductive hearing impairment",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000774",
+     "hpo_term": "Narrow chest",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001363",
+     "hpo_term": "Craniosynostosis",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001376",
+     "hpo_term": "Limitation of joint mobility",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001633",
+     "hpo_term": "Abnormal mitral valve morphology",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001653",
+     "hpo_term": "Mitral regurgitation",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002091",
+     "hpo_term": "Restrictive ventilatory defect",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002465",
+     "hpo_term": "Poor speech",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002540",
+     "hpo_term": "Inability to walk",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002870",
+     "hpo_term": "Obstructive sleep apnea",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005280",
+     "hpo_term": "Depressed nasal bridge",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010444",
+     "hpo_term": "Pulmonary insufficiency",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012368",
+     "hpo_term": "Flat face",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0045027",
+     "hpo_term": "Abnormality of the thoracic cavity",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100543",
+     "hpo_term": "Cognitive impairment",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000023",
+     "hpo_term": "Inguinal hernia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000286",
+     "hpo_term": "Epicanthus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000586",
+     "hpo_term": "Shallow orbits",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001433",
+     "hpo_term": "Hepatosplenomegaly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001540",
+     "hpo_term": "Diastasis recti",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001562",
+     "hpo_term": "Oligohydramnios",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001638",
+     "hpo_term": "Cardiomyopathy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001646",
+     "hpo_term": "Abnormal aortic valve morphology",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001655",
+     "hpo_term": "Patent foramen ovale",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001659",
+     "hpo_term": "Aortic regurgitation",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001712",
+     "hpo_term": "Left ventricular hypertrophy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001762",
+     "hpo_term": "Talipes equinovarus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001824",
+     "hpo_term": "Weight loss",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002205",
+     "hpo_term": "Recurrent respiratory infections",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002213",
+     "hpo_term": "Fine hair",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002808",
+     "hpo_term": "Kyphosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002827",
+     "hpo_term": "Hip dislocation",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003273",
+     "hpo_term": "Hip contracture",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005487",
+     "hpo_term": "Prominent metopic ridge",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006203",
+     "hpo_term": "Decreased movement range in interphalangeal joints",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006248",
+     "hpo_term": "Limited wrist movement",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006380",
+     "hpo_term": "Knee flexion contracture",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006467",
+     "hpo_term": "Limited shoulder movement",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007421",
+     "hpo_term": "Telangiectases of the cheeks",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008936",
+     "hpo_term": "Axial hypotonia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010307",
+     "hpo_term": "Stridor",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011314",
+     "hpo_term": "Abnormality of long bone morphology",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011359",
+     "hpo_term": "Dry hair",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011364",
+     "hpo_term": "White hair",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012389",
+     "hpo_term": "Appendicular hypotonia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000407",
+     "hpo_term": "Sensorineural hearing impairment",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001744",
+     "hpo_term": "Splenomegaly",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004887",
+     "hpo_term": "Respiratory failure requiring assisted ventilation",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011471",
+     "hpo_term": "Gastrostomy tube feeding in infancy",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 63
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "576"
+  }
+ },
+ "{\"orphacode\": 309282}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309282",
+   "preferred_term": "Alpha-mannosidosis, infantile form",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000410",
+     "hpo_term": "Mixed hearing impairment",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000486",
+     "hpo_term": "Strabismus",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000518",
+     "hpo_term": "Cataract",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000540",
+     "hpo_term": "Hypermetropia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000545",
+     "hpo_term": "Myopia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000736",
+     "hpo_term": "Short attention span",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001251",
+     "hpo_term": "Ataxia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001252",
+     "hpo_term": "Hypotonia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001256",
+     "hpo_term": "Intellectual disability, mild",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001270",
+     "hpo_term": "Motor delay",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001433",
+     "hpo_term": "Hepatosplenomegaly",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002090",
+     "hpo_term": "Pneumonia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003198",
+     "hpo_term": "Myopathy",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011334",
+     "hpo_term": "Facial shape deformation",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0025406",
+     "hpo_term": "Asthenia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0031123",
+     "hpo_term": "Recurrent gastroenteritis",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000158",
+     "hpo_term": "Macroglossia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000248",
+     "hpo_term": "Brachycephaly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000256",
+     "hpo_term": "Macrocephaly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000297",
+     "hpo_term": "Facial hypotonia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000303",
+     "hpo_term": "Mandibular prognathia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000337",
+     "hpo_term": "Broad forehead",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000407",
+     "hpo_term": "Sensorineural hearing impairment",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000470",
+     "hpo_term": "Short neck",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000483",
+     "hpo_term": "Astigmatism",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000520",
+     "hpo_term": "Proptosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000543",
+     "hpo_term": "Optic disc pallor",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000687",
+     "hpo_term": "Widely spaced teeth",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000708",
+     "hpo_term": "Atypical behavior",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000716",
+     "hpo_term": "Depression",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000738",
+     "hpo_term": "Hallucinations",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000739",
+     "hpo_term": "Anxiety",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000746",
+     "hpo_term": "Delusion",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000767",
+     "hpo_term": "Pectus excavatum",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000768",
+     "hpo_term": "Pectus carinatum",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000900",
+     "hpo_term": "Thickened ribs",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000926",
+     "hpo_term": "Platyspondyly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000938",
+     "hpo_term": "Osteopenia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000977",
+     "hpo_term": "Soft skin",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001258",
+     "hpo_term": "Spastic paraplegia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001272",
+     "hpo_term": "Cerebellar atrophy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001289",
+     "hpo_term": "Confusion",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001363",
+     "hpo_term": "Craniosynostosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001382",
+     "hpo_term": "Joint hypermobility",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001387",
+     "hpo_term": "Joint stiffness",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001519",
+     "hpo_term": "Disproportionate tall stature",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001537",
+     "hpo_term": "Umbilical hernia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001653",
+     "hpo_term": "Mitral regurgitation",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001776",
+     "hpo_term": "Bilateral talipes equinovarus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001876",
+     "hpo_term": "Pancytopenia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002120",
+     "hpo_term": "Cerebral cortical atrophy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002308",
+     "hpo_term": "Chiari malformation",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002312",
+     "hpo_term": "Clumsiness",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002329",
+     "hpo_term": "Drowsiness",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002553",
+     "hpo_term": "Highly arched eyebrow",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002679",
+     "hpo_term": "Abnormality of the sella turcica",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002684",
+     "hpo_term": "Thickened calvaria",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002797",
+     "hpo_term": "Osteolysis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002857",
+     "hpo_term": "Genu valgum",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004437",
+     "hpo_term": "Cranial hyperostosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004684",
+     "hpo_term": "Talipes valgus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005280",
+     "hpo_term": "Depressed nasal bridge",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005791",
+     "hpo_term": "Cortical thickening of long bone diaphyses",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007957",
+     "hpo_term": "Corneal opacity",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008821",
+     "hpo_term": "Hypoplastic inferior ilia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008936",
+     "hpo_term": "Axial hypotonia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010665",
+     "hpo_term": "Bilateral coxa valga",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010885",
+     "hpo_term": "Avascular necrosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011220",
+     "hpo_term": "Prominent forehead",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012157",
+     "hpo_term": "Subcortical cerebral atrophy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012368",
+     "hpo_term": "Flat face",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0430022",
+     "hpo_term": "Abnormality of the sphenoid sinus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000010",
+     "hpo_term": "Recurrent urinary tract infections",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001334",
+     "hpo_term": "Communicating hydrocephalus",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001659",
+     "hpo_term": "Aortic regurgitation",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002371",
+     "hpo_term": "Loss of speech",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000388",
+     "hpo_term": "Otitis media",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000750",
+     "hpo_term": "Delayed speech and language development",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000943",
+     "hpo_term": "Dysostosis multiplex",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001249",
+     "hpo_term": "Intellectual disability",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001328",
+     "hpo_term": "Specific learning disability",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002719",
+     "hpo_term": "Recurrent infections",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002721",
+     "hpo_term": "Immunodeficiency",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010471",
+     "hpo_term": "Oligosacchariduria",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011842",
+     "hpo_term": "Abnormality of skeletal morphology",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012379",
+     "hpo_term": "Abnormal enzyme/coenzyme activity",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000280",
+     "hpo_term": "Coarse facial features",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000316",
+     "hpo_term": "Hypertelorism",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 88
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "309282"
+  }
+ },
+ "{\"orphacode\": 137639}": {
+  "status": "error",
+  "error": "Disease ORPHA:137639 not found. Use Orphanet_search_diseases to find a valid ORPHA code."
+ },
+ "{\"orphacode\": 85453}": {
+  "status": "error",
+  "error": "Disease ORPHA:85453 not found. Use Orphanet_search_diseases to find a valid ORPHA code."
+ },
+ "{\"orphacode\": 821}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "821",
+   "preferred_term": "Sotos syndrome",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0006349",
+     "hpo_term": "Agenesis of permanent teeth",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000540",
+     "hpo_term": "Hypermetropia",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000545",
+     "hpo_term": "Myopia",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000639",
+     "hpo_term": "Nystagmus",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000668",
+     "hpo_term": "Hypodontia",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000696",
+     "hpo_term": "Delayed eruption of permanent teeth",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002664",
+     "hpo_term": "Neoplasm",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003006",
+     "hpo_term": "Neuroblastoma",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003072",
+     "hpo_term": "Hypercalcemia",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003273",
+     "hpo_term": "Hip contracture",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003468",
+     "hpo_term": "Abnormal vertebral morphology",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000098",
+     "hpo_term": "Tall stature",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000280",
+     "hpo_term": "Coarse facial features",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012771",
+     "hpo_term": "Increased arm span",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000268",
+     "hpo_term": "Dolichocephaly",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000275",
+     "hpo_term": "Narrow face",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000276",
+     "hpo_term": "Long face",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000365",
+     "hpo_term": "Hearing impairment",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000389",
+     "hpo_term": "Chronic otitis media",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000483",
+     "hpo_term": "Astigmatism",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000494",
+     "hpo_term": "Downslanted palpebral fissures",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000708",
+     "hpo_term": "Atypical behavior",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001250",
+     "hpo_term": "Seizure",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001252",
+     "hpo_term": "Hypotonia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001256",
+     "hpo_term": "Intellectual disability, mild",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001263",
+     "hpo_term": "Global developmental delay",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002019",
+     "hpo_term": "Constipation",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002650",
+     "hpo_term": "Scoliosis",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004768",
+     "hpo_term": "Sparse anterior scalp hair",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005616",
+     "hpo_term": "Accelerated skeletal maturation",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006579",
+     "hpo_term": "Prolonged neonatal jaundice",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011220",
+     "hpo_term": "Prominent forehead",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011968",
+     "hpo_term": "Feeding difficulties",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0031284",
+     "hpo_term": "Flushing",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0040194",
+     "hpo_term": "Increased head circumference",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0400000",
+     "hpo_term": "Tall chin",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0410263",
+     "hpo_term": "Brain imaging abnormality",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000076",
+     "hpo_term": "Vesicoureteral reflux",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000077",
+     "hpo_term": "Abnormality of the kidney",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000083",
+     "hpo_term": "Renal insufficiency",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000164",
+     "hpo_term": "Abnormality of the dentition",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000256",
+     "hpo_term": "Macrocephaly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000718",
+     "hpo_term": "Aggressive behavior",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000729",
+     "hpo_term": "Autistic behavior",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000739",
+     "hpo_term": "Anxiety",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001176",
+     "hpo_term": "Large hands",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001320",
+     "hpo_term": "Cerebellar vermis hypoplasia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001337",
+     "hpo_term": "Tremor",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001371",
+     "hpo_term": "Flexion contracture",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001627",
+     "hpo_term": "Abnormal heart morphology",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001629",
+     "hpo_term": "Ventricular septal defect",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001631",
+     "hpo_term": "Atrial septal defect",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001643",
+     "hpo_term": "Patent ductus arteriosus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001763",
+     "hpo_term": "Pes planus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002020",
+     "hpo_term": "Gastroesophageal reflux",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002059",
+     "hpo_term": "Cerebral atrophy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002069",
+     "hpo_term": "Bilateral tonic-clonic seizure",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002119",
+     "hpo_term": "Ventriculomegaly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002121",
+     "hpo_term": "Generalized non-motor (absence) seizure",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002123",
+     "hpo_term": "Generalized myoclonic seizure",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002280",
+     "hpo_term": "Enlarged cisterna magna",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002342",
+     "hpo_term": "Intellectual disability, moderate",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002370",
+     "hpo_term": "Poor coordination",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002384",
+     "hpo_term": "Focal impaired awareness seizure",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002389",
+     "hpo_term": "Cavum septum pellucidum",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002442",
+     "hpo_term": "Dyscalculia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002808",
+     "hpo_term": "Kyphosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004942",
+     "hpo_term": "Aortic aneurysm",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007370",
+     "hpo_term": "Aplasia/Hypoplasia of the corpus callosum",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010741",
+     "hpo_term": "Pedal edema",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010864",
+     "hpo_term": "Intellectual disability, severe",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000023",
+     "hpo_term": "Inguinal hernia",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000028",
+     "hpo_term": "Cryptorchidism",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000034",
+     "hpo_term": "Hydrocele testis",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000047",
+     "hpo_term": "Hypospadias",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000073",
+     "hpo_term": "Ureteral duplication",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000074",
+     "hpo_term": "Ureteropelvic junction obstruction",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000104",
+     "hpo_term": "Renal agenesis",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000126",
+     "hpo_term": "Hydronephrosis",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000144",
+     "hpo_term": "Decreased fertility",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000405",
+     "hpo_term": "Conductive hearing impairment",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000486",
+     "hpo_term": "Strabismus",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000518",
+     "hpo_term": "Cataract",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000767",
+     "hpo_term": "Pectus excavatum",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000821",
+     "hpo_term": "Hypothyroidism",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000953",
+     "hpo_term": "Hyperpigmentation of the skin",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001010",
+     "hpo_term": "Hypopigmentation of the skin",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001028",
+     "hpo_term": "Hemangioma",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001363",
+     "hpo_term": "Craniosynostosis",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001537",
+     "hpo_term": "Umbilical hernia",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001741",
+     "hpo_term": "Phimosis",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001762",
+     "hpo_term": "Talipes equinovarus",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001792",
+     "hpo_term": "Small nail",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001998",
+     "hpo_term": "Neonatal hypoglycemia",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002251",
+     "hpo_term": "Aganglionic megacolon",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004691",
+     "hpo_term": "2-3 toe syndactyly",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005617",
+     "hpo_term": "Bilateral camptodactyly",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006466",
+     "hpo_term": "Ankle flexion contracture",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0006721",
+     "hpo_term": "Acute lymphoblastic leukemia",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007018",
+     "hpo_term": "Attention deficit hyperactivity disorder",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0009592",
+     "hpo_term": "Astrocytoma",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0009797",
+     "hpo_term": "Cholesteatoma",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010957",
+     "hpo_term": "Congenital posterior urethral valve",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030357",
+     "hpo_term": "Small cell lung carcinoma",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030736",
+     "hpo_term": "Sacrococcygeal teratoma",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0032447",
+     "hpo_term": "Pulmonary bleb",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001382",
+     "hpo_term": "Joint hypermobility",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 107
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "821"
+  }
+ },
+ "{\"orphacode\": 796}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "796",
+   "preferred_term": "Sandhoff disease",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000256",
+     "hpo_term": "Macrocephaly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000293",
+     "hpo_term": "Full cheeks",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000365",
+     "hpo_term": "Hearing impairment",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000618",
+     "hpo_term": "Blindness",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001250",
+     "hpo_term": "Seizure",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001251",
+     "hpo_term": "Ataxia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001324",
+     "hpo_term": "Muscle weakness",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001508",
+     "hpo_term": "Failure to thrive",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001635",
+     "hpo_term": "Congestive heart failure",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001744",
+     "hpo_term": "Splenomegaly",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002205",
+     "hpo_term": "Recurrent respiratory infections",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002240",
+     "hpo_term": "Hepatomegaly",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002333",
+     "hpo_term": "Motor deterioration",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002652",
+     "hpo_term": "Skeletal dysplasia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002808",
+     "hpo_term": "Kyphosis",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004343",
+     "hpo_term": "Abnormal glycosphingolipid metabolism",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007272",
+     "hpo_term": "Progressive psychomotor deterioration",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010729",
+     "hpo_term": "Cherry red spot of the macula",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100022",
+     "hpo_term": "Abnormality of movement",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 19
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "796"
+  }
+ },
+ "{\"orphacode\": 93473}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93473",
+   "preferred_term": "Hurler syndrome",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000280",
+     "hpo_term": "Coarse facial features",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000293",
+     "hpo_term": "Full cheeks",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000431",
+     "hpo_term": "Wide nasal bridge",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000463",
+     "hpo_term": "Anteverted nares",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000470",
+     "hpo_term": "Short neck",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000574",
+     "hpo_term": "Thick eyebrow",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000924",
+     "hpo_term": "Abnormality of the skeletal system",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001249",
+     "hpo_term": "Intellectual disability",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001252",
+     "hpo_term": "Hypotonia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001263",
+     "hpo_term": "Global developmental delay",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001376",
+     "hpo_term": "Limitation of joint mobility",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001638",
+     "hpo_term": "Cardiomyopathy",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001654",
+     "hpo_term": "Abnormal heart valve morphology",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001744",
+     "hpo_term": "Splenomegaly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002007",
+     "hpo_term": "Frontal bossing",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002230",
+     "hpo_term": "Generalized hirsutism",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002240",
+     "hpo_term": "Hepatomegaly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002652",
+     "hpo_term": "Skeletal dysplasia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003468",
+     "hpo_term": "Abnormal vertebral morphology",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005280",
+     "hpo_term": "Depressed nasal bridge",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008155",
+     "hpo_term": "Mucopolysacchariduria",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012384",
+     "hpo_term": "Rhinitis",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100021",
+     "hpo_term": "Cerebral palsy",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100729",
+     "hpo_term": "Large face",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100765",
+     "hpo_term": "Abnormality of the tonsils",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100790",
+     "hpo_term": "Hernia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000158",
+     "hpo_term": "Macroglossia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000232",
+     "hpo_term": "Everted lower lip vermilion",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000238",
+     "hpo_term": "Hydrocephalus",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000268",
+     "hpo_term": "Dolichocephaly",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000365",
+     "hpo_term": "Hearing impairment",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000488",
+     "hpo_term": "Retinopathy",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000501",
+     "hpo_term": "Glaucoma",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000716",
+     "hpo_term": "Depression",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000772",
+     "hpo_term": "Abnormal rib morphology",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000822",
+     "hpo_term": "Hypertension",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000889",
+     "hpo_term": "Abnormality of the clavicle",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000940",
+     "hpo_term": "Abnormal diaphysis morphology",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001510",
+     "hpo_term": "Growth delay",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001522",
+     "hpo_term": "Death in infancy",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002028",
+     "hpo_term": "Chronic diarrhea",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002205",
+     "hpo_term": "Recurrent respiratory infections",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002360",
+     "hpo_term": "Sleep abnormality",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002650",
+     "hpo_term": "Scoliosis",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003275",
+     "hpo_term": "Narrow pelvis bone",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004322",
+     "hpo_term": "Short stature",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0005930",
+     "hpo_term": "Abnormality of epiphysis morphology",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007957",
+     "hpo_term": "Corneal opacity",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0009811",
+     "hpo_term": "Abnormality of the elbow",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011369",
+     "hpo_term": "Mongolian blue spot",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011968",
+     "hpo_term": "Feeding difficulties",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012471",
+     "hpo_term": "Thick vermilion border",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100490",
+     "hpo_term": "Camptodactyly of finger",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001000",
+     "hpo_term": "Abnormality of skin pigmentation",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001681",
+     "hpo_term": "Angina pectoris",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001706",
+     "hpo_term": "Endocardial fibroelastosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002313",
+     "hpo_term": "Spastic paraparesis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003416",
+     "hpo_term": "Spinal canal stenosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007256",
+     "hpo_term": "Abnormal pyramidal sign",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0040129",
+     "hpo_term": "Abnormal nerve conduction velocity",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 60
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "93473"
+  }
+ },
+ "{\"orphacode\": 309155}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "309155",
+   "preferred_term": "Sandhoff disease, infantile form",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0033978",
+     "hpo_term": "Reduced beta-hexosaminidase activity",
+     "frequency": "Obligate (100%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001250",
+     "hpo_term": "Seizure",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001347",
+     "hpo_term": "Hyperreflexia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002376",
+     "hpo_term": "Developmental regression",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008936",
+     "hpo_term": "Axial hypotonia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012758",
+     "hpo_term": "Neurodevelopmental delay",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001257",
+     "hpo_term": "Spasticity",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001336",
+     "hpo_term": "Myoclonus",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002069",
+     "hpo_term": "Bilateral tonic-clonic seizure",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002120",
+     "hpo_term": "Cerebral cortical atrophy",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002267",
+     "hpo_term": "Exaggerated startle response",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003429",
+     "hpo_term": "CNS hypomyelination",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004481",
+     "hpo_term": "Progressive macrocephaly",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007083",
+     "hpo_term": "Hyperactive patellar reflex",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010729",
+     "hpo_term": "Cherry red spot of the macula",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012696",
+     "hpo_term": "Abnormal thalamic MRI signal intensity",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0032794",
+     "hpo_term": "Myoclonic seizure",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000280",
+     "hpo_term": "Coarse facial features",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001433",
+     "hpo_term": "Hepatosplenomegaly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001653",
+     "hpo_term": "Mitral regurgitation",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010780",
+     "hpo_term": "Hyperacusis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0100814",
+     "hpo_term": "Blue nevus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001634",
+     "hpo_term": "Mitral valve prolapse",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 23
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "309155"
+  }
+ },
+ "{\"orphacode\": 101110}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "101110",
+   "preferred_term": "Spinocerebellar ataxia type 20",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0002066",
+     "hpo_term": "Gait ataxia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002321",
+     "hpo_term": "Vertigo",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007256",
+     "hpo_term": "Abnormal pyramidal sign",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007351",
+     "hpo_term": "Upper limb postural tremor",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010545",
+     "hpo_term": "Downbeat nystagmus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030185",
+     "hpo_term": "Isometric tremor",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030186",
+     "hpo_term": "Kinetic tremor",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002080",
+     "hpo_term": "Intention tremor",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001260",
+     "hpo_term": "Dysarthria",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001272",
+     "hpo_term": "Cerebellar atrophy",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001618",
+     "hpo_term": "Dysphonia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002067",
+     "hpo_term": "Bradykinesia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002514",
+     "hpo_term": "Cerebral calcification",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007338",
+     "hpo_term": "Hypermetric saccades",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012049",
+     "hpo_term": "Laryngeal dystonia",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0030188",
+     "hpo_term": "Tremor by anatomical site",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000640",
+     "hpo_term": "Gaze-evoked nystagmus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001251",
+     "hpo_term": "Ataxia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001347",
+     "hpo_term": "Hyperreflexia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 19
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "101110"
+  }
+ },
+ "{\"orphacode\": 93399}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "93399",
+   "preferred_term": "Juvenile sialidosis type 2",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0000280",
+     "hpo_term": "Coarse facial features",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000943",
+     "hpo_term": "Dysostosis multiplex",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001263",
+     "hpo_term": "Global developmental delay",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003271",
+     "hpo_term": "Visceromegaly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000365",
+     "hpo_term": "Hearing impairment",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000518",
+     "hpo_term": "Cataract",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001250",
+     "hpo_term": "Seizure",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008947",
+     "hpo_term": "Floppy infant",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010729",
+     "hpo_term": "Cherry red spot of the macula",
+     "frequency": "Frequent (79-30%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000023",
+     "hpo_term": "Inguinal hernia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000077",
+     "hpo_term": "Abnormality of the kidney",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000212",
+     "hpo_term": "Gingival overgrowth",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000369",
+     "hpo_term": "Low-set ears",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000486",
+     "hpo_term": "Strabismus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000572",
+     "hpo_term": "Visual loss",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000639",
+     "hpo_term": "Nystagmus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000648",
+     "hpo_term": "Optic atrophy",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001251",
+     "hpo_term": "Ataxia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001257",
+     "hpo_term": "Spasticity",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001270",
+     "hpo_term": "Motor delay",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001310",
+     "hpo_term": "Dysmetria",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001336",
+     "hpo_term": "Myoclonus",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001433",
+     "hpo_term": "Hepatosplenomegaly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001537",
+     "hpo_term": "Umbilical hernia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001618",
+     "hpo_term": "Dysphonia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001627",
+     "hpo_term": "Abnormal heart morphology",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002015",
+     "hpo_term": "Dysphagia",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002061",
+     "hpo_term": "Lower limb spasticity",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002086",
+     "hpo_term": "Abnormality of the respiratory system",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002123",
+     "hpo_term": "Generalized myoclonic seizure",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002240",
+     "hpo_term": "Hepatomegaly",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002505",
+     "hpo_term": "Loss of ambulation",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003312",
+     "hpo_term": "Abnormal form of the vertebral bodies",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004554",
+     "hpo_term": "Generalized hypertrichosis",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007957",
+     "hpo_term": "Corneal opacity",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0009891",
+     "hpo_term": "Underdeveloped supraorbital ridges",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010808",
+     "hpo_term": "Protruding tongue",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010864",
+     "hpo_term": "Intellectual disability, severe",
+     "frequency": "Very rare (<4-1%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 38
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "93399"
+  }
+ },
+ "{\"orphacode\": 309144}": {
+  "status": "error",
+  "error": "Disease ORPHA:309144 not found. Use Orphanet_search_diseases to find a valid ORPHA code."
+ },
+ "{\"orphacode\": 3166}": {
+  "status": "success",
+  "data": {
+   "orpha_code": "3166",
+   "preferred_term": "Sialuria",
+   "phenotypes": [
+    {
+     "hpo_id": "HP:0001256",
+     "hpo_term": "Intellectual disability, mild",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001290",
+     "hpo_term": "Generalized hypotonia",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001382",
+     "hpo_term": "Joint hypermobility",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001433",
+     "hpo_term": "Hepatosplenomegaly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001609",
+     "hpo_term": "Hoarse voice",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001847",
+     "hpo_term": "Long hallux",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001939",
+     "hpo_term": "Abnormality of metabolism/homeostasis",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001999",
+     "hpo_term": "Abnormal facial shape",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002240",
+     "hpo_term": "Hepatomegaly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002354",
+     "hpo_term": "Memory impairment",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002474",
+     "hpo_term": "Expressive language delay",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002487",
+     "hpo_term": "Hyperkinetic movements",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002574",
+     "hpo_term": "Episodic abdominal pain",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002705",
+     "hpo_term": "High, narrow palate",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002781",
+     "hpo_term": "Upper airway obstruction",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0002910",
+     "hpo_term": "Elevated circulating hepatic transaminase concentration",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0003645",
+     "hpo_term": "Prolonged partial thromboplastin time",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0004691",
+     "hpo_term": "2-3 toe syndactyly",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0007018",
+     "hpo_term": "Attention deficit hyperactivity disorder",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008151",
+     "hpo_term": "Prolonged prothrombin time",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0008443",
+     "hpo_term": "Spinal deformities",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0010535",
+     "hpo_term": "Sleep apnea",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0011220",
+     "hpo_term": "Prominent forehead",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0012103",
+     "hpo_term": "Abnormality of the mitochondrion",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001263",
+     "hpo_term": "Global developmental delay",
+     "frequency": "Occasional (29-5%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000219",
+     "hpo_term": "Thin upper lip vermilion",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000280",
+     "hpo_term": "Coarse facial features",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000286",
+     "hpo_term": "Epicanthus",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000316",
+     "hpo_term": "Hypertelorism",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000319",
+     "hpo_term": "Smooth philtrum",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000369",
+     "hpo_term": "Low-set ears",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000431",
+     "hpo_term": "Wide nasal bridge",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000629",
+     "hpo_term": "Periorbital fullness",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0000943",
+     "hpo_term": "Dysostosis multiplex",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001081",
+     "hpo_term": "Cholelithiasis",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    },
+    {
+     "hpo_id": "HP:0001250",
+     "hpo_term": "Seizure",
+     "frequency": "Very frequent (99-80%)",
+     "diagnostic_criteria": null
+    }
+   ],
+   "phenotype_count": 36
+  },
+  "metadata": {
+   "source": "Orphanet Orphadata API",
+   "orpha_code": "3166"
+  }
+ }
+}

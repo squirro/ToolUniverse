@@ -17,6 +17,12 @@ _BLOCKED = "fda.gov refuses automated requests from this network"
 
 CLINPGX_URL = "https://api.clinpgx.org/v1/data/labelAnnotation"
 CLINPGX_PAGE = "https://www.clinpgx.org/labelAnnotation/{id}"
+CLINPGX_LOOKUP = "https://api.clinpgx.org/v1/site/autocomplete"
+# Words that name a salt or a joint, not the chemical: "abacavir sulfate" is abacavir.
+_SALT_WORDS = {"and", "sulfate", "sulphate", "hydrochloride", "dihydrochloride", "hcl",
+               "sodium", "potassium", "calcium", "magnesium", "mesylate", "maleate",
+               "tartrate", "citrate", "phosphate", "acetate", "besylate", "succinate",
+               "fumarate", "bromide", "hydrobromide", "hydrate", "monohydrate"}
 _ON_FDA_LIST = "On FDA Biomarker List"
 
 
@@ -112,7 +118,13 @@ class FDAPharmacogenomicBiomarkersTool(BaseTool):
         """ClinPGx's annotations of FDA labels on FDA's biomarker list, labelled as ClinPGx."""
         unread = f"FDA table not read: {fda_reason}"
         try:
-            annotations = self._clinpgx_annotations(drug_name)
+            chemicals = self._resolve_chemicals(drug_name) if drug_name else []
+            if drug_name and not chemicals:
+                return upstream_error(
+                    f"{unread}; ClinPGx has no chemical named {drug_name!r}, so no ClinPGx "
+                    "annotation could be looked up", fda_status, retryable=False)
+            annotations = [a for name in ([c["name"] for c in chemicals] or [None])
+                           for a in self._clinpgx_annotations(name)]
         except _Unread as failed:
             return upstream_error(f"{unread}; ClinPGx fallback failed too: {failed}",
                                   failed.status or fda_status, retryable=False)
@@ -122,8 +134,10 @@ class FDAPharmacogenomicBiomarkersTool(BaseTool):
                     or biomarker.lower() in r["Alleles"].lower()]
         if not rows:
             # ClinPGx listing nothing says nothing about FDA's table, which stays unread.
-            asked = ", ".join(f"{k} {v!r}" for k, v in
-                              (("drug", drug_name), ("biomarker", biomarker)) if v)
+            resolved = " / ".join(repr(c["name"]) for c in chemicals)
+            asked = ", ".join(f"{k} {v}" for k, v in
+                              (("drug", f"{drug_name!r} (ClinPGx chemical {resolved})" if chemicals else None),
+                               ("biomarker", repr(biomarker) if biomarker else None)) if v)
             return upstream_error(
                 f"{unread}; ClinPGx lists no FDA-biomarker label annotation for {asked or 'the query'}, "
                 "which is not an FDA answer: whether FDA's table lists it is unknown",
@@ -134,6 +148,7 @@ class FDAPharmacogenomicBiomarkersTool(BaseTool):
             "source": "ClinPGx",
             "fallback_from": "fda.gov",
             "fda_table": unread,
+            "clinpgx_chemicals": chemicals,
             "note": ("ClinPGx (formerly PharmGKB) annotations of FDA drug labels that ClinPGx "
                      f"marks \"{_ON_FDA_LIST}\" -- not the FDA table, which could not be read. "
                      "Cite each row by its ClinPGx link."),
@@ -142,25 +157,56 @@ class FDAPharmacogenomicBiomarkersTool(BaseTool):
             "results": shown,
         }
 
-    def _clinpgx_annotations(self, drug_name: Optional[str]) -> List[Dict[str, Any]]:
+    @staticmethod
+    def _clinpgx_json(response) -> Any:
+        try:
+            return response.json()
+        except ValueError as e:
+            raise _Unread(f"ClinPGx answered HTTP {response.status_code} without JSON at "
+                          f"{response.url}", response.status_code) from e
+
+    def _resolve_chemicals(self, drug_name: str) -> List[Dict[str, str]]:
+        """ClinPGx's chemicals whose name, trade name or synonym is `drug_name`.
+
+        The lookup also returns near misses and combination products that contain the
+        drug; only a hit whose matched name has the same words as the asked name counts.
+        """
+        try:
+            response = requests.post(CLINPGX_LOOKUP, json={"query": drug_name}, timeout=30)
+        except requests.RequestException as e:
+            raise _Unread(f"ClinPGx name lookup failed: {type(e).__name__}: {e}", None) from e
+        body = self._clinpgx_json(response) if response.status_code == 200 else None
+        hits = (body.get("data") or {}).get("hits") if isinstance(body, dict) else None
+        if not isinstance(hits, list):
+            raise _Unread(f"ClinPGx name lookup answered HTTP {response.status_code} at "
+                          f"{CLINPGX_LOOKUP}", response.status_code)
+        asked = _words(drug_name)
+        found: Dict[str, Dict[str, str]] = {}
+        for hit in hits:
+            if (hit.get("objCls") == "Chemical" and hit.get("name")
+                    and _words(hit.get("matchedName", "")) == asked):
+                found.setdefault(hit["id"], {"name": hit["name"], "id": hit["id"],
+                                             "matched": hit.get("matchedName", "")})
+        return list(found.values())
+
+    def _clinpgx_annotations(self, chemical: Optional[str]) -> List[Dict[str, Any]]:
+        """FDA-list label annotations for one ClinPGx chemical name, or all of them."""
         params = {"source": "FDA", "biomarkerStatus": _ON_FDA_LIST, "view": "base"}
-        # ClinPGx matches names exactly and holds most in lower case.
-        names = list(dict.fromkeys([drug_name.lower(), drug_name])) if drug_name else [None]
-        for name in names:
-            query = {**params, "relatedChemicals.name": name} if name else params
-            try:
-                response = requests.get(CLINPGX_URL, params=query, timeout=30)
-                body = response.json()
-            except (requests.RequestException, ValueError) as e:
-                raise _Unread(f"ClinPGx request failed: {type(e).__name__}: {e}", None) from e
-            data = body.get("data") if isinstance(body, dict) else None
-            if response.status_code == 200 and isinstance(data, list):
-                return [a for a in data if a.get("biomarkerStatus") == _ON_FDA_LIST]
-            # 404 with "No results matching criteria." is ClinPGx's empty answer.
-            if not (response.status_code == 404 and "No results" in response.text):
-                raise _Unread(f"ClinPGx answered HTTP {response.status_code} at {CLINPGX_URL}",
-                              response.status_code)
-        return []
+        if chemical:
+            params["relatedChemicals.name"] = chemical
+        try:
+            response = requests.get(CLINPGX_URL, params=params, timeout=30)
+        except requests.RequestException as e:
+            raise _Unread(f"ClinPGx request failed: {type(e).__name__}: {e}", None) from e
+        body = self._clinpgx_json(response)
+        data = body.get("data") if isinstance(body, dict) else None
+        if response.status_code == 200 and isinstance(data, list):
+            return [a for a in data if a.get("biomarkerStatus") == _ON_FDA_LIST]
+        # 404 with "No results matching criteria." is ClinPGx's empty answer.
+        if response.status_code == 404 and "No results" in response.text:
+            return []
+        raise _Unread(f"ClinPGx answered HTTP {response.status_code} at {CLINPGX_URL}",
+                      response.status_code)
 
     @staticmethod
     def _clinpgx_row(annotation: Dict[str, Any]) -> Dict[str, Any]:
@@ -282,3 +328,8 @@ class FDAPharmacogenomicBiomarkersTool(BaseTool):
                             }
                         )
             return records
+
+
+def _words(name: str) -> frozenset:
+    """A name's words, case, punctuation, order and salt words aside."""
+    return frozenset(re.findall(r"[a-z0-9]+", name.lower())) - _SALT_WORDS

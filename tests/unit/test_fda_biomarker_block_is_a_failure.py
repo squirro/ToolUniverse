@@ -61,7 +61,11 @@ def _run(monkeypatch, response, arguments=None):
             raise requests.exceptions.ConnectionError("unreachable in this test")
         return response
 
+    def post(url, *a, **k):
+        raise requests.exceptions.ConnectionError("unreachable in this test")
+
     monkeypatch.setattr(mod.requests, "get", get)
+    monkeypatch.setattr(mod.requests, "post", post)
     return FDAPharmacogenomicBiomarkersTool({"name": "x"}).run(arguments or {"drug_name": "abacavir"})
 
 
@@ -115,6 +119,9 @@ from tooluniverse.skill_runner import absorb
 RECORDED_CLINPGX = json.loads(
     (Path(__file__).resolve().parents[1] / "fixtures" / "clinpgx"
      / "fda_biomarker_label_annotations_2026-09-24.json").read_text())
+RECORDED_NAMES = json.loads(
+    (Path(__file__).resolve().parents[1] / "fixtures" / "clinpgx"
+     / "name_resolution_2026-09-24.json").read_text())
 CLINPGX_HOST = "api.clinpgx.org"
 
 
@@ -125,19 +132,34 @@ class _JSONResponse(_Response):
 
 def _clinpgx(url, params):
     """ClinPGx as recorded: an exact, case-sensitive name match, 404 for no match."""
-    recorded = RECORDED_CLINPGX.get((params or {}).get("relatedChemicals.name"),
-                                    RECORDED_CLINPGX["aspirin"])
+    name = (params or {}).get("relatedChemicals.name")
+    recorded = (RECORDED_CLINPGX.get(name) or RECORDED_NAMES["labelAnnotation"].get(name)
+                or RECORDED_CLINPGX["aspirin"])
     return _JSONResponse(recorded["http_status"], json.dumps(recorded["body"]), url=url)
 
 
-def _run_blocked(monkeypatch, fda_response, arguments, clinpgx=_clinpgx):
+def _lookup(url, body):
+    """ClinPGx's name lookup as recorded; a name not recorded is a test error."""
+    recorded = RECORDED_NAMES["autocomplete"][body["query"]]
+    return _JSONResponse(recorded["http_status"], json.dumps(recorded["body"]), url=url)
+
+
+def _run_blocked(monkeypatch, fda_response, arguments, clinpgx=_clinpgx, lookup=_lookup):
     seen = []
 
     def get(url, params=None, **kwargs):
         seen.append(url)
-        return clinpgx(url, params) if CLINPGX_HOST in url else fda_response
+        if CLINPGX_HOST in url:
+            seen.append(("label", (params or {}).get("relatedChemicals.name")))
+            return clinpgx(url, params)
+        return fda_response
+
+    def post(url, json=None, **kwargs):
+        seen.append(url)
+        return lookup(url, json)
 
     monkeypatch.setattr(mod.requests, "get", get)
+    monkeypatch.setattr(mod.requests, "post", post)
     return FDAPharmacogenomicBiomarkersTool({"name": "x"}).run(arguments), seen
 
 
@@ -169,8 +191,8 @@ def test_every_clinpgx_row_carries_its_own_link(monkeypatch):
 
 
 def test_the_drug_name_is_found_whatever_its_case(monkeypatch):
-    """ClinPGx matches names exactly and holds them in lower case; "Abacavir" answers 404."""
-    result, _ = _run_blocked(monkeypatch, _Response(403, AKAMAI_403), {"drug_name": "Abacavir"})
+    """ClinPGx's annotation query matches names exactly; "ABACAVIR" there answers 404."""
+    result, _ = _run_blocked(monkeypatch, _Response(403, AKAMAI_403), {"drug_name": "ABACAVIR"})
 
     assert result["count"] == 1, result
 
@@ -225,3 +247,83 @@ def test_the_step_records_which_source_answered(monkeypatch, skill, step):
     assert absorb(spec, [cpic, fallback], {})["facts"]["pgx_biomarker_source"] == "ClinPGx"
     assert absorb(spec, [cpic, fda], {})["facts"]["pgx_biomarker_source"] == "FDA"
     assert "ClinPGx" in spec["notes"] and "pgx_biomarker_source" in spec["notes"]
+
+
+# --- the drug name is resolved to ClinPGx's own chemical first --------------------------
+#
+# The annotation query takes ClinPGx's chemical name exactly. ClinPGx's name lookup
+# (POST /v1/site/autocomplete) knows trade names and synonyms, and says which name it
+# matched. Only a hit whose matched name is the asked name (word order, case, punctuation
+# and a salt word aside) resolves it: the lookup also returns near misses and the
+# combination products that contain the drug.
+
+
+def _labelled_for(seen):
+    return [name for entry in seen if isinstance(entry, tuple) for name in entry[1:]]
+
+
+@pytest.mark.parametrize("asked", ["Ziagen", "abacavir sulfate", "ABACAVIR"])
+def test_brand_salt_and_case_resolve_to_clinpgx_abacavir(monkeypatch, asked):
+    result, seen = _run_blocked(monkeypatch, _Response(403, AKAMAI_403), {"drug_name": asked})
+
+    assert result["status"] == "success", result
+    assert [c["name"] for c in result["clinpgx_chemicals"]] == ["abacavir"]
+    assert result["clinpgx_chemicals"][0]["id"] == "PA448004"
+    assert [r["Biomarker"] for r in result["results"]] == ["HLA-B"]
+    assert _labelled_for(seen) == ["abacavir"]
+
+
+@pytest.mark.parametrize("asked", ["Lutathera", "lutetium Lu 177 dotatate"])
+def test_lutathera_resolves_and_clinpgx_has_its_fda_label(monkeypatch, asked):
+    result, _ = _run_blocked(monkeypatch, _Response(403, AKAMAI_403), {"drug_name": asked})
+
+    assert [c["name"] for c in result["clinpgx_chemicals"]] == ["lutetium (177Lu) dotatate"]
+    (row,) = result["results"]
+    assert row["Biomarker"] == "SSTR1, SSTR2, SSTR3, SSTR4, SSTR5"
+    assert row["PGxLevel"] == "Testing Required"
+
+
+def test_a_single_drug_does_not_resolve_into_the_combinations_that_contain_it(monkeypatch):
+    """The lookup for "abacavir" also returns "lamivudine / abacavir"; that is another product."""
+    result, seen = _run_blocked(monkeypatch, _Response(403, AKAMAI_403), {"drug_name": "abacavir"})
+
+    assert [c["name"] for c in result["clinpgx_chemicals"]] == ["abacavir"]
+    assert _labelled_for(seen) == ["abacavir"]
+
+
+def test_a_combination_resolves_to_the_combination_and_is_named_when_it_has_nothing(monkeypatch):
+    result, seen = _run_blocked(monkeypatch, _Response(403, AKAMAI_403),
+                                {"drug_name": "abacavir and lamivudine"})
+
+    assert is_upstream_failure(result), result
+    assert _labelled_for(seen) == ["lamivudine / abacavir"]
+    assert "lamivudine / abacavir" in result["error"] and "not read" in result["error"]
+
+
+def test_a_trade_name_of_two_chemicals_asks_for_both(monkeypatch):
+    """ClinPGx files "Epzicom" under abacavir and under lamivudine."""
+    result, seen = _run_blocked(monkeypatch, _Response(403, AKAMAI_403), {"drug_name": "Epzicom"})
+
+    assert sorted(_labelled_for(seen)) == ["abacavir", "lamivudine"]
+    assert [r["Biomarker"] for r in result["results"]] == ["HLA-B"]
+    assert {c["matched"] for c in result["clinpgx_chemicals"]} == {"Epzicom"}
+
+
+def test_a_name_clinpgx_does_not_know_fails_and_says_so(monkeypatch):
+    result, seen = _run_blocked(monkeypatch, _Response(403, AKAMAI_403), {"drug_name": "notadrugxyz"})
+
+    assert is_upstream_failure(result), result
+    assert "not read" in result["error"]
+    assert "no chemical named 'notadrugxyz'" in result["error"]
+    assert _labelled_for(seen) == []
+
+
+def test_a_failed_name_lookup_fails_with_both_reasons(monkeypatch):
+    def down(url, body):
+        return _JSONResponse(503, '{"status": "error"}', url=url)
+
+    result, _ = _run_blocked(monkeypatch, _Response(403, AKAMAI_403), {"drug_name": "Ziagen"},
+                             lookup=down)
+
+    assert is_upstream_failure(result), result
+    assert "refuses automated" in result["error"] and "503" in result["error"]

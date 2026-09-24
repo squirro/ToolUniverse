@@ -2,7 +2,7 @@
   {
     "name": "fda_pharmacogenomic_biomarkers",
     "type": "FDAPharmacogenomicBiomarkersTool",
-    "description": "Retrieve pharmacogenomic biomarkers from FDA drug labels. Reads the FDA Table of Pharmacogenomic Biomarkers in Drug Labeling (source \"FDA\") and filters it by drug name or biomarker. When fda.gov refuses the request, answers instead from ClinPGx (formerly PharmGKB) annotations of FDA labels marked \"On FDA Biomarker List\": then source is \"ClinPGx\", fallback_from is \"fda.gov\", fda_table says why the FDA table was not read, and each row carries its ClinPGx url. Those rows are ClinPGx data, not the FDA table. If neither source answers, or ClinPGx lists nothing while fda.gov refuses, the call fails: whether the FDA table lists the drug is then unknown.",
+    "description": "Retrieve pharmacogenomic biomarkers from FDA drug labels. Reads the FDA Table of Pharmacogenomic Biomarkers in Drug Labeling (source \"FDA\") and filters it by drug name or biomarker. When fda.gov refuses the request, answers instead from ClinPGx (formerly PharmGKB) annotations of FDA labels marked \"On FDA Biomarker List\": then source is \"ClinPGx\", fallback_from is \"fda.gov\", fda_table says why the FDA table was not read, clinpgx_chemicals names the ClinPGx chemical(s) the drug name resolved to (by name, trade name or synonym), and each row carries its ClinPGx url. Those rows are ClinPGx data, not the FDA table. If neither source answers, or ClinPGx lists nothing while fda.gov refuses, the call fails: whether the FDA table lists the drug is then unknown.",
     "parameter": {
       "type": "object",
       "properties": {
@@ -97,6 +97,24 @@
         },
         "note": {
           "type": "string"
+        },
+        "clinpgx_chemicals": {
+          "type": "array",
+          "description": "ClinPGx chemicals the drug name resolved to (ClinPGx answers only).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "matched": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     },

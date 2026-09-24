@@ -186,6 +186,9 @@ class OpentargetTool(GraphQLTool):
         super().__init__(tool_config, self.endpoint_url)
 
     def run(self, arguments):
+        if retired := self.tool_config.get("retired"):
+            # The source dropped the data; its schema refuses the query whole.
+            return upstream_error(retired, None, retryable=False, error_type="SourceRetired")
         arguments = copy.deepcopy(arguments)
         paged = self.tool_config.get("page_rows")
         if paged:

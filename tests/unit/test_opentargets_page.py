@@ -92,6 +92,27 @@ def test_the_diseases_by_target_tool_pages_too_and_carries_the_association_score
     assert DISEASES["parameter"]["properties"]["size"]["default"] == 25
 
 
+def test_every_field_the_associations_step_collects_is_declared_in_the_return_schema():
+    """The drug-target process collects each row's overall `score` and bands it; a field the
+    schema does not declare is one the description promises and the contract does not."""
+    import yaml
+    graph = yaml.safe_load((Path(mod.__file__).parent / "data" / "skill_graphs"
+                            / "drug-target-validation.yaml").read_text())
+    step = next(s for s in graph["steps"] if s["id"] == "associations")
+    collected = step["collect"]["disease_rows"]
+    schema = DISEASES["return_schema"]
+    for part in collected["path"].split("."):
+        schema = schema["properties"][part]
+    row = schema["items"]
+
+    for field in collected["fields"]:
+        node = row
+        for part in field.split(" as ")[0].split("."):
+            assert part in node.get("properties", {}), (field, sorted(node.get("properties", {})))
+            node = node["properties"][part]
+    assert row["properties"]["score"]["type"] == "number"
+
+
 def test_the_already_paged_similar_entity_tools_keep_their_default_size():
     """`GraphQLTool.run` fills `size` for any tool that declares it; those tools got 5 and must still."""
     similar = next(t for t in CONFIGS if t["name"] == "OpenTargets_get_similar_entities_by_disease_efoId")

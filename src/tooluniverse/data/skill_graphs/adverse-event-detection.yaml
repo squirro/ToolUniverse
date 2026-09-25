@@ -238,9 +238,16 @@ steps:
         arguments: {drug_name: "{drug_name}"}
       - tool: fda_pharmacogenomic_biomarkers
         arguments: {drug_name: "{drug_name}"}
+    # Which biomarker source answered: the FDA table, or ClinPGx when fda.gov refused.
+    extract:
+      pgx_biomarker_source: {path: "source", regex: "^(FDA|ClinPGx)$"}
     notes: >-
-      fda.gov refuses automated requests from sr-dev, so fda_pharmacogenomic_biomarkers
-      fails there: report the FDA biomarker table as not reachable, never as "no biomarker".
+      fda_pharmacogenomic_biomarkers reads FDA's biomarker table; where fda.gov refuses
+      (it does from sr-dev) it answers from ClinPGx instead, and `pgx_biomarker_source`
+      says which. Name that source in the report. ClinPGx rows are ClinPGx's annotations
+      of FDA labels, not FDA's table: cite each by its ClinPGx link and say FDA's table
+      was not reachable. A failed call means neither answered: report the biomarker
+      table as not reachable, never as "no biomarker".
 
   - id: literature
     label: "Phase 7 — literature evidence"

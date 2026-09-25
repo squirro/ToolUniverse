@@ -83,6 +83,8 @@ def _is_string_expression(node: ast.AST) -> bool:
         return (getattr(node.func, "attr", None) or getattr(node.func, "id", None)) in _STRING_CALLS
     if isinstance(node, ast.Attribute):
         return node.attr in _STRING_ATTRS
+    if isinstance(node, ast.BoolOp):  # `(resp.text or "")`: a string only if every operand is
+        return all(_is_string_expression(v) for v in node.values)
     return False
 
 

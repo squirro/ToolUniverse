@@ -730,6 +730,18 @@ def test_repair_gives_up_after_two_attempts():
     assert any("could not be resolved" in b["reason"] for b in out["blocked"])
 
 
+@pytest.mark.parametrize("suggested, said", [
+    (["variant one"], "trying 1 of 1 available"),
+    (["variant one", "variant two", "variant three"], "trying 2 of 3 available"),
+])
+def test_a_failed_repair_says_how_many_suggestions_it_tried_of_how_many(suggested, said):
+    """Not always "after MAX_REPAIRS": fewer may have been offered, or more left untried."""
+    execute, _ = _executor("never")
+    runner = SkillRunner(REPAIR_GRAPH, execute=execute, ask=lambda q: suggested)
+    out = runner.advance(runner.start({"drug_name": "original"})["run_id"])
+    assert any(said in b["reason"] for b in out["blocked"]), out["blocked"]
+
+
 def test_a_lookup_that_works_first_time_never_asks():
     execute, seen = _executor("lutetium lu 177 dotatate")
     called = []

@@ -170,6 +170,10 @@
                               }
                             }
                           },
+                          "score": {
+                            "type": "number",
+                            "description": "the overall association score for the target and this disease, 0 to 1"
+                          },
                           "datasourceScores": {
                             "type": "array",
                             "items": {

@@ -267,7 +267,10 @@ def _overlap(rule: dict, facts: dict) -> list[dict] | None:
 
 
 def _fewest(rule: dict, facts: dict) -> list | None:
-    """The `take` ids whose count is smallest; None when the cut ties, so the model is asked."""
+    """The `take` ids whose count is smallest; None when the cut ties, so the model is asked.
+
+    The cut is the answer the rule asks for, not a truncation of one.
+    """
     rows = facts.get(rule["rows"])
     if rows is None:
         return None
@@ -1643,7 +1646,9 @@ class SkillRunner:
                                    "error": problem}]
         retry_calls = step["calls"]
         retry_failures: list[dict] = []
-        for candidate in (suggestions or [])[: self.MAX_REPAIRS]:
+        suggestions = suggestions or []
+        tried = suggestions[: self.MAX_REPAIRS]
+        for candidate in tried:
             retried, retry_failures = [], []
             retry_calls = repair_calls(spec, step["calls"], argument, candidate, run["facts"])
             made.extend(retry_calls)
@@ -1663,8 +1668,8 @@ class SkillRunner:
             results = retried
         run["blocked"].append({
             "step": step["id"],
-            "reason": (f"{argument}={original!r} could not be resolved after "
-                       f"{self.MAX_REPAIRS} suggested alternatives"),
+            "reason": (f"{argument}={original!r} could not be resolved after trying "
+                       f"{len(tried)} of {len(suggestions)} available suggested alternatives"),
         })
         # The failure the repair started from is kept, so a source outage never reads
         # to the reader as a wrong identifier.

@@ -956,3 +956,15 @@ async def test_a_choice_waits_for_the_users_pick_and_behaves_as_in_memory():
     while not runner.advance(run_id).get("finished"):
         pass
     assert in_memory == calls
+
+
+async def test_the_durable_repair_says_how_many_suggestions_it_tried_of_how_many():
+    """Three offered, two tried: the reason must not read as if every suggestion failed."""
+    responses = _disease_responses(repaired="never suggested")
+    suggestions = {"name": ["Rett syndrome", "Rett disease", "RTT"]}
+    async with await WorkflowEnvironment.start_time_skipping() as env:
+        bundle, _ = await _run(
+            env, responses, DISEASE_REPAIR, {"disease": "Rett's"}, "run-disease-repair-count",
+            before_result=lambda h, e: _answer(h, suggestions))
+
+    assert any("trying 2 of 3 available" in b["reason"] for b in bundle["blocked"]), bundle["blocked"]

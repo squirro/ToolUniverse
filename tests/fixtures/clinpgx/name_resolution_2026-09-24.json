@@ -1,0 +1,630 @@
+{
+ "_note": "Recorded 2026-09-24T18:58Z from inside the smcp container on sr-dev (python requests), 3 s apart (ClinPGx answers 429 to bursts). `autocomplete`: one POST per name to ClinPGx's name lookup with body {\"query\": <name>}. `labelAnnotation`: one GET per resolved ClinPGx chemical name with the FDA biomarker-list filter. Bodies are as served, unedited; `http_status` and `url` are the response's own.",
+ "autocomplete": {
+  "abacavir": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [
+      {
+       "directMatch": true,
+       "id": "PA448004",
+       "matchedName": "abacavir",
+       "name": "abacavir",
+       "objCls": "Chemical",
+       "score": 1.0
+      },
+      {
+       "directMatch": false,
+       "id": "15165343",
+       "matchedName": "Abacavir ",
+       "name": "Abacavir | AEMPS",
+       "objCls": "Literature",
+       "score": 0.64285713
+      },
+      {
+       "directMatch": false,
+       "id": "PA166184501",
+       "matchedName": "abacavir / lamivudine",
+       "name": "lamivudine / abacavir",
+       "objCls": "Chemical",
+       "score": 0.45
+      },
+      {
+       "directMatch": true,
+       "id": "PA166131344",
+       "matchedName": "abacavir carboxylate",
+       "name": "abacavir carboxylate",
+       "objCls": "Chemical",
+       "score": 0.42857143
+      },
+      {
+       "directMatch": true,
+       "id": "PA166131304",
+       "matchedName": "abacavir glucuronide",
+       "name": "abacavir glucuronide",
+       "objCls": "Chemical",
+       "score": 0.42857143
+      }
+     ],
+     "total": 5
+    },
+    "status": "success"
+   }
+  },
+  "ABACAVIR": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [
+      {
+       "directMatch": true,
+       "id": "PA448004",
+       "matchedName": "abacavir",
+       "name": "abacavir",
+       "objCls": "Chemical",
+       "score": 1.0
+      },
+      {
+       "directMatch": false,
+       "id": "15165343",
+       "matchedName": "Abacavir ",
+       "name": "Abacavir | AEMPS",
+       "objCls": "Literature",
+       "score": 0.64285713
+      },
+      {
+       "directMatch": false,
+       "id": "PA166184501",
+       "matchedName": "abacavir / lamivudine",
+       "name": "lamivudine / abacavir",
+       "objCls": "Chemical",
+       "score": 0.45
+      },
+      {
+       "directMatch": true,
+       "id": "PA166131344",
+       "matchedName": "abacavir carboxylate",
+       "name": "abacavir carboxylate",
+       "objCls": "Chemical",
+       "score": 0.42857143
+      },
+      {
+       "directMatch": true,
+       "id": "PA166131304",
+       "matchedName": "abacavir glucuronide",
+       "name": "abacavir glucuronide",
+       "objCls": "Chemical",
+       "score": 0.42857143
+      }
+     ],
+     "total": 5
+    },
+    "status": "success"
+   }
+  },
+  "Ziagen": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [
+      {
+       "directMatch": false,
+       "id": "PA448004",
+       "matchedName": "Ziagen",
+       "name": "abacavir",
+       "objCls": "Chemical",
+       "score": 1.0
+      },
+      {
+       "directMatch": false,
+       "id": "PA449899",
+       "matchedName": "Ziac",
+       "name": "hydrochlorothiazide",
+       "objCls": "Chemical",
+       "score": 0.33333334
+      }
+     ],
+     "total": 2
+    },
+    "status": "success"
+   }
+  },
+  "abacavir sulfate": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [
+      {
+       "directMatch": true,
+       "id": "PA448004",
+       "matchedName": "abacavir",
+       "name": "abacavir",
+       "objCls": "Chemical",
+       "score": 0.5294118
+      },
+      {
+       "directMatch": false,
+       "id": "PA10251",
+       "matchedName": "Atazanavir sulfate",
+       "name": "atazanavir",
+       "objCls": "Chemical",
+       "score": 0.5
+      },
+      {
+       "directMatch": false,
+       "id": "PA450163",
+       "matchedName": "Kivexa (Abacavir (Abacavir Sulfate) + Lamivudine)",
+       "name": "lamivudine",
+       "objCls": "Chemical",
+       "score": 0.4857143
+      },
+      {
+       "directMatch": false,
+       "id": "PA449977",
+       "matchedName": "Indinavir sulfate",
+       "name": "indinavir",
+       "objCls": "Chemical",
+       "score": 0.45833334
+      },
+      {
+       "directMatch": false,
+       "id": "PA451954",
+       "matchedName": "Trizivir (Abacavir sulfate + Lamivudine + Zidovudine)",
+       "name": "zidovudine",
+       "objCls": "Chemical",
+       "score": 0.41463414
+      }
+     ],
+     "total": 5
+    },
+    "status": "success"
+   }
+  },
+  "Epzicom": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [
+      {
+       "directMatch": false,
+       "id": "PA448004",
+       "matchedName": "Epzicom",
+       "name": "abacavir",
+       "objCls": "Chemical",
+       "score": 1.0
+      },
+      {
+       "directMatch": false,
+       "id": "PA450163",
+       "matchedName": "Epzicom",
+       "name": "lamivudine",
+       "objCls": "Chemical",
+       "score": 1.0
+      }
+     ],
+     "total": 2
+    },
+    "status": "success"
+   }
+  },
+  "abacavir and lamivudine": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [
+      {
+       "directMatch": false,
+       "id": "PA166184501",
+       "matchedName": "lamivudine and abacavir",
+       "name": "lamivudine / abacavir",
+       "objCls": "Chemical",
+       "score": 1.0
+      },
+      {
+       "directMatch": false,
+       "id": "PA166184503",
+       "matchedName": "zidovudine, lamivudine and abacavir",
+       "name": "zidovudine / lamivudine / abacavir",
+       "objCls": "Chemical",
+       "score": 0.79310346
+      },
+      {
+       "directMatch": false,
+       "id": "PA166184505",
+       "matchedName": "lamivudine, abacavir and dolutegravir",
+       "name": "dolutegravir / abacavir / lamivudine",
+       "objCls": "Chemical",
+       "score": 0.6969697
+      },
+      {
+       "directMatch": false,
+       "id": "PA448004",
+       "matchedName": "Kivexa (Abacavir Sulfate + Lamivudine)",
+       "name": "abacavir",
+       "objCls": "Chemical",
+       "score": 0.5263158
+      },
+      {
+       "directMatch": false,
+       "id": "PA450163",
+       "matchedName": "Kivexa (Abacavir (Abacavir Sulfate) + Lamivudine)",
+       "name": "lamivudine",
+       "objCls": "Chemical",
+       "score": 0.5263158
+      }
+     ],
+     "total": 5
+    },
+    "status": "success"
+   }
+  },
+  "Lutathera": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [
+      {
+       "directMatch": false,
+       "id": "PA166224981",
+       "matchedName": "Lutathera",
+       "name": "lutetium (177Lu) dotatate",
+       "objCls": "Chemical",
+       "score": 1.0
+      },
+      {
+       "directMatch": false,
+       "id": "PA449801",
+       "matchedName": "Lutal",
+       "name": "gonadorelin",
+       "objCls": "Chemical",
+       "score": 0.33333334
+      }
+     ],
+     "total": 2
+    },
+    "status": "success"
+   }
+  },
+  "lutetium Lu 177 dotatate": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [
+      {
+       "directMatch": false,
+       "id": "PA166224981",
+       "matchedName": "Lutetium (177-Lu) dotatate",
+       "name": "lutetium (177Lu) dotatate",
+       "objCls": "Chemical",
+       "score": 1.0
+      },
+      {
+       "directMatch": true,
+       "id": "15114602",
+       "matchedName": "Drugs@FDA: Drug Product  LUTETIUM DOTATATE NDA208700",
+       "name": "Drugs@FDA: Drug Product  LUTETIUM DOTATATE NDA208700",
+       "objCls": "Literature",
+       "score": 0.34
+      }
+     ],
+     "total": 2
+    },
+    "status": "success"
+   }
+  },
+  "warfarin": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [
+      {
+       "directMatch": true,
+       "id": "PA451906",
+       "matchedName": "warfarin",
+       "name": "warfarin",
+       "objCls": "Chemical",
+       "score": 1.0
+      },
+      {
+       "directMatch": true,
+       "id": "PA166428781",
+       "matchedName": "s-warfarin",
+       "name": "s-warfarin",
+       "objCls": "Chemical",
+       "score": 0.8181818
+      },
+      {
+       "directMatch": true,
+       "id": "PA166428761",
+       "matchedName": "r-warfarin",
+       "name": "r-warfarin",
+       "objCls": "Chemical",
+       "score": 0.8181818
+      },
+      {
+       "directMatch": false,
+       "id": "PA452632",
+       "matchedName": "Nitrowarfarin",
+       "name": "acenocoumarol",
+       "objCls": "Chemical",
+       "score": 0.4375
+      },
+      {
+       "directMatch": true,
+       "id": "PA166131396",
+       "matchedName": "8-hydroxy r-warfarin",
+       "name": "8-hydroxy r-warfarin",
+       "objCls": "Chemical",
+       "score": 0.42857143
+      }
+     ],
+     "total": 5
+    },
+    "status": "success"
+   }
+  },
+  "aspirin": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [
+      {
+       "directMatch": true,
+       "id": "PA448497",
+       "matchedName": "aspirin",
+       "name": "aspirin",
+       "objCls": "Chemical",
+       "score": 1.0
+      },
+      {
+       "directMatch": true,
+       "id": "2332879",
+       "matchedName": "Aspirin.",
+       "name": "Aspirin.",
+       "objCls": "Literature",
+       "score": 1.0
+      },
+      {
+       "directMatch": false,
+       "id": "PA450377",
+       "matchedName": "Mepro-Aspirin",
+       "name": "meprobamate",
+       "objCls": "Chemical",
+       "score": 0.5714286
+      },
+      {
+       "directMatch": true,
+       "id": "4243436",
+       "matchedName": "Beyond aspirin.",
+       "name": "Beyond aspirin.",
+       "objCls": "Literature",
+       "score": 0.53333336
+      },
+      {
+       "directMatch": false,
+       "id": "PA25057",
+       "matchedName": "asporin",
+       "name": "ASPN",
+       "objCls": "Gene",
+       "score": 0.45454547
+      }
+     ],
+     "total": 5
+    },
+    "status": "success"
+   }
+  },
+  "notadrugxyz": {
+   "url": "https://api.clinpgx.org/v1/site/autocomplete",
+   "http_status": 200,
+   "body": {
+    "data": {
+     "hits": [],
+     "total": 0
+    },
+    "status": "success"
+   }
+  }
+ },
+ "labelAnnotation": {
+  "lutetium (177Lu) dotatate": {
+   "url": "https://api.clinpgx.org/v1/data/labelAnnotation?relatedChemicals.name=lutetium+%28177Lu%29+dotatate&source=FDA&biomarkerStatus=On+FDA+Biomarker+List&view=base",
+   "http_status": 200,
+   "body": {
+    "data": [
+     {
+      "objCls": "Label Annotation",
+      "id": "PA166225001",
+      "name": "Annotation of FDA Label for lutetium (177Lu) oxodotreotide and SSTR1, SSTR2, SSTR3, SSTR4, SSTR5",
+      "alternateDrugAvailable": false,
+      "biomarkerStatus": "On FDA Biomarker List",
+      "cancerGenome": true,
+      "crossReferences": [],
+      "dosingInformation": false,
+      "highlightedLabelLink": "Lutetium_177Lu_oxodotreotide_2024_08_08_FDA.pdf",
+      "history": [
+       {
+        "id": 1451827123,
+        "date": "2022-07-18T06:24:26.122-07:00",
+        "description": "Fixed typos in drug name.",
+        "type": "Update",
+        "version": 0
+       },
+       {
+        "id": 1452011324,
+        "date": "2023-02-16T20:55:59.938-08:00",
+        "description": "added prescribing genes",
+        "type": "Update",
+        "version": 0
+       },
+       {
+        "id": 1452224524,
+        "date": "2023-08-31T16:27:04.975-07:00",
+        "description": "removed prescribing info and alternate drug tag and added indication tag",
+        "type": "Update",
+        "version": 0
+       },
+       {
+        "id": 1452551782,
+        "date": "2024-08-08T17:19:30.203-07:00",
+        "description": "updated label, added Pediatric tag and info",
+        "type": "Update",
+        "version": 0
+       }
+      ],
+      "indication": true,
+      "labelApplications": [],
+      "labelDocumentAvailable": true,
+      "literature": [
+       {
+        "id": 15163302,
+        "title": "Drugs@FDA: Drug Product Lutathera (Lutetium Lu 177 dotatate), Advanced Accelerator Applications USA, Inc - NDA208700/SUPPL-31, 04/23/2024",
+        "_sameAs": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=208700",
+        "crossReferences": [
+         {
+          "id": 1452551743,
+          "resource": "FDA Application",
+          "resourceId": "NDA208700/SUPPL-31",
+          "_url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=208700"
+         }
+        ],
+        "objCls": "Literature",
+        "pubDate": "2024-04-23T00:00:00-07:00",
+        "terms": [],
+        "type": "Drug Label"
+       },
+       {
+        "id": 15114602,
+        "title": "Drugs@FDA: Drug Product  LUTETIUM DOTATATE NDA208700",
+        "_sameAs": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=208700",
+        "crossReferences": [
+         {
+          "id": 1451277124,
+          "resource": "FDA Application",
+          "resourceId": "NDA208700",
+          "_url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=208700"
+         }
+        ],
+        "objCls": "Literature",
+        "terms": [
+         {
+          "id": 1452267780,
+          "resource": "ClinPGx Tags",
+          "term": "Has PGx",
+          "termId": "pgkbTags:1452267780"
+         }
+        ],
+        "type": "Drug Label"
+       }
+      ],
+      "otherPrescribingGuidance": false,
+      "pediatric": true,
+      "pediatricMarkdown": {
+       "id": 1452551781,
+       "html": "<blockquote class=\"blockquote\">\n<p>The safety and effectiveness of LUTATHERA have been established in pediatric patients 12 years and older with somatostatin receptor-positive gastroenteropancreatic neuroendocrine (GEP-NET). Use of LUTATHERA for this indication is supported by evidence from an adequate and well-controlled study of LUTATHERA in adults with additional safety, pharmacokinetic, and dosimetry data in pediatric patients aged 12 years and older with somatostatin receptor-positive tumors, including 4 pediatric patients with GEP-NETs [see Adverse Reactions (6.1), Clinical Pharmacology (12.3), and Clinical Studies (14)].</p>\n</blockquote>\n"
+      },
+      "pgxRelated": true,
+      "prescribingGenes": [],
+      "relatedAlleles": [],
+      "relatedChemicals": [
+       {
+        "objCls": "Chemical",
+        "id": "PA166224981",
+        "name": "lutetium (177Lu) dotatate"
+       }
+      ],
+      "relatedGenes": [
+       {
+        "objCls": "Gene",
+        "id": "PA36154",
+        "symbol": "SSTR1",
+        "name": "somatostatin receptor 1"
+       },
+       {
+        "objCls": "Gene",
+        "id": "PA36155",
+        "symbol": "SSTR2",
+        "name": "somatostatin receptor 2"
+       },
+       {
+        "objCls": "Gene",
+        "id": "PA36156",
+        "symbol": "SSTR3",
+        "name": "somatostatin receptor 3"
+       },
+       {
+        "objCls": "Gene",
+        "id": "PA36157",
+        "symbol": "SSTR4",
+        "name": "somatostatin receptor 4"
+       },
+       {
+        "objCls": "Gene",
+        "id": "PA36158",
+        "symbol": "SSTR5",
+        "name": "somatostatin receptor 5"
+       }
+      ],
+      "source": "FDA",
+      "summaryMarkdown": {
+       "id": 1451277120,
+       "html": "<p>The FDA label for lutetium Lu 177 dotatate (LUTATHERA) states that LUTATHERA is a radiolabeled somatostatin analog indicated for the treatment of somatostatin receptor (SSTR)-positive gastroenteropancreatic neuroendocrine tumors (GEP-NETs), including foregut, midgut, and hindgut neuroendocrine tumors in adult and pediatric patients 12 years and older.</p>\n"
+      },
+      "testing": {
+       "id": 1183672041,
+       "resource": "Genetic Testing Level",
+       "synonyms": [],
+       "term": "Testing Required",
+       "termId": "geneTestLevel:1183672041",
+       "valid": true
+      },
+      "textMarkdown": {
+       "id": 1451277121,
+       "html": "<p>Excerpts from the lutetium Lu177 dotatate (LUTATHERA) drug label:</p>\n<blockquote class=\"blockquote\">\n<p>LUTATHERA is indicated for the treatment of adult and pediatric patients 12 years and older with somatostatin receptor-positive gastroenteropancreatic neuroendocrine tumors (GEP-NETs), including foregut, midgut, and hindgut neuroendocrine tumors.</p>\n</blockquote>\n<blockquote class=\"blockquote\">\n<p>Lutetium Lu 177 dotatate binds to somatostatin receptors with highest affinity for subtype 2 somatostatin receptors (SSTR2). Upon binding to somatostatin receptor expressing cells, including malignant somatostatin receptor-positive tumors, the compound is internalized. The beta-minus emission from lutetium-177 induces cellular damage by formation of free radicals in somatostatin receptor-positive cells and in neighboring cells.</p>\n</blockquote>\n<p>For the complete drug label text with sections containing pharmacogenetic information highlighted, see the <a download=\"Lutetium_177Lu_oxodotreotide_2024_08_08_FDA.pdf\" href=\"https://api.clinpgx.org/v1/download/file/attachment/Lutetium_177Lu_oxodotreotide_2024_08_08_FDA.pdf\">lutetium Lu 177 dotatate  drug label</a>.</p>\n"
+      }
+     }
+    ],
+    "status": "success"
+   }
+  },
+  "lamivudine": {
+   "url": "https://api.clinpgx.org/v1/data/labelAnnotation?relatedChemicals.name=lamivudine&source=FDA&biomarkerStatus=On+FDA+Biomarker+List&view=base",
+   "http_status": 404,
+   "body": {
+    "status": "fail",
+    "data": {
+     "errors": [
+      {
+       "message": "No results matching criteria."
+      }
+     ]
+    }
+   }
+  },
+  "lamivudine / abacavir": {
+   "url": "https://api.clinpgx.org/v1/data/labelAnnotation?relatedChemicals.name=lamivudine+%2F+abacavir&source=FDA&biomarkerStatus=On+FDA+Biomarker+List&view=base",
+   "http_status": 404,
+   "body": {
+    "status": "fail",
+    "data": {
+     "errors": [
+      {
+       "message": "No results matching criteria."
+      }
+     ]
+    }
+   }
+  }
+ }
+}

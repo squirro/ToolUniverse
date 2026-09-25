@@ -1,0 +1,519 @@
+{
+ "_note": "Recorded 2026-09-24T18:48Z from inside the smcp container on sr-dev (python requests), one GET per drug to the ClinPGx label-annotation endpoint with the FDA biomarker-list filter. Bodies are as served, unedited; `http_status` and `url` are the response's own. aspirin has no FDA-list annotation: ClinPGx answers 404 'No results matching criteria.'",
+ "abacavir": {
+  "url": "https://api.clinpgx.org/v1/data/labelAnnotation?relatedChemicals.name=abacavir&source=FDA&biomarkerStatus=On+FDA+Biomarker+List&view=base",
+  "http_status": 200,
+  "body": {
+   "data": [
+    {
+     "objCls": "Label Annotation",
+     "id": "PA166104833",
+     "name": "Annotation of FDA Label for abacavir and HLA-B",
+     "alternateDrugAvailable": true,
+     "biomarkerStatus": "On FDA Biomarker List",
+     "cancerGenome": false,
+     "crossReferences": [],
+     "dosingInformation": false,
+     "highlightedLabelLink": "Abacavir_11_15_2018_FDA.pdf",
+     "history": [
+      {
+       "id": 1183681374,
+       "date": "2013-10-25T11:27:09.748-07:00",
+       "type": "Update",
+       "version": 0
+      },
+      {
+       "id": 1450377490,
+       "date": "2019-04-10T06:25:05.615-07:00",
+       "description": "Update to include haplotype.",
+       "type": "Update",
+       "version": 0
+      },
+      {
+       "id": 1450399447,
+       "date": "2019-05-08T08:53:17.982-07:00",
+       "description": "Added prescribing info",
+       "type": "Update",
+       "version": 0
+      }
+     ],
+     "indication": false,
+     "labelApplications": [],
+     "labelDocumentAvailable": true,
+     "literature": [
+      {
+       "id": 15101896,
+       "title": "Drugs@FDA: Drug Product ZIAGEN (abacavir sulfate), NDA020977, ViiV Healthcare Company",
+       "_sameAs": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=020977",
+       "crossReferences": [
+        {
+         "id": 1449893329,
+         "resource": "FDA Application",
+         "resourceId": "NDA020977",
+         "_url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=020977"
+        }
+       ],
+       "objCls": "Literature",
+       "terms": [
+        {
+         "id": 1452267780,
+         "resource": "ClinPGx Tags",
+         "term": "Has PGx",
+         "termId": "pgkbTags:1452267780"
+        }
+       ],
+       "type": "Drug Label"
+      }
+     ],
+     "otherPrescribingGuidance": false,
+     "pediatric": false,
+     "pgxRelated": true,
+     "prescribingGenes": [
+      {
+       "objCls": "Gene",
+       "id": "PA35056",
+       "symbol": "HLA-B",
+       "name": "major histocompatibility complex, class I, B"
+      }
+     ],
+     "prescribingMarkdown": {
+      "id": 1450399446,
+      "html": "<p>Excerpts from the abacavir (ZIAGEN) drug label:</p>\n<blockquote class=\"blockquote\">\n<p>DOSAGE AND ADMINISTRATION: Before initiating ZIAGEN, screen for the HLA-B*5701 allele.</p>\n</blockquote>\n<blockquote class=\"blockquote\">\n<p>CONTRAINDICATIONS: Presence of HLA-B*5701 allele.</p>\n</blockquote>\n"
+     },
+     "relatedAlleles": [
+      {
+       "objCls": "Haplotype",
+       "id": "PA165987830",
+       "symbol": "HLA-B*57:01",
+       "name": "*57:01"
+      }
+     ],
+     "relatedChemicals": [
+      {
+       "objCls": "Chemical",
+       "id": "PA448004",
+       "name": "abacavir"
+      }
+     ],
+     "relatedGenes": [
+      {
+       "objCls": "Gene",
+       "id": "PA35056",
+       "symbol": "HLA-B",
+       "name": "major histocompatibility complex, class I, B"
+      }
+     ],
+     "source": "FDA",
+     "summaryMarkdown": {
+      "id": 1450043400,
+      "html": "<p>The FDA-approved label for abacavir (ZIAGEN) states that genetic testing for the HLA-B*5701 allele is required prior to initiating or reinitiating treatment with abacavir in patients of unknown HLA-B*5701 status. Abacavir is contraindicated in patients with the HLA-B*5701 allele due to risk for abacavir hypersensitivity reactions.</p>\n"
+     },
+     "testing": {
+      "id": 1183672041,
+      "resource": "Genetic Testing Level",
+      "synonyms": [],
+      "term": "Testing Required",
+      "termId": "geneTestLevel:1183672041",
+      "valid": true
+     },
+     "textMarkdown": {
+      "id": 1450042734,
+      "html": "<p>Excerpts from the abacavir (ZIAGEN) drug label:</p>\n<blockquote class=\"blockquote\">\n<p>All patients should be screened for the HLA-B*5701 allele prior to initiating therapy with ZIAGEN or reinitiation of therapy with ZIAGEN, unless patients have a previously documented HLA-B*5701 allele assessment.</p>\n</blockquote>\n<blockquote class=\"blockquote\">\n<p>ZIAGEN is contraindicated in patients: who have the HLA-B*5701 allele.</p>\n</blockquote>\n<p>In the CNA106030 (PREDICT-1) study of 1650 HIV-infected adults, it was found that pre-screening for the HLA-B*5701 allele reduced the incidence of suspected hypersensitivity reactions from 7.8% to 3.4%. Based on this study, it is estimated that 61% of patients carrying the HLA-B*5701 allele will develop a hypersensitivity reaction to abacavir vs. 4% of patients who do not have this allele.</p>\n<p>For the complete drug label text with sections containing pharmacogenetic information highlighted, see the <a download=\"Abacavir_11_15_2018_FDA.pdf\" href=\"https://api.clinpgx.org/v1/download/file/attachment/Abacavir_11_15_2018_FDA.pdf\">abacavir drug label</a>.</p>\n"
+     }
+    }
+   ],
+   "status": "success"
+  }
+ },
+ "warfarin": {
+  "url": "https://api.clinpgx.org/v1/data/labelAnnotation?relatedChemicals.name=warfarin&source=FDA&biomarkerStatus=On+FDA+Biomarker+List&view=base",
+  "http_status": 200,
+  "body": {
+   "data": [
+    {
+     "objCls": "Label Annotation",
+     "id": "PA166104776",
+     "name": "Annotation of FDA Label for warfarin and CYP2C9, VKORC1",
+     "alternateDrugAvailable": false,
+     "biomarkerStatus": "On FDA Biomarker List",
+     "cancerGenome": false,
+     "crossReferences": [],
+     "dosingInformation": true,
+     "highlightedLabelLink": "Warfarin_03_01_19_FDA.pdf",
+     "history": [
+      {
+       "id": 1183681191,
+       "date": "2013-10-25T10:40:29.882-07:00",
+       "type": "Update",
+       "version": 0
+      },
+      {
+       "id": 1184483106,
+       "date": "2014-07-14T00:00:00-07:00",
+       "description": "FDA Table added the gene PROC",
+       "type": "Update",
+       "version": 0
+      },
+      {
+       "id": 1451280400,
+       "date": "2020-10-16T17:59:39.889-07:00",
+       "description": "Updated Prescribing Info section to be more specific about what is in Table 1.",
+       "type": "Update",
+       "version": 0
+      },
+      {
+       "id": 1452324620,
+       "date": "2023-12-12T10:56:21.222-08:00",
+       "description": "Added dosing info tag because the label provides genotype-based dosing guidance",
+       "type": "Update",
+       "version": 0
+      },
+      {
+       "id": 1452711484,
+       "date": "2024-11-21T00:00:00-08:00",
+       "description": "moved PROC, PROS1 genes to a separate label annotation",
+       "type": "Update",
+       "version": 0
+      }
+     ],
+     "indication": false,
+     "labelApplications": [],
+     "labelDocumentAvailable": true,
+     "literature": [
+      {
+       "id": 15101939,
+       "title": "Drugs@FDA: Drug Product COUMADIN (warfarin sodium), NDA009218, Bristol-Myers Squibb Pharma Company",
+       "_sameAs": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=009218",
+       "crossReferences": [
+        {
+         "id": 1449891982,
+         "resource": "FDA Application",
+         "resourceId": "NDA009218",
+         "_url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=009218"
+        }
+       ],
+       "objCls": "Literature",
+       "terms": [
+        {
+         "id": 1452267780,
+         "resource": "ClinPGx Tags",
+         "term": "Has PGx",
+         "termId": "pgkbTags:1452267780"
+        }
+       ],
+       "type": "Drug Label"
+      }
+     ],
+     "otherPrescribingGuidance": false,
+     "pediatric": false,
+     "pgxRelated": true,
+     "prescribingGenes": [
+      {
+       "objCls": "Gene",
+       "id": "PA126",
+       "symbol": "CYP2C9",
+       "name": "cytochrome P450 family 2 subfamily C member 9"
+      },
+      {
+       "objCls": "Gene",
+       "id": "PA133787052",
+       "symbol": "VKORC1",
+       "name": "vitamin K epoxide reductase complex subunit 1"
+      }
+     ],
+     "prescribingMarkdown": {
+      "id": 1450384944,
+      "html": "<p>Table 1 in the drug label provides ranges of expected maintenance daily doses of warfarin (COUMADIN) based on CYP2C9*2, CYP2C9*3 and &quot;VKORC1−1639G&gt;A (rs9923231)&quot; genotypes.</p>\n"
+     },
+     "relatedAlleles": [
+      {
+       "objCls": "Haplotype",
+       "id": "PA165816542",
+       "symbol": "CYP2C9*1",
+       "name": "*1"
+      },
+      {
+       "objCls": "Haplotype",
+       "id": "PA165816543",
+       "symbol": "CYP2C9*2",
+       "name": "*2"
+      },
+      {
+       "objCls": "Haplotype",
+       "id": "PA165816544",
+       "symbol": "CYP2C9*3",
+       "name": "*3"
+      },
+      {
+       "objCls": "Variant",
+       "id": "PA166155091",
+       "symbol": "rs9923231",
+       "name": "rs9923231"
+      }
+     ],
+     "relatedChemicals": [
+      {
+       "objCls": "Chemical",
+       "id": "PA451906",
+       "name": "warfarin"
+      }
+     ],
+     "relatedGenes": [
+      {
+       "objCls": "Gene",
+       "id": "PA126",
+       "symbol": "CYP2C9",
+       "name": "cytochrome P450 family 2 subfamily C member 9"
+      },
+      {
+       "objCls": "Gene",
+       "id": "PA133787052",
+       "symbol": "VKORC1",
+       "name": "vitamin K epoxide reductase complex subunit 1"
+      }
+     ],
+     "source": "FDA",
+     "summaryMarkdown": {
+      "id": 1447981534,
+      "html": "<p>Warfarin (COUMADIN) is an anticoagulant used as a prophylaxis and to treat venous thrombosis, pulmonary embolism, thromboembolic complications from atrial fibrillation and cardiac valve replacement, and to reduce the recurrence of myocardial infarction. Pharmacogenomics-related dosing information for CYP2C9 and VKORC1 variants is provided within the label.</p>\n"
+     },
+     "testing": {
+      "id": 1183672111,
+      "resource": "Genetic Testing Level",
+      "synonyms": [],
+      "term": "Actionable PGx",
+      "termId": "geneTestLevel:1183672111",
+      "valid": true
+     },
+     "textMarkdown": {
+      "id": 1447981533,
+      "html": "<p>The VKORC1:G-1639A polymorphism is associated with lower dose requirements for warfarin in Caucasian and Asian patients. Increased bleeding risk and lower initial warfarin dose requirements have been associated with the CYP2C9*2 and CYP2C9*3 alleles. Approximately 30% of the variance in warfarin dose could be attributed to genetic variation in VKORC1, and about 40% of dose variance could be explained taking into consideration both VKORC1 and CYP2C9 genetic polymorphisms. Accounting for genetic variation in both VKORC1 and CYP2C9, age, height, body weight, interacting drugs, and indication for warfarin therapy explained about 55% of the variability in warfarin dose.</p>\n<p>Excerpts from the warfarin (COUMADIN) drug label:</p>\n<blockquote class=\"blockquote\">\n<p>Table 1 displays three ranges of expected maintenance COUMADIN doses observed in subgroups of patients having different combinations of CYP2C9 and VKORC1 gene variants...If the patient’s CYP2C9 and/or VKORC1 genotype are known, consider these ranges in choosing the initial dose. Patients with CYP2C9 *1/*3, *2/*2, *2/*3, and *3/*3 may require more prolonged time (&gt;2 to 4 weeks) to achieve maximum INR effect for a given dosage regimen than patients without these CYP variants.</p>\n</blockquote>\n<blockquote class=\"blockquote\">\n<p>Known or suspected deficiency in protein C mediated anticoagulant response: Hereditary or acquired deficiencies of protein C or its cofactor, protein S, have been associated with tissue necrosis following warfarin administration.</p>\n</blockquote>\n<p>For the complete drug label text with sections containing pharmacogenetic information highlighted, see the <a download=\"Warfarin_03_01_19_FDA.pdf\" href=\"https://api.clinpgx.org/v1/download/file/attachment/Warfarin_03_01_19_FDA.pdf\">warfarin drug label</a>. Pharmacogenomics-related dosing information is found in Table 5 on page 27.</p>\n"
+     }
+    },
+    {
+     "objCls": "Label Annotation",
+     "id": "PA166359701",
+     "name": "Annotation of FDA Label for warfarin and PROC, PROS1",
+     "alternateDrugAvailable": false,
+     "biomarkerStatus": "On FDA Biomarker List",
+     "cancerGenome": false,
+     "crossReferences": [],
+     "dosingInformation": false,
+     "highlightedLabelLink": "Warfarin_03_01_19_FDA.pdf",
+     "history": [],
+     "indication": false,
+     "labelApplications": [],
+     "labelDocumentAvailable": true,
+     "literature": [
+      {
+       "id": 15101939,
+       "title": "Drugs@FDA: Drug Product COUMADIN (warfarin sodium), NDA009218, Bristol-Myers Squibb Pharma Company",
+       "_sameAs": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=009218",
+       "crossReferences": [
+        {
+         "id": 1449891982,
+         "resource": "FDA Application",
+         "resourceId": "NDA009218",
+         "_url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=009218"
+        }
+       ],
+       "objCls": "Literature",
+       "terms": [
+        {
+         "id": 1452267780,
+         "resource": "ClinPGx Tags",
+         "term": "Has PGx",
+         "termId": "pgkbTags:1452267780"
+        }
+       ],
+       "type": "Drug Label"
+      }
+     ],
+     "otherPrescribingGuidance": true,
+     "pediatric": false,
+     "pgxRelated": true,
+     "prescribingGenes": [
+      {
+       "objCls": "Gene",
+       "id": "PA33799",
+       "symbol": "PROC",
+       "name": "protein C, inactivator of coagulation factors Va and VIIIa"
+      },
+      {
+       "objCls": "Gene",
+       "id": "PA33809",
+       "symbol": "PROS1",
+       "name": "protein S"
+      }
+     ],
+     "prescribingMarkdown": {
+      "id": 1452711482,
+      "html": "<blockquote class=\"blockquote\">\n<p>Deficiency in protein C-mediated anticoagulant response: COUMADIN reduces the synthesis of the naturally occurring anticoagulants, protein C and protein S. Hereditary or acquired deficiencies of protein C or its cofactor, protein S, have been associated with tissue necrosis following warfarin administration. Concomitant anticoagulation therapy with heparin for 5 to 7 days during initiation of therapy with COUMADIN may minimize the incidence of tissue necrosis in these patients.</p>\n</blockquote>\n"
+     },
+     "relatedAlleles": [],
+     "relatedChemicals": [
+      {
+       "objCls": "Chemical",
+       "id": "PA451906",
+       "name": "warfarin"
+      }
+     ],
+     "relatedGenes": [
+      {
+       "objCls": "Gene",
+       "id": "PA33799",
+       "symbol": "PROC",
+       "name": "protein C, inactivator of coagulation factors Va and VIIIa"
+      },
+      {
+       "objCls": "Gene",
+       "id": "PA33809",
+       "symbol": "PROS1",
+       "name": "protein S"
+      }
+     ],
+     "source": "FDA",
+     "summaryMarkdown": {
+      "id": 1452711480,
+      "html": "<p>Warfarin (COUMADIN) is an anticoagulant used as a prophylaxis and to treat venous thrombosis, pulmonary embolism, thromboembolic complications from atrial fibrillation and cardiac valve replacement, and to reduce the recurrence of myocardial infarction. The drug label notes that deficiency in protein C (PROC) or protein S (PROS1) have been associated with tissue necrosis following warfarin administration.</p>\n"
+     },
+     "testing": {
+      "id": 1183672111,
+      "resource": "Genetic Testing Level",
+      "synonyms": [],
+      "term": "Actionable PGx",
+      "termId": "geneTestLevel:1183672111",
+      "valid": true
+     },
+     "textMarkdown": {
+      "id": 1452711481,
+      "html": "<p>Excerpts from the warfarin (COUMADIN) label:</p>\n<blockquote class=\"blockquote\">\n<p>Deficiency in protein C-mediated anticoagulant response: COUMADIN reduces the synthesis of the naturally occurring anticoagulants, protein C and protein S. Hereditary or acquired deficiencies of protein C or its cofactor, protein S, have been associated with tissue necrosis following warfarin administration. Concomitant anticoagulation therapy with heparin for 5 to 7 days during initiation of therapy with COUMADIN may minimize the incidence of tissue necrosis in these patients.</p>\n</blockquote>\n<p>For the complete drug label text with sections containing pharmacogenetic information highlighted, see the <a download=\"Warfarin_03_01_19_FDA.pdf\" href=\"https://api.clinpgx.org/v1/download/file/attachment/Warfarin_03_01_19_FDA.pdf\">warfarin drug label</a>.</p>\n"
+     }
+    }
+   ],
+   "status": "success"
+  }
+ },
+ "cisplatin": {
+  "url": "https://api.clinpgx.org/v1/data/labelAnnotation?relatedChemicals.name=cisplatin&source=FDA&biomarkerStatus=On+FDA+Biomarker+List&view=base",
+  "http_status": 200,
+  "body": {
+   "data": [
+    {
+     "objCls": "Label Annotation",
+     "id": "PA166104853",
+     "name": "Annotation of FDA Label for cisplatin and TPMT",
+     "alternateDrugAvailable": false,
+     "biomarkerStatus": "On FDA Biomarker List",
+     "cancerGenome": false,
+     "crossReferences": [],
+     "dosingInformation": false,
+     "highlightedLabelLink": "Cisplatin_2024_07_26_FDA.pdf",
+     "history": [
+      {
+       "id": 1183681200,
+       "date": "2013-10-25T10:42:12.074-07:00",
+       "type": "Update",
+       "version": 0
+      },
+      {
+       "id": 1452206743,
+       "date": "2023-08-15T00:00:00-07:00",
+       "description": "Checked and this meets new criteria for Informative.",
+       "type": "Note",
+       "version": 0
+      },
+      {
+       "id": 1452540460,
+       "date": "2024-07-26T17:07:33.484-07:00",
+       "description": "updated label, changed level to Actionable PGx",
+       "type": "Update",
+       "version": 0
+      }
+     ],
+     "indication": false,
+     "labelApplications": [],
+     "labelDocumentAvailable": true,
+     "literature": [
+      {
+       "id": 15162282,
+       "title": "Drugs@FDA: Drug Product CISplatin (CISplatin), WG Critical Care, LLC - NDA018057/SUPPL-92, 03/24/2022",
+       "_sameAs": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=018057",
+       "crossReferences": [
+        {
+         "id": 1452540441,
+         "resource": "FDA Application",
+         "resourceId": "NDA018057/SUPPL-92",
+         "_url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&varApplNo=018057"
+        }
+       ],
+       "objCls": "Literature",
+       "pubDate": "2022-03-24T00:00:00-07:00",
+       "terms": [
+        {
+         "id": 1452267780,
+         "resource": "ClinPGx Tags",
+         "term": "Has PGx",
+         "termId": "pgkbTags:1452267780"
+        }
+       ],
+       "type": "Drug Label"
+      }
+     ],
+     "otherPrescribingGuidance": false,
+     "pediatric": false,
+     "pgxRelated": true,
+     "prescribingGenes": [],
+     "relatedAlleles": [],
+     "relatedChemicals": [
+      {
+       "objCls": "Chemical",
+       "id": "PA449014",
+       "name": "cisplatin"
+      }
+     ],
+     "relatedGenes": [
+      {
+       "objCls": "Gene",
+       "id": "PA356",
+       "symbol": "TPMT",
+       "name": "thiopurine S-methyltransferase"
+      }
+     ],
+     "source": "FDA",
+     "summaryMarkdown": {
+      "id": 1450342813,
+      "html": "<p>The FDA-approved drug label for cisplatin states that genetic factors, such as variants in the TPMT gene, may contribute to cisplatin-induced ototoxicity. However, this association has not be consistent across populations and study designs.</p>\n"
+     },
+     "testing": {
+      "id": 1183672141,
+      "resource": "Genetic Testing Level",
+      "synonyms": [],
+      "term": "Informative PGx",
+      "termId": "geneTestLevel:1183672141",
+      "valid": true
+     },
+     "textMarkdown": {
+      "id": 1450342814,
+      "html": "<p>Excerpt from the cisplatin drug label:</p>\n<blockquote class=\"blockquote\">\n<p>Genetic factors (e.g. variants in the thiopurine S-methyltransferase [TPMT] gene) may also contribute to the cisplatin-induced ototoxicity; although this association has not been consistent across populations and study designs.</p>\n</blockquote>\n<p>For the complete drug label text with sections containing pharmacogenetic information highlighted, see the <a download=\"Cisplatin_2024_07_26_FDA.pdf\" href=\"https://api.clinpgx.org/v1/download/file/attachment/Cisplatin_2024_07_26_FDA.pdf\">cisplatin drug label</a>.</p>\n"
+     }
+    }
+   ],
+   "status": "success"
+  }
+ },
+ "aspirin": {
+  "url": "https://api.clinpgx.org/v1/data/labelAnnotation?relatedChemicals.name=aspirin&source=FDA&biomarkerStatus=On+FDA+Biomarker+List&view=base",
+  "http_status": 404,
+  "body": {
+   "status": "fail",
+   "data": {
+    "errors": [
+     {
+      "message": "No results matching criteria."
+     }
+    ]
+   }
+  }
+ }
+}

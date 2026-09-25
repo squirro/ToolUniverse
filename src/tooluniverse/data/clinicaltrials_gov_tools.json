@@ -84,12 +84,12 @@
       }
     ],
     "return_schema": {
-      "oneOf": [
-        {
-          "type": "string",
-          "description": "Message when no studies are found"
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
         },
-        {
+        "data": {
           "type": "object",
           "properties": {
             "studies": {
@@ -135,7 +135,7 @@
             "studies"
           ]
         }
-      ]
+      }
     }
   },
   {

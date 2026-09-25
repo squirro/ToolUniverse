@@ -57,7 +57,18 @@
       "type": "object",
       "properties": {
         "data": {
-          "type": "array"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "setid": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            }
+          }
         },
         "metadata": {
           "type": "object",
@@ -93,6 +104,9 @@
               "type": ["string", "integer", "null"]
             }
           }
+        },
+        "status": {
+          "type": "string"
         }
       }
     }

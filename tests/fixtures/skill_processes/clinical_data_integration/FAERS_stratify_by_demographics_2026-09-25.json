@@ -1,0 +1,69 @@
+{
+ "_note": "Recorded 2026-09-25T07:14:34 through ToolUniverse (run_one_function via normalised_executor), unedited, keyed by the call's arguments; the process's call shapes.",
+ "{\"drug_name\": \"cisplatin\", \"stratify_by\": \"sex\"}": {
+  "status": "success",
+  "data": {
+   "drug_name": "cisplatin",
+   "adverse_event": null,
+   "stratified_by": "sex",
+   "case_definition": {
+    "query_term": "cisplatin",
+    "resolved_field": "patient.drug.openfda.generic_name",
+    "drug_report_total": 77664,
+    "note": "Reports matched on this single openFDA field."
+   },
+   "total_reports": 64988,
+   "total_reports_note": "Summed over the whole distribution openFDA returned.",
+   "stratification": [
+    {
+     "group": "Male",
+     "count": 38714,
+     "percentage": 59.57
+    },
+    {
+     "group": "Female",
+     "count": 25599,
+     "percentage": 39.39
+    },
+    {
+     "group": "Unknown",
+     "count": 675,
+     "percentage": 1.04
+    }
+   ]
+  }
+ },
+ "{\"adverse_event\": \"NAUSEA\", \"drug_name\": \"cisplatin\", \"stratify_by\": \"sex\"}": {
+  "status": "success",
+  "data": {
+   "drug_name": "cisplatin",
+   "adverse_event": "NAUSEA",
+   "stratified_by": "sex",
+   "case_definition": {
+    "query_term": "cisplatin",
+    "resolved_field": "patient.drug.openfda.generic_name",
+    "drug_report_total": 77664,
+    "note": "Reports matched on this single openFDA field."
+   },
+   "total_reports": 4722,
+   "total_reports_note": "Summed over the whole distribution openFDA returned.",
+   "stratification": [
+    {
+     "group": "Female",
+     "count": 2358,
+     "percentage": 49.94
+    },
+    {
+     "group": "Male",
+     "count": 2319,
+     "percentage": 49.11
+    },
+    {
+     "group": "Unknown",
+     "count": 45,
+     "percentage": 0.95
+    }
+   ]
+  }
+ }
+}

@@ -3624,6 +3624,36 @@
               }
             }
           }
+        },
+        "status": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "object",
+              "properties": {
+                "chemicalProbes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "isHighQuality": {
+                        "type": "boolean"
+                      },
+                      "probesDrugsScore": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }

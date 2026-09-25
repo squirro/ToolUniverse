@@ -55,11 +55,24 @@
       }
     ],
     "return_schema": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "List of disease names associated with the provided HPO phenotype IDs"
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "diseases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of disease names associated with the provided HPO phenotype IDs"
+            }
+          }
+        },
+        "status": {
+          "type": "string"
+        }
+      }
     }
   },
   {
@@ -152,8 +165,27 @@
     "return_schema": {
       "type": "object",
       "properties": {
-        "limit": {
-          "type": "integer"
+        "status": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }

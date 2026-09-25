@@ -47,59 +47,86 @@
     "return_schema": {
       "type": "object",
       "properties": {
-        "took": {
-          "type": "integer",
-          "description": "Query time in milliseconds"
+        "status": {
+          "type": "string"
         },
-        "total": {
-          "type": "integer",
-          "description": "Total number of matching genes"
-        },
-        "max_score": {
-          "type": "number",
-          "description": "Maximum relevance score"
-        },
-        "hits": {
-          "type": "array",
-          "description": "Array of matching gene records",
-          "items": {
-            "type": "object",
-            "properties": {
-              "_id": {
-                "type": "string",
-                "description": "Gene ID (usually Entrez gene ID)"
-              },
-              "_score": {
-                "type": "number",
-                "description": "Relevance score"
-              },
-              "symbol": {
-                "type": "string",
-                "description": "Official gene symbol"
-              },
-              "name": {
-                "type": "string",
-                "description": "Full gene name"
-              },
-              "entrezgene": {
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "description": "Entrez Gene ID"
-              },
-              "ensembl": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "took": {
+              "type": "integer",
+              "description": "Query time in milliseconds"
+            },
+            "total": {
+              "type": "integer",
+              "description": "Total number of matching genes"
+            },
+            "max_score": {
+              "type": "number",
+              "description": "Maximum relevance score"
+            },
+            "hits": {
+              "type": "array",
+              "description": "Array of matching gene records",
+              "items": {
                 "type": "object",
                 "properties": {
-                  "gene": {
+                  "_id": {
                     "type": "string",
-                    "description": "Ensembl gene ID"
+                    "description": "Gene ID (usually Entrez gene ID)"
+                  },
+                  "_score": {
+                    "type": "number",
+                    "description": "Relevance score"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "description": "Official gene symbol"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Full gene name"
+                  },
+                  "entrezgene": {
+                    "type": [
+                      "integer",
+                      "string"
+                    ],
+                    "description": "Entrez Gene ID"
+                  },
+                  "ensembl": {
+                    "type": [
+                      "object",
+                      "array"
+                    ],
+                    "properties": {
+                      "gene": {
+                        "type": "string",
+                        "description": "Ensembl gene ID"
+                      }
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "gene": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Gene summary/description"
+                  },
+                  "uniprot": {
+                    "type": "object",
+                    "properties": {
+                      "Swiss-Prot": {
+                        "type": "string"
+                      }
+                    }
                   }
                 }
-              },
-              "summary": {
-                "type": "string",
-                "description": "Gene summary/description"
               }
             }
           }

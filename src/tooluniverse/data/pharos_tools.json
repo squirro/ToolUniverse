@@ -32,16 +32,15 @@
             "properties": {
                 "status": {"type": "string", "enum": ["success", "error"]},
                 "data": {
-                    "type": "object",
+                    "type": ["object", "null"],
+                    "description": "The target, or null when Pharos has none for the query.",
                     "properties": {
                         "name": {"type": "string"},
-                        "gene": {"type": "string"},
-                        "accession": {"type": "string"},
-                        "idgFamily": {"type": "string"},
-                        "idgTDL": {"type": "string"},
+                        "tdl": {"type": "string"},
                         "novelty": {"type": "number"},
-                        "diseases": {"type": "array"},
-                        "ligands": {"type": "array"}
+                        "publicationCount": {
+                            "type": "integer"
+                        }
                     }
                 },
                 "error": {"type": "string"}

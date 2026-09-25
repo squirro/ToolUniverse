@@ -302,196 +302,204 @@
     "return_schema": {
       "type": "object",
       "properties": {
-        "uniprot_entry": {
+        "status": {
+          "type": "string"
+        },
+        "data": {
           "type": "object",
           "properties": {
-            "ac": {
-              "type": "string"
+            "uniprot_entry": {
+              "type": "object",
+              "properties": {
+                "ac": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "uniprot_checksum": {
+                  "type": "string"
+                },
+                "sequence_length": {
+                  "type": "integer"
+                },
+                "segment_start": {
+                  "type": "integer"
+                },
+                "segment_end": {
+                  "type": "integer"
+                }
+              }
             },
-            "id": {
-              "type": "string"
-            },
-            "uniprot_checksum": {
-              "type": "string"
-            },
-            "sequence_length": {
-              "type": "integer"
-            },
-            "segment_start": {
-              "type": "integer"
-            },
-            "segment_end": {
-              "type": "integer"
-            }
-          }
-        },
-        "structures": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "summary": {
+            "structures": {
+              "type": "array",
+              "items": {
                 "type": "object",
                 "properties": {
-                  "model_identifier": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "model_category": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "model_url": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "model_format": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "model_type": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "model_page_url": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "provider": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "number_of_conformers": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "ensemble_sample_url": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "ensemble_sample_format": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "created": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "sequence_identity": {
-                    "type": [
-                      "number",
-                      "null"
-                    ]
-                  },
-                  "uniprot_start": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "uniprot_end": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "coverage": {
-                    "type": [
-                      "number",
-                      "null"
-                    ]
-                  },
-                  "experimental_method": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "resolution": {
-                    "type": [
-                      "number",
-                      "null"
-                    ]
-                  },
-                  "confidence_type": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "confidence_version": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "confidence_avg_local_score": {
-                    "type": [
-                      "number",
-                      "null"
-                    ]
-                  },
-                  "oligomeric_state": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "preferred_assembly_id": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "entities": {
-                    "type": [
-                      "array",
-                      "null"
-                    ],
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "entity_type": {
-                          "type": "string"
-                        },
-                        "entity_poly_type": {
-                          "type": "string"
-                        },
-                        "identifier": {
-                          "type": "string"
-                        },
-                        "identifier_category": {
-                          "type": "string"
-                        },
-                        "description": {
-                          "type": "string"
-                        },
-                        "chain_ids": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
+                  "summary": {
+                    "type": "object",
+                    "properties": {
+                      "model_identifier": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "model_category": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "model_url": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "model_format": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "model_type": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "model_page_url": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "provider": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "number_of_conformers": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "ensemble_sample_url": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "ensemble_sample_format": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "created": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "sequence_identity": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "uniprot_start": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "uniprot_end": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "coverage": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "experimental_method": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "resolution": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "confidence_type": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "confidence_version": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "confidence_avg_local_score": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "oligomeric_state": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "preferred_assembly_id": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "entities": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entity_type": {
+                              "type": "string"
+                            },
+                            "entity_poly_type": {
+                              "type": "string"
+                            },
+                            "identifier": {
+                              "type": "string"
+                            },
+                            "identifier_category": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "chain_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
                           }
                         }
                       }

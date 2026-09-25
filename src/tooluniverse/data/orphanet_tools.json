@@ -45,7 +45,18 @@
           "properties": {
             "results": {
               "type": "array",
-              "description": "Matching rare diseases"
+              "description": "Matching rare diseases",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ORPHAcode": {
+                    "type": "integer"
+                  },
+                  "Preferred term": {
+                    "type": "string"
+                  }
+                }
+              }
             },
             "count": {
               "type": "integer",

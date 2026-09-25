@@ -124,8 +124,11 @@ def _rules(graph: dict):
         for kind in ("collect", "extract"):
             for fact, rule in (step.get(kind) or {}).items():
                 rule = rule if isinstance(rule, dict) else {"path": rule}
-                if isinstance(rule.get("path"), str):
-                    yield step["id"], f"{kind}.{fact}", tools, rule
+                paths = rule.get("path")
+                # An extract may list alternative paths; each must be declared.
+                for path in paths if isinstance(paths, list) else [paths]:
+                    if isinstance(path, str):
+                        yield step["id"], f"{kind}.{fact}", tools, {**rule, "path": path}
 
 
 def undeclared(graph: dict, tools: dict[str, dict]) -> list[str]:

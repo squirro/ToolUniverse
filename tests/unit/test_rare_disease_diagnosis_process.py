@@ -22,7 +22,8 @@ VARIANT = "1-155235843-T-C"
 
 
 def _recorded(tool, arguments):
-    rows = json.loads((RECORDED / f"{tool}_2026-09-24.json").read_text())
+    (path,) = RECORDED.glob(f"{tool}_2026-*.json")
+    rows = json.loads(path.read_text())
     return rows[json.dumps(arguments, sort_keys=True)]
 
 

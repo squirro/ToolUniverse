@@ -53,7 +53,7 @@ def _agent(question, first_answers):
     return answer
 
 
-def _drive(records, disease="ovarian cancer", first_answers=None, responses=None):
+def _drive(records, disease="ovarian cancer", first_answers=None, responses=None, target="FOLR1"):
     calls, asked = [], []
     first_answers = dict(first_answers or {})
     served = {**RECORDED, **(responses or {})}
@@ -68,7 +68,7 @@ def _drive(records, disease="ovarian cancer", first_answers=None, responses=None
 
     runner = SkillRunner(load_graph("drug-target-validation"), execute=execute, ask=agent,
                          records=records)
-    inputs = {"target": "FOLR1", **({"disease": disease} if disease else {})}
+    inputs = {"target": target, **({"disease": disease} if disease else {})}
     run_id = runner.start(inputs)["run_id"]
     for _ in range(200):
         if runner.advance(run_id)["finished"]:
@@ -341,3 +341,17 @@ def test_the_probe_rows_are_read_from_the_chemical_probes_answer_of_the_live_sch
                        "probesDrugsScore": probes[0]["probesDrugsScore"]}
     assert not [f for f in handed["failures"]
                 if f["tool"] == "OpenTargets_get_chemical_probes_by_target_ensemblID"]
+
+
+def test_a_gene_mygene_lists_on_alternate_loci_keys_every_later_call_on_its_primary_gene(tmp_path):
+    """MyGene lists HPS5 on chromosome 11 and a patch; the run takes Ensembl's primary-assembly
+    gene and every Ensembl-keyed call uses it. Identity is HPS5's recording; the other tools
+    answer from the FOLR1 recording, which is all this drive needs of them."""
+    listed = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "dtv"
+                         / "identity_ensembl_list_2026-09-25.json").read_text())["responses"]["HPS5"]
+    handed, calls, _ = _drive(tmp_path, responses=listed, target="HPS5")
+
+    assert isinstance(listed["MyGene_query_genes"]["data"]["hits"][0]["ensembl"], list)
+    assert handed["facts"]["ensembl_id"] == "ENSG00000110756"
+    keyed = [a["ensemblId"] for _, a in calls if "ensemblId" in a]
+    assert keyed and set(keyed) == {"ENSG00000110756"}

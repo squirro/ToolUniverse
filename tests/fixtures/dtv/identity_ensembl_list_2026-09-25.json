@@ -1,0 +1,294 @@
+{
+ "_note": "Recorded 2026-09-25T07:50:55+00:00 from the live tools through ToolUniverse (run_one_function, normalised as the worker hands results to the runner), unedited, with the arguments drug-target-validation's identity step sends. MyGene lists HPS5 on chromosome 11 and an HG2111 patch, and NEU1 on chromosome 6 and seven MHC haplotypes; Ensembl's lookup names the chromosome 11 / 6 gene, the only one of each list Open Targets knows (checked live the same day).",
+ "responses": {
+  "HPS5": {
+   "MyGene_query_genes": {
+    "status": "success",
+    "data": {
+     "took": 2,
+     "total": 1,
+     "max_score": 140.1846,
+     "hits": [
+      {
+       "_id": "11234",
+       "_score": 140.1846,
+       "alias": [
+        "AIBP63",
+        "BLOC2S2"
+       ],
+       "ensembl": [
+        {
+         "gene": "ENSG00000288445"
+        },
+        {
+         "gene": "ENSG00000110756"
+        }
+       ],
+       "entrezgene": "11234",
+       "name": "HPS5 biogenesis of lysosomal organelles complex 2 subunit 2",
+       "symbol": "HPS5",
+       "uniprot": {
+        "Swiss-Prot": "Q9UPZ3",
+        "TrEMBL": [
+         "F5GWM5",
+         "G3V159",
+         "F5H6Q8",
+         "A0ACI8QVH2",
+         "A0ACI8UA49"
+        ]
+       }
+      }
+     ]
+    }
+   },
+   "Pharos_get_target": {
+    "status": "success",
+    "data": {
+     "name": "Hermansky-Pudlak syndrome 5 protein",
+     "sym": "HPS5",
+     "uniprot": "Q9UPZ3",
+     "tdl": "Tbio",
+     "fam": null,
+     "novelty": 0.05155851,
+     "description": "This gene encodes a protein that may play a role in organelle biogenesis associated with melanosomes, platelet dense granules, and lysosomes. This protein interacts with Hermansky-Pudlak syndrome 6 protein and may interact with the cytoplasmic domain of integrin, alpha-3. Mutations in this gene are associated with Hermansky-Pudlak syndrome type 5. Multiple transcript variants encoding two distinct isoforms have been identified for this gene. [provided by RefSeq, Jul 2008]",
+     "publicationCount": 23
+    }
+   },
+   "ensembl_lookup_gene": {
+    "status": "success",
+    "data": {
+     "version": 20,
+     "strand": -1,
+     "db_type": "core",
+     "source": "ensembl_havana",
+     "logic_name": "ensembl_havana_gene_homo_sapiens",
+     "id": "ENSG00000110756",
+     "canonical_transcript": "ENST00000349215.8",
+     "biotype": "protein_coding",
+     "start": 18278668,
+     "end": 18322523,
+     "description": "HPS5 biogenesis of lysosomal organelles complex 2 subunit 2 [Source:HGNC Symbol;Acc:HGNC:17022]",
+     "species": "homo_sapiens",
+     "object_type": "Gene",
+     "display_name": "HPS5",
+     "assembly_name": "GRCh38",
+     "seq_region_name": "11"
+    },
+    "url": "https://rest.ensembl.org/lookup/symbol/homo_sapiens/HPS5",
+    "content_type": "application/json"
+   }
+  },
+  "NEU1": {
+   "MyGene_query_genes": {
+    "status": "success",
+    "data": {
+     "took": 3,
+     "total": 4,
+     "max_score": 143.29118,
+     "hits": [
+      {
+       "_id": "4758",
+       "_score": 143.29118,
+       "alias": [
+        "NANH",
+        "NEU",
+        "SIAL1"
+       ],
+       "ensembl": [
+        {
+         "gene": "ENSG00000234343"
+        },
+        {
+         "gene": "ENSG00000228691"
+        },
+        {
+         "gene": "ENSG00000223957"
+        },
+        {
+         "gene": "ENSG00000234846"
+        },
+        {
+         "gene": "ENSG00000227315"
+        },
+        {
+         "gene": "ENSG00000184494"
+        },
+        {
+         "gene": "ENSG00000227129"
+        },
+        {
+         "gene": "ENSG00000204386"
+        }
+       ],
+       "entrezgene": "4758",
+       "name": "neuraminidase 1",
+       "symbol": "NEU1",
+       "uniprot": {
+        "Swiss-Prot": "Q99519",
+        "TrEMBL": [
+         "E9PIF4",
+         "Q5JQI0",
+         "A0A0G2JKS5",
+         "A0ABB0MVI1",
+         "A0ABB0MVI7",
+         "A0ACI8R9N0",
+         "A0ACI8URE2",
+         "A0ABB0MVK1"
+        ]
+       }
+      },
+      {
+       "_id": "51162",
+       "_score": 1.6684625,
+       "alias": [
+        "NEU1",
+        "VE-STATIN",
+        "ZNEU1"
+       ],
+       "ensembl": {
+        "gene": "ENSG00000172889"
+       },
+       "entrezgene": "51162",
+       "name": "EGF like domain multiple 7",
+       "symbol": "EGFL7",
+       "uniprot": {
+        "Swiss-Prot": "Q9UHF1",
+        "TrEMBL": [
+         "A0ACI8QZF7",
+         "A0ACI8RFP7",
+         "A0ACI8VFK0",
+         "A0ACI8VG25",
+         "A0ACI8VHY0",
+         "A0ACI8SV30",
+         "A0ACI8SUP6",
+         "A0ACI8RVE6",
+         "A0ACI8SUX7",
+         "A0ACI8SUY2",
+         "R4GMT3",
+         "A0ACI8VHW3",
+         "A0ACI8R940"
+        ]
+       }
+      },
+      {
+       "_id": "5476",
+       "_score": 1.5739349,
+       "alias": [
+        "BSVD6",
+        "GLB2",
+        "GSL",
+        "NGBE",
+        "PPCA",
+        "PPGB"
+       ],
+       "ensembl": {
+        "gene": "ENSG00000064601"
+       },
+       "entrezgene": "5476",
+       "name": "cathepsin A",
+       "symbol": "CTSA",
+       "uniprot": {
+        "Swiss-Prot": "P10619",
+        "TrEMBL": [
+         "B4E324",
+         "X6R8A1",
+         "X6R5C5",
+         "A0ACI8R2P4",
+         "U3KQU6",
+         "A0ACI8QH28",
+         "A0A7I2YQT8",
+         "A0A7I2V4R8",
+         "A0ACI8RTA7",
+         "A0A7I2V4Q9",
+         "A0A7I2V2E2",
+         "U3KQF1",
+         "A0A7I2V3M2",
+         "A0ACI8V4V3",
+         "Q5JZH0",
+         "A0ACI8PZ96",
+         "A0ACI8QUF4",
+         "A0A7I2V4K5",
+         "A0ACI8V4W2",
+         "A0ACI8V4R6",
+         "A0ACI8V3I9",
+         "A0ACI8QV75",
+         "A0ACI8V3U5",
+         "A0ACI8V4X9",
+         "A0A7I2V3B2",
+         "A0ACI8V4U9",
+         "A0A7I2V4D1",
+         "A0A7I2V504",
+         "A0ACI8PJX7"
+        ]
+       }
+      },
+      {
+       "_id": "2720",
+       "_score": 1.4137369,
+       "alias": [
+        "EBP",
+        "ELNR1",
+        "MPS4B"
+       ],
+       "ensembl": {
+        "gene": "ENSG00000170266"
+       },
+       "entrezgene": "2720",
+       "name": "galactosidase beta 1",
+       "symbol": "GLB1",
+       "uniprot": {
+        "Swiss-Prot": "P16278",
+        "TrEMBL": [
+         "E7EQ29",
+         "B7Z6Q5",
+         "F8WF40",
+         "F8WEN1",
+         "C9J4G9",
+         "C9J539",
+         "C9JWX1",
+         "C9JF15"
+        ]
+       }
+      }
+     ]
+    }
+   },
+   "Pharos_get_target": {
+    "status": "success",
+    "data": {
+     "name": "Sialidase-1",
+     "sym": "NEU1",
+     "uniprot": "Q99519",
+     "tdl": "Tchem",
+     "fam": "Enzyme",
+     "novelty": 0.00479879,
+     "description": "The protein encoded by this gene is a lysosomal enzyme that cleaves terminal sialic acid residues from substrates such as glycoproteins and glycolipids. In the lysosome, this enzyme is part of a heterotrimeric complex together with beta-galactosidase and cathepsin A (the latter is also referred to as 'protective protein'). Mutations in this gene can lead to sialidosis, a lysosomal storage disease that can be type 1 (cherry red spot-myoclonus syndrome or normosomatic type), which is late-onset, or type 2 (the dysmorphic type), which occurs at an earlier age with increased severity. [provided by RefSeq, Jul 2008]",
+     "publicationCount": 124
+    }
+   },
+   "ensembl_lookup_gene": {
+    "status": "success",
+    "data": {
+     "db_type": "core",
+     "biotype": "protein_coding",
+     "description": "neuraminidase 1 [Source:HGNC Symbol;Acc:HGNC:7758]",
+     "id": "ENSG00000204386",
+     "end": 31862905,
+     "seq_region_name": "6",
+     "version": 15,
+     "display_name": "NEU1",
+     "logic_name": "ensembl_havana_gene_homo_sapiens",
+     "start": 31857063,
+     "source": "ensembl_havana",
+     "object_type": "Gene",
+     "canonical_transcript": "ENST00000375631.5",
+     "species": "homo_sapiens",
+     "strand": -1,
+     "assembly_name": "GRCh38"
+    },
+    "url": "https://rest.ensembl.org/lookup/symbol/homo_sapiens/NEU1",
+    "content_type": "application/json"
+   }
+  }
+ }
+}

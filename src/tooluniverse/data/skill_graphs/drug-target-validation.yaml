@@ -108,13 +108,16 @@ steps:
       # A protein name or an alias returns no hit, or a wrong first hit; the agent knows the symbol.
       argument: target
       when_missing: ensembl_id
-      # The hit counts only when the target is its symbol or one of its listed aliases.
-      named_by: ["data.hits.0.symbol", "data.hits.0.alias"]
+      # The hit counts only when the target is its symbol, one of its listed aliases or,
+      # for Ensembl's lookup, its display name.
+      named_by: ["data.hits.0.symbol", "data.hits.0.alias", "data.display_name"]
     extract:
       symbol: "data.hits.0.symbol"
       gene_name: "data.hits.0.name"
       entrez_id: "data.hits.0.entrezgene"
-      ensembl_id: "data.hits.0.ensembl.gene"
+      # Ensembl's own lookup gives the primary-assembly gene, the one Open Targets keys on;
+      # MyGene lists alternate-locus copies too, so its id is only the fallback.
+      ensembl_id: {path: ["data.id", "data.hits.0.ensembl.gene"]}
       uniprot_id: "data.hits.0.uniprot.Swiss-Prot"
       tdl: "data.tdl"
       pharos_publications: "data.publicationCount"

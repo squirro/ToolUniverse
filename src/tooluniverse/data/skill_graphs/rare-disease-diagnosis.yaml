@@ -59,8 +59,9 @@ report: >-
   (or "not in Open Targets"), plus the top three scored targets of that disease
   with their scores so the drop-off is visible — never apply a cut; the
   OptimusKG relation and evidence score from `facts.optimuskg_genes` when the
-  gene is there (or "not in OptimusKG"); Ensembl and Entrez ids from
-  `facts.gene_rows`; expression from the panel results that the bundle kept.
+  gene is there (or "not in OptimusKG"); the Entrez id from `facts.gene_rows`
+  and the Ensembl id from `facts.gene_ensembl` (or "not in Ensembl");
+  expression from the panel results that the bundle kept.
   Where the three agree, say so once; where they differ, show
   all and do not pick. A gene in none of the three sources is not in the
   report. A disease with no gene in any source says "no causal gene in
@@ -100,6 +101,7 @@ tables:
   mondo_ids: fact
   opentargets_rows: fact
   gene_rows: fact
+  gene_ensembl: fact
 
 steps:
   - id: hypothesis
@@ -472,13 +474,31 @@ steps:
     # The writer reads the panel from these rows; loop payloads in the bundle are
     # bounded per step and may be counted rather than kept.
     collect:
-      gene_rows: {path: "data.hits.0", fields: ["symbol", "name", "entrezgene", "ensembl.gene as ensembl"]}
+      gene_rows: {path: "data.hits.0", fields: ["symbol", "name", "entrezgene"]}
     produces: [gene_rows]
     notes: >-
-      One call per gene in `facts.genes`. Take symbol, name, Entrez id and
-      Ensembl id from the hit whose symbol matches exactly; a gene with no exact
-      hit is reported as unresolved, never replaced by a near match. Skipped
-      entirely when no gene could be sourced.
+      One call per gene in `facts.genes`. Take symbol, name and Entrez id from
+      the hit whose symbol matches exactly; a gene with no exact hit is reported
+      as unresolved, never replaced by a near match. Skipped entirely when no
+      gene could be sourced.
+
+  - id: gene_ensembl
+    label: "Phase 4 — the Ensembl gene of each candidate"
+    requires: [literature]
+    when: genes
+    for_each: genes
+    as: gene
+    calls:
+      - tool: ensembl_lookup_gene
+        arguments: {gene_id: "{gene}", species: "homo_sapiens"}
+    # MyGene lists alternate-locus copies of some genes; Ensembl's lookup by symbol
+    # gives the primary-assembly gene, the one Open Targets keys on.
+    collect:
+      gene_ensembl: {path: "data", fields: ["$item as gene", "display_name as symbol", "id as ensembl"]}
+    produces: [gene_ensembl]
+    notes: >-
+      One call per gene in `facts.genes`. A symbol Ensembl does not know gets no
+      id and is reported "not in Ensembl", never an alternate-locus id from MyGene.
 
   - id: expression
     label: "Phase 5 — tissue expression context"

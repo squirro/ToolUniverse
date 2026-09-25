@@ -68,6 +68,12 @@ def _dig(payload: Any, path: str) -> Any:
     return current
 
 
+def extract_paths(rule: Any) -> list[str]:
+    """The paths an extract rule tries, in order: one path, or a list of alternatives."""
+    path = rule.get("path") if isinstance(rule, dict) else rule
+    return list(path) if isinstance(path, list) else [path]
+
+
 def _step_in(current: Any, key: str, mapping: bool) -> Any:
     """Take one path segment, over a single value or over every mapped item."""
     if mapping:
@@ -934,10 +940,13 @@ def _names(payload: Any, paths: list[str]) -> list[str]:
 def _hit(spec: dict, repair: dict, payload: Any) -> bool:
     """The payload carries the value the repair watches for."""
     rule = (spec.get("extract") or {}).get(repair["when_missing"])
-    try:
-        return _dig(payload, rule["path"] if isinstance(rule, dict) else rule) is not None
-    except SkillPathError:
-        return False                         # a malformed path has not resolved anything either
+    for path in extract_paths(rule):
+        try:
+            if _dig(payload, path) is not None:
+                return True
+        except SkillPathError:
+            continue                         # a malformed path has not resolved anything either
+    return False
 
 
 def _wrong_hit(spec: dict, repair: dict | None, payload: Any, value: Any) -> bool:
@@ -1365,9 +1374,10 @@ def absorb(spec: dict, results: list, facts: dict, items: list | None = None,
     for name, rule in (spec.get("extract") or {}).items():
         rule = rule if isinstance(rule, dict) else {"path": rule}
         path_blocked = False
-        for payload in results:
+        # A list of paths is tried in order; the first that yields a value in any payload wins.
+        for path, payload in ((p, r) for p in extract_paths(rule) for r in results):
             try:
-                found = _dig(payload, rule["path"])
+                found = _dig(payload, path)
             except SkillPathError as error:
                 # A syntax error in the path is the same for every payload; a mapped segment over
                 # something that is not a list depends on what this one payload gave back. Either

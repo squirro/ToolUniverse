@@ -150,7 +150,8 @@ _JSON_SPECS = {
 def _rule(rule: Any) -> str:
     if not isinstance(rule, dict):
         return str(rule)
-    parts = [rule["path"]]
+    path = rule["path"]
+    parts = [" or ".join(path) if isinstance(path, list) else path]
     for key in ("regex", "limit", "default_from"):
         if rule.get(key) is not None:
             parts.append(f"{key}={rule[key]}")

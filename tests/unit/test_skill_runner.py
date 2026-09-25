@@ -953,6 +953,18 @@ def test_absorb_extracts_by_path_regex_limit_and_default():
     assert out["unresolved"] == ["never"] and out["blocked"] == []
 
 
+def test_an_extract_tries_its_paths_in_order_whatever_payload_comes_first():
+    spec = {"id": "s", "extract": {"gene": {"path": ["data.id", "data.hits.0.ensembl.gene"]},
+                                   "none": {"path": ["data.a", "data.b"]}}}
+    listed = {"data": {"hits": [{"ensembl": [{"gene": "ENSG_PATCH"}, {"gene": "ENSG_PRIMARY"}]}]}}
+    single = {"data": {"hits": [{"ensembl": {"gene": "ENSG_MYGENE"}}]}}
+    lookup = {"data": {"id": "ENSG_PRIMARY"}}
+    assert absorb(spec, [listed, lookup], facts={})["facts"] == {"gene": "ENSG_PRIMARY"}
+    assert absorb(spec, [single, lookup], facts={})["facts"] == {"gene": "ENSG_PRIMARY"}
+    out = absorb(spec, [single, {"error": "no lookup"}], facts={})
+    assert out["facts"] == {"gene": "ENSG_MYGENE"} and out["unresolved"] == ["none"]
+
+
 def test_absorb_collects_combines_and_derives_and_blocks_an_unknown():
     spec = {"id": "prr",
             "collect": {"prrs": "data.metrics.PRR.value"},
@@ -1283,7 +1295,7 @@ RARE_TOOLS = ("get_HPO_ID_by_phenotype", "HPO_get_diseases_by_phenotype", "HPO_g
               "Orphanet_get_phenotypes", "Orphanet_get_natural_history", "Orphanet_get_epidemiology",
               "Orphanet_get_genes", "EuropePMC_search_articles", "OpenTargets_get_disease_ids_by_name",
               "OpenTargets_get_associated_targets_by_disease_efoId", "MyGene_query_genes",
-              "GTEx_get_expression_summary")
+              "GTEx_get_expression_summary", "ensembl_lookup_gene")
 RARE_CASE = {"symptoms": ["coarse facies", "hepatosplenomegaly", "global developmental delay"],
              "age_years": 4}
 RARE_ANSWERS = {"primary_keyword": "mucopolysaccharidosis",
@@ -1295,7 +1307,8 @@ RARE_ANSWERS = {"primary_keyword": "mucopolysaccharidosis",
 
 
 def _recorded(tool):
-    return json.loads((RARE / f"{tool}_2026-09-24.json").read_text())
+    (path,) = RARE.glob(f"{tool}_2026-*.json")
+    return json.loads(path.read_text())
 
 
 RECORDED_RARE = {tool: _recorded(tool) for tool in RARE_TOOLS}
@@ -1634,12 +1647,23 @@ def test_a_question_stubs_facts_larger_than_a_payload_cap():
 
 
 def test_the_gene_panel_collects_a_row_per_gene_for_the_writer():
-    """With loop results bounded, the writer reads Ensembl and Entrez ids from rows."""
+    """With loop results bounded, the writer reads Entrez ids from rows."""
     state, _ = _rare_disease_run()
     rows = state["facts"]["gene_rows"]
     assert len(rows) == len(state["facts"]["genes"])
-    assert rows[0] == {"symbol": "IDS", "name": "iduronate 2-sulfatase",
-                                "entrezgene": "3423", "ensembl": "ENSG00000010404"}
+    assert rows[0] == {"symbol": "IDS", "name": "iduronate 2-sulfatase", "entrezgene": "3423"}
+
+
+def test_each_gene_gets_its_primary_assembly_ensembl_id_even_when_mygene_lists_several():
+    """MyGene lists NEU1 on the seven MHC haplotypes too; Ensembl's lookup names the one gene."""
+    state, _ = _rare_disease_run()
+    listed = {json.loads(k)["query"]: v["data"]["hits"][0].get("ensembl")
+              for k, v in RECORDED_RARE["MyGene_query_genes"].items() if k != "_note"}
+    assert isinstance(listed["NEU1"], list) and len(listed["NEU1"]) == 8
+    ids = {r["gene"]: r.get("ensembl") for r in state["facts"]["gene_ensembl"]}
+    assert set(ids) == set(state["facts"]["genes"])
+    assert ids["NEU1"] == "ENSG00000204386"          # chromosome 6, the id Open Targets knows
+    assert ids["IDS"] == listed["IDS"]["gene"] == "ENSG00000010404"
 
 
 def test_a_stubbed_fact_says_it_travels_whole_in_the_questions_own_calls():

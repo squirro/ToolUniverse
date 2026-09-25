@@ -50,130 +50,146 @@
       ]
     },
     "return_schema": {
-      "oneOf": [
-        {
-          "type": "array",
-          "description": "Array of PubMed articles with metadata",
-          "items": {
-            "type": "object",
-            "properties": {
-              "pmid": {
-                "type": "string",
-                "description": "PubMed ID (PMID)"
-              },
-              "title": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "Article title"
-              },
-              "authors": {
-                "type": "array",
-                "description": "List of author names (up to 5 authors shown)",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "journal": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "Full journal name"
-              },
-              "pub_date": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "Publication date (e.g., '2023 Jan 15')"
-              },
-              "pub_year": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "Publication year"
-              },
-              "doi": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "Digital Object Identifier (DOI)"
-              },
-              "pmcid": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "PubMed Central ID (if available)"
-              },
-              "article_type": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "Type of article (e.g., 'Journal Article, Review')"
-              },
-              "url": {
-                "type": "string",
-                "description": "Direct URL to the article on PubMed"
-              },
-              "abstract": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "Abstract text (only when include_abstract=true and available)"
-              },
-              "abstract_source": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "Source for abstract text (e.g., 'PubMed')"
-              },
-              "doi_url": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "DOI resolver URL"
-              },
-              "pmc_url": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "PMC full text URL when PMCID is available"
-              }
-            }
-          }
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
         },
-        {
-          "type": "array",
-          "description": "Stub response when summaries fail (contains PMIDs and URLs only)",
-          "items": {
-            "type": "object",
-            "properties": {
-              "pmid": {
-                "type": "string"
-              },
-              "partial": {
-                "type": "boolean"
-              },
-              "warning": {
-                "type": "string"
+        "data": {
+          "oneOf": [
+            {
+              "type": "array",
+              "description": "Array of PubMed articles with metadata",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "pmid": {
+                    "type": "string",
+                    "description": "PubMed ID (PMID)"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Article title"
+                  },
+                  "authors": {
+                    "type": "array",
+                    "description": "List of author names (up to 5 authors shown)",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "journal": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Full journal name"
+                  },
+                  "pub_date": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Publication date (e.g., '2023 Jan 15')"
+                  },
+                  "pub_year": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Publication year"
+                  },
+                  "doi": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Digital Object Identifier (DOI)"
+                  },
+                  "pmcid": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "PubMed Central ID (if available)"
+                  },
+                  "article_type": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Type of article (e.g., 'Journal Article, Review')"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "Direct URL to the article on PubMed"
+                  },
+                  "abstract": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Abstract text (only when include_abstract=true and available)"
+                  },
+                  "abstract_source": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Source for abstract text (e.g., 'PubMed')"
+                  },
+                  "doi_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "DOI resolver URL"
+                  },
+                  "pmc_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "PMC full text URL when PMCID is available"
+                  }
+                }
               }
             },
-            "required": [
-              "partial"
-            ]
+            {
+              "type": "array",
+              "description": "Stub response when summaries fail (contains PMIDs and URLs only)",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "pmid": {
+                    "type": "string"
+                  },
+                  "partial": {
+                    "type": "boolean"
+                  },
+                  "warning": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "partial"
+                ]
+              }
+            }
+          ]
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer"
+            }
           }
         }
-      ]
+      }
     },
     "test_examples": [
       {

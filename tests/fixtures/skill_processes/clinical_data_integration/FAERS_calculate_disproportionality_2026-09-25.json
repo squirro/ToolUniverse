@@ -1,0 +1,68 @@
+{
+ "_note": "Recorded 2026-09-25T07:14:34 through ToolUniverse (run_one_function via normalised_executor), unedited, keyed by the call's arguments; the process's call shapes.",
+ "{\"adverse_event\": \"NAUSEA\", \"drug_name\": \"cisplatin\"}": {
+  "status": "success",
+  "data": {
+   "drug_name": "cisplatin",
+   "adverse_event": "NAUSEA",
+   "case_definition": {
+    "query_term": "cisplatin",
+    "resolved_field": "patient.drug.openfda.generic_name",
+    "drug_report_total": 77664,
+    "note": "PRIMARY analysis: reports matched on this single openFDA field (the narrow population). See population_sensitivity for the same analysis over the union of every spelling."
+   },
+   "population_sensitivity": {
+    "computed": true,
+    "definition": "union over every openFDA field AND every other name openFDA gives this product (its NDC-derived brand/generic/substance set). Known limit: only NDC-matched reports carry that name set, so an as-reported spelling that never mapped stays out of this cohort.",
+    "fields_unioned": [
+     "patient.drug.openfda.generic_name:\"cisplatin\"",
+     "patient.drug.openfda.brand_name:\"cisplatin\"",
+     "patient.drug.openfda.substance_name:\"cisplatin\"",
+     "patient.drug.medicinalproduct.exact:\"CISPLATIN\""
+    ],
+    "narrow_field": "patient.drug.openfda.generic_name",
+    "cases": 5459,
+    "drug_report_total": 77664,
+    "ROR": 1.938,
+    "ci_95": {
+     "lower": 1.886,
+     "upper": 1.993
+    },
+    "agrees_with_primary": true,
+    "divergence": null
+   },
+   "contingency_table": {
+    "a_drug_and_event": 5459,
+    "b_drug_no_event": 72205,
+    "c_no_drug_event": 773917,
+    "d_no_drug_no_event": 19841109
+   },
+   "metrics": {
+    "ROR": {
+     "value": 1.938,
+     "ci_95_lower": 1.886,
+     "ci_95_upper": 1.993,
+     "interpretation": "Reporting odds ratio - measures association strength"
+    },
+    "PRR": {
+     "value": 1.872,
+     "ci_95_lower": 1.825,
+     "ci_95_upper": 1.921,
+     "interpretation": "Proportional reporting ratio - probability ratio"
+    },
+    "IC": {
+     "value": 0.9,
+     "ci_95_lower": 0.863,
+     "ci_95_upper": 0.937,
+     "interpretation": "Information component - Bayesian measure"
+    }
+   },
+   "signal_detection": {
+    "signal_detected": true,
+    "signal_strength": "Weak signal",
+    "criteria": "ROR lower CI > 1.0 and case count >= 3"
+   },
+   "note": "Disproportionality analysis indicates potential safety signal. Does NOT prove causation. Requires clinical evaluation."
+  }
+ }
+}

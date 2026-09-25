@@ -101,7 +101,20 @@
     ],
     "return_schema": {
       "anyOf": [
-        {"type": "array", "items": {"type": "object"}},
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "term": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer"
+              }
+            }
+          }
+        },
         {"type": "object"}
       ],
       "properties": {

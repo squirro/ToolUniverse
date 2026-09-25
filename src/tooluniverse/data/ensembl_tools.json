@@ -23,39 +23,50 @@
     },
     "return_schema": {
       "type": "object",
-      "description": "Gene information object",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Ensembl gene ID"
+        "status": {
+          "type": "string"
         },
-        "display_name": {
-          "type": "string",
-          "description": "Gene symbol"
-        },
-        "description": {
-          "type": "string",
-          "description": "Gene description"
-        },
-        "biotype": {
-          "type": "string",
-          "description": "Gene biotype"
-        },
-        "start": {
-          "type": "integer",
-          "description": "Gene start position"
-        },
-        "end": {
-          "type": "integer",
-          "description": "Gene end position"
-        },
-        "strand": {
-          "type": "integer",
-          "description": "Gene strand (1 or -1)"
-        },
-        "seq_region_name": {
-          "type": "string",
-          "description": "Chromosome name"
+        "data": {
+          "type": "object",
+          "description": "Gene information object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Ensembl gene ID"
+            },
+            "display_name": {
+              "type": "string",
+              "description": "Gene symbol"
+            },
+            "description": {
+              "type": "string",
+              "description": "Gene description"
+            },
+            "biotype": {
+              "type": "string",
+              "description": "Gene biotype"
+            },
+            "start": {
+              "type": "integer",
+              "description": "Gene start position"
+            },
+            "end": {
+              "type": "integer",
+              "description": "Gene end position"
+            },
+            "strand": {
+              "type": "integer",
+              "description": "Gene strand (1 or -1)"
+            },
+            "seq_region_name": {
+              "type": "string",
+              "description": "Chromosome name"
+            },
+            "version": {
+              "type": "integer"
+            }
+          }
         }
       }
     },

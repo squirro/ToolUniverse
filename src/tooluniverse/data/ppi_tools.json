@@ -57,7 +57,21 @@
       "properties": {
         "data": {
           "type": "array",
-          "description": "Array of interaction records parsed from TSV"
+          "description": "Array of interaction records parsed from TSV",
+          "items": {
+            "type": "object",
+            "properties": {
+              "preferredName_A": {
+                "type": "string"
+              },
+              "preferredName_B": {
+                "type": "string"
+              },
+              "score": {
+                "type": "string"
+              }
+            }
+          }
         },
         "header": {
           "type": "array",
@@ -69,6 +83,9 @@
         "error": {
           "type": "string",
           "description": "Error message if request failed"
+        },
+        "status": {
+          "type": "string"
         }
       }
     },

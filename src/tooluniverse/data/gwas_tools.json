@@ -1796,7 +1796,7 @@
           "items": {
             "type": "object",
             "properties": {
-              "rs_id": {
+              "rsId": {
                 "type": "string",
                 "description": "dbSNP rs identifier"
               },
@@ -1804,11 +1804,11 @@
                 "type": "integer",
                 "description": "Merged status"
               },
-              "functional_class": {
+              "functionalClass": {
                 "type": "string",
                 "description": "Functional classification"
               },
-              "last_update_date": {
+              "lastUpdateDate": {
                 "type": "string",
                 "description": "Last update timestamp"
               },
@@ -1817,12 +1817,6 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "chromosome_name": {
-                      "type": "string"
-                    },
-                    "chromosome_position": {
-                      "type": "integer"
-                    },
                     "region": {
                       "type": "object",
                       "properties": {
@@ -1833,28 +1827,6 @@
                     }
                   }
                 }
-              },
-              "alleles": {
-                "type": "string",
-                "description": "Allele information"
-              },
-              "most_severe_consequence": {
-                "type": "string",
-                "description": "Most severe functional consequence"
-              },
-              "mapped_genes": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "maf": {
-                "type": "number",
-                "description": "Minor allele frequency"
-              },
-              "minor_allele": {
-                "type": "string",
-                "description": "Minor allele"
               },
               "_links": {
                 "type": "object",
@@ -1889,6 +1861,9 @@
               "description": "Navigation links"
             }
           }
+        },
+        "status": {
+          "type": "string"
         }
       }
     },

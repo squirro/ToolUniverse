@@ -447,7 +447,12 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Target objects returned by ChEMBL. When 'fields' is provided, each object will contain only the selected fields."
+                "description": "Target objects returned by ChEMBL. When 'fields' is provided, each object will contain only the selected fields.",
+                "properties": {
+                  "target_chembl_id": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
@@ -683,7 +688,57 @@
             "activities": {
               "type": "array",
               "items": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "assay_description": {
+                    "type": "string"
+                  },
+                  "assay_type": {
+                    "type": "string"
+                  },
+                  "document_chembl_id": {
+                    "type": "string"
+                  },
+                  "document_year": {
+                    "type": "integer"
+                  },
+                  "molecule_chembl_id": {
+                    "type": "string"
+                  },
+                  "molecule_pref_name": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "pchembl_value": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "standard_relation": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "standard_type": {
+                    "type": "string"
+                  },
+                  "standard_units": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "standard_value": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
               }
             }
           }

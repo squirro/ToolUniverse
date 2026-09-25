@@ -1,0 +1,199 @@
+{
+ "_note": "Recorded 2026-09-25T07:14:34 through ToolUniverse (run_one_function via normalised_executor), unedited, keyed by the call's arguments; the process's call shapes.",
+ "{\"drug_name\": \"cisplatin\", \"seriousness_type\": \"hospitalization\"}": {
+  "status": "success",
+  "data": {
+   "drug_name": "cisplatin",
+   "seriousness_type": "hospitalization",
+   "case_definition": {
+    "query_term": "cisplatin",
+    "resolved_field": "patient.drug.openfda.generic_name",
+    "drug_report_total": 77664,
+    "note": "Reports matched on this single openFDA field."
+   },
+   "total_serious_events": 32401,
+   "top_serious_reactions": [
+    {
+     "reaction": "NAUSEA",
+     "count": 3224
+    },
+    {
+     "reaction": "VOMITING",
+     "count": 2988
+    },
+    {
+     "reaction": "FEBRILE NEUTROPENIA",
+     "count": 2668
+    },
+    {
+     "reaction": "PYREXIA",
+     "count": 2436
+    },
+    {
+     "reaction": "DIARRHOEA",
+     "count": 2300
+    },
+    {
+     "reaction": "DEHYDRATION",
+     "count": 2172
+    },
+    {
+     "reaction": "ANAEMIA",
+     "count": 2012
+    },
+    {
+     "reaction": "NEUTROPENIA",
+     "count": 1860
+    },
+    {
+     "reaction": "OFF LABEL USE",
+     "count": 1793
+    },
+    {
+     "reaction": "THROMBOCYTOPENIA",
+     "count": 1549
+    },
+    {
+     "reaction": "PNEUMONIA",
+     "count": 1495
+    },
+    {
+     "reaction": "ASTHENIA",
+     "count": 1278
+    },
+    {
+     "reaction": "DYSPNOEA",
+     "count": 1244
+    },
+    {
+     "reaction": "FATIGUE",
+     "count": 1228
+    },
+    {
+     "reaction": "MYELOSUPPRESSION",
+     "count": 1173
+    },
+    {
+     "reaction": "PANCYTOPENIA",
+     "count": 1157
+    },
+    {
+     "reaction": "ACUTE KIDNEY INJURY",
+     "count": 1133
+    },
+    {
+     "reaction": "SEPSIS",
+     "count": 1090
+    },
+    {
+     "reaction": "MUCOSAL INFLAMMATION",
+     "count": 1072
+    },
+    {
+     "reaction": "HYPOTENSION",
+     "count": 1017
+    }
+   ],
+   "note": "Serious events: hospitalization",
+   "truncation_warning": "TRUNCATED: openFDA returned a full page of 100 terms, the most it gives this caller (100), so rarer events beyond the cap are missing. Counts shown are a lower bound and the distribution is incomplete. Set FDA_API_KEY to raise the page to 1000."
+  }
+ },
+ "{\"drug_name\": \"cisplatin\", \"seriousness_type\": \"death\"}": {
+  "status": "success",
+  "data": {
+   "drug_name": "cisplatin",
+   "seriousness_type": "death",
+   "case_definition": {
+    "query_term": "cisplatin",
+    "resolved_field": "patient.drug.openfda.generic_name",
+    "drug_report_total": 77664,
+    "note": "Reports matched on this single openFDA field."
+   },
+   "total_serious_events": 14917,
+   "top_serious_reactions": [
+    {
+     "reaction": "DEATH",
+     "count": 2720
+    },
+    {
+     "reaction": "MALIGNANT NEOPLASM PROGRESSION",
+     "count": 1326
+    },
+    {
+     "reaction": "DISEASE PROGRESSION",
+     "count": 1246
+    },
+    {
+     "reaction": "OFF LABEL USE",
+     "count": 1178
+    },
+    {
+     "reaction": "SEPSIS",
+     "count": 1138
+    },
+    {
+     "reaction": "FEBRILE NEUTROPENIA",
+     "count": 980
+    },
+    {
+     "reaction": "DRUG INEFFECTIVE",
+     "count": 940
+    },
+    {
+     "reaction": "PNEUMONIA",
+     "count": 923
+    },
+    {
+     "reaction": "NEUTROPENIA",
+     "count": 887
+    },
+    {
+     "reaction": "THROMBOCYTOPENIA",
+     "count": 772
+    },
+    {
+     "reaction": "DIARRHOEA",
+     "count": 718
+    },
+    {
+     "reaction": "RESPIRATORY FAILURE",
+     "count": 661
+    },
+    {
+     "reaction": "ANAEMIA",
+     "count": 656
+    },
+    {
+     "reaction": "VOMITING",
+     "count": 613
+    },
+    {
+     "reaction": "NAUSEA",
+     "count": 608
+    },
+    {
+     "reaction": "SEPTIC SHOCK",
+     "count": 591
+    },
+    {
+     "reaction": "PYREXIA",
+     "count": 491
+    },
+    {
+     "reaction": "DYSPNOEA",
+     "count": 460
+    },
+    {
+     "reaction": "PANCYTOPENIA",
+     "count": 418
+    },
+    {
+     "reaction": "RENAL FAILURE",
+     "count": 401
+    }
+   ],
+   "note": "Serious events: death",
+   "truncation_warning": "TRUNCATED: openFDA returned a full page of 100 terms, the most it gives this caller (100), so rarer events beyond the cap are missing. Counts shown are a lower bound and the distribution is incomplete. Set FDA_API_KEY to raise the page to 1000."
+  }
+ }
+}

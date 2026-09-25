@@ -1,0 +1,72 @@
+{
+ "_note": "Recorded 2026-09-25T07:48:32+00:00 from the live tool through ToolUniverse (run_one_function, normalised as the worker hands results to the runner), unedited, for the genes the splenomegaly, thrombocytopenia, bone pain case sources. Each key is one call's arguments as JSON with sorted keys.",
+ "{\"gene_id\": \"CYP27B1\", \"species\": \"homo_sapiens\"}": {
+  "status": "success",
+  "data": {
+   "object_type": "Gene",
+   "canonical_transcript": "ENST00000228606.9",
+   "logic_name": "ensembl_havana_gene_homo_sapiens",
+   "start": 57762334,
+   "source": "ensembl_havana",
+   "version": 13,
+   "display_name": "CYP27B1",
+   "db_type": "core",
+   "description": "cytochrome P450 family 27 subfamily B member 1 [Source:HGNC Symbol;Acc:HGNC:2606]",
+   "biotype": "protein_coding",
+   "end": 57768986,
+   "id": "ENSG00000111012",
+   "seq_region_name": "12",
+   "assembly_name": "GRCh38",
+   "species": "homo_sapiens",
+   "strand": -1
+  },
+  "url": "https://rest.ensembl.org/lookup/symbol/homo_sapiens/CYP27B1",
+  "content_type": "application/json"
+ },
+ "{\"gene_id\": \"CYP2R1\", \"species\": \"homo_sapiens\"}": {
+  "status": "success",
+  "data": {
+   "logic_name": "ensembl_havana_gene_homo_sapiens",
+   "db_type": "core",
+   "version": 13,
+   "assembly_name": "GRCh38",
+   "start": 14877349,
+   "description": "cytochrome P450 family 2 subfamily R member 1 [Source:HGNC Symbol;Acc:HGNC:20580]",
+   "end": 14892262,
+   "object_type": "Gene",
+   "species": "homo_sapiens",
+   "canonical_transcript": "ENST00000334636.10",
+   "display_name": "CYP2R1",
+   "seq_region_name": "11",
+   "biotype": "protein_coding",
+   "source": "ensembl_havana",
+   "id": "ENSG00000186104",
+   "strand": -1
+  },
+  "url": "https://rest.ensembl.org/lookup/symbol/homo_sapiens/CYP2R1",
+  "content_type": "application/json"
+ },
+ "{\"gene_id\": \"LPIN2\", \"species\": \"homo_sapiens\"}": {
+  "status": "success",
+  "data": {
+   "logic_name": "ensembl_havana_gene_homo_sapiens",
+   "db_type": "core",
+   "version": 13,
+   "end": 3013356,
+   "assembly_name": "GRCh38",
+   "start": 2885271,
+   "description": "lipin 2 [Source:HGNC Symbol;Acc:HGNC:14450]",
+   "object_type": "Gene",
+   "canonical_transcript": "ENST00000677752.1",
+   "display_name": "LPIN2",
+   "seq_region_name": "18",
+   "species": "homo_sapiens",
+   "biotype": "protein_coding",
+   "id": "ENSG00000101577",
+   "strand": -1,
+   "source": "ensembl_havana"
+  },
+  "url": "https://rest.ensembl.org/lookup/symbol/homo_sapiens/LPIN2",
+  "content_type": "application/json"
+ }
+}

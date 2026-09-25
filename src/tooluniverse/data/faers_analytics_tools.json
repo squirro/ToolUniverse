@@ -30,7 +30,30 @@
       }
     },
     "return_schema": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "metrics": {
+              "type": "object",
+              "properties": {
+                "PRR": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "test_examples": [
       {
@@ -89,7 +112,37 @@
       }
     },
     "return_schema": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "total_reports": {
+              "type": "integer"
+            },
+            "stratification": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "group": {
+                    "type": "string"
+                  },
+                  "count": {
+                    "type": "integer"
+                  },
+                  "percentage": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "test_examples": [
       {
@@ -142,7 +195,34 @@
       }
     },
     "return_schema": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "total_serious_events": {
+              "type": "integer"
+            },
+            "top_serious_reactions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "reaction": {
+                    "type": "string"
+                  },
+                  "count": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "test_examples": [
       {

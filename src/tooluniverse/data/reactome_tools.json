@@ -455,27 +455,33 @@
       }
     ],
     "return_schema": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "dbId": {"type": "integer", "description": "Database ID"},
-          "displayName": {"type": "string", "description": "Pathway display name"},
-          "stId": {"type": "string", "description": "Stable identifier"},
-          "stIdVersion": {"type": "string", "description": "Versioned stable ID"},
-          "isInDisease": {"type": "boolean", "description": "Whether pathway is associated with disease"},
-          "isInferred": {"type": "boolean", "description": "Whether pathway is inferred"},
-          "maxDepth": {"type": "integer", "description": "Maximum depth"},
-          "name": {"type": "array", "items": {"type": "string"}, "description": "Pathway names"},
-          "releaseDate": {"type": "string", "description": "Release date"},
-          "speciesName": {"type": "string", "description": "Species name"},
-          "hasDiagram": {"type": "boolean", "description": "Whether pathway has diagram"},
-          "hasEHLD": {"type": "boolean", "description": "Whether pathway has EHLD diagram"},
-          "lastUpdatedDate": {"type": "string", "description": "Last update date"},
-          "schemaClass": {"type": "string", "description": "Schema class (e.g., 'Pathway')"},
-          "className": {"type": "string", "description": "Class name"}
-        },
-        "description": "Pathway objects containing the UniProt protein"
+      "type": "object",
+      "properties": {
+        "status": {"type": "string"},
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dbId": {"type": "integer", "description": "Database ID"},
+              "displayName": {"type": "string", "description": "Pathway display name"},
+              "stId": {"type": "string", "description": "Stable identifier"},
+              "stIdVersion": {"type": "string", "description": "Versioned stable ID"},
+              "isInDisease": {"type": "boolean", "description": "Whether pathway is associated with disease"},
+              "isInferred": {"type": "boolean", "description": "Whether pathway is inferred"},
+              "maxDepth": {"type": "integer", "description": "Maximum depth"},
+              "name": {"type": "array", "items": {"type": "string"}, "description": "Pathway names"},
+              "releaseDate": {"type": "string", "description": "Release date"},
+              "speciesName": {"type": "string", "description": "Species name"},
+              "hasDiagram": {"type": "boolean", "description": "Whether pathway has diagram"},
+              "hasEHLD": {"type": "boolean", "description": "Whether pathway has EHLD diagram"},
+              "lastUpdatedDate": {"type": "string", "description": "Last update date"},
+              "schemaClass": {"type": "string", "description": "Schema class (e.g., 'Pathway')"},
+              "className": {"type": "string", "description": "Class name"}
+            },
+            "description": "Pathway objects containing the UniProt protein"
+          }
+        }
       }
     }
   },
